@@ -12,19 +12,22 @@ This document details the automated setup of `sri-subscription` as an independen
 ## Architecture Strategy
 
 ### Shared Resources (Cost Optimization)
+
 - **VPC & Subnets**: Reused from sri-template (free)
-- **Security Groups**: Reused from sri-template (free)  
+- **Security Groups**: Reused from sri-template (free)
 - **Cognito User Pool**: Reused from sri-template (free <50k MAU)
   - Users can authenticate to both apps with same credentials
   - Sri-subscription has its own Cognito app client
 
 ### Isolated Resources (Per-Project)
-- **ECR Repositories**: sri-subscription-* (separate images)
+
+- **ECR Repositories**: sri-subscription-\* (separate images)
 - **RDS Database**: sri-subscription-dev-db (separate data)
-- **App Runner Services**: sri-subscription-* (separate compute)
-- **S3 + CloudFront**: sri-subscription-* (separate frontend)
+- **App Runner Services**: sri-subscription-\* (separate compute)
+- **S3 + CloudFront**: sri-subscription-\* (separate frontend)
 
 ### Cost Comparison
+
 ```
 Single Project (sri-template): ~$32/month
 - VPC: $0
@@ -80,7 +83,9 @@ Get-ChildItem -Recurse -File | Where-Object { $_.Extension -match '\.(md|json|ym
 ### 3. Port Configuration (Conflict Isolation)
 
 **Updated Files**:
+
 - `docker-compose.yml`:
+
   - Postgres: 5432 → 5433
   - PgAdmin: 5050 → 5051
   - Identity: 5001 → 5011
@@ -89,10 +94,12 @@ Get-ChildItem -Recurse -File | Where-Object { $_.Extension -match '\.(md|json|ym
   - Frontend: 3000 → 3001
 
 - `frontend/vite.config.ts`:
+
   - Port: 3000 → 3001
   - Proxy target: 5002 → 5012
 
 - `backend/*/Properties/launchSettings.json`:
+
   - Identity Service: 5011
   - API Gateway: 5012
   - Data Service: 5013
@@ -105,19 +112,22 @@ Get-ChildItem -Recurse -File | Where-Object { $_.Extension -match '\.(md|json|ym
 **Created Files**:
 
 `terraform/setup/shared-resources.tf`:
+
 - Data sources to reference existing sri-template VPC, subnets, security groups
 - Data source for existing Cognito User Pool
 - Outputs shared resource IDs for deploy phase
 
 `terraform/setup/cognito-client.tf`:
+
 - Creates NEW Cognito app client in shared user pool
 - Client name: sri-subscription-client
 - Separate client ID from sri-template
 
 **Existing Terraform files automatically use project_name variable** to create:
-- sri-subscription-* ECR repositories
-- sri-subscription-* terraform state bucket
-- sri-subscription-* DynamoDB lock table
+
+- sri-subscription-\* ECR repositories
+- sri-subscription-\* terraform state bucket
+- sri-subscription-\* DynamoDB lock table
 
 ### 5. Git Configuration
 
@@ -146,16 +156,19 @@ git remote add template https://github.com/abhee15/sri-template.git
 **Created Files**:
 
 `.gitattributes`:
+
 - Protects project-specific configs from template syncs
 - Files marked with `merge=ours` keep sri-subscription version
 - Files marked with `merge=union` trigger conflicts for review
 
 `scripts/sync-from-template.ps1`:
+
 - Automated script to sync updates from sri-template
 - Backs up protected configs before merge
 - Restores sri-subscription configs after merge
 
 `docs/TEMPLATE_SYNC.md`:
+
 - Complete guide for syncing template updates
 - Lists all files that must never be overwritten
 - Provides troubleshooting steps
@@ -305,6 +318,7 @@ git merge sync-template-updates
 ## Port Mapping Summary
 
 ### Sri-Template (Original)
+
 - Frontend: `localhost:3000`
 - Identity Service: `localhost:5001`
 - API Gateway: `localhost:5002`
@@ -313,6 +327,7 @@ git merge sync-template-updates
 - PgAdmin: `localhost:5050`
 
 ### Sri-Subscription (New)
+
 - Frontend: `localhost:3001`
 - Identity Service: `localhost:5011`
 - API Gateway: `localhost:5012`
@@ -352,6 +367,7 @@ git merge sync-template-updates
 ## Support
 
 For issues or questions:
+
 1. Check `docs/TEMPLATE_SYNC.md` for sync-related issues
 2. Review terraform outputs for infrastructure details
 3. Verify GitHub workflows status
@@ -363,4 +379,3 @@ For issues or questions:
 - AWS Region: us-east-1
 - Shared Cognito Pool: us-east-1_WTfHVTfHT
 - Shared VPC: From sri-template terraform state
-
