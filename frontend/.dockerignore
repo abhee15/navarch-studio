@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (will be installed in container)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+dist/
+build/
+coverage/
+.vite/
+
+# Tests
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.js
+setupTests.ts
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+
+# Linting and formatting
+.eslintrc.*
+.eslintignore
+.prettierrc
+.prettierignore
+eslint.config.js
+
+# TypeScript
+tsconfig.*.json
+!tsconfig.json
+
+# Docker
+Dockerfile*
+!Dockerfile
+docker-compose*.yml
+.dockerignore
+

@@ -1,0 +1,17 @@
+# Git attributes for sri-subscription
+# Protects project-specific configs from being overwritten when syncing from sri-template
+
+# Files to NEVER merge from template (keep ours)
+backend/*.sln merge=ours
+docker-compose.yml merge=ours
+docker-compose.override.yml merge=ours
+terraform/setup/terraform.tfvars merge=ours
+terraform/deploy/environments/*.tfvars merge=ours
+.env* merge=ours
+README.md merge=ours
+
+# Files to REVIEW carefully during merge (mark as conflict)
+frontend/vite.config.ts merge=union
+backend/*/Properties/launchSettings.json merge=union
+backend/*/appsettings.json merge=union
+backend/*/appsettings.Development.json merge=union

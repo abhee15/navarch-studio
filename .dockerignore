@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Documentation
+*.md
+docs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies (will be installed in container)
+node_modules/
+bin/
+obj/
+
+# Tests
+**/*.Tests/
+tests/
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Terraform
+terraform/
+*.tf
+*.tfvars
+
+# Scripts
+scripts/
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+!Dockerfile

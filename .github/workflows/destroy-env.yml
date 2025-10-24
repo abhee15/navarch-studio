@@ -1,0 +1,274 @@
+name: Destroy Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to destroy (dev/staging/prod)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      confirm:
+        description: 'Type "DESTROY" to confirm deletion'
+        required: true
+        type: string
+
+# Prevent simultaneous deploy/destroy operations on the same environment
+# Shared concurrency group with deploy workflows to prevent conflicts
+concurrency:
+  group: terraform-${{ github.event.inputs.environment }}  # Same as deploy workflows
+  cancel-in-progress: false  # Queue instead of canceling
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  validate-confirmation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "DESTROY" ]; then
+            echo "❌ Confirmation failed. You must type 'DESTROY' to proceed."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+  destroy-infrastructure:
+    runs-on: ubuntu-latest
+    needs: validate-confirmation
+    environment: ${{ github.event.inputs.environment }}-destroy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Create backend config
+        run: |
+          cat > backend-config.tfvars <<EOF
+          bucket         = "${{ secrets.S3_BUCKET_NAME }}"
+          key            = "deploy/${{ github.event.inputs.environment }}/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.DYNAMODB_TABLE_NAME }}"
+          EOF
+        working-directory: ./terraform/deploy
+
+      - name: Create terraform.tfvars
+        run: |
+          cat > terraform.tfvars <<EOF
+          project_name                 = "${{ secrets.PROJECT_NAME }}"
+          aws_region                   = "${{ env.AWS_REGION }}"
+          cost_center                  = "${{ secrets.COST_CENTER }}"
+          s3_bucket_name               = "${{ secrets.S3_BUCKET_NAME }}"
+          dynamodb_table_name          = "${{ secrets.DYNAMODB_TABLE_NAME }}"
+          vpc_id                       = "${{ secrets.VPC_ID }}"
+          public_subnet_ids            = ${{ secrets.PUBLIC_SUBNET_IDS }}
+          app_runner_security_group_id = "${{ secrets.APP_RUNNER_SECURITY_GROUP_ID }}"
+          rds_security_group_id        = "${{ secrets.RDS_SECURITY_GROUP_ID }}"
+          ecr_repository_urls = {
+            identity_service = "${{ secrets.ECR_IDENTITY_SERVICE_URL }}"
+            api_gateway      = "${{ secrets.ECR_API_GATEWAY_URL }}"
+            data_service     = "${{ secrets.ECR_DATA_SERVICE_URL }}"
+            frontend         = "${{ secrets.ECR_FRONTEND_URL }}"
+          }
+          cognito_user_pool_id        = "${{ secrets.COGNITO_USER_POOL_ID }}"
+          cognito_user_pool_client_id = "${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}"
+          cognito_domain              = "${{ secrets.COGNITO_DOMAIN }}"
+          domain_name                 = "${{ secrets.DOMAIN_NAME }}"
+          EOF
+        working-directory: ./terraform/deploy
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend-config.tfvars
+        working-directory: ./terraform/deploy
+
+      - name: Validate Environment Exists
+        id: validate
+        run: |
+          echo "🔍 Checking if environment exists..."
+          if terraform state list | grep -q "module."; then
+            echo "✅ Environment found, proceeding with destroy"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ No resources found for environment '${{ github.event.inputs.environment }}'"
+            echo "State may be empty or environment already destroyed"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        working-directory: ./terraform/deploy
+
+      - name: Discover and Empty S3 Frontend Bucket
+        if: steps.validate.outputs.exists == 'true'
+        run: |
+          echo "🔍 Querying AWS for frontend S3 bucket..."
+          BUCKET_NAME=$(aws s3api list-buckets \
+            --query "Buckets[?contains(Name, '-${{ github.event.inputs.environment }}-frontend')].Name | [0]" \
+            --output text)
+          
+          if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" == "None" ]; then
+            echo "⚠️ No S3 bucket found for environment '${{ github.event.inputs.environment }}'"
+            echo "Bucket may have already been deleted or never created"
+          else
+            echo "📦 Found S3 bucket: $BUCKET_NAME"
+            echo "🗑️ Emptying bucket contents..."
+            aws s3 rm s3://$BUCKET_NAME --recursive || echo "Bucket is already empty"
+            echo "✅ S3 bucket emptied successfully"
+          fi
+
+      - name: Terraform Destroy
+        if: steps.validate.outputs.exists == 'true'
+        id: destroy
+        run: terraform destroy -var-file="environments/${{ github.event.inputs.environment }}.tfvars" -var-file="terraform.tfvars" -auto-approve
+        working-directory: ./terraform/deploy
+
+      - name: Release State Lock on Failure
+        if: failure() && steps.destroy.outcome == 'failure'
+        run: |
+          echo "🔓 Attempting to release state lock..."
+          
+          # Query DynamoDB for the lock
+          LOCK_INFO=$(aws dynamodb get-item \
+            --table-name ${{ secrets.DYNAMODB_TABLE_NAME }} \
+            --key '{"LockID":{"S":"${{ secrets.S3_BUCKET_NAME }}/deploy/${{ github.event.inputs.environment }}/terraform.tfstate-md5"}}' \
+            --query 'Item.LockID.S' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$LOCK_INFO" ] && [ "$LOCK_INFO" != "None" ]; then
+            echo "🔒 State lock detected, attempting force unlock..."
+            cd terraform/deploy
+            
+            # Get the actual lock ID from terraform
+            LOCK_ID=$(terraform force-unlock -force 2>&1 | grep -oP 'Lock ID: \K[a-f0-9-]+' | head -1 || echo "")
+            
+            if [ -n "$LOCK_ID" ]; then
+              echo "📋 Lock ID: $LOCK_ID"
+              terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Could not auto-unlock, manual intervention required"
+              echo "✅ State lock released"
+            else
+              echo "⚠️ Could not determine lock ID automatically"
+              echo "💡 To manually unlock, run:"
+              echo "   cd terraform/deploy"
+              echo "   terraform init -backend-config=backend-config.tfvars"
+              echo "   terraform force-unlock <LOCK_ID>"
+            fi
+          else
+            echo "ℹ️ No state lock found"
+          fi
+        working-directory: .
+
+      - name: Remove Terraform State (Optional)
+        run: |
+          echo "⚠️ Terraform state file remains in S3 for recovery purposes"
+          echo "State location: s3://${{ secrets.S3_BUCKET_NAME }}/deploy/${{ github.event.inputs.environment }}/terraform.tfstate"
+          echo "To permanently delete state, run: aws s3 rm s3://${{ secrets.S3_BUCKET_NAME }}/deploy/${{ github.event.inputs.environment }}/terraform.tfstate"
+
+  cleanup-ecr-images:
+    runs-on: ubuntu-latest
+    needs: destroy-infrastructure
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Delete ECR images for environment
+        run: |
+          ENV_TAG="${{ github.event.inputs.environment }}"
+          
+          # Function to delete images from a repository
+          delete_images() {
+            REPO_NAME=$1
+            echo "Deleting images tagged with '$ENV_TAG' from $REPO_NAME..."
+            IMAGE_IDS=$(aws ecr list-images --repository-name $REPO_NAME --query "imageIds[?imageTag=='$ENV_TAG']" --output json)
+            
+            if [ "$IMAGE_IDS" != "[]" ]; then
+              aws ecr batch-delete-image --repository-name $REPO_NAME --image-ids "$IMAGE_IDS" || echo "Failed to delete images from $REPO_NAME"
+            else
+              echo "No images found with tag '$ENV_TAG' in $REPO_NAME"
+            fi
+          }
+          
+          # Extract repository names from ECR URLs
+          IDENTITY_REPO=$(echo "${{ secrets.ECR_IDENTITY_SERVICE_URL }}" | cut -d'/' -f2)
+          GATEWAY_REPO=$(echo "${{ secrets.ECR_API_GATEWAY_URL }}" | cut -d'/' -f2)
+          DATA_REPO=$(echo "${{ secrets.ECR_DATA_SERVICE_URL }}" | cut -d'/' -f2)
+          FRONTEND_REPO=$(echo "${{ secrets.ECR_FRONTEND_URL }}" | cut -d'/' -f2)
+          
+          delete_images "$IDENTITY_REPO"
+          delete_images "$GATEWAY_REPO"
+          delete_images "$DATA_REPO"
+          delete_images "$FRONTEND_REPO"
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [destroy-infrastructure, cleanup-ecr-images]
+    if: always()
+
+    steps:
+      - name: Notify destruction status
+        run: |
+          if [ "${{ needs.destroy-infrastructure.result }}" == "success" ]; then
+            echo "✅ Environment '${{ github.event.inputs.environment }}' destroyed successfully!"
+            echo ""
+            echo "📦 Resources destroyed:"
+            echo "  - RDS PostgreSQL instance"
+            echo "  - App Runner services (Identity, API Gateway, Data Service)"
+            echo "  - S3 frontend bucket (emptied and deleted)"
+            echo "  - CloudFront distribution"
+            echo "  - CloudWatch Log Groups"
+            echo "  - Secrets Manager secrets"
+            echo "  - IAM roles and policies"
+            echo ""
+            echo "⚠️ Resources NOT destroyed (shared across environments):"
+            echo "  - VPC and networking (from Phase 4 setup)"
+            echo "  - ECR repositories (from Phase 4 setup)"
+            echo "  - Cognito User Pool (from Phase 4 setup)"
+            echo "  - S3 Terraform state bucket"
+            echo "  - DynamoDB state lock table"
+            echo ""
+            echo "💰 Estimated monthly cost savings:"
+            echo "  - Dev: ~\$30-50/month"
+            echo "  - Staging: ~\$50-80/month"
+            echo "  - Prod: ~\$100+/month"
+          elif [ "${{ needs.destroy-infrastructure.result }}" == "skipped" ]; then
+            echo "ℹ️ Environment '${{ github.event.inputs.environment }}' was not found or already destroyed"
+            echo "No resources to clean up."
+          else
+            echo "❌ Environment destruction failed!"
+            echo ""
+            echo "🔍 Troubleshooting steps:"
+            echo "1. Check the 'destroy-infrastructure' job logs for errors"
+            echo "2. Verify AWS credentials have sufficient permissions"
+            echo "3. Check if state lock was released (see 'Release State Lock' step)"
+            echo "4. Manually verify resources in AWS Console"
+            echo ""
+            echo "💡 Manual cleanup (if needed):"
+            echo "  - App Runner: aws apprunner list-services --region ${{ env.AWS_REGION }}"
+            echo "  - RDS: aws rds describe-db-instances --region ${{ env.AWS_REGION }}"
+            echo "  - S3: aws s3 ls | grep ${{ github.event.inputs.environment }}"
+            echo "  - State lock: Check DynamoDB table for locks"
+            exit 1
+          fi
+
+
+
+
+
+

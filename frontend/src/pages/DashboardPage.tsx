@@ -1,0 +1,134 @@
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { observer } from "mobx-react-lite";
+import { Package, LogOut, Loader2, ShoppingBag } from "lucide-react";
+import { useStore } from "../stores";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+
+export const DashboardPage: React.FC = observer(() => {
+  const { authStore, dataStore } = useStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    dataStore.fetchProducts();
+  }, [dataStore]);
+
+  const handleLogout = async () => {
+    await authStore.logout();
+    navigate("/login");
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header/Navigation */}
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="rounded-lg bg-primary p-2">
+                <ShoppingBag className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Dashboard</h1>
+                <p className="text-sm text-muted-foreground">
+                  Welcome back, {authStore.user?.name}
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleLogout} disabled={authStore.loading}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2">Products</h2>
+          <p className="text-muted-foreground">Browse our collection of products</p>
+        </div>
+
+        {dataStore.loading ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading products...</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : dataStore.error ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center">
+                <div className="rounded-full bg-destructive/10 p-3 w-fit mx-auto mb-4">
+                  <Package className="h-8 w-8 text-destructive" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Failed to load products</h3>
+                <p className="text-muted-foreground mb-4">{dataStore.error}</p>
+                <Button onClick={() => dataStore.fetchProducts()} variant="outline">
+                  Try again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : dataStore.products.length === 0 ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center">
+                <div className="rounded-full bg-muted p-3 w-fit mx-auto mb-4">
+                  <Package className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No products yet</h3>
+                <p className="text-muted-foreground">
+                  Products will appear here once they are added
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dataStore.products.map((product) => (
+              <Card key={product.id} className="hover:shadow-lg transition-shadow duration-200">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="rounded-lg bg-primary/10 p-2 mb-2">
+                      <Package className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-primary">${product.price.toFixed(2)}</p>
+                    </div>
+                  </div>
+                  <CardTitle className="line-clamp-1">{product.name}</CardTitle>
+                  <CardDescription className="line-clamp-2">{product.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" variant="outline">
+                    View Details
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t bg-white/80 backdrop-blur-sm mt-12">
+        <div className="container mx-auto px-4 py-6">
+          <p className="text-center text-sm text-muted-foreground">
+            © 2024 Your Company. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+});
+
+
+
+
+

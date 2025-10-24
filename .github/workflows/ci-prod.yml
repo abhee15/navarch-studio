@@ -1,0 +1,328 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to deploy (e.g., v1.0.0)'
+        required: true
+        type: string
+
+# Prevent multiple deployments from running simultaneously
+concurrency:
+  group: terraform-prod  # Shared with destroy workflow to prevent conflicts
+  cancel-in-progress: false  # Queue workflows instead of canceling
+
+env:
+  AWS_REGION: us-east-1
+  ENVIRONMENT: prod
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      identity-image: ${{ steps.build-identity.outputs.image }}
+      gateway-image: ${{ steps.build-gateway.outputs.image }}
+      data-image: ${{ steps.build-data.outputs.image }}
+      frontend-image: ${{ steps.build-frontend.outputs.image }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Identity Service
+        id: build-identity
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.version }}"
+          docker build -f backend/IdentityService/Dockerfile -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:prod ./backend
+          docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:prod
+          echo "image=${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push API Gateway
+        id: build-gateway
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.version }}"
+          docker build -f backend/ApiGateway/Dockerfile -t ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_API_GATEWAY_URL }}:prod ./backend
+          docker push ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_API_GATEWAY_URL }}:prod
+          echo "image=${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Data Service
+        id: build-data
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.version }}"
+          docker build -f backend/DataService/Dockerfile -t ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_DATA_SERVICE_URL }}:prod ./backend
+          docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:prod
+          echo "image=${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Frontend
+        id: build-frontend
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.version }}"
+          docker build -t ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_FRONTEND_URL }}:prod ./frontend
+          docker push ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_FRONTEND_URL }}:prod
+          echo "image=${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: 
+      name: production
+      url: https://${{ steps.tf-outputs.outputs.cloudfront_domain }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Create backend config
+        run: |
+          cat > backend-config.tfvars <<EOF
+          bucket         = "${{ secrets.S3_BUCKET_NAME }}"
+          key            = "deploy/prod/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "${{ secrets.DYNAMODB_TABLE_NAME }}"
+          EOF
+        working-directory: ./terraform/deploy
+
+      - name: Create terraform.tfvars
+        run: |
+          cat > terraform.tfvars <<EOF
+          project_name                 = "${{ secrets.PROJECT_NAME }}"
+          aws_region                   = "${{ env.AWS_REGION }}"
+          cost_center                  = "${{ secrets.COST_CENTER }}"
+          s3_bucket_name               = "${{ secrets.S3_BUCKET_NAME }}"
+          dynamodb_table_name          = "${{ secrets.DYNAMODB_TABLE_NAME }}"
+          vpc_id                       = "${{ secrets.VPC_ID }}"
+          public_subnet_ids            = ${{ secrets.PUBLIC_SUBNET_IDS }}
+          app_runner_security_group_id = "${{ secrets.APP_RUNNER_SECURITY_GROUP_ID }}"
+          rds_security_group_id        = "${{ secrets.RDS_SECURITY_GROUP_ID }}"
+          ecr_repository_urls = {
+            identity_service = "${{ secrets.ECR_IDENTITY_SERVICE_URL }}"
+            api_gateway      = "${{ secrets.ECR_API_GATEWAY_URL }}"
+            data_service     = "${{ secrets.ECR_DATA_SERVICE_URL }}"
+            frontend         = "${{ secrets.ECR_FRONTEND_URL }}"
+          }
+          cognito_user_pool_id        = "${{ secrets.COGNITO_USER_POOL_ID }}"
+          cognito_user_pool_client_id = "${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}"
+          cognito_domain              = "${{ secrets.COGNITO_DOMAIN }}"
+          domain_name                 = "${{ secrets.DOMAIN_NAME }}"
+          EOF
+        working-directory: ./terraform/deploy
+
+      - name: Check if backend resources exist
+        id: check-backend
+        run: |
+          # Check if S3 bucket exists
+          if ! aws s3 ls s3://${{ secrets.S3_BUCKET_NAME }} 2>/dev/null; then
+            echo "❌ ERROR: S3 bucket '${{ secrets.S3_BUCKET_NAME }}' does not exist!"
+            echo "Please run Phase 4 (AWS Infrastructure Setup) first:"
+            echo "  cd terraform/setup"
+            echo "  terraform init"
+            echo "  terraform apply"
+            exit 1
+          fi
+          
+          # Check if DynamoDB table exists
+          if ! aws dynamodb describe-table --table-name ${{ secrets.DYNAMODB_TABLE_NAME }} 2>/dev/null; then
+            echo "❌ ERROR: DynamoDB table '${{ secrets.DYNAMODB_TABLE_NAME }}' does not exist!"
+            echo "Please run Phase 4 (AWS Infrastructure Setup) first:"
+            echo "  cd terraform/setup"
+            echo "  terraform init"
+            echo "  terraform apply"
+            exit 1
+          fi
+          
+          echo "✅ Backend resources verified"
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend-config.tfvars
+        working-directory: ./terraform/deploy
+
+      - name: Terraform Plan
+        run: terraform plan -var-file="environments/prod.tfvars" -var-file="terraform.tfvars" -out=tfplan
+        working-directory: ./terraform/deploy
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./terraform/deploy
+
+      - name: Get outputs
+        id: tf-outputs
+        run: |
+          echo "rds_endpoint=$(terraform output -raw rds_endpoint)" >> $GITHUB_OUTPUT
+          echo "identity_service_url=$(terraform output -raw identity_service_url)" >> $GITHUB_OUTPUT
+          echo "api_gateway_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
+          echo "data_service_url=$(terraform output -raw data_service_url)" >> $GITHUB_OUTPUT
+          echo "cloudfront_domain=$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_OUTPUT
+          echo "s3_bucket=$(terraform output -raw frontend_s3_bucket_name)" >> $GITHUB_OUTPUT
+        working-directory: ./terraform/deploy
+
+    outputs:
+      rds_endpoint: ${{ steps.tf-outputs.outputs.rds_endpoint }}
+      identity_service_url: ${{ steps.tf-outputs.outputs.identity_service_url }}
+      api_gateway_url: ${{ steps.tf-outputs.outputs.api_gateway_url }}
+      data_service_url: ${{ steps.tf-outputs.outputs.data_service_url }}
+      cloudfront_domain: ${{ steps.tf-outputs.outputs.cloudfront_domain }}
+      s3_bucket: ${{ steps.tf-outputs.outputs.s3_bucket }}
+
+  run-migrations:
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run database migrations
+        run: |
+          docker run --rm \
+            -v $PWD/database/migrations:/flyway/sql \
+            flyway/flyway:10-alpine \
+            -url=jdbc:postgresql://${{ needs.deploy-infrastructure.outputs.rds_endpoint }}:5432/${{ secrets.RDS_DATABASE }} \
+            -user=${{ secrets.RDS_USERNAME }} \
+            -password=${{ secrets.RDS_PASSWORD }} \
+            -locations=filesystem:/flyway/sql \
+            migrate
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-infrastructure]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: https://${{ needs.deploy-infrastructure.outputs.api_gateway_url }}
+          VITE_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
+          VITE_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./frontend/dist/ s3://${{ needs.deploy-infrastructure.outputs.s3_bucket }} --delete
+
+      - name: Get CloudFront Distribution ID
+        id: get-cf-id
+        run: |
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, '${{ needs.deploy-infrastructure.outputs.cloudfront_domain }}')]].Id | [0]" --output text)
+          echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.get-cf-id.outputs.distribution_id }} \
+            --paths "/*"
+
+  smoke-tests:
+    runs-on: ubuntu-latest
+    needs: [deploy-infrastructure, run-migrations, deploy-frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test Identity Service health
+        run: |
+          echo "Testing Identity Service at https://${{ needs.deploy-infrastructure.outputs.identity_service_url }}/health"
+          curl -f https://${{ needs.deploy-infrastructure.outputs.identity_service_url }}/health || exit 1
+
+      - name: Test API Gateway health
+        run: |
+          echo "Testing API Gateway at https://${{ needs.deploy-infrastructure.outputs.api_gateway_url }}/health"
+          curl -f https://${{ needs.deploy-infrastructure.outputs.api_gateway_url }}/health || exit 1
+
+      - name: Test Data Service health
+        run: |
+          echo "Testing Data Service at https://${{ needs.deploy-infrastructure.outputs.data_service_url }}/health"
+          curl -f https://${{ needs.deploy-infrastructure.outputs.data_service_url }}/health || exit 1
+
+      - name: Test Frontend
+        run: |
+          echo "Testing Frontend at https://${{ needs.deploy-infrastructure.outputs.cloudfront_domain }}"
+          curl -f https://${{ needs.deploy-infrastructure.outputs.cloudfront_domain }} || exit 1
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [smoke-tests]
+    if: always()
+
+    steps:
+      - name: Notify deployment status
+        run: |
+          if [ "${{ needs.smoke-tests.result }}" == "success" ]; then
+            echo "✅ Production deployment successful!"
+            echo "Version: ${{ github.event.inputs.version }}"
+            echo "Frontend: https://${{ needs.deploy-infrastructure.outputs.cloudfront_domain }}"
+            echo "API Gateway: https://${{ needs.deploy-infrastructure.outputs.api_gateway_url }}"
+          else
+            echo "❌ Production deployment failed!"
+            exit 1
+          fi
+
+
+
+
+
+

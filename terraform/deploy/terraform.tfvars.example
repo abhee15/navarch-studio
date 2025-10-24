@@ -1,0 +1,25 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and update with your values
+# DO NOT commit terraform.tfvars (it's in .gitignore)
+
+project_name = "your-project-name"
+aws_region   = "us-east-1"
+cost_center  = "engineering"
+
+# Values from Phase 4 terraform/setup outputs
+vpc_id                        = "vpc-xxxxx"
+public_subnet_ids             = ["subnet-xxxxx", "subnet-yyyyy"]
+app_runner_security_group_id  = "sg-xxxxx"
+rds_security_group_id         = "sg-yyyyy"
+
+ecr_repository_urls = {
+  identity_service = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/project-identity-service"
+  api_gateway      = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/project-api-gateway"
+  data_service     = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/project-data-service"
+  frontend         = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/project-frontend"
+}
+
+cognito_user_pool_id        = "us-east-1_XXXXX"
+cognito_user_pool_client_id = "xxxxxxxxxxxxx"
+cognito_domain              = "your-project-domain"
+

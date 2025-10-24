@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+yarn.lock
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rchive/
+[Bb]uild[Ll]og.*
+*.DotSettings.user
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform/deploy/environments/dev.tfvars
+!terraform/deploy/environments/staging.tfvars
+!terraform/deploy/environments/prod.tfvars
+!dev.tfvars.example
+!staging.tfvars.example
+!prod.tfvars.example
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+docker-compose.override.yml
+
+# AWS
+.aws/
+
+# Build outputs
+dist/
+build/
+out/
+coverage/
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.cert
+
+# Template config (should be customized per project)
+template-config.yml

@@ -1,0 +1,9 @@
+# Backend Configuration Example
+# Copy this file to backend-config.tfvars and update with your values
+# DO NOT commit backend-config.tfvars (it's in .gitignore)
+
+# Values from Phase 4 terraform/setup outputs
+bucket         = "your-project-terraform-state-ACCOUNT_ID"
+region         = "us-east-1"
+dynamodb_table = "your-project-terraform-locks"
+

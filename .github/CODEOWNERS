@@ -1,0 +1,138 @@
+# Code Owners
+#
+# This file defines individuals or teams responsible for code in this repository.
+# Code owners are automatically requested for review when someone opens a pull request
+# that modifies code they own.
+#
+# Order matters: the last matching pattern has the most precedence.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ==============================================================================
+# Global Owners
+# ==============================================================================
+# These owners will be the default owners for everything in the repo
+# unless a later match takes precedence.
+
+# * @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Frontend
+# ==============================================================================
+# React, TypeScript, Vite, MobX, Tailwind
+
+frontend/ @{{GITHUB_OWNER}}
+frontend/src/components/ @{{GITHUB_OWNER}}
+frontend/src/stores/ @{{GITHUB_OWNER}}
+frontend/src/pages/ @{{GITHUB_OWNER}}
+frontend/src/services/ @{{GITHUB_OWNER}}
+frontend/package.json @{{GITHUB_OWNER}}
+frontend/package-lock.json @{{GITHUB_OWNER}}
+frontend/vite.config.ts @{{GITHUB_OWNER}}
+frontend/tsconfig.json @{{GITHUB_OWNER}}
+frontend/.eslintrc.cjs @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Backend Services
+# ==============================================================================
+# .NET 8, C#, Entity Framework Core
+
+# All backend code
+backend/ @{{GITHUB_OWNER}}
+
+# Shared library (models, utilities)
+backend/Shared/ @{{GITHUB_OWNER}}
+
+# Identity Service (authentication, Cognito integration)
+backend/IdentityService/ @{{GITHUB_OWNER}}
+backend/IdentityService.Tests/ @{{GITHUB_OWNER}}
+
+# API Gateway (routing, middleware)
+backend/ApiGateway/ @{{GITHUB_OWNER}}
+
+# Data Service (business logic, data access)
+backend/DataService/ @{{GITHUB_OWNER}}
+backend/DataService.Tests/ @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Infrastructure as Code
+# ==============================================================================
+# Terraform, AWS resources
+
+terraform/ @{{GITHUB_OWNER}}
+terraform/setup/ @{{GITHUB_OWNER}}
+terraform/deploy/ @{{GITHUB_OWNER}}
+terraform/iam-policy.tf @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# CI/CD Workflows
+# ==============================================================================
+# GitHub Actions, deployment automation
+
+.github/ @{{GITHUB_OWNER}}
+.github/workflows/ @{{GITHUB_OWNER}}
+.github/workflows/pr-checks.yml @{{GITHUB_OWNER}}
+.github/workflows/ci-dev.yml @{{GITHUB_OWNER}}
+.github/workflows/ci-staging.yml @{{GITHUB_OWNER}}
+.github/workflows/ci-prod.yml @{{GITHUB_OWNER}}
+.github/workflows/destroy-env.yml @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Database
+# ==============================================================================
+# Migrations, schemas, seed data
+
+database/ @{{GITHUB_OWNER}}
+database/migrations/ @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Docker & Compose
+# ==============================================================================
+# Container definitions, local development
+
+Dockerfile @{{GITHUB_OWNER}}
+docker-compose.yml @{{GITHUB_OWNER}}
+.dockerignore @{{GITHUB_OWNER}}
+backend/*/Dockerfile @{{GITHUB_OWNER}}
+frontend/Dockerfile @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Documentation
+# ==============================================================================
+# Markdown files, guides, plans
+
+*.md @{{GITHUB_OWNER}}
+docs/ @{{GITHUB_OWNER}}
+.plan/ @{{GITHUB_OWNER}}
+README.md @{{GITHUB_OWNER}}
+ARCHITECTURE.md @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Configuration Files
+# ==============================================================================
+# YAML, JSON, environment configs
+
+*.yml @{{GITHUB_OWNER}}
+*.yaml @{{GITHUB_OWNER}}
+*.json @{{GITHUB_OWNER}}
+.env.example @{{GITHUB_OWNER}}
+.gitignore @{{GITHUB_OWNER}}
+.cursorignore @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Scripts
+# ==============================================================================
+# PowerShell, Bash automation scripts
+
+scripts/ @{{GITHUB_OWNER}}
+*.ps1 @{{GITHUB_OWNER}}
+*.sh @{{GITHUB_OWNER}}
+
+# ==============================================================================
+# Security & Compliance
+# ==============================================================================
+# Security policies, dependency management
+
+.github/dependabot.yml @{{GITHUB_OWNER}}
+.github/SECURITY.md @{{GITHUB_OWNER}}
+LICENSE @{{GITHUB_OWNER}}
+

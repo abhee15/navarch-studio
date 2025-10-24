@@ -1,0 +1,249 @@
+# Cursor Rules for Full Stack Template
+
+## Project Context
+
+This is a full-stack template project with:
+- **Frontend**: React 18 + TypeScript + Vite + MobX + TailwindCSS
+- **Backend**: .NET 8 microservices (Identity, API Gateway, Data Service)
+- **Database**: PostgreSQL with Flyway migrations
+- **Infrastructure**: AWS (App Runner, RDS, S3, CloudFront, Cognito) via Terraform
+- **CI/CD**: GitHub Actions
+
+## Code Style
+
+### TypeScript/React
+- Use functional components with hooks
+- Use TypeScript strict mode
+- Use MobX for state management
+- Use Axios for API calls
+- Follow rules in `.cursor/rules/react-typescript.md`
+- Use Tailwind classes (no inline styles)
+- Use named exports (no default exports)
+
+### .NET
+- Use .NET 8 features
+- Use async/await for all I/O
+- Follow controller → service → repository pattern
+- Use dependency injection
+- Follow rules in `.cursor/rules/dotnet.md`
+- Use records for DTOs
+- Always pass CancellationToken
+
+### Terraform
+- Use Terraform 1.5+
+- Use modules for reusability
+- Follow rules in `.cursor/rules/terraform.md`
+- Always use `terraform fmt`
+- Store secrets in AWS Secrets Manager
+
+## File Organization
+
+### React Components
+- One component per file
+- Place in `frontend/src/components/`
+- Name files in PascalCase
+- Include `.test.tsx` file for tests
+
+### .NET Services
+- Controllers in `Controllers/`
+- Business logic in `Services/`
+- Data access in `Repositories/`
+- Shared code in `Shared/` project
+
+### Terraform
+- Setup infrastructure in `terraform/setup/`
+- Deployment infrastructure in `terraform/deploy/`
+- Use modules in `terraform/deploy/modules/`
+- Environment configs in `terraform/deploy/environments/`
+
+## Testing
+
+### Frontend
+- Use Jest + React Testing Library
+- Test files: `*.test.tsx`
+- Mock API calls
+- Test user interactions
+
+### Backend
+- Use xUnit
+- Test files: `*Tests.cs` in separate projects
+- Use Moq for mocking
+- Use FluentAssertions
+
+## Docker
+
+- Multi-stage builds for production
+- Use `.dockerignore` to reduce context
+- Health checks in docker-compose
+- Mount volumes for local development hot reload
+
+## Environment Variables
+
+### Frontend
+- Prefix with `VITE_`
+- Define in `.env.example`
+- Validate at runtime
+
+### Backend
+- Define in `appsettings.json`
+- Override with environment variables
+- Use AWS Secrets Manager in production
+
+## Git Workflow
+
+- Branch: `main` (production-ready)
+- Branch: `develop` (development)
+- Feature branches: `feature/feature-name`
+- Commit message format: `type: description`
+  - Types: feat, fix, docs, style, refactor, test, chore
+
+## When Generating Code
+
+### Always Include
+- TypeScript types
+- Error handling
+- Logging
+- Tests
+- Documentation comments
+- Input validation
+
+### Always Use
+- async/await (no blocking calls)
+- Dependency injection
+- Environment variables (no hardcoded values)
+- Proper HTTP status codes
+- Cancellation tokens in .NET
+
+### Never Use
+- `any` type in TypeScript
+- Hardcoded secrets
+- Blocking calls (.Result, .Wait())
+- SQL injection-prone code
+- Unhandled exceptions
+
+## API Design
+
+- Use RESTful conventions
+- Version APIs: `/api/v1/`
+- Use proper HTTP methods (GET, POST, PUT, DELETE)
+- Return consistent error responses
+- Include correlation IDs in headers
+
+## Security
+
+- Never commit secrets
+- Use AWS Secrets Manager for production
+- Use environment variables for configuration
+- Validate all user input
+- Use parameterized queries
+- Hash passwords (BCrypt)
+- Implement proper CORS
+
+## Performance
+
+- Use caching where appropriate
+- Use database indexes
+- Use connection pooling
+- Lazy load routes in React
+- Optimize Docker images (multi-stage)
+- Use CDN for static assets (CloudFront)
+
+## Logging
+
+### Frontend
+- Log errors to console (development)
+- Send errors to backend (production)
+
+### Backend
+- Use structured logging
+- Include correlation IDs
+- Log levels: Debug, Info, Warning, Error
+- Don't log sensitive data
+
+## Documentation
+
+- Update README when adding features
+- Document API endpoints with Swagger
+- Comment complex logic
+- Keep ARCHITECTURE.md updated
+
+## Special Placeholders
+
+These placeholders are replaced by the clone script:
+- `{{PROJECT_NAME}}` - Project name
+- `{{AWS_REGION}}` - AWS region
+- `{{AWS_ACCOUNT_ID}}` - AWS account ID
+- `{{GITHUB_OWNER}}` - GitHub username/org
+- `{{DOMAIN_NAME}}` - Custom domain (optional)
+
+## When Asked to Implement
+
+1. Check which phase we're in (`.plan/phaseX-*.md`)
+2. Follow the phase plan document
+3. Create tests alongside code
+4. Update documentation if needed
+5. Ensure code follows style rules
+
+## Pre-Commit Checks
+
+**ALWAYS** run these checks before committing code:
+
+```bash
+# Backend checks (from backend/ directory)
+cd backend && dotnet format --verify-no-changes  # Check formatting
+cd backend && dotnet format                      # Fix formatting (if needed)
+cd backend && dotnet build                       # Verify build succeeds
+
+# Frontend checks (from frontend/ directory)
+cd frontend && npm run lint                      # Check linting
+cd frontend && npm run type-check                # Check TypeScript types
+cd frontend && npm run format-check              # Check Prettier formatting
+cd frontend && npm run build                     # Verify build succeeds
+
+# Terraform checks (from terraform/ directory)
+cd terraform && terraform fmt -recursive         # Format code
+```
+
+**These checks prevent CI/CD failures and maintain code quality.**
+
+## Common Commands
+
+```bash
+# Frontend
+npm run dev          # Start dev server
+npm run test         # Run tests
+npm run lint         # Lint code
+npm run build        # Build for production
+
+# Backend
+dotnet run           # Run service
+dotnet test          # Run tests
+dotnet format        # Format code
+
+# Docker
+docker-compose up    # Start all services
+docker-compose down  # Stop all services
+
+# Terraform
+terraform fmt        # Format code
+terraform plan       # Preview changes
+terraform apply      # Apply changes
+```
+
+## Priority Order
+
+1. Security (never compromise)
+2. Correctness (working code)
+3. Tests (prove it works)
+4. Documentation (explain it)
+5. Performance (optimize if needed)
+
+## Questions to Ask
+
+Before implementing, consider:
+- Is this secure?
+- Is this testable?
+- Is this maintainable?
+- Does this follow the established patterns?
+- Will this work in all environments (dev/staging/prod)?
+
