@@ -13,7 +13,7 @@ resource "aws_cognito_user_pool_client" "sri_subscription" {
   ]
 
   prevent_user_existence_errors = "ENABLED"
-  
+
   # Token validity
   refresh_token_validity = 30
   access_token_validity  = 60

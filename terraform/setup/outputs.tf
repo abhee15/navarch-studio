@@ -18,39 +18,40 @@ output "ecr_repository_urls" {
   }
 }
 
+# Shared resources from sri-template (reference only, not created)
 output "vpc_id" {
-  description = "VPC ID"
-  value       = aws_vpc.main.id
+  description = "VPC ID (shared with sri-template)"
+  value       = data.aws_vpc.existing.id
 }
 
 output "public_subnet_ids" {
-  description = "Public subnet IDs"
-  value       = aws_subnet.public[*].id
+  description = "Public subnet IDs (shared with sri-template)"
+  value       = data.aws_subnets.existing_public.ids
 }
 
 output "app_runner_security_group_id" {
-  description = "App Runner security group ID"
-  value       = aws_security_group.app_runner.id
+  description = "App Runner security group ID (shared with sri-template)"
+  value       = data.aws_security_group.existing_app_runner.id
 }
 
 output "rds_security_group_id" {
-  description = "RDS security group ID"
-  value       = aws_security_group.rds.id
+  description = "RDS security group ID (shared with sri-template)"
+  value       = data.aws_security_group.existing_rds.id
 }
 
 output "cognito_user_pool_id" {
-  description = "Cognito User Pool ID"
-  value       = aws_cognito_user_pool.main.id
+  description = "Cognito User Pool ID (shared with sri-template)"
+  value       = tolist(data.aws_cognito_user_pools.existing.ids)[0]
 }
 
 output "cognito_user_pool_client_id" {
-  description = "Cognito User Pool Client ID"
-  value       = aws_cognito_user_pool_client.main.id
+  description = "Cognito User Pool Client ID (sri-subscription specific)"
+  value       = aws_cognito_user_pool_client.sri_subscription.id
 }
 
 output "cognito_domain" {
-  description = "Cognito domain"
-  value       = aws_cognito_user_pool_domain.main.domain
+  description = "Cognito domain (shared with sri-template)"
+  value       = "sri-test-project-1-1zvox1e6"
 }
 
 
