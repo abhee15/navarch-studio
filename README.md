@@ -1,8 +1,8 @@
-# sri-subscription - Full Stack Template
+# NavArch Studio
 
-A production-ready template for building modern full-stack applications with React, .NET microservices, PostgreSQL, and AWS infrastructure.
+Architecture management platform built with React, .NET microservices, PostgreSQL, and AWS infrastructure.
 
-[![CI/CD](https://github.com/abhee15/sri-subscription/actions/workflows/ci-dev.yml/badge.svg)](https://github.com/abhee15/sri-subscription/actions)
+[![CI/CD](https://github.com/{username}/navarch-studio/actions/workflows/ci-dev.yml/badge.svg)](https://github.com/{username}/navarch-studio/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## ✨ Features
@@ -36,8 +36,8 @@ A production-ready template for building modern full-stack applications with Rea
 
 ```bash
 # Clone the repository
-git clone https://github.com/abhee15/sri-subscription.git
-cd sri-subscription
+git clone https://github.com/{username}/navarch-studio.git
+cd navarch-studio
 
 # Start all services with Docker Compose
 docker-compose up
@@ -309,8 +309,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation**: Browse the [docs/](docs/) directory
-- **Issues**: [GitHub Issues](https://github.com/abhee15/sri-subscription/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/abhee15/sri-subscription/discussions)
+- **Issues**: [GitHub Issues](https://github.com/{username}/navarch-studio/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/{username}/navarch-studio/discussions)
 
 ## 🗺️ Roadmap
 
@@ -326,8 +326,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Made with ❤️ for developers who want to ship fast without compromising quality.**
-
-
-
-
-

@@ -1,6 +1,6 @@
 # System Architecture
 
-This document describes the high-level architecture, design decisions, and technical details of the sri-subscription full-stack template.
+This document describes the high-level architecture, design decisions, and technical details of NavArch Studio.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ This document describes the high-level architecture, design decisions, and techn
 
 ## Overview
 
-sri-subscription is a modern, production-ready full-stack application template built with:
+NavArch Studio is a modern architecture management platform built with:
 
 - **Frontend**: Single Page Application (SPA) using React
 - **Backend**: Microservices architecture using .NET 8
@@ -107,12 +107,14 @@ User Browser
 ### 1. Identity Service (Port 5001)
 
 **Responsibilities:**
+
 - User registration and authentication
 - User profile management
 - Integration with AWS Cognito
 - JWT token validation
 
 **Endpoints:**
+
 - `POST /api/v1/auth/signup` - User registration
 - `POST /api/v1/auth/login` - User login
 - `POST /api/v1/auth/logout` - User logout
@@ -122,6 +124,7 @@ User Browser
 - `DELETE /api/v1/users/{id}` - Delete user (soft delete)
 
 **Database Schema:**
+
 ```sql
 identity.users
   - id (uuid)
@@ -135,6 +138,7 @@ identity.users
 ### 2. API Gateway (Port 5002)
 
 **Responsibilities:**
+
 - Single entry point for all API requests
 - Request routing to appropriate microservices
 - JWT authentication middleware
@@ -143,6 +147,7 @@ identity.users
 - Error handling and standardization
 
 **Routing:**
+
 ```
 /api/v1/auth/*     → Identity Service
 /api/v1/users/*    → Identity Service
@@ -150,6 +155,7 @@ identity.users
 ```
 
 **Features:**
+
 - Health check endpoint: `GET /health`
 - Swagger/OpenAPI documentation: `/swagger`
 - Correlation ID injection for request tracing
@@ -157,11 +163,13 @@ identity.users
 ### 3. Data Service (Port 5003)
 
 **Responsibilities:**
+
 - Business logic and data management
 - CRUD operations for domain entities
 - Data validation and business rules
 
 **Endpoints:**
+
 - `GET /api/v1/products` - List products
 - `GET /api/v1/products/{id}` - Get product by ID
 - `POST /api/v1/products` - Create product
@@ -169,6 +177,7 @@ identity.users
 - `DELETE /api/v1/products/{id}` - Delete product (soft delete)
 
 **Database Schema:**
+
 ```sql
 data.products
   - id (uuid)
@@ -185,6 +194,7 @@ data.products
 **Purpose:** Code reuse across microservices
 
 **Contents:**
+
 - **Models**: Common data models (User, Product)
 - **DTOs**: Data Transfer Objects for API contracts
 - **Middleware**: JWT authentication middleware
@@ -251,6 +261,7 @@ data.products
 #### Storage
 
 - **Amazon RDS (PostgreSQL)**: Managed relational database
+
   - Multi-AZ deployment for high availability (production)
   - Automated backups and point-in-time recovery
   - Encryption at rest and in transit
@@ -314,6 +325,7 @@ data.products
 **Purpose:** One-time infrastructure setup
 
 **Resources:**
+
 - VPC and networking
 - Security groups
 - ECR repositories
@@ -328,11 +340,13 @@ data.products
 **Purpose:** Environment-specific application deployment
 
 **Modules:**
+
 - **RDS Module**: PostgreSQL database
 - **App Runner Module**: Microservices deployment
 - **S3/CloudFront Module**: Frontend hosting and CDN
 
 **Environments:**
+
 - `dev.tfvars` - Development environment
 - `staging.tfvars` - Staging environment
 - `prod.tfvars` - Production environment
@@ -342,11 +356,13 @@ data.products
 ### Authentication & Authorization
 
 1. **AWS Cognito**: Centralized user management
+
    - User registration and verification
    - Password policies and MFA support
    - JWT token generation
 
 2. **JWT Tokens**: Stateless authentication
+
    - Signed by Cognito
    - Validated by microservices
    - Short expiration (1 hour)
@@ -360,10 +376,12 @@ data.products
 ### Network Security
 
 1. **VPC Security Groups**:
+
    - App Runner: Outbound only (managed by AWS)
    - RDS: Inbound from App Runner only
 
 2. **HTTPS**: Enforced for all external traffic
+
    - CloudFront to browser
    - App Runner endpoints
 
@@ -374,11 +392,13 @@ data.products
 ### Data Security
 
 1. **Encryption at Rest**:
+
    - RDS storage encryption
    - S3 bucket encryption
    - EBS volumes encrypted
 
 2. **Encryption in Transit**:
+
    - TLS 1.2+ for all connections
    - PostgreSQL SSL connections
 
@@ -429,12 +449,14 @@ data.products
 ### Why Microservices?
 
 **Pros:**
+
 - ✅ Independent deployment and scaling
 - ✅ Technology flexibility per service
 - ✅ Team autonomy (separate services)
 - ✅ Fault isolation
 
 **Cons:**
+
 - ❌ Increased complexity
 - ❌ Network latency between services
 - ❌ Distributed transactions complexity
@@ -446,6 +468,7 @@ data.products
 **Alternatives:** ECS, EKS, EC2, Lambda
 
 **Decision:** App Runner for simplicity and cost
+
 - ✅ Fully managed (no cluster management)
 - ✅ Auto-scaling included
 - ✅ Built-in load balancing
@@ -453,6 +476,7 @@ data.products
 - ✅ Easy container deployment
 
 **Trade-offs:**
+
 - ❌ Less control than ECS/EKS
 - ❌ Limited configuration options
 
@@ -461,6 +485,7 @@ data.products
 **Alternatives:** MySQL, DynamoDB, MongoDB
 
 **Decision:** PostgreSQL for reliability and features
+
 - ✅ ACID compliance
 - ✅ Rich data types (JSON, arrays, UUID)
 - ✅ Mature ecosystem
@@ -472,12 +497,14 @@ data.products
 **Alternative:** Shared database
 
 **Decision:** Schema-per-service for isolation
+
 - ✅ Service autonomy
 - ✅ Independent schema evolution
 - ✅ Clear boundaries
 - ✅ Easier to migrate to separate databases
 
 **Trade-offs:**
+
 - ❌ No foreign keys across schemas
 - ❌ Distributed queries more complex
 
@@ -486,6 +513,7 @@ data.products
 **Alternatives:** Auth0, Firebase, Custom auth
 
 **Decision:** Cognito for AWS integration
+
 - ✅ Fully managed
 - ✅ AWS ecosystem integration
 - ✅ Free tier (50,000 MAU)
@@ -493,18 +521,21 @@ data.products
 - ✅ MFA support
 
 **Trade-offs:**
+
 - ❌ AWS vendor lock-in
 - ❌ Less flexible than custom auth
 
 ### Why MobX over Redux?
 
 **Decision:** MobX for simplicity
+
 - ✅ Less boilerplate
 - ✅ Easier to learn
 - ✅ Reactive programming
 - ✅ Good TypeScript support
 
 **Trade-offs:**
+
 - ❌ Less predictable than Redux
 - ❌ Smaller ecosystem
 
@@ -530,9 +561,3 @@ data.products
 **Last Updated:** Phase 8 - Architecture Documentation
 
 **Contributors:** See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines.
-
-
-
-
-
-

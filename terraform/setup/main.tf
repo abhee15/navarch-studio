@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -14,7 +18,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = var.project_name
+      Project     = "NAV-${var.project_name}"
       Environment = "setup"
       ManagedBy   = "Terraform"
       CostCenter  = var.cost_center

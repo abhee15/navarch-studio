@@ -21,7 +21,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = var.project_name
+      Project     = "NAV-${var.project_name}"
       Environment = var.environment
       ManagedBy   = "Terraform"
       CostCenter  = var.cost_center

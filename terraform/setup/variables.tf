@@ -1,7 +1,7 @@
 variable "project_name" {
   description = "Project name used for resource naming"
   type        = string
-  default     = "sri-subscription"
+  default     = "navarch-studio"
 
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.project_name))

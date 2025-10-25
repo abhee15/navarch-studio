@@ -1,13 +1,13 @@
-# Sri-Subscription Setup Documentation
+# NavArch Studio Setup Documentation
 
-**Created**: October 23, 2025  
-**Project**: sri-subscription  
-**Template**: sri-template  
-**Owner**: abhee15
+**Created**: October 25, 2025  
+**Project**: navarch-studio  
+**Description**: Architecture management platform  
+**Owner**: {username}
 
 ## Overview
 
-This document details the automated setup of `sri-subscription` as an independent project forked from `sri-template`, configured for cost-effective parallel development with shared foundation infrastructure.
+This document details the setup of `navarch-studio` as a completely independent project with its own AWS resources (not shared with other projects).
 
 ## Architecture Strategy
 

@@ -1,6 +1,6 @@
 # AWS Infrastructure Setup Script
 param(
-    [string]$ProjectName = "sri-subscription",
+    [string]$ProjectName = "navarch-studio",
     [string]$AwsRegion = "us-east-1",
     [string]$AwsAccountId = "",
     [string]$BudgetEmail = "",
@@ -84,7 +84,7 @@ Write-Host "`n📝 Creating .env files..." -ForegroundColor Yellow
 
 # Frontend .env
 $frontendEnv = @"
-VITE_API_URL=https://api-gateway.sri-subscription.com
+VITE_API_URL=https://api-gateway.navarch-studio.com
 VITE_COGNITO_USER_POOL_ID=$($outputs.cognito_user_pool_id.value)
 VITE_COGNITO_CLIENT_ID=$($outputs.cognito_user_pool_client_id.value)
 VITE_COGNITO_DOMAIN=$($outputs.cognito_domain.value)
@@ -93,7 +93,7 @@ $frontendEnv | Out-File -FilePath "../frontend/.env" -Encoding UTF8
 
 # Identity Service .env
 $identityEnv = @"
-ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=sri-subscription_dev;Username=postgres;Password=postgres
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=navarch_studio_dev;Username=postgres;Password=postgres
 ASPNETCORE_ENVIRONMENT=Development
 "@
 $identityEnv | Out-File -FilePath "../backend/IdentityService/.env" -Encoding UTF8
@@ -108,7 +108,7 @@ $gatewayEnv | Out-File -FilePath "../backend/ApiGateway/.env" -Encoding UTF8
 
 # Data Service .env
 $dataEnv = @"
-ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=sri-subscription_dev;Username=postgres;Password=postgres
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=navarch_studio_dev;Username=postgres;Password=postgres
 ASPNETCORE_ENVIRONMENT=Development
 "@
 $dataEnv | Out-File -FilePath "../backend/DataService/.env" -Encoding UTF8
