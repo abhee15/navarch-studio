@@ -5,6 +5,7 @@ public record UserDto
     public required string Id { get; init; }
     public required string Email { get; init; }
     public required string Name { get; init; }
+    public string PreferredUnits { get; init; } = "SI";
     public DateTime CreatedAt { get; init; }
 }
 

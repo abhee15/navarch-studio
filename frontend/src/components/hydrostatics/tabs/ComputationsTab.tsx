@@ -1,12 +1,24 @@
 import { useState, useEffect } from "react";
-import { hydrostaticsApi, loadcasesApi } from "../../../services/hydrostaticsApi";
-import type { HydroResult, Loadcase } from "../../../types/hydrostatics";
+import { observer } from "mobx-react-lite";
+import { hydrostaticsApi, loadcasesApi, vesselsApi } from "../../../services/hydrostaticsApi";
+import type { HydroResult, Loadcase, VesselDetails } from "../../../types/hydrostatics";
+import { settingsStore } from "../../../stores/SettingsStore";
+import {
+  convertLength,
+  convertMass,
+  convertArea,
+  getLengthUnit,
+  getMassUnit,
+  getAreaUnit,
+  UnitSystem,
+} from "../../../utils/unitConversion";
 
 interface ComputationsTabProps {
   vesselId: string;
 }
 
-export function ComputationsTab({ vesselId }: ComputationsTabProps) {
+export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => {
+  const [vessel, setVessel] = useState<VesselDetails | null>(null);
   const [loadcases, setLoadcases] = useState<Loadcase[]>([]);
   const [selectedLoadcaseId, setSelectedLoadcaseId] = useState<string>("");
   const [minDraft, setMinDraft] = useState<number>(1);
@@ -19,9 +31,19 @@ export function ComputationsTab({ vesselId }: ComputationsTabProps) {
   const [computationTime, setComputationTime] = useState<number | null>(null);
 
   useEffect(() => {
+    loadVessel();
     loadLoadcases();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vesselId]);
+
+  const loadVessel = async () => {
+    try {
+      const data = await vesselsApi.get(vesselId);
+      setVessel(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load vessel");
+    }
+  };
 
   const loadLoadcases = async () => {
     try {
@@ -66,6 +88,19 @@ export function ComputationsTab({ vesselId }: ComputationsTabProps) {
     } finally {
       setComputing(false);
     }
+  };
+
+  // Get unit systems
+  const vesselUnits = (vessel?.unitsSystem as UnitSystem) || "SI";
+  const displayUnits = settingsStore.preferredUnits;
+
+  // Helper to convert and format values
+  const convertValue = (
+    value: number | undefined | null,
+    conversionFn: (val: number, from: UnitSystem, to: UnitSystem) => number
+  ): number | null => {
+    if (value === null || value === undefined) return null;
+    return conversionFn(value, vesselUnits, displayUnits);
   };
 
   const formatNumber = (value: number | undefined | null, decimals: number = 2): string => {
@@ -263,25 +298,25 @@ export function ComputationsTab({ vesselId }: ComputationsTabProps) {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Draft (m)
+                    Draft ({getLengthUnit(displayUnits)})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    ∆ (kg)
+                    ∆ ({getMassUnit(displayUnits)})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    KB (m)
+                    KB ({getLengthUnit(displayUnits)})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    LCB (m)
+                    LCB ({getLengthUnit(displayUnits)})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    BMt (m)
+                    BMt ({getLengthUnit(displayUnits)})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    GMt (m)
+                    GMt ({getLengthUnit(displayUnits)})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Awp (m²)
+                    Awp ({getAreaUnit(displayUnits)})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Cb
@@ -298,17 +333,25 @@ export function ComputationsTab({ vesselId }: ComputationsTabProps) {
                 {results.map((result, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-900 font-medium">
-                      {formatNumber(result.draft)}
+                      {formatNumber(convertValue(result.draft, convertLength))}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(result.dispWeight, 0)}
+                      {formatNumber(convertValue(result.dispWeight, convertMass), 0)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.kBz)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.lCBx)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.bMt)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.gMt)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(result.awp, 1)}
+                      {formatNumber(convertValue(result.kBz, convertLength))}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatNumber(convertValue(result.lCBx, convertLength))}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatNumber(convertValue(result.bMt, convertLength))}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatNumber(convertValue(result.gMt, convertLength))}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatNumber(convertValue(result.awp, convertArea), 1)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatNumber(result.cb, 3)}
@@ -328,6 +371,6 @@ export function ComputationsTab({ vesselId }: ComputationsTabProps) {
       )}
     </div>
   );
-}
+});
 
 export default ComputationsTab;

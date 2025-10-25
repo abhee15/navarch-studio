@@ -58,11 +58,56 @@ public class UserService : IUserService
         return $"token_{user.Id}_{DateTime.UtcNow:yyyyMMddHHmmss}";
     }
 
+    public async Task<UserSettingsDto?> GetUserSettingsAsync(string userId, CancellationToken cancellationToken)
+    {
+        var user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user == null)
+        {
+            return null;
+        }
+
+        return new UserSettingsDto
+        {
+            PreferredUnits = user.PreferredUnits
+        };
+    }
+
+    public async Task<UserSettingsDto?> UpdateUserSettingsAsync(string userId, UpdateUserSettingsDto dto, CancellationToken cancellationToken)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user == null)
+        {
+            return null;
+        }
+
+        // Validate unit system
+        if (dto.PreferredUnits != "SI" && dto.PreferredUnits != "Imperial")
+        {
+            throw new ArgumentException("PreferredUnits must be either 'SI' or 'Imperial'");
+        }
+
+        user.PreferredUnits = dto.PreferredUnits;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("User settings updated for user: {UserId}", userId);
+
+        return new UserSettingsDto
+        {
+            PreferredUnits = user.PreferredUnits
+        };
+    }
+
     private static UserDto MapToDto(User user) => new()
     {
         Id = user.Id,
         Email = user.Email,
         Name = user.Name,
+        PreferredUnits = user.PreferredUnits,
         CreatedAt = user.CreatedAt
     };
 }

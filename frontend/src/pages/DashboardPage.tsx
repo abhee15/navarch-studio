@@ -1,17 +1,21 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import { Package, LogOut, Loader2, ShoppingBag } from "lucide-react";
+import { Package, LogOut, Loader2, ShoppingBag, Settings } from "lucide-react";
 import { useStore } from "../stores";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { UserSettingsDialog } from "../components/UserSettingsDialog";
+import { settingsStore } from "../stores/SettingsStore";
 
 export const DashboardPage: React.FC = observer(() => {
   const { authStore, dataStore } = useStore();
   const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     dataStore.fetchProducts();
+    settingsStore.loadSettings();
   }, [dataStore]);
 
   const handleLogout = async () => {
@@ -36,10 +40,20 @@ export const DashboardPage: React.FC = observer(() => {
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout} disabled={authStore.loading}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign out
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(true)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout} disabled={authStore.loading}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -164,6 +178,9 @@ export const DashboardPage: React.FC = observer(() => {
           </p>
         </div>
       </footer>
+
+      {/* Settings Dialog */}
+      <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 });

@@ -73,6 +73,58 @@ public class UsersController : ControllerBase
             new { id = user.Id },
             user);
     }
+
+    [HttpGet("settings")]
+    public async Task<ActionResult<UserSettingsDto>> GetUserSettings(CancellationToken cancellationToken)
+    {
+        // Get user ID from JWT claims
+        var userId = _jwtService.GetUserId(User);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(new { message = "User not authenticated" });
+        }
+
+        var settings = await _userService.GetUserSettingsAsync(userId, cancellationToken);
+        if (settings == null)
+        {
+            return NotFound(new { message = "User settings not found" });
+        }
+
+        return Ok(settings);
+    }
+
+    [HttpPut("settings")]
+    public async Task<ActionResult<UserSettingsDto>> UpdateUserSettings(
+        [FromBody] UpdateUserSettingsDto dto,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        // Get user ID from JWT claims
+        var userId = _jwtService.GetUserId(User);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(new { message = "User not authenticated" });
+        }
+
+        try
+        {
+            var settings = await _userService.UpdateUserSettingsAsync(userId, dto, cancellationToken);
+            if (settings == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            return Ok(settings);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
 
 

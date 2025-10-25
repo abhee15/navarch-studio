@@ -1,13 +1,27 @@
+import { observer } from "mobx-react-lite";
 import type { VesselDetails } from "../../../types/hydrostatics";
+import { settingsStore } from "../../../stores/SettingsStore";
+import {
+  convertLength,
+  getLengthUnit,
+  UnitSystem,
+} from "../../../utils/unitConversion";
 
 interface OverviewTabProps {
   vessel: VesselDetails;
   onUpdate: () => void;
 }
 
-export function OverviewTab({ vessel }: OverviewTabProps) {
+export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const vesselUnits = (vessel.unitsSystem as UnitSystem) || "SI";
+  const displayUnits = settingsStore.preferredUnits;
+
+  const convertValue = (value: number): number => {
+    return convertLength(value, vesselUnits, displayUnits);
   };
 
   return (
@@ -24,8 +38,17 @@ export function OverviewTab({ vessel }: OverviewTabProps) {
               <dd className="mt-1 text-sm text-gray-900">{vessel.name}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Units System</dt>
-              <dd className="mt-1 text-sm text-gray-900">{vessel.unitsSystem}</dd>
+              <dt className="text-sm font-medium text-gray-500">Vessel Native Units</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {vessel.unitsSystem}
+                </span>
+                {vesselUnits !== displayUnits && (
+                  <span className="ml-2 text-xs text-gray-500">
+                    (Displaying in {displayUnits})
+                  </span>
+                )}
+              </dd>
             </div>
             {vessel.description && (
               <div className="sm:col-span-2">
@@ -48,15 +71,21 @@ export function OverviewTab({ vessel }: OverviewTabProps) {
               <dt className="text-sm font-medium text-gray-500">
                 Length Between Perpendiculars (Lpp)
               </dt>
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">{vessel.lpp} m</dd>
+              <dd className="mt-1 text-2xl font-semibold text-gray-900">
+                {convertValue(vessel.lpp).toFixed(2)} {getLengthUnit(displayUnits)}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Beam (B)</dt>
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">{vessel.beam} m</dd>
+              <dd className="mt-1 text-2xl font-semibold text-gray-900">
+                {convertValue(vessel.beam).toFixed(2)} {getLengthUnit(displayUnits)}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Design Draft (T)</dt>
-              <dd className="mt-1 text-2xl font-semibold text-gray-900">{vessel.designDraft} m</dd>
+              <dd className="mt-1 text-2xl font-semibold text-gray-900">
+                {convertValue(vessel.designDraft).toFixed(2)} {getLengthUnit(displayUnits)}
+              </dd>
             </div>
           </dl>
         </div>
@@ -156,6 +185,6 @@ export function OverviewTab({ vessel }: OverviewTabProps) {
       </div>
     </div>
   );
-}
+});
 
 export default OverviewTab;

@@ -1,18 +1,37 @@
 import { useState, useEffect } from "react";
-import { loadcasesApi } from "../../../services/hydrostaticsApi";
-import type { Loadcase } from "../../../types/hydrostatics";
+import { observer } from "mobx-react-lite";
+import { loadcasesApi, vesselsApi } from "../../../services/hydrostaticsApi";
+import type { Loadcase, VesselDetails } from "../../../types/hydrostatics";
 import CreateLoadcaseDialog from "../CreateLoadcaseDialog";
+import { settingsStore } from "../../../stores/SettingsStore";
+import {
+  convertDensity,
+  convertLength,
+  getDensityUnit,
+  getLengthUnit,
+  UnitSystem,
+} from "../../../utils/unitConversion";
 
 interface LoadcasesTabProps {
   vesselId: string;
 }
 
-export function LoadcasesTab({ vesselId }: LoadcasesTabProps) {
+export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
+  const [vessel, setVessel] = useState<VesselDetails | null>(null);
   const [loadcases, setLoadcases] = useState<Loadcase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const loadVessel = async () => {
+    try {
+      const data = await vesselsApi.get(vesselId);
+      setVessel(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load vessel");
+    }
+  };
 
   const loadLoadcases = async () => {
     try {
@@ -28,6 +47,7 @@ export function LoadcasesTab({ vesselId }: LoadcasesTabProps) {
   };
 
   useEffect(() => {
+    loadVessel();
     loadLoadcases();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vesselId]);
@@ -51,6 +71,9 @@ export function LoadcasesTab({ vesselId }: LoadcasesTabProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
+
+  const vesselUnits = (vessel?.unitsSystem as UnitSystem) || "SI";
+  const displayUnits = settingsStore.preferredUnits;
 
   if (loading) {
     return (
@@ -187,7 +210,9 @@ export function LoadcasesTab({ vesselId }: LoadcasesTabProps) {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{loadcase.rho} kg/m³</div>
+                    <div className="text-sm text-gray-900">
+                      {convertDensity(loadcase.rho, vesselUnits, displayUnits).toFixed(2)} {getDensityUnit(displayUnits)}
+                    </div>
                     <div className="text-xs text-gray-500">
                       {loadcase.rho === 1025
                         ? "Seawater"
@@ -197,7 +222,9 @@ export function LoadcasesTab({ vesselId }: LoadcasesTabProps) {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {loadcase.kg !== null && loadcase.kg !== undefined ? `${loadcase.kg} m` : "—"}
+                    {loadcase.kg !== null && loadcase.kg !== undefined
+                      ? `${convertLength(loadcase.kg, vesselUnits, displayUnits).toFixed(2)} ${getLengthUnit(displayUnits)}`
+                      : "—"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(loadcase.createdAt)}
@@ -232,6 +259,6 @@ export function LoadcasesTab({ vesselId }: LoadcasesTabProps) {
       )}
     </div>
   );
-}
+});
 
 export default LoadcasesTab;

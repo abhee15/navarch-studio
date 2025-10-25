@@ -7,8 +7,9 @@ import { GeometryTab } from "../../components/hydrostatics/tabs/GeometryTab";
 import { LoadcasesTab } from "../../components/hydrostatics/tabs/LoadcasesTab";
 import { ComputationsTab } from "../../components/hydrostatics/tabs/ComputationsTab";
 import { CurvesTab } from "../../components/hydrostatics/tabs/CurvesTab";
+import { TrimSolverTab } from "../../components/hydrostatics/tabs/TrimSolverTab";
 
-type TabName = "overview" | "geometry" | "loadcases" | "computations" | "curves";
+type TabName = "overview" | "geometry" | "loadcases" | "computations" | "curves" | "trim";
 
 export function VesselDetail() {
   const { vesselId } = useParams<{ vesselId: string }>();
@@ -48,6 +49,7 @@ export function VesselDetail() {
     { id: "loadcases", label: "Loadcases", count: null },
     { id: "computations", label: "Computations", count: null },
     { id: "curves", label: "Curves", count: null },
+    { id: "trim", label: "Trim Solver", count: null },
   ] as const;
 
   if (loading) {
@@ -184,6 +186,7 @@ export function VesselDetail() {
         {activeTab === "loadcases" && <LoadcasesTab vesselId={vessel.id} />}
         {activeTab === "computations" && <ComputationsTab vesselId={vessel.id} />}
         {activeTab === "curves" && <CurvesTab vesselId={vessel.id} />}
+        {activeTab === "trim" && <TrimSolverTab vesselId={vessel.id} />}
       </div>
     </div>
   );

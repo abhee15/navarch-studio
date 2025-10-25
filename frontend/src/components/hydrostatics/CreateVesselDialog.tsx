@@ -201,6 +201,9 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
                   <label htmlFor="unitsSystem" className="block text-sm font-medium text-gray-700">
                     Units System *
                   </label>
+                  <p className="text-xs text-gray-500 mb-1">
+                    Native units for this vessel. You can view it in any unit system via Settings.
+                  </p>
                   <select
                     name="unitsSystem"
                     id="unitsSystem"
