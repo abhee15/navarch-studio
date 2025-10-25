@@ -84,6 +84,7 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ICsvParserService, DataService.Services.Hydrostatics.CsvParserService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ICurvesGenerator, DataService.Services.Hydrostatics.CurvesGenerator>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ITrimSolver, DataService.Services.Hydrostatics.TrimSolver>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IExportService, DataService.Services.Hydrostatics.ExportService>();
 
     // FluentValidation - Register all validators from Shared assembly
     builder.Services.AddValidatorsFromAssemblyContaining<Shared.Validators.CreateProductDtoValidator>();

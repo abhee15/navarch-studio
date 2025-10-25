@@ -40,7 +40,7 @@ public class TrimSolver : ITrimSolver
 
         // Get vessel for validation
         var vessel = await _context.Vessels
-            .FirstOrDefaultAsync(v => v.Id == vesselId && !v.IsDeleted, cancellationToken);
+            .FirstOrDefaultAsync(v => v.Id == vesselId && v.DeletedAt == null, cancellationToken);
 
         if (vessel == null)
         {
@@ -178,7 +178,7 @@ public class TrimSolver : ITrimSolver
     {
         // Get vessel
         var vessel = await _context.Vessels
-            .FirstOrDefaultAsync(v => v.Id == vesselId && !v.IsDeleted, cancellationToken);
+            .FirstOrDefaultAsync(v => v.Id == vesselId && v.DeletedAt == null, cancellationToken);
 
         if (vessel == null)
         {
