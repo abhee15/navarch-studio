@@ -6,46 +6,46 @@ namespace Shared.Models;
 public class Vessel
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    
+
     /// <summary>
     /// User who owns this vessel
     /// </summary>
     public Guid UserId { get; set; }
-    
+
     /// <summary>
     /// Vessel name
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Description or notes about the vessel
     /// </summary>
     public string? Description { get; set; }
-    
+
     /// <summary>
     /// Length between perpendiculars (m)
     /// </summary>
     public decimal Lpp { get; set; }
-    
+
     /// <summary>
     /// Maximum breadth/beam (m)
     /// </summary>
     public decimal Beam { get; set; }
-    
+
     /// <summary>
     /// Design draft (m)
     /// </summary>
     public decimal DesignDraft { get; set; }
-    
+
     /// <summary>
     /// Units system: 'SI' or 'Imperial'
     /// </summary>
     public string UnitsSystem { get; set; } = "SI";
-    
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DeletedAt { get; set; }
-    
+
     // Navigation properties
     public ICollection<Station> Stations { get; set; } = new List<Station>();
     public ICollection<Waterline> Waterlines { get; set; } = new List<Waterline>();

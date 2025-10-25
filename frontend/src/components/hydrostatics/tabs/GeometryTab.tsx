@@ -1,13 +1,15 @@
 import { useState } from "react";
 import type { VesselDetails } from "../../../types/hydrostatics";
+import CsvImportWizard from "../CsvImportWizard";
 
 interface GeometryTabProps {
   vesselId: string;
   vessel: VesselDetails;
 }
 
-export function GeometryTab({ vessel }: GeometryTabProps) {
+export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
   const [activeView, setActiveView] = useState<"grid" | "import">("grid");
+  const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -99,8 +101,8 @@ export function GeometryTab({ vessel }: GeometryTabProps) {
             </p>
             <div className="mt-6">
               <button
-                disabled
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setIsImportWizardOpen(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <svg
                   className="-ml-1 mr-2 h-5 w-5"
@@ -115,12 +117,23 @@ export function GeometryTab({ vessel }: GeometryTabProps) {
                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
-                Choose CSV File (Coming Soon)
+                Import CSV File
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* CSV Import Wizard */}
+      <CsvImportWizard
+        vesselId={vesselId}
+        isOpen={isImportWizardOpen}
+        onClose={() => setIsImportWizardOpen(false)}
+        onImportComplete={() => {
+          setIsImportWizardOpen(false);
+          window.location.reload(); // Reload to update geometry counts
+        }}
+      />
     </div>
   );
 }

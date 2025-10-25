@@ -18,12 +18,12 @@ public record OffsetsGridDto
     /// Station X positions
     /// </summary>
     public List<decimal> Stations { get; init; } = new();
-    
+
     /// <summary>
     /// Waterline Z positions
     /// </summary>
     public List<decimal> Waterlines { get; init; } = new();
-    
+
     /// <summary>
     /// 2D grid of offsets [stationIndex][waterlineIndex]
     /// </summary>

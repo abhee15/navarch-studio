@@ -55,7 +55,7 @@ public class IntegrationEngineTests
 
         // Assert
         var expected = 8m / 3m;
-        Assert.True(Math.Abs(result - expected) < 0.01m, 
+        Assert.True(Math.Abs(result - expected) < 0.01m,
             $"Expected {expected}, got {result}");
     }
 
@@ -67,7 +67,7 @@ public class IntegrationEngineTests
         var y = new List<decimal> { 1, 1, 1, 1 };
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => 
+        Assert.Throws<ArgumentException>(() =>
             _integrationEngine.SimpsonsRule(x, y));
     }
 
