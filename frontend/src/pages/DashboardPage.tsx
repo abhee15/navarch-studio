@@ -46,6 +46,46 @@ export const DashboardPage: React.FC = observer(() => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Quick Access Cards */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Applications</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <Card
+              className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+              onClick={() => navigate("/hydrostatics/vessels")}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="rounded-lg bg-blue-500/10 p-3 mb-2">
+                    <svg
+                      className="h-6 w-6 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <CardTitle>Hydrostatics</CardTitle>
+                <CardDescription>
+                  Naval architecture hydrostatic calculations and analysis
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" variant="outline">
+                  Open Hydrostatics →
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">Products</h2>
           <p className="text-muted-foreground">Browse our collection of products</p>

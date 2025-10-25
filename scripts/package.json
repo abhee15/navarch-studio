@@ -1,0 +1,12 @@
+{
+  "name": "navarch-linear-sync",
+  "version": "1.0.0",
+  "description": "Linear issue import and cleanup scripts",
+  "scripts": {
+    "sync": "node sync-linear.js"
+  },
+  "dependencies": {
+    "@linear/sdk": "^25.0.0",
+    "csv-parser": "^3.2.0"
+  }
+}

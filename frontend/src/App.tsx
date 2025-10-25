@@ -5,6 +5,8 @@ import { useStore } from "./stores";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { VesselsList } from "./pages/hydrostatics/VesselsList";
+import { VesselDetail } from "./pages/hydrostatics/VesselDetail";
 
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { authStore } = useStore();
@@ -21,6 +23,22 @@ export const App: React.FC = observer(() => (
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hydrostatics/vessels"
+        element={
+          <ProtectedRoute>
+            <VesselsList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hydrostatics/vessels/:vesselId"
+        element={
+          <ProtectedRoute>
+            <VesselDetail />
           </ProtectedRoute>
         }
       />

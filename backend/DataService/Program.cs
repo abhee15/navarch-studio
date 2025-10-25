@@ -74,6 +74,16 @@ try
     builder.Services.AddScoped<IProductService, ProductService>();
     builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
 
+    // Hydrostatics Services
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IValidationService, DataService.Services.Hydrostatics.ValidationService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IVesselService, DataService.Services.Hydrostatics.VesselService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IGeometryService, DataService.Services.Hydrostatics.GeometryService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.ILoadcaseService, DataService.Services.Hydrostatics.LoadcaseService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IIntegrationEngine, DataService.Services.Hydrostatics.IntegrationEngine>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IHydroCalculator, DataService.Services.Hydrostatics.HydroCalculator>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.ICsvParserService, DataService.Services.Hydrostatics.CsvParserService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.ICurvesGenerator, DataService.Services.Hydrostatics.CurvesGenerator>();
+
     // FluentValidation - Register all validators from Shared assembly
     builder.Services.AddValidatorsFromAssemblyContaining<Shared.Validators.CreateProductDtoValidator>();
 

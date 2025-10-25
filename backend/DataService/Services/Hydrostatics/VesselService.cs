@@ -1,0 +1,146 @@
+using DataService.Data;
+using Microsoft.EntityFrameworkCore;
+using Shared.DTOs;
+using Shared.Models;
+
+namespace DataService.Services.Hydrostatics;
+
+/// <summary>
+/// Implementation of vessel management service
+/// </summary>
+public class VesselService : IVesselService
+{
+    private readonly DataDbContext _context;
+    private readonly IValidationService _validationService;
+    private readonly ILogger<VesselService> _logger;
+
+    public VesselService(
+        DataDbContext context,
+        IValidationService validationService,
+        ILogger<VesselService> logger)
+    {
+        _context = context;
+        _validationService = validationService;
+        _logger = logger;
+    }
+
+    public async Task<Vessel> CreateVesselAsync(VesselDto dto, Guid userId, CancellationToken cancellationToken = default)
+    {
+        // Validate
+        var validationResult = _validationService.ValidateVessel(dto);
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = string.Join(", ", validationResult.Errors.Select(e => e.Message));
+            throw new ArgumentException($"Vessel validation failed: {errorMessages}");
+        }
+
+        var vessel = new Vessel
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = dto.Name,
+            Description = dto.Description,
+            Lpp = dto.Lpp,
+            Beam = dto.Beam,
+            DesignDraft = dto.DesignDraft,
+            UnitsSystem = dto.UnitsSystem,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Vessels.Add(vessel);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("Created vessel {VesselId} '{VesselName}' for user {UserId}",
+            vessel.Id, vessel.Name, userId);
+
+        return vessel;
+    }
+
+    public async Task<Vessel?> GetVesselAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Vessels
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+    }
+
+    public async Task<VesselDetailsDto?> GetVesselDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var vessel = await _context.Vessels
+            .Where(v => v.Id == id)
+            .Select(v => new VesselDetailsDto
+            {
+                Id = v.Id,
+                Name = v.Name,
+                Description = v.Description,
+                Lpp = v.Lpp,
+                Beam = v.Beam,
+                DesignDraft = v.DesignDraft,
+                UnitsSystem = v.UnitsSystem,
+                StationsCount = v.Stations.Count,
+                WaterlinesCount = v.Waterlines.Count,
+                OffsetsCount = v.Offsets.Count,
+                CreatedAt = v.CreatedAt,
+                UpdatedAt = v.UpdatedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return vessel;
+    }
+
+    public async Task<List<Vessel>> ListVesselsAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Vessels
+            .Where(v => v.UserId == userId)
+            .OrderByDescending(v => v.UpdatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Vessel?> UpdateVesselAsync(Guid id, VesselDto dto, CancellationToken cancellationToken = default)
+    {
+        // Validate
+        var validationResult = _validationService.ValidateVessel(dto);
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = string.Join(", ", validationResult.Errors.Select(e => e.Message));
+            throw new ArgumentException($"Vessel validation failed: {errorMessages}");
+        }
+
+        var vessel = await _context.Vessels.FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+        if (vessel == null)
+        {
+            return null;
+        }
+
+        vessel.Name = dto.Name;
+        vessel.Description = dto.Description;
+        vessel.Lpp = dto.Lpp;
+        vessel.Beam = dto.Beam;
+        vessel.DesignDraft = dto.DesignDraft;
+        vessel.UnitsSystem = dto.UnitsSystem;
+        vessel.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("Updated vessel {VesselId} '{VesselName}'", vessel.Id, vessel.Name);
+
+        return vessel;
+    }
+
+    public async Task<bool> DeleteVesselAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var vessel = await _context.Vessels.FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+        if (vessel == null)
+        {
+            return false;
+        }
+
+        // Soft delete
+        vessel.DeletedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("Deleted vessel {VesselId} '{VesselName}'", vessel.Id, vessel.Name);
+
+        return true;
+    }
+}
+
