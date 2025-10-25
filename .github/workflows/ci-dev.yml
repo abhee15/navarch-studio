@@ -83,9 +83,32 @@ jobs:
       - name: Run tests
         run: dotnet test --no-build --verbosity normal
 
+  check-infrastructure:
+    runs-on: ubuntu-latest
+    needs: [frontend-quality, backend-quality]
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: Check if AWS infrastructure is configured
+        id: check
+        run: |
+          if [ -z "${{ secrets.ECR_IDENTITY_SERVICE_URL }}" ]; then
+            echo "⚠️ AWS infrastructure not yet deployed"
+            echo "📋 To enable deployments:"
+            echo "   1. Run: cd terraform/setup && terraform init && terraform apply"
+            echo "   2. Configure GitHub secrets (see docs/GITHUB_SECRETS.md)"
+            echo "   3. Deployments will run automatically on next push"
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ AWS infrastructure configured - proceeding with deployment"
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+          fi
+
   build-and-push:
     runs-on: ubuntu-latest
-    needs: [frontend-quality, backend-quality]  # Only run if quality checks pass
+    needs: [frontend-quality, backend-quality, check-infrastructure]
+    # Only run if AWS infrastructure is configured
+    if: ${{ needs.check-infrastructure.outputs.has-secrets == 'true' }}
     outputs:
       identity-image: ${{ steps.build-identity.outputs.image }}
       gateway-image: ${{ steps.build-gateway.outputs.image }}
@@ -145,7 +168,9 @@ jobs:
 
   deploy-infrastructure:
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: [check-infrastructure, build-and-push]
+    # Only run if build-and-push succeeded
+    if: ${{ needs.check-infrastructure.outputs.has-secrets == 'true' && needs.build-and-push.result == 'success' }}
     environment: dev
 
     steps:
