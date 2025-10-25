@@ -111,8 +111,3 @@ export const LoginPage: React.FC = observer(() => {
     </div>
   );
 });
-
-
-
-
-

@@ -67,8 +67,3 @@ const createApiClient = (): AxiosInstance => {
 };
 
 export const api = createApiClient();
-
-
-
-
-

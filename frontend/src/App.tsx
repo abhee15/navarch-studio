@@ -28,8 +28,3 @@ export const App: React.FC = observer(() => (
     </Routes>
   </BrowserRouter>
 ));
-
-
-
-
-

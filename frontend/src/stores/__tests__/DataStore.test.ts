@@ -70,8 +70,3 @@ describe("DataStore", () => {
     expect(dataStore.products.find((p) => p.id === "old")).toBeUndefined();
   });
 });
-
-
-
-
-

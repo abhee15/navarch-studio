@@ -13,8 +13,3 @@ export class RootStore {
 
 export const rootStore = new RootStore();
 export const useStore = () => rootStore;
-
-
-
-
-

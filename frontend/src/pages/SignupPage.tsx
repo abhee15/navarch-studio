@@ -263,8 +263,3 @@ export const SignupPage: React.FC = observer(() => {
     </div>
   );
 });
-
-
-
-
-

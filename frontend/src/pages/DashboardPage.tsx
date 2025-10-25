@@ -127,8 +127,3 @@ export const DashboardPage: React.FC = observer(() => {
     </div>
   );
 });
-
-
-
-
-
