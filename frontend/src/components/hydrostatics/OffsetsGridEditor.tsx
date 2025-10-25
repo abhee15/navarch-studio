@@ -58,10 +58,13 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
       };
 
       // Add offset values for each waterline
-      for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+      for (
+        let waterlineIndex = 0;
+        waterlineIndex < offsetData.waterlines.length;
+        waterlineIndex++
+      ) {
         // offsets[stationIndex][waterlineIndex]
-        const halfBreadth =
-          offsetData.offsets[stationIndex]?.[waterlineIndex] ?? 0;
+        const halfBreadth = offsetData.offsets[stationIndex]?.[waterlineIndex] ?? 0;
         row[`wl_${waterlineIndex}`] = halfBreadth;
       }
 
@@ -124,7 +127,11 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
       // Convert grid data back to offsets array
       const updatedOffsets: Offset[] = [];
       for (const row of rowData) {
-        for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+        for (
+          let waterlineIndex = 0;
+          waterlineIndex < offsetData.waterlines.length;
+          waterlineIndex++
+        ) {
           const halfBreadthY = row[`wl_${waterlineIndex}`];
           updatedOffsets.push({
             stationIndex: row.stationIndex,

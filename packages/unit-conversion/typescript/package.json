@@ -1,0 +1,42 @@
+{
+  "name": "@navarch/unit-conversion",
+  "version": "1.0.0",
+  "description": "Standalone bilingual unit conversion library for naval architecture applications",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "units",
+    "conversion",
+    "naval-architecture",
+    "maritime",
+    "engineering",
+    "bilingual"
+  ],
+  "author": "NavArch Studio",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/jest": "^29.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist",
+    "config"
+  ]
+}
+

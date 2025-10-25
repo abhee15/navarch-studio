@@ -41,15 +41,16 @@ export const DashboardPage: React.FC = observer(() => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSettings(true)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout} disabled={authStore.loading}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                disabled={authStore.loading}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </Button>

@@ -1,6 +1,9 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { api } from "../services/api";
-import { UnitSystem } from "../utils/unitConversion";
+import type { UnitSystemId } from "@navarch/unit-conversion";
+
+// Type alias for compatibility
+export type UnitSystem = UnitSystemId;
 
 export interface UserSettings {
   preferredUnits: UnitSystem;
@@ -77,4 +80,3 @@ export class SettingsStore {
 }
 
 export const settingsStore = new SettingsStore();
-

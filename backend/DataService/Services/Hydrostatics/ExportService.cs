@@ -106,7 +106,7 @@ public class ExportService : IExportService
         // TODO: Implement PDF export using iText7 or QuestPDF
         // For MVP, throw NotImplementedException with guidance
         _logger.LogWarning("PDF export not yet implemented. Use CSV/JSON export for now.");
-        
+
         throw new NotImplementedException(
             "PDF export is planned for a future release. " +
             "Please use CSV or JSON export formats for now. " +
@@ -122,7 +122,7 @@ public class ExportService : IExportService
         // TODO: Implement Excel export using EPPlus or ClosedXML
         // For MVP, throw NotImplementedException with guidance
         _logger.LogWarning("Excel export not yet implemented. Use CSV/JSON export for now.");
-        
+
         throw new NotImplementedException(
             "Excel export is planned for a future release. " +
             "Please use CSV or JSON export formats for now. " +

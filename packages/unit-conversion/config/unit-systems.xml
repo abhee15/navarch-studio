@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UnitSystems version="1.0">
+  <!-- SI System (Metric) -->
+  <UnitSystem id="SI" isDefault="true">
+    <Names>
+      <Name locale="en">SI (Metric)</Name>
+      <Name locale="es">SI (Métrico)</Name>
+    </Names>
+    <Descriptions>
+      <Description locale="en">International System of Units</Description>
+      <Description locale="es">Sistema Internacional de Unidades</Description>
+    </Descriptions>
+    
+    <Categories>
+      <Category id="Length">
+        <Names>
+          <Name locale="en">Length</Name>
+          <Name locale="es">Longitud</Name>
+        </Names>
+        <Unit id="meter" symbol="m" isBase="true">
+          <Names>
+            <Name locale="en">Meter</Name>
+            <Name locale="es">Metro</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Meters</Name>
+            <Name locale="es">Metros</Name>
+          </PluralNames>
+        </Unit>
+      </Category>
+      
+      <Category id="Mass">
+        <Names>
+          <Name locale="en">Mass</Name>
+          <Name locale="es">Masa</Name>
+        </Names>
+        <Unit id="kilogram" symbol="kg" isBase="true">
+          <Names>
+            <Name locale="en">Kilogram</Name>
+            <Name locale="es">Kilogramo</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Kilograms</Name>
+            <Name locale="es">Kilogramos</Name>
+          </PluralNames>
+        </Unit>
+      </Category>
+      
+      <Category id="Area">
+        <Names>
+          <Name locale="en">Area</Name>
+          <Name locale="es">Área</Name>
+        </Names>
+        <Unit id="square-meter" symbol="m²" isBase="true">
+          <Names>
+            <Name locale="en">Square Meter</Name>
+            <Name locale="es">Metro Cuadrado</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Square Meters</Name>
+            <Name locale="es">Metros Cuadrados</Name>
+          </PluralNames>
+        </Unit>
+      </Category>
+      
+      <Category id="Volume">
+        <Names>
+          <Name locale="en">Volume</Name>
+          <Name locale="es">Volumen</Name>
+        </Names>
+        <Unit id="cubic-meter" symbol="m³" isBase="true">
+          <Names>
+            <Name locale="en">Cubic Meter</Name>
+            <Name locale="es">Metro Cúbico</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Cubic Meters</Name>
+            <Name locale="es">Metros Cúbicos</Name>
+          </PluralNames>
+        </Unit>
+      </Category>
+      
+      <Category id="Density">
+        <Names>
+          <Name locale="en">Density</Name>
+          <Name locale="es">Densidad</Name>
+        </Names>
+        <Unit id="kg-per-cubic-meter" symbol="kg/m³" isBase="true">
+          <Names>
+            <Name locale="en">Kilogram per Cubic Meter</Name>
+            <Name locale="es">Kilogramo por Metro Cúbico</Name>
+          </Names>
+        </Unit>
+      </Category>
+      
+      <Category id="MomentOfInertia">
+        <Names>
+          <Name locale="en">Moment of Inertia</Name>
+          <Name locale="es">Momento de Inercia</Name>
+        </Names>
+        <Unit id="meter-to-fourth" symbol="m⁴" isBase="true">
+          <Names>
+            <Name locale="en">Meter to the Fourth Power</Name>
+            <Name locale="es">Metro a la Cuarta Potencia</Name>
+          </Names>
+        </Unit>
+      </Category>
+    </Categories>
+  </UnitSystem>
+  
+  <!-- Imperial System -->
+  <UnitSystem id="Imperial" isDefault="false">
+    <Names>
+      <Name locale="en">Imperial (US)</Name>
+      <Name locale="es">Imperial (EE.UU.)</Name>
+    </Names>
+    <Descriptions>
+      <Description locale="en">United States customary units</Description>
+      <Description locale="es">Unidades consuetudinarias de Estados Unidos</Description>
+    </Descriptions>
+    
+    <Categories>
+      <Category id="Length">
+        <Names>
+          <Name locale="en">Length</Name>
+          <Name locale="es">Longitud</Name>
+        </Names>
+        <Unit id="foot" symbol="ft" isBase="false">
+          <Names>
+            <Name locale="en">Foot</Name>
+            <Name locale="es">Pie</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Feet</Name>
+            <Name locale="es">Pies</Name>
+          </PluralNames>
+          <ConversionToSI factor="0.3048" baseUnit="meter"/>
+        </Unit>
+      </Category>
+      
+      <Category id="Mass">
+        <Names>
+          <Name locale="en">Mass</Name>
+          <Name locale="es">Masa</Name>
+        </Names>
+        <Unit id="pound" symbol="lb" isBase="false">
+          <Names>
+            <Name locale="en">Pound</Name>
+            <Name locale="es">Libra</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Pounds</Name>
+            <Name locale="es">Libras</Name>
+          </PluralNames>
+          <ConversionToSI factor="0.453592" baseUnit="kilogram"/>
+        </Unit>
+      </Category>
+      
+      <Category id="Area">
+        <Names>
+          <Name locale="en">Area</Name>
+          <Name locale="es">Área</Name>
+        </Names>
+        <Unit id="square-foot" symbol="ft²" isBase="false">
+          <Names>
+            <Name locale="en">Square Foot</Name>
+            <Name locale="es">Pie Cuadrado</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Square Feet</Name>
+            <Name locale="es">Pies Cuadrados</Name>
+          </PluralNames>
+          <ConversionToSI factor="0.092903" baseUnit="square-meter"/>
+        </Unit>
+      </Category>
+      
+      <Category id="Volume">
+        <Names>
+          <Name locale="en">Volume</Name>
+          <Name locale="es">Volumen</Name>
+        </Names>
+        <Unit id="cubic-foot" symbol="ft³" isBase="false">
+          <Names>
+            <Name locale="en">Cubic Foot</Name>
+            <Name locale="es">Pie Cúbico</Name>
+          </Names>
+          <PluralNames>
+            <Name locale="en">Cubic Feet</Name>
+            <Name locale="es">Pies Cúbicos</Name>
+          </PluralNames>
+          <ConversionToSI factor="0.0283168" baseUnit="cubic-meter"/>
+        </Unit>
+      </Category>
+      
+      <Category id="Density">
+        <Names>
+          <Name locale="en">Density</Name>
+          <Name locale="es">Densidad</Name>
+        </Names>
+        <Unit id="lb-per-cubic-foot" symbol="lb/ft³" isBase="false">
+          <Names>
+            <Name locale="en">Pound per Cubic Foot</Name>
+            <Name locale="es">Libra por Pie Cúbico</Name>
+          </Names>
+          <ConversionToSI factor="16.0185" baseUnit="kg-per-cubic-meter"/>
+        </Unit>
+      </Category>
+      
+      <Category id="MomentOfInertia">
+        <Names>
+          <Name locale="en">Moment of Inertia</Name>
+          <Name locale="es">Momento de Inercia</Name>
+        </Names>
+        <Unit id="foot-to-fourth" symbol="ft⁴" isBase="false">
+          <Names>
+            <Name locale="en">Foot to the Fourth Power</Name>
+            <Name locale="es">Pie a la Cuarta Potencia</Name>
+          </Names>
+          <ConversionToSI factor="0.00863097" baseUnit="meter-to-fourth"/>
+        </Unit>
+      </Category>
+    </Categories>
+  </UnitSystem>
+  
+  <!-- Conversion Factors (precalculated for performance) -->
+  <ConversionMatrix>
+    <!-- Length -->
+    <Conversion from="meter" to="foot" factor="3.28084"/>
+    <Conversion from="foot" to="meter" factor="0.3048"/>
+    
+    <!-- Mass -->
+    <Conversion from="kilogram" to="pound" factor="2.20462"/>
+    <Conversion from="pound" to="kilogram" factor="0.453592"/>
+    
+    <!-- Area -->
+    <Conversion from="square-meter" to="square-foot" factor="10.7639"/>
+    <Conversion from="square-foot" to="square-meter" factor="0.092903"/>
+    
+    <!-- Volume -->
+    <Conversion from="cubic-meter" to="cubic-foot" factor="35.3147"/>
+    <Conversion from="cubic-foot" to="cubic-meter" factor="0.0283168"/>
+    
+    <!-- Density -->
+    <Conversion from="kg-per-cubic-meter" to="lb-per-cubic-foot" factor="0.062428"/>
+    <Conversion from="lb-per-cubic-foot" to="kg-per-cubic-meter" factor="16.0185"/>
+    
+    <!-- Moment of Inertia -->
+    <Conversion from="meter-to-fourth" to="foot-to-fourth" factor="115.862"/>
+    <Conversion from="foot-to-fourth" to="meter-to-fourth" factor="0.00863097"/>
+  </ConversionMatrix>
+</UnitSystems>
+

@@ -3,15 +3,20 @@ import { observer } from "mobx-react-lite";
 import { hydrostaticsApi, loadcasesApi, vesselsApi } from "../../../services/hydrostaticsApi";
 import type { HydroResult, Loadcase, VesselDetails } from "../../../types/hydrostatics";
 import { settingsStore } from "../../../stores/SettingsStore";
-import {
-  convertLength,
-  convertMass,
-  convertArea,
-  getLengthUnit,
-  getMassUnit,
-  getAreaUnit,
-  UnitSystem,
-} from "../../../utils/unitConversion";
+import { unitConverter, type UnitSystemId } from "@navarch/unit-conversion";
+
+// Helper functions for backward compatibility
+const convertLength = (value: number, from: UnitSystemId, to: UnitSystemId) =>
+  unitConverter.convert(value, from, to, "Length");
+const convertMass = (value: number, from: UnitSystemId, to: UnitSystemId) =>
+  unitConverter.convert(value, from, to, "Mass");
+const convertArea = (value: number, from: UnitSystemId, to: UnitSystemId) =>
+  unitConverter.convert(value, from, to, "Area");
+const getLengthUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Length");
+const getMassUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Mass");
+const getAreaUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Area");
+
+type UnitSystem = UnitSystemId;
 
 interface ComputationsTabProps {
   vesselId: string;

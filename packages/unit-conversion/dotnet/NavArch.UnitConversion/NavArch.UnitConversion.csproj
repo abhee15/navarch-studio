@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>NavArch.UnitConversion</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>NavArch Studio</Authors>
+    <Company>NavArch</Company>
+    <Product>NavArch Unit Conversion</Product>
+    <Description>Standalone bilingual unit conversion library for naval architecture applications</Description>
+    <PackageTags>units;conversion;naval-architecture;maritime;engineering</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/navarch/unit-conversion</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\config\unit-systems.xml">
+      <Pack>true</Pack>
+      <PackagePath>config</PackagePath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
+

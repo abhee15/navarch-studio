@@ -15,6 +15,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@navarch/unit-conversion": "file:../packages/unit-conversion/typescript",
     "ag-grid-community": "^34.3.0",
     "ag-grid-react": "^34.3.0",
     "amazon-cognito-identity-js": "^6.3.12",

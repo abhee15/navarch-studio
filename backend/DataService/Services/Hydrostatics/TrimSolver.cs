@@ -92,11 +92,11 @@ public class TrimSolver : ITrimSolver
 
                 // Calculate trim angle (in meters)
                 decimal trimAngle = draftAP - draftFP;
-                
+
                 // Calculate LCF (Longitudinal Center of Floatation) from hydro result
                 // For simplified approach, use LCB as approximation
                 decimal lcf = hydroResult.LCBx;
-                
+
                 // Calculate MTC (Moment to Change Trim by 1cm)
                 // MTC = (rho * g * I_l) / (100 * Lpp)
                 // Using approximate formula: MTC ≈ (Disp * BML) / (100 * Lpp)

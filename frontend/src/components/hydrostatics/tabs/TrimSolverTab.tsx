@@ -198,9 +198,7 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
 
             {/* Advanced Options */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Max Iterations
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Max Iterations</label>
               <input
                 type="number"
                 value={maxIterations}
@@ -212,9 +210,7 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tolerance (kg)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tolerance (kg)</label>
               <input
                 type="number"
                 value={tolerance}
@@ -336,15 +332,17 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
                 {formatNumber(solution.trimAngle)} m
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                {solution.trimAngle > 0 ? "By the stern" : solution.trimAngle < 0 ? "By the bow" : "Even keel"}
+                {solution.trimAngle > 0
+                  ? "By the stern"
+                  : solution.trimAngle < 0
+                    ? "By the bow"
+                    : "Even keel"}
               </div>
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-sm font-medium text-gray-600">LCF</div>
-              <div className="text-2xl font-bold text-gray-900">
-                {formatNumber(solution.lcf)} m
-              </div>
+              <div className="text-2xl font-bold text-gray-900">{formatNumber(solution.lcf)} m</div>
               <div className="text-xs text-gray-500 mt-1">Longitudinal Center of Flotation</div>
             </div>
 
@@ -399,4 +397,3 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
     </div>
   );
 }
-

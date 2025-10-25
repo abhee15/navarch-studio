@@ -15,7 +15,7 @@ public static class HullTestData
     /// <param name="designDraft">Design draft (m)</param>
     /// <param name="numStations">Number of stations</param>
     /// <param name="numWaterlines">Number of waterlines</param>
-    public static (List<StationData> stations, List<WaterlineData> waterlines, List<OffsetData> offsets) 
+    public static (List<StationData> stations, List<WaterlineData> waterlines, List<OffsetData> offsets)
         GenerateRectangularBarge(
             decimal length = 100m,
             decimal beam = 20m,

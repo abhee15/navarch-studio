@@ -1,11 +1,14 @@
 import { observer } from "mobx-react-lite";
 import type { VesselDetails } from "../../../types/hydrostatics";
 import { settingsStore } from "../../../stores/SettingsStore";
-import {
-  convertLength,
-  getLengthUnit,
-  UnitSystem,
-} from "../../../utils/unitConversion";
+import { unitConverter, type UnitSystemId } from "@navarch/unit-conversion";
+
+// Helper functions for backward compatibility
+const convertLength = (value: number, from: UnitSystemId, to: UnitSystemId) =>
+  unitConverter.convert(value, from, to, "Length");
+const getLengthUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Length");
+
+type UnitSystem = UnitSystemId;
 
 interface OverviewTabProps {
   vessel: VesselDetails;
@@ -44,9 +47,7 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
                   {vessel.unitsSystem}
                 </span>
                 {vesselUnits !== displayUnits && (
-                  <span className="ml-2 text-xs text-gray-500">
-                    (Displaying in {displayUnits})
-                  </span>
+                  <span className="ml-2 text-xs text-gray-500">(Displaying in {displayUnits})</span>
                 )}
               </dd>
             </div>

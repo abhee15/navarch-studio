@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { settingsStore } from "../stores/SettingsStore";
-import { UnitSystem } from "../utils/unitConversion";
+import { settingsStore, type UnitSystem } from "../stores/SettingsStore";
 
 interface UserSettingsDialogProps {
   isOpen: boolean;
@@ -9,9 +8,7 @@ interface UserSettingsDialogProps {
 }
 
 export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDialogProps) => {
-  const [preferredUnits, setPreferredUnits] = useState<UnitSystem>(
-    settingsStore.preferredUnits
-  );
+  const [preferredUnits, setPreferredUnits] = useState<UnitSystem>(settingsStore.preferredUnits);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,10 +59,7 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
         <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
           <div>
             <div className="mt-3 text-center sm:mt-0 sm:text-left">
-              <h3
-                className="text-lg leading-6 font-medium text-gray-900 mb-4"
-                id="modal-title"
-              >
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
                 User Settings
               </h3>
 
@@ -78,12 +72,15 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
               <div className="space-y-4">
                 {/* Unit System Selection */}
                 <div>
-                  <label htmlFor="preferredUnits" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="preferredUnits"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Preferred Unit System
                   </label>
                   <p className="text-sm text-gray-500 mb-3">
-                    Choose how you want to view measurements throughout the application. 
-                    Vessels will display in your preferred units regardless of their native unit system.
+                    Choose how you want to view measurements throughout the application. Vessels
+                    will display in your preferred units regardless of their native unit system.
                   </p>
                   <select
                     id="preferredUnits"
@@ -155,4 +152,3 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
     </div>
   );
 });
-

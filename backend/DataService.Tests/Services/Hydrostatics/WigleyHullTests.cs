@@ -109,7 +109,7 @@ public class WigleyHullTests : IDisposable
         decimal length = 100m;
         decimal beam = 10m;
         decimal draft = 6.25m; // B/1.6 for typical Wigley
-        
+
         var analytical = HullTestData.GetWigleyHullApproximate(length, beam, draft);
 
         // Act
@@ -117,7 +117,7 @@ public class WigleyHullTests : IDisposable
 
         // Assert - Volume within 2%
         decimal volumeError = Math.Abs(computed.DispVolume - analytical.Volume) / analytical.Volume;
-        Assert.True(volumeError < 0.02m, 
+        Assert.True(volumeError < 0.02m,
             $"Volume error {volumeError:P2} exceeds 2% tolerance. " +
             $"Expected: {analytical.Volume:F2}, Got: {computed.DispVolume:F2}");
     }
@@ -129,7 +129,7 @@ public class WigleyHullTests : IDisposable
         decimal length = 100m;
         decimal beam = 10m;
         decimal draft = 6.25m;
-        
+
         var analytical = HullTestData.GetWigleyHullApproximate(length, beam, draft);
 
         // Act
@@ -149,7 +149,7 @@ public class WigleyHullTests : IDisposable
         decimal length = 100m;
         decimal beam = 10m;
         decimal draft = 6.25m;
-        
+
         var analytical = HullTestData.GetWigleyHullApproximate(length, beam, draft);
 
         // Act
@@ -175,7 +175,7 @@ public class WigleyHullTests : IDisposable
         decimal length = 100m;
         decimal beam = 10m;
         decimal draft = 6.25m;
-        
+
         var analytical = HullTestData.GetWigleyHullApproximate(length, beam, draft);
 
         // Act
@@ -196,7 +196,7 @@ public class WigleyHullTests : IDisposable
         decimal length = 100m;
         decimal beam = 10m;
         decimal draft = 6.25m;
-        
+
         var analytical = HullTestData.GetWigleyHullApproximate(length, beam, draft);
 
         // Act
@@ -216,7 +216,7 @@ public class WigleyHullTests : IDisposable
         decimal length = 100m;
         decimal beam = 10m;
         decimal draft = 6.25m;
-        
+
         var analytical = HullTestData.GetWigleyHullApproximate(length, beam, draft);
 
         // Act

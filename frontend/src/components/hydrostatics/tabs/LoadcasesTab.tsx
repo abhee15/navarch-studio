@@ -4,13 +4,17 @@ import { loadcasesApi, vesselsApi } from "../../../services/hydrostaticsApi";
 import type { Loadcase, VesselDetails } from "../../../types/hydrostatics";
 import CreateLoadcaseDialog from "../CreateLoadcaseDialog";
 import { settingsStore } from "../../../stores/SettingsStore";
-import {
-  convertDensity,
-  convertLength,
-  getDensityUnit,
-  getLengthUnit,
-  UnitSystem,
-} from "../../../utils/unitConversion";
+import { unitConverter, type UnitSystemId } from "@navarch/unit-conversion";
+
+// Helper functions for backward compatibility
+const convertDensity = (value: number, from: UnitSystemId, to: UnitSystemId) =>
+  unitConverter.convert(value, from, to, "Density");
+const convertLength = (value: number, from: UnitSystemId, to: UnitSystemId) =>
+  unitConverter.convert(value, from, to, "Length");
+const getDensityUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Density");
+const getLengthUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Length");
+
+type UnitSystem = UnitSystemId;
 
 interface LoadcasesTabProps {
   vesselId: string;
@@ -211,7 +215,8 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {convertDensity(loadcase.rho, vesselUnits, displayUnits).toFixed(2)} {getDensityUnit(displayUnits)}
+                      {convertDensity(loadcase.rho, vesselUnits, displayUnits).toFixed(2)}{" "}
+                      {getDensityUnit(displayUnits)}
                     </div>
                     <div className="text-xs text-gray-500">
                       {loadcase.rho === 1025
