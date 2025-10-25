@@ -1,0 +1,4 @@
+Case,Inputs,Notes
+Baseline A (Tanker-like),"Lpp=120,B=20,T=8,Cb=0.80,V=14kn,Dprop=6,P/D=0.95",High Cb ⇒ higher RT at same V; prop diameter ~6 m suffices with PD≈6–8 MW
+Baseline B (Containership-like),"Lpp=180,B=25,T=9,Cb=0.65,V=20kn,Dprop=7,P/D=1.0","Lower Cb, higher Fn; wave-making dominates beyond 18 kn; PD≈15–20 MW"
+Seakeeping Case,"Hs=2.0 m, Tp=8 s, β=180°, GMt=2.0 m",Head seas: heave/pitch dominant; roll low unless beam seas.

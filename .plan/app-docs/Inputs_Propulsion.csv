@@ -1,0 +1,9 @@
+Parameter,Symbol,Units,Type,Default,Valid Range/Enum,Required?,Description,Where Used
+Propeller diameter,Dprop,m,number,5.5,1–12,True,Propeller diameter.,Propulsion
+Propeller blades,Z,-,integer,5.0,3–7,True,Number of blades.,Propulsion
+Area ratio (expanded),AE/A0,-,number,0.65,0.3–1.2,False,Disc area ratio.,Propulsion
+Pitch-to-diameter,P/D,-,number,0.95,0.5–1.6,True,Pitch ratio.,Propulsion
+Shaft rpm,n,rev/s,number,8.0,1–20,True,Shaft rotational speed.,Propulsion
+Thrust deduction,t,-,number,0.15,0–0.4,False,Hull-interaction parameter.,Propulsion
+Wake fraction,w,-,number,0.25,0–0.5,False,Average wake at propeller.,Propulsion
+Relative rotative efficiency,ηR,-,number,1.0,0.9–1.1,False,Propulsive coefficient component.,Propulsion

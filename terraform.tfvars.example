@@ -1,0 +1,13 @@
+# NavArch Studio - Terraform Setup Configuration Example
+# Copy this file to terraform.tfvars and update with your actual values
+
+# Project Configuration
+project_name   = "navarch-studio"
+aws_region     = "us-east-1"
+aws_account_id = "YOUR_AWS_ACCOUNT_ID"  # Get this from: aws sts get-caller-identity
+
+# Cost Monitoring
+budget_email = "your-email@example.com"
+cost_center  = "engineering"
+
+

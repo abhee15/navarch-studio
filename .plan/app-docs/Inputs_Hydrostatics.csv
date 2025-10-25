@@ -1,0 +1,12 @@
+Parameter,Symbol,Units,Type,Default,Valid Range/Enum,Required?,Description,Where Used
+Length between perpendiculars,Lpp,m,number,120.0,> 0,True,Distance between forward and aft perpendiculars.,"Hydrostatics, Resistance"
+Beam (moulded),B,m,number,20.0,> 0,True,Maximum breadth of the hull.,"Hydrostatics, Stability"
+Draft (design),T,m,number,8.0,> 0,True,Design waterline draft.,"Hydrostatics, Stability"
+Depth (moulded),D,m,number,12.0,> 0,False,Vertical distance keel to deck at side.,Hydrostatics
+Block coefficient,Cb,-,number,0.7,0.4–0.9,True,Volume/(Lpp*B*T).,"Hydrostatics, Resistance"
+Waterplane coefficient,Cwp,-,number,0.85,0.5–0.95,False,Aw/(Lpp*B).,Hydrostatics
+Prismatic coefficient,Cp,-,number,0.72,0.45–0.9,False,V/(Amid*Lpp).,Resistance
+Midship area coefficient,Cm,-,number,0.98,0.80–1.00,False,Amid/(B*T).,Resistance
+Displacement volume,∇,m^3,number,13500.0,> 0,False,Underwater volume at draft T.,Hydrostatics
+Water density,ρ,t/m^3,number,1.025,0.99–1.03,True,"Sea=1.025, Fresh=1.0.",All
+Speed (trial),V,kn,number,15.0,0–40,True,Service speed for resistance/propulsion.,"Resistance, Propulsion"

@@ -1,0 +1,7 @@
+Test ID,What,Input/Setup,Expected
+HYD-001,Displacement balance,"Given Lpp=120, B=20, T=8, Cb=0.70, ρ=1.025; expect Δ≈ ρ*∇ with ∇=Lpp*B*T*Cb",Δ within ±2% of 1.025*120*20*8*0.70 t
+RES-101,Friction coefficient,"At V=15 kn, ν=1.188e-6, Lpp=120 m; Re>1e7 and Cf matches ITTC-1957",Cf within ±1e-4 of spec formula
+RES-150,Holtrop–Mennen sanity,Typical tanker geometry (Cb~0.8): RT increases monotonically 5→20 kn,dRT/dV > 0 across sweep
+PRO-201,Advance ratio,"Compute J with V_A=V(1-w) at w=0.25, n=8 rps, D=5.5 m",J equals VA/(nD) within 1e-6
+PRO-250,Power balance,Delivered power equals RT*V/ηH/ηR/ηO where ηH≈(1-t)/(1-w),Energy consistency within 3%
+SEA-301,Spectrum,PM spectrum integrates to ~H_s^2/16 variance,Error < 5%

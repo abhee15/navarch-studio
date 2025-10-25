@@ -1,0 +1,8 @@
+Output,Units,Module,Notes
+Δ (Displacement mass),t,Hydrostatics,Total weight equals buoyancy at equilibrium.
+KM (Metacentric height),m,Hydrostatics,Initial stability indicator.
+RT (Total resistance),kN,Resistance,Net towing resistance at speed.
+PE (Effective power),kW,Resistance,RT * V (m/s).
+PD (Delivered power),kW,Propulsion,Power to shaft including losses.
+ηD (Propeller efficiency),-,Propulsion,Open-water efficiency.
+Heave/Pitch/Roll RMS,"m, deg",Seakeeping,Motion responses for sea state.

@@ -1,0 +1,8 @@
+Priority,User Story,Key UI Elements,Epic
+1,"As a user, I can enter basic hull inputs (Lpp, B, T, Cb, ρ) and get hydrostatic displacement and KM instantly.","Inputs panel, calculate button, results card",Hydrostatics MVP
+2,"As a user, I can run Holtrop–Mennen to get RT vs speed curve 5–25 kn.","Speed sweep control, chart, export CSV",Resistance MVP
+3,"As a user, I can size a propeller (P/D, D) to meet service speed with margin.","Prop selector, constraint hints, PC summary",Propulsion MVP
+4,"As a user, I can save a ‘Design Case’ and compare against a benchmark.","Save case, compare panel, diff view",Benchmark & Compare
+5,"As a user, I can export a one-click PDF report.",Generate report button,Reporting
+6,"As a user, I can view input validation warnings and suggested ranges.","Inline validation, tooltips",UX Safety
+7,"As a user, I can run simple seakeeping motions for head/beam seas.","Sea state panel, RAO presets, charts",Seakeeping MVP

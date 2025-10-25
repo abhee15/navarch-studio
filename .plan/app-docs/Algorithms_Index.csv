@@ -1,0 +1,7 @@
+Module,Algorithm/Method,Inputs (symbols),Key Equations / Notes,Primary Outputs
+Hydrostatics,Hydrostatic Curves via Simpson’s Rule,"Lpp,B,T,Cb,Cwp,∇","Integrate sectional areas to derive Δ, KB, BM, KM, Aw, MTC.","Δ (t), KM, KB, BM, Aw, TPC, MTC"
+Resistance,ITTC-1957 Friction + Form Factor + Air + Correlation,"S, ν, V, k, ρ",Cf=0.075/(log10(Re)-2)^2; CT = (1+k)Cf + CR + CA.,"RT (kN), CT, Power bare-hull"
+Resistance,Holtrop–Mennen,"Lpp,B,T,Cb,Cp,Cm,At,S,ν,V","Semi-empirical components for viscous, wave-making, appendages, bulb, transom.","RT (kN), PE (kW)"
+Propulsion,Open-Water + Propulsive Coefficients,"VA, n, Dprop, P/D, AE/A0, w,t,ηR","J=VA/(nD); KT(J), KQ(J) from series; ηD= (1-t)T*VA/(2πnQ).","ηD, PD, Delivered Power"
+Seakeeping,RAOs from Strip Theory (Lewis forms),"Hull geometry, β, Hs, Tp, GMt","Linear frequency-domain, RAOζζ(ω,β).","Heave, pitch, roll RAOs, motions"
+Seakeeping,Pierson–Moskowitz Spectrum,"Hs, Tp",S(ω)=αg^2 ω^-5 exp(-β(ωp/ω)^4).,"Spectral moments, response stats"

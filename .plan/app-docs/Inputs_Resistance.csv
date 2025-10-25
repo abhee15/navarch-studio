@@ -1,0 +1,6 @@
+Parameter,Symbol,Units,Type,Default,Valid Range/Enum,Required?,Description,Where Used
+Wetted surface area,S,m^2,number,4500.0,> 0,False,Hull wetted area (estimate via ITTC).,Resistance
+Transom area,At,m^2,number,20.0,>= 0,False,Immersed transom area.,Resistance
+Appendage area,Sapp,m^2,number,120.0,>= 0,False,Sum of appendage wetted area.,Resistance
+Froude number,Fn,-,number,,>= 0,False,Computed: V / sqrt(g*Lpp).,Resistance
+Kinematic viscosity,ν,m^2/s,number,1.188e-06,1.0e-6–1.5e-6,False,Water temperature dependent.,Resistance

@@ -1,0 +1,5 @@
+Parameter,Symbol,Units,Type,Default,Valid Range/Enum,Required?,Description,Where Used
+Significant wave height,Hs,m,number,2,0–12,True,Sea state input.,Seakeeping
+Peak period,Tp,s,number,8,2–20,True,Wave energy peak period.,Seakeeping
+Heading,β,deg,number,180,0–180,True,Wave heading relative to bow.,Seakeeping
+GMt (transverse),GMt,m,number,2,0.2–6,False,Metacentric height.,Seakeeping

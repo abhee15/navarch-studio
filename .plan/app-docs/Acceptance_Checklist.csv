@@ -1,0 +1,3 @@
+Area,Check,Tolerance,Verified By
+Geometry Ingest,CSV schema valid,station/waterline monotonic,Inline QC
+Point Hydrostatics,Analytic barge parity,±0.1% vs formulas,Barge_Hydro_Table
