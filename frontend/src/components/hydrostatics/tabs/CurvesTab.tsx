@@ -84,7 +84,7 @@ export function CurvesTab({ vesselId }: CurvesTabProps) {
 
   const toggleCurve = (curveId: string) => {
     setSelectedCurves((prev) =>
-      prev.includes(curveId) ? prev.filter((id) => id !== curveId) : [...prev, curveId],
+      prev.includes(curveId) ? prev.filter((id) => id !== curveId) : [...prev, curveId]
     );
   };
 
@@ -287,7 +287,9 @@ export function CurvesTab({ vesselId }: CurvesTabProps) {
             const curveInfo = CURVE_TYPES.find((t) => t.id === curveType);
             return (
               <div key={curveType} className="bg-white shadow rounded-lg p-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">{curveInfo?.label || curveType}</h4>
+                <h4 className="text-lg font-medium text-gray-900 mb-4">
+                  {curveInfo?.label || curveType}
+                </h4>
                 <ResponsiveContainer width="100%" height={400}>
                   <LineChart data={curveData.points}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -295,7 +297,9 @@ export function CurvesTab({ vesselId }: CurvesTabProps) {
                       dataKey="x"
                       label={{ value: curveData.xLabel, position: "insideBottom", offset: -5 }}
                     />
-                    <YAxis label={{ value: curveData.yLabel, angle: -90, position: "insideLeft" }} />
+                    <YAxis
+                      label={{ value: curveData.yLabel, angle: -90, position: "insideLeft" }}
+                    />
                     <Tooltip />
                     <Legend />
                     <Line

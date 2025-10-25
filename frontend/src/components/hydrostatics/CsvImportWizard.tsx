@@ -135,7 +135,8 @@ export function CsvImportWizard({
               Import Hull Geometry from CSV
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Step {step} of 3: {step === 1 ? "Select File" : step === 2 ? "Review & Import" : "Complete"}
+              Step {step} of 3:{" "}
+              {step === 1 ? "Select File" : step === 2 ? "Review & Import" : "Complete"}
             </p>
           </div>
 
@@ -185,9 +186,13 @@ export function CsvImportWizard({
                   />
                 </svg>
                 <p className="mt-2 text-sm text-gray-600">
-                  {isDragActive ? "Drop the CSV file here" : "Drag & drop CSV file here, or click to select"}
+                  {isDragActive
+                    ? "Drop the CSV file here"
+                    : "Drag & drop CSV file here, or click to select"}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">Supports combined format or offsets-only format</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Supports combined format or offsets-only format
+                </p>
               </div>
 
               {file && (
@@ -211,7 +216,8 @@ export function CsvImportWizard({
                         <p className="text-sm font-medium text-gray-900">{file.name}</p>
                         <p className="text-xs text-gray-500">
                           {(file.size / 1024).toFixed(2)} KB
-                          {format && ` • ${format === "combined" ? "Combined format" : "Offsets only"}`}
+                          {format &&
+                            ` • ${format === "combined" ? "Combined format" : "Offsets only"}`}
                         </p>
                       </div>
                     </div>
@@ -296,7 +302,10 @@ export function CsvImportWizard({
                       {previewData.map((row, idx) => (
                         <tr key={idx}>
                           {Object.values(row).map((value, colIdx) => (
-                            <td key={colIdx} className="px-4 py-2 text-sm text-gray-900 whitespace-nowrap">
+                            <td
+                              key={colIdx}
+                              className="px-4 py-2 text-sm text-gray-900 whitespace-nowrap"
+                            >
                               {value}
                             </td>
                           ))}
@@ -309,11 +318,7 @@ export function CsvImportWizard({
 
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <div className="flex">
-                  <svg
-                    className="h-5 w-5 text-blue-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -325,7 +330,8 @@ export function CsvImportWizard({
                       Format: <strong>{format === "combined" ? "Combined" : "Offsets Only"}</strong>
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
-                      Ready to import. This will {format === "combined" ? "create" : "update"} geometry data.
+                      Ready to import. This will {format === "combined" ? "create" : "update"}{" "}
+                      geometry data.
                     </p>
                   </div>
                 </div>
@@ -368,16 +374,8 @@ export function CsvImportWizard({
               {step === 3 ? "Close" : step === 1 ? "Cancel" : "Back"}
             </button>
             <button
-              onClick={
-                step === 1
-                  ? () => setStep(2)
-                  : step === 2
-                    ? handleImport
-                    : handleComplete
-              }
-              disabled={
-                (step === 1 && (!file || !format)) || (step === 2 && importing)
-              }
+              onClick={step === 1 ? () => setStep(2) : step === 2 ? handleImport : handleComplete}
+              disabled={(step === 1 && (!file || !format)) || (step === 2 && importing)}
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {importing ? "Importing..." : step === 1 ? "Next" : step === 2 ? "Import" : "Done"}
@@ -390,4 +388,3 @@ export function CsvImportWizard({
 }
 
 export default CsvImportWizard;
-

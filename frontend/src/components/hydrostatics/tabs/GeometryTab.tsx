@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { VesselDetails } from "../../../types/hydrostatics";
 import CsvImportWizard from "../CsvImportWizard";
+import OffsetsGridEditor from "../OffsetsGridEditor";
 
 interface GeometryTabProps {
   vesselId: string;
@@ -10,6 +11,7 @@ interface GeometryTabProps {
 export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
   const [activeView, setActiveView] = useState<"grid" | "import">("grid");
   const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
+  const [isGridEditorOpen, setIsGridEditorOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -66,12 +68,33 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
             <p className="mt-1 text-sm text-gray-500">
               {vessel.offsetsCount === 0
                 ? "No geometry defined yet. Import CSV data to get started."
-                : "Interactive grid editor coming soon"}
+                : "View and edit hull offsets in an interactive spreadsheet"}
             </p>
-            <div className="mt-6">
+            <div className="mt-6 flex gap-3 justify-center">
+              {vessel.offsetsCount > 0 && (
+                <button
+                  onClick={() => setIsGridEditorOpen(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <svg
+                    className="-ml-1 mr-2 h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Open Grid Editor
+                </button>
+              )}
               <button
                 onClick={() => setActiveView("import")}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
                 Import from CSV
               </button>
@@ -131,6 +154,16 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
         onClose={() => setIsImportWizardOpen(false)}
         onImportComplete={() => {
           setIsImportWizardOpen(false);
+          window.location.reload(); // Reload to update geometry counts
+        }}
+      />
+
+      {/* Offsets Grid Editor */}
+      <OffsetsGridEditor
+        vesselId={vesselId}
+        isOpen={isGridEditorOpen}
+        onClose={() => {
+          setIsGridEditorOpen(false);
           window.location.reload(); // Reload to update geometry counts
         }}
       />
