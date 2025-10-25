@@ -11,24 +11,16 @@ interface OffsetsGridEditorProps {
   onClose: () => void;
 }
 
+import type { OffsetsGrid, Offset } from "../../types/hydrostatics";
+
 interface GridRow {
   stationIndex: number;
   stationX: number;
   [key: string]: number; // Dynamic waterline columns
 }
 
-interface OffsetData {
-  stations: Array<{ index: number; x: number }>;
-  waterlines: Array<{ index: number; z: number }>;
-  offsets: Array<{
-    stationIndex: number;
-    waterlineIndex: number;
-    halfBreadthY: number;
-  }>;
-}
-
 export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEditorProps) {
-  const [offsetData, setOffsetData] = useState<OffsetData | null>(null);
+  const [offsetData, setOffsetData] = useState<OffsetsGrid | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,18 +50,19 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
 
     const rows: GridRow[] = [];
 
-    for (const station of offsetData.stations) {
+    // Each station is at index i with X position offsetData.stations[i]
+    for (let stationIndex = 0; stationIndex < offsetData.stations.length; stationIndex++) {
       const row: GridRow = {
-        stationIndex: station.index,
-        stationX: station.x,
+        stationIndex,
+        stationX: offsetData.stations[stationIndex],
       };
 
       // Add offset values for each waterline
-      for (const waterline of offsetData.waterlines) {
-        const offset = offsetData.offsets.find(
-          (o) => o.stationIndex === station.index && o.waterlineIndex === waterline.index
-        );
-        row[`wl_${waterline.index}`] = offset?.halfBreadthY ?? 0;
+      for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+        // offsets[stationIndex][waterlineIndex]
+        const halfBreadth =
+          offsetData.offsets[stationIndex]?.[waterlineIndex] ?? 0;
+        row[`wl_${waterlineIndex}`] = halfBreadth;
       }
 
       rows.push(row);
@@ -99,10 +92,11 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
     ];
 
     // Add columns for each waterline
-    for (const waterline of offsetData.waterlines) {
+    for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+      const waterlineZ = offsetData.waterlines[waterlineIndex];
       cols.push({
-        field: `wl_${waterline.index}`,
-        headerName: `WL ${waterline.index} (z=${waterline.z.toFixed(2)}m)`,
+        field: `wl_${waterlineIndex}`,
+        headerName: `WL ${waterlineIndex} (z=${waterlineZ.toFixed(2)}m)`,
         width: 150,
         editable: true,
         valueParser: (params) => {
@@ -127,20 +121,20 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
       setSaving(true);
       setError(null);
 
-      // Convert grid data back to offsets
-      const updatedOffsets = [];
+      // Convert grid data back to offsets array
+      const updatedOffsets: Offset[] = [];
       for (const row of rowData) {
-        for (const waterline of offsetData.waterlines) {
-          const halfBreadthY = row[`wl_${waterline.index}`];
+        for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+          const halfBreadthY = row[`wl_${waterlineIndex}`];
           updatedOffsets.push({
             stationIndex: row.stationIndex,
-            waterlineIndex: waterline.index,
+            waterlineIndex,
             halfBreadthY,
           });
         }
       }
 
-      await geometryApi.importOffsets(vesselId, updatedOffsets);
+      await geometryApi.bulkImportOffsets(vesselId, updatedOffsets);
       alert("Offsets saved successfully!");
       onClose();
     } catch (err) {

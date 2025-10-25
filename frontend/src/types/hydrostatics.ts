@@ -44,9 +44,9 @@ export interface Offset {
 }
 
 export interface OffsetsGrid {
-  stations: number[];
-  waterlines: number[];
-  offsets: number[][];
+  stations: number[]; // Station X positions
+  waterlines: number[]; // Waterline Z positions
+  offsets: number[][]; // 2D grid [stationIndex][waterlineIndex]
 }
 
 export interface Loadcase {
