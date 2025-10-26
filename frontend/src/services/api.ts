@@ -41,7 +41,7 @@ const createApiClient = (): AxiosInstance => {
       }
       // Add client version header for tracking
       config.headers["X-Client-Version"] = "1.0.0";
-      
+
       // Add preferred units header for backend conversion
       // Import settingsStore dynamically to avoid circular dependency
       const { settingsStore } = await import("../stores/SettingsStore");

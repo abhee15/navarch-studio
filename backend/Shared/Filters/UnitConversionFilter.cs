@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Logging;
 using Shared.Services;
 using System.Text.Json;
 
@@ -30,7 +31,7 @@ public class UnitConversionFilter : IAsyncActionFilter
         {
             // Get preferred units from header
             var preferredUnits = context.HttpContext.Request.Headers["X-Preferred-Units"].FirstOrDefault();
-            
+
             if (string.IsNullOrEmpty(preferredUnits))
             {
                 // No preference specified, return as-is
@@ -41,7 +42,7 @@ public class UnitConversionFilter : IAsyncActionFilter
             {
                 // Get the source unit system from the response object
                 var sourceUnits = GetSourceUnits(objectResult.Value);
-                
+
                 if (sourceUnits == null)
                 {
                     _logger.LogDebug("No source unit system found in response, skipping conversion");
@@ -59,15 +60,15 @@ public class UnitConversionFilter : IAsyncActionFilter
 
                 // Convert the response
                 _logger.LogDebug("Converting response from {SourceUnits} to {PreferredUnits}", sourceUnits, preferredUnits);
-                
+
                 // For records/immutable DTOs, we need to serialize and deserialize with converted values
                 var json = JsonSerializer.Serialize(objectResult.Value);
                 var converted = JsonSerializer.Deserialize(json, objectResult.Value.GetType());
-                
+
                 if (converted != null)
                 {
                     _conversionService.ConvertDto(converted, sourceUnits, preferredUnits);
-                    
+
                     // Update the result
                     resultContext.Result = new ObjectResult(converted)
                     {
@@ -90,7 +91,7 @@ public class UnitConversionFilter : IAsyncActionFilter
 
         // Try to get UnitsSystem property using reflection
         var type = obj.GetType();
-        
+
         // Handle collections - get units from first item
         if (obj is System.Collections.IEnumerable enumerable and not string)
         {

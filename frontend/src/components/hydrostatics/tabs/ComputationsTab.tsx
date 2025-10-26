@@ -312,18 +312,10 @@ export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => 
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatNumber(result.dispWeight, 0)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(result.kBz)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(result.lCBx)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(result.bMt)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(result.gMt)}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.kBz)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.lCBx)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.bMt)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{formatNumber(result.gMt)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatNumber(result.awp, 1)}
                     </td>

@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using Shared.Attributes;
 
 namespace Shared.Services;
@@ -17,8 +18,8 @@ public class UnitConversionService : IUnitConversionService
 
     public T ConvertDto<T>(T dto, string fromUnits, string toUnits) where T : class
     {
-        if (dto == null) return dto;
-        
+        if (dto == null) return dto!;
+
         // If same unit system, no conversion needed
         if (string.Equals(fromUnits, toUnits, StringComparison.OrdinalIgnoreCase))
         {
@@ -94,10 +95,14 @@ public class UnitConversionService : IUnitConversionService
                     var converted = ConvertValue((double)decimalValue, attribute.QuantityType, fromUnits, toUnits);
                     prop.SetValue(obj, (decimal)converted);
                 }
-                else if (value is double? nullableDouble && nullableDouble.HasValue)
+                else if (prop.PropertyType == typeof(double?) && value != null)
                 {
-                    var converted = ConvertValue(nullableDouble.Value, attribute.QuantityType, fromUnits, toUnits);
-                    prop.SetValue(obj, (double?)converted);
+                    var nullableDouble = (double?)value;
+                    if (nullableDouble.HasValue)
+                    {
+                        var converted = ConvertValue(nullableDouble.Value, attribute.QuantityType, fromUnits, toUnits);
+                        prop.SetValue(obj, (double?)converted);
+                    }
                 }
             }
             else if (!prop.PropertyType.IsPrimitive && prop.PropertyType != typeof(string) && prop.PropertyType != typeof(Guid))

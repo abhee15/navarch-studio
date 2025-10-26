@@ -99,7 +99,6 @@ export const DashboardPage: React.FC = observer(() => {
             </Card>
           </div>
         </div>
-
       </main>
 
       {/* Footer */}
