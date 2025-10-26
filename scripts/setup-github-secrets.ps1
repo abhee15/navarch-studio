@@ -61,7 +61,8 @@ function Set-GitHubSecret {
     if ([string]::IsNullOrWhiteSpace($Value)) {
         if ($Required) {
             Write-Host "⚠️  $Name - EMPTY (required!)" -ForegroundColor Yellow
-        } else {
+        }
+        else {
             Write-Host "⏭️  $Name - SKIPPED (optional)" -ForegroundColor Gray
         }
         return $false
@@ -79,15 +80,18 @@ function Set-GitHubSecret {
         if ($LASTEXITCODE -eq 0) {
             if ($exists) {
                 Write-Host "✓  $Name - UPDATED" -ForegroundColor Cyan
-            } else {
+            }
+            else {
                 Write-Host "✓  $Name - SET" -ForegroundColor Green
             }
             return $true
-        } else {
+        }
+        else {
             Write-Host "❌ $Name - FAILED" -ForegroundColor Red
             return $false
         }
-    } catch {
+    }
+    catch {
         Write-Host "❌ $Name - ERROR: $_" -ForegroundColor Red
         return $false
     }
@@ -146,7 +150,8 @@ try {
     
     Write-Host "✓ Terraform outputs loaded`n" -ForegroundColor Green
     
-} catch {
+}
+catch {
     Write-Host "❌ Failed to read Terraform outputs: $_" -ForegroundColor Red
     Pop-Location
     exit 1

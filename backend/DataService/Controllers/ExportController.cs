@@ -185,15 +185,15 @@ public class ExportController : ControllerBase
     /// </summary>
     [HttpPost("pdf")]
     [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public async Task<IActionResult> ExportToPdf(
+    public Task<IActionResult> ExportToPdf(
         Guid vesselId,
         [FromBody] ExportReportRequest request,
         CancellationToken cancellationToken)
     {
-        return StatusCode(StatusCodes.Status501NotImplemented, new
+        return Task.FromResult<IActionResult>(StatusCode(StatusCodes.Status501NotImplemented, new
         {
             error = "PDF export is planned for a future release. Please use CSV or JSON export for now."
-        });
+        }));
     }
 
     /// <summary>
@@ -201,15 +201,15 @@ public class ExportController : ControllerBase
     /// </summary>
     [HttpPost("excel")]
     [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public async Task<IActionResult> ExportToExcel(
+    public Task<IActionResult> ExportToExcel(
         Guid vesselId,
         [FromBody] ExportReportRequest request,
         CancellationToken cancellationToken)
     {
-        return StatusCode(StatusCodes.Status501NotImplemented, new
+        return Task.FromResult<IActionResult>(StatusCode(StatusCodes.Status501NotImplemented, new
         {
             error = "Excel export is planned for a future release. Please use CSV or JSON export for now."
-        });
+        }));
     }
 
     private async Task<List<Shared.DTOs.CurveDto>> GenerateCurvesAsync(
