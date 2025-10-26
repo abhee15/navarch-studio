@@ -62,6 +62,34 @@ public class UsersController : ControllerBase
 
         return StatusCode((int)response.StatusCode, responseContent);
     }
+
+    /// <summary>
+    /// Get user settings
+    /// </summary>
+    [HttpGet("settings")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GetSettings()
+    {
+        // For now, return default settings
+        // TODO: Store and retrieve user preferences from database
+        return Ok(new
+        {
+            preferredUnits = "SI"
+        });
+    }
+
+    /// <summary>
+    /// Update user settings
+    /// </summary>
+    [HttpPut("settings")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult UpdateSettings([FromBody] JsonElement settings)
+    {
+        // For now, just echo back the settings
+        // TODO: Store user preferences in database
+        _logger.LogInformation("Settings updated: {Settings}", settings);
+        return Ok(settings);
+    }
 }
 
 

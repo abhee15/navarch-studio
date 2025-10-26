@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import { Package, LogOut, Loader2, ShoppingBag, Settings } from "lucide-react";
+import { LogOut, ShoppingBag, Settings } from "lucide-react";
 import { useStore } from "../stores";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -9,14 +9,13 @@ import { UserSettingsDialog } from "../components/UserSettingsDialog";
 import { settingsStore } from "../stores/SettingsStore";
 
 export const DashboardPage: React.FC = observer(() => {
-  const { authStore, dataStore } = useStore();
+  const { authStore } = useStore();
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    dataStore.fetchProducts();
     settingsStore.loadSettings();
-  }, [dataStore]);
+  }, []);
 
   const handleLogout = async () => {
     await authStore.logout();
@@ -101,74 +100,6 @@ export const DashboardPage: React.FC = observer(() => {
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Products</h2>
-          <p className="text-muted-foreground">Browse our collection of products</p>
-        </div>
-
-        {dataStore.loading ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading products...</p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : dataStore.error ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <div className="rounded-full bg-destructive/10 p-3 w-fit mx-auto mb-4">
-                  <Package className="h-8 w-8 text-destructive" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Failed to load products</h3>
-                <p className="text-muted-foreground mb-4">{dataStore.error}</p>
-                <Button onClick={() => dataStore.fetchProducts()} variant="outline">
-                  Try again
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : dataStore.products.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <div className="rounded-full bg-muted p-3 w-fit mx-auto mb-4">
-                  <Package className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">No products yet</h3>
-                <p className="text-muted-foreground">
-                  Products will appear here once they are added
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dataStore.products.map((product) => (
-              <Card key={product.id} className="hover:shadow-lg transition-shadow duration-200">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="rounded-lg bg-primary/10 p-2 mb-2">
-                      <Package className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">${product.price.toFixed(2)}</p>
-                    </div>
-                  </div>
-                  <CardTitle className="line-clamp-1">{product.name}</CardTitle>
-                  <CardDescription className="line-clamp-2">{product.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" variant="outline">
-                    View Details
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
       </main>
 
       {/* Footer */}

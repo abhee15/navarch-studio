@@ -37,6 +37,24 @@ public class HttpClientService : IHttpClientService
         return await _httpClient.PostAsync(url, content, cancellationToken);
     }
 
+    public async Task<HttpResponseMessage> PutAsync(string service, string endpoint, HttpContent content, CancellationToken cancellationToken)
+    {
+        var baseUrl = GetServiceBaseUrl(service);
+        var url = $"{baseUrl}/{endpoint.TrimStart('/')}";
+
+        _logger.LogInformation("Forwarding PUT request to {Url}", url);
+        return await _httpClient.PutAsync(url, content, cancellationToken);
+    }
+
+    public async Task<HttpResponseMessage> DeleteAsync(string service, string endpoint, CancellationToken cancellationToken)
+    {
+        var baseUrl = GetServiceBaseUrl(service);
+        var url = $"{baseUrl}/{endpoint.TrimStart('/')}";
+
+        _logger.LogInformation("Forwarding DELETE request to {Url}", url);
+        return await _httpClient.DeleteAsync(url, cancellationToken);
+    }
+
     private string GetServiceBaseUrl(string service)
     {
         return service.ToLower() switch

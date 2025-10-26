@@ -71,7 +71,6 @@ try
     builder.Services.AddHttpClient();
 
     // Services
-    builder.Services.AddScoped<IProductService, ProductService>();
     builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
 
     // Hydrostatics Services
@@ -87,7 +86,8 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IExportService, DataService.Services.Hydrostatics.ExportService>();
 
     // FluentValidation - Register all validators from Shared assembly
-    builder.Services.AddValidatorsFromAssemblyContaining<Shared.Validators.CreateProductDtoValidator>();
+    // Note: Add validators from Shared assembly as needed
+    // builder.Services.AddValidatorsFromAssembly(typeof(Shared.Models.Vessel).Assembly);
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();

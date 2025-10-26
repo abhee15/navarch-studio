@@ -98,7 +98,7 @@ User Browser
                     ├─→ /api/v1/users/* → Identity Service
                     │       └─→ RDS (identity schema)
                     │
-                    └─→ /api/v1/products/* → Data Service
+                    └─→ /api/v1/hydrostatics/* → Data Service
                             └─→ RDS (data schema)
 ```
 
@@ -120,7 +120,9 @@ User Browser
 - `POST /api/v1/auth/logout` - User logout
 - `GET /api/v1/users` - List users
 - `GET /api/v1/users/{id}` - Get user by ID
+- `GET /api/v1/users/settings` - Get user settings
 - `PUT /api/v1/users/{id}` - Update user
+- `PUT /api/v1/users/settings` - Update user settings
 - `DELETE /api/v1/users/{id}` - Delete user (soft delete)
 
 **Database Schema:**
@@ -149,9 +151,9 @@ identity.users
 **Routing:**
 
 ```
-/api/v1/auth/*     → Identity Service
-/api/v1/users/*    → Identity Service
-/api/v1/products/* → Data Service
+/api/v1/auth/*          → Identity Service
+/api/v1/users/*         → Identity Service
+/api/v1/hydrostatics/*  → Data Service
 ```
 
 **Features:**
@@ -170,23 +172,64 @@ identity.users
 
 **Endpoints:**
 
-- `GET /api/v1/products` - List products
-- `GET /api/v1/products/{id}` - Get product by ID
-- `POST /api/v1/products` - Create product
-- `PUT /api/v1/products/{id}` - Update product
-- `DELETE /api/v1/products/{id}` - Delete product (soft delete)
+**Vessels:**
+- `POST /api/v1/hydrostatics/vessels` - Create vessel
+- `GET /api/v1/hydrostatics/vessels/{id}` - Get vessel details
+- `GET /api/v1/hydrostatics/vessels` - List vessels
+- `PUT /api/v1/hydrostatics/vessels/{id}` - Update vessel
+- `DELETE /api/v1/hydrostatics/vessels/{id}` - Delete vessel (soft delete)
+
+**Geometry:**
+- `POST /api/v1/hydrostatics/vessels/{id}/stations` - Import stations
+- `POST /api/v1/hydrostatics/vessels/{id}/waterlines` - Import waterlines
+- `POST /api/v1/hydrostatics/vessels/{id}/offsets:bulk` - Import offsets
+- `POST /api/v1/hydrostatics/vessels/{id}/geometry:import` - Import all geometry
+- `POST /api/v1/hydrostatics/vessels/{id}/offsets:upload` - Upload CSV
+- `GET /api/v1/hydrostatics/vessels/{id}/offsets` - Get offsets grid
+
+**Loadcases:**
+- `POST /api/v1/hydrostatics/vessels/{id}/loadcases` - Create loadcase
+- `GET /api/v1/hydrostatics/vessels/{id}/loadcases/{lcId}` - Get loadcase
+- `GET /api/v1/hydrostatics/vessels/{id}/loadcases` - List loadcases
+- `PUT /api/v1/hydrostatics/vessels/{id}/loadcases/{lcId}` - Update loadcase
+- `DELETE /api/v1/hydrostatics/vessels/{id}/loadcases/{lcId}` - Delete loadcase
+
+**Hydrostatics Computations:**
+- `POST /api/v1/hydrostatics/vessels/{id}/compute/table` - Compute hydrostatic table
+- `POST /api/v1/hydrostatics/vessels/{id}/compute/single` - Compute at single draft
+
+**Curves:**
+- `GET /api/v1/hydrostatics/vessels/{id}/curves/types` - Get available curve types
+- `POST /api/v1/hydrostatics/vessels/{id}/curves` - Generate multiple curves
+- `GET /api/v1/hydrostatics/vessels/{id}/curves/bonjean` - Get Bonjean curves
+
+**Export:**
+- `POST /api/v1/hydrostatics/vessels/{id}/export/hydrostatic-table` - Export hydrostatic table
+- `POST /api/v1/hydrostatics/vessels/{id}/export/curves` - Export curves
 
 **Database Schema:**
 
+See [HYDROSTATICS_MODULE.md](HYDROSTATICS_MODULE.md) for detailed schema information.
+
+Main tables:
 ```sql
-data.products
+data.vessels
   - id (uuid)
   - name (string)
   - description (string)
-  - price (decimal)
+  - length_overall (decimal)
+  - breadth (decimal)
+  - depth (decimal)
+  - user_id (uuid)
   - created_at (timestamp)
   - updated_at (timestamp)
   - deleted_at (timestamp, nullable)
+
+data.stations, data.waterlines, data.offsets
+  - Hull geometry data for hydrostatic calculations
+
+data.loadcases
+  - Design conditions (drafts, trim, KG, water density)
 ```
 
 ### 4. Shared Library
@@ -234,16 +277,23 @@ data.products
 5. API Gateway returns response to frontend
 ```
 
-### Data Query Flow
+### Hydrostatics Calculation Flow
 
 ```
-1. Frontend requests product list
-2. API Gateway routes to Data Service
+1. Frontend requests vessel list or creates new vessel
+2. API Gateway proxies to Data Service
 3. Data Service:
    - Queries PostgreSQL (data schema)
-   - Applies filters, sorting, pagination
-   - Returns products
-4. Frontend displays products in UI
+   - Returns vessels with geometry data
+4. User imports hull geometry (stations, waterlines, offsets)
+5. User creates loadcase (draft, trim, KG, etc.)
+6. User requests hydrostatic calculations
+7. Data Service:
+   - Validates geometry and loadcase data
+   - Performs numerical integration (Simpson's/Trapezoidal)
+   - Computes hydrostatic properties (displacement, centers, metacenters)
+   - Returns calculation results
+8. Frontend displays results in tables and charts
 ```
 
 ## Infrastructure

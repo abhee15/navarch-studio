@@ -10,8 +10,6 @@ public class DataDbContext : DbContext
     {
     }
 
-    public DbSet<Product> Products => Set<Product>();
-
     // Hydrostatics entities
     public DbSet<Vessel> Vessels => Set<Vessel>();
     public DbSet<Loadcase> Loadcases => Set<Loadcase>();
@@ -28,17 +26,6 @@ public class DataDbContext : DbContext
 
         // Use 'data' schema to separate from other services
         modelBuilder.HasDefaultSchema("data");
-
-        // Product configuration
-        modelBuilder.Entity<Product>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
-
-            // Soft delete support
-            entity.HasQueryFilter(e => e.DeletedAt == null);
-        });
 
         // Vessel configuration
         modelBuilder.Entity<Vessel>(entity =>
@@ -181,20 +168,12 @@ public class DataDbContext : DbContext
     private void UpdateTimestamps()
     {
         var entries = ChangeTracker.Entries()
-            .Where(e => (e.Entity is Product || e.Entity is Vessel)
+            .Where(e => e.Entity is Vessel
                 && (e.State == EntityState.Added || e.State == EntityState.Modified));
 
         foreach (var entry in entries)
         {
-            if (entry.Entity is Product product)
-            {
-                if (entry.State == EntityState.Added)
-                {
-                    product.CreatedAt = DateTime.UtcNow;
-                }
-                product.UpdatedAt = DateTime.UtcNow;
-            }
-            else if (entry.Entity is Vessel vessel)
+            if (entry.Entity is Vessel vessel)
             {
                 if (entry.State == EntityState.Added)
                 {
