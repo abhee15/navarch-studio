@@ -1,35 +1,64 @@
+using Shared.Attributes;
+
 namespace Shared.DTOs;
 
-public record HydroResultDto
+public class HydroResultDto
 {
-    public decimal Draft { get; init; }
-    public decimal? DispVolume { get; init; }
-    public decimal? DispWeight { get; init; }
-    public decimal? KBz { get; init; }
-    public decimal? LCBx { get; init; }
-    public decimal? TCBy { get; init; }
-    public decimal? BMt { get; init; }
-    public decimal? BMl { get; init; }
-    public decimal? GMt { get; init; }
-    public decimal? GMl { get; init; }
-    public decimal? Awp { get; init; }
-    public decimal? Iwp { get; init; }
-    public decimal? Cb { get; init; }
-    public decimal? Cp { get; init; }
-    public decimal? Cm { get; init; }
-    public decimal? Cwp { get; init; }
-    public decimal? TrimAngle { get; init; }
+    [Convertible("Length")]
+    public decimal Draft { get; set; }
+    
+    [Convertible("Volume")]
+    public decimal? DispVolume { get; set; }
+    
+    [Convertible("Mass")]
+    public decimal? DispWeight { get; set; }
+    
+    [Convertible("Length")]
+    public decimal? KBz { get; set; }
+    
+    [Convertible("Length")]
+    public decimal? LCBx { get; set; }
+    
+    [Convertible("Length")]
+    public decimal? TCBy { get; set; }
+    
+    [Convertible("Length")]
+    public decimal? BMt { get; set; }
+    
+    [Convertible("Length")]
+    public decimal? BMl { get; set; }
+    
+    [Convertible("Length")]
+    public decimal? GMt { get; set; }
+    
+    [Convertible("Length")]
+    public decimal? GMl { get; set; }
+    
+    [Convertible("Area")]
+    public decimal? Awp { get; set; }
+    
+    [Convertible("Inertia")]
+    public decimal? Iwp { get; set; }
+    
+    public decimal? Cb { get; set; }  // Dimensionless
+    public decimal? Cp { get; set; }  // Dimensionless
+    public decimal? Cm { get; set; }  // Dimensionless
+    public decimal? Cwp { get; set; } // Dimensionless
+    public decimal? TrimAngle { get; set; }  // Degrees (no conversion needed)
 }
 
-public record HydroTableRequestDto
+public class HydroTableRequestDto
 {
-    public Guid LoadcaseId { get; init; }
-    public List<decimal> Drafts { get; init; } = new();
+    public Guid LoadcaseId { get; set; }
+    
+    [Convertible("Length")]
+    public List<decimal> Drafts { get; set; } = new();
 }
 
-public record HydroTableResponseDto
+public class HydroTableResponseDto
 {
-    public List<HydroResultDto> Results { get; init; } = new();
-    public int ComputationTimeMs { get; init; }
+    public List<HydroResultDto> Results { get; set; } = new();
+    public int ComputationTimeMs { get; set; }
+    public string UnitsSystem { get; set; } = "SI";  // Track source units
 }
 

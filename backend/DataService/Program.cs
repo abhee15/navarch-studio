@@ -44,7 +44,11 @@ try
     });
 
     // Add services to the container.
-    builder.Services.AddControllers();
+    builder.Services.AddControllers(options =>
+    {
+        // Add global filter for automatic unit conversion
+        options.Filters.Add<Shared.Filters.UnitConversionFilter>();
+    });
 
     // API Versioning
     builder.Services.AddApiVersioning(options =>
@@ -72,6 +76,7 @@ try
 
     // Services
     builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
+    builder.Services.AddScoped<IUnitConversionService, UnitConversionService>();
 
     // Hydrostatics Services
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IValidationService, DataService.Services.Hydrostatics.ValidationService>();

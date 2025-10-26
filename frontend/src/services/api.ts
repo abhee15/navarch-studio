@@ -32,7 +32,7 @@ const createApiClient = (): AxiosInstance => {
     timeout: 10000,
   });
 
-  // Request interceptor - Add Cognito JWT token and version tracking
+  // Request interceptor - Add Cognito JWT token, version, and unit preference
   client.interceptors.request.use(async (config) => {
     try {
       const token = await getCognitoToken();
@@ -41,6 +41,11 @@ const createApiClient = (): AxiosInstance => {
       }
       // Add client version header for tracking
       config.headers["X-Client-Version"] = "1.0.0";
+      
+      // Add preferred units header for backend conversion
+      // Import settingsStore dynamically to avoid circular dependency
+      const { settingsStore } = await import("../stores/SettingsStore");
+      config.headers["X-Preferred-Units"] = settingsStore.preferredUnits;
     } catch {
       console.log("No auth token available");
     }

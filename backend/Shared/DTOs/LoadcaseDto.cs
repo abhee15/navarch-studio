@@ -1,12 +1,19 @@
+using Shared.Attributes;
+
 namespace Shared.DTOs;
 
-public record LoadcaseDto
+public class LoadcaseDto
 {
-    public Guid? Id { get; init; }
-    public Guid VesselId { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public decimal Rho { get; init; } = 1025m;
-    public decimal? KG { get; init; }
-    public string? Notes { get; init; }
+    public Guid? Id { get; set; }
+    public Guid VesselId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    
+    [Convertible("Density")]
+    public decimal Rho { get; set; } = 1025m;
+    
+    [Convertible("Length")]
+    public decimal? KG { get; set; }
+    
+    public string? Notes { get; set; }
 }
 

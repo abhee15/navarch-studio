@@ -1,29 +1,15 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { hydrostaticsApi, loadcasesApi, vesselsApi } from "../../../services/hydrostaticsApi";
-import type { HydroResult, Loadcase, VesselDetails } from "../../../types/hydrostatics";
+import { hydrostaticsApi, loadcasesApi } from "../../../services/hydrostaticsApi";
+import type { HydroResult, Loadcase } from "../../../types/hydrostatics";
 import { settingsStore } from "../../../stores/SettingsStore";
-import { unitConverter, type UnitSystemId } from "@navarch/unit-conversion";
-
-// Helper functions for backward compatibility
-const convertLength = (value: number, from: UnitSystemId, to: UnitSystemId) =>
-  unitConverter.convert(value, from, to, "Length");
-const convertMass = (value: number, from: UnitSystemId, to: UnitSystemId) =>
-  unitConverter.convert(value, from, to, "Mass");
-const convertArea = (value: number, from: UnitSystemId, to: UnitSystemId) =>
-  unitConverter.convert(value, from, to, "Area");
-const getLengthUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Length");
-const getMassUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Mass");
-const getAreaUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Area");
-
-type UnitSystem = UnitSystemId;
+import { unitConverter } from "@navarch/unit-conversion";
 
 interface ComputationsTabProps {
   vesselId: string;
 }
 
 export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => {
-  const [vessel, setVessel] = useState<VesselDetails | null>(null);
   const [loadcases, setLoadcases] = useState<Loadcase[]>([]);
   const [selectedLoadcaseId, setSelectedLoadcaseId] = useState<string>("");
   const [minDraft, setMinDraft] = useState<number>(1);
@@ -34,21 +20,6 @@ export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => 
   const [computing, setComputing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [computationTime, setComputationTime] = useState<number | null>(null);
-
-  useEffect(() => {
-    loadVessel();
-    loadLoadcases();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vesselId]);
-
-  const loadVessel = async () => {
-    try {
-      const data = await vesselsApi.get(vesselId);
-      setVessel(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load vessel");
-    }
-  };
 
   const loadLoadcases = async () => {
     try {
@@ -64,6 +35,11 @@ export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => 
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadLoadcases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vesselId]);
 
   const handleCompute = async () => {
     if (minDraft >= maxDraft) {
@@ -95,18 +71,11 @@ export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => 
     }
   };
 
-  // Get unit systems
-  const vesselUnits = (vessel?.unitsSystem as UnitSystem) || "SI";
+  // Backend automatically converts values to user's preferred units
   const displayUnits = settingsStore.preferredUnits;
-
-  // Helper to convert and format values
-  const convertValue = (
-    value: number | undefined | null,
-    conversionFn: (val: number, from: UnitSystem, to: UnitSystem) => number
-  ): number | null => {
-    if (value === null || value === undefined) return null;
-    return conversionFn(value, vesselUnits, displayUnits);
-  };
+  const lengthUnit = unitConverter.getUnitSymbol(displayUnits, "Length");
+  const massUnit = unitConverter.getUnitSymbol(displayUnits, "Mass");
+  const areaUnit = unitConverter.getUnitSymbol(displayUnits, "Area");
 
   const formatNumber = (value: number | undefined | null, decimals: number = 2): string => {
     if (value === null || value === undefined) return "—";
@@ -303,25 +272,25 @@ export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => 
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Draft ({getLengthUnit(displayUnits)})
+                    Draft ({lengthUnit})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    ∆ ({getMassUnit(displayUnits)})
+                    ∆ ({massUnit})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    KB ({getLengthUnit(displayUnits)})
+                    KB ({lengthUnit})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    LCB ({getLengthUnit(displayUnits)})
+                    LCB ({lengthUnit})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    BMt ({getLengthUnit(displayUnits)})
+                    BMt ({lengthUnit})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    GMt ({getLengthUnit(displayUnits)})
+                    GMt ({lengthUnit})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Awp ({getAreaUnit(displayUnits)})
+                    Awp ({areaUnit})
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Cb
@@ -338,25 +307,25 @@ export const ComputationsTab = observer(({ vesselId }: ComputationsTabProps) => 
                 {results.map((result, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-900 font-medium">
-                      {formatNumber(convertValue(result.draft, convertLength))}
+                      {formatNumber(result.draft)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(convertValue(result.dispWeight, convertMass), 0)}
+                      {formatNumber(result.dispWeight, 0)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(convertValue(result.kBz, convertLength))}
+                      {formatNumber(result.kBz)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(convertValue(result.lCBx, convertLength))}
+                      {formatNumber(result.lCBx)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(convertValue(result.bMt, convertLength))}
+                      {formatNumber(result.bMt)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(convertValue(result.gMt, convertLength))}
+                      {formatNumber(result.gMt)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatNumber(convertValue(result.awp, convertArea), 1)}
+                      {formatNumber(result.awp, 1)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatNumber(result.cb, 3)}

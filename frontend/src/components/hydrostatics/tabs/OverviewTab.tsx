@@ -1,14 +1,7 @@
 import { observer } from "mobx-react-lite";
 import type { VesselDetails } from "../../../types/hydrostatics";
 import { settingsStore } from "../../../stores/SettingsStore";
-import { unitConverter, type UnitSystemId } from "@navarch/unit-conversion";
-
-// Helper functions for backward compatibility
-const convertLength = (value: number, from: UnitSystemId, to: UnitSystemId) =>
-  unitConverter.convert(value, from, to, "Length");
-const getLengthUnit = (system: UnitSystemId) => unitConverter.getUnitSymbol(system, "Length");
-
-type UnitSystem = UnitSystemId;
+import { unitConverter } from "@navarch/unit-conversion";
 
 interface OverviewTabProps {
   vessel: VesselDetails;
@@ -20,12 +13,9 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
     return new Date(dateString).toLocaleString();
   };
 
-  const vesselUnits = (vessel.unitsSystem as UnitSystem) || "SI";
+  // Backend automatically converts values to user's preferred units
   const displayUnits = settingsStore.preferredUnits;
-
-  const convertValue = (value: number): number => {
-    return convertLength(value, vesselUnits, displayUnits);
-  };
+  const lengthUnit = unitConverter.getUnitSymbol(displayUnits, "Length");
 
   return (
     <div className="space-y-6">
@@ -46,7 +36,7 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   {vessel.unitsSystem}
                 </span>
-                {vesselUnits !== displayUnits && (
+                {vessel.unitsSystem !== displayUnits && (
                   <span className="ml-2 text-xs text-gray-500">(Displaying in {displayUnits})</span>
                 )}
               </dd>
@@ -73,19 +63,19 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
                 Length Between Perpendiculars (Lpp)
               </dt>
               <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                {convertValue(vessel.lpp).toFixed(2)} {getLengthUnit(displayUnits)}
+                {vessel.lpp.toFixed(2)} {lengthUnit}
               </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Beam (B)</dt>
               <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                {convertValue(vessel.beam).toFixed(2)} {getLengthUnit(displayUnits)}
+                {vessel.beam.toFixed(2)} {lengthUnit}
               </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Design Draft (T)</dt>
               <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                {convertValue(vessel.designDraft).toFixed(2)} {getLengthUnit(displayUnits)}
+                {vessel.designDraft.toFixed(2)} {lengthUnit}
               </dd>
             </div>
           </dl>
