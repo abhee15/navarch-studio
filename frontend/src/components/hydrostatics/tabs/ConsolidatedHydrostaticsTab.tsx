@@ -5,6 +5,7 @@ import type { HydroResult, Loadcase, VesselDetails } from "../../../types/hydros
 import { settingsStore } from "../../../stores/SettingsStore";
 import { getUnitSymbol } from "../../../utils/unitSymbols";
 import { CollapsibleSection } from "../CollapsibleSection";
+import { HullDiagram } from "../HullDiagram";
 import {
   LineChart,
   Line,
@@ -53,6 +54,7 @@ export const ConsolidatedHydrostaticsTab = observer(
     const [selectedCurveType, setSelectedCurveType] = useState<
       "hydrostatic" | "bonjean" | "cross-curves"
     >("hydrostatic");
+    const [highlightedDraft, setHighlightedDraft] = useState<number | null>(null);
 
     const loadLoadcases = async () => {
       try {
@@ -534,7 +536,7 @@ export const ConsolidatedHydrostaticsTab = observer(
                   </div>
                 </div>
 
-                {/* Curves Visualization with Type Selector */}
+                {/* Hull Diagram and Curves Visualization */}
                 <div className="bg-white dark:bg-gray-800 m-3 p-3 rounded border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100">
@@ -555,8 +557,27 @@ export const ConsolidatedHydrostaticsTab = observer(
                     </select>
                   </div>
 
-                  {/* Curve Display Area */}
-                  <div className="bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-2">
+                  {/* Layout: Hull Diagram + Curves */}
+                  <div className="flex gap-3">
+                    {/* Hull Diagram - Left Side */}
+                    <div className="w-1/3 flex-shrink-0">
+                      <HullDiagram
+                        lpp={vessel?.lpp || 0}
+                        beam={vessel?.beam || 0}
+                        draft={currentResult?.draft || vessel?.designDraft || 0}
+                        designDraft={vessel?.designDraft || 0}
+                        kb={currentResult?.kBz}
+                        lcb={currentResult?.lCBx}
+                        kg={kg}
+                        lcg={lcg}
+                        results={results}
+                        highlightedDraft={highlightedDraft}
+                        onDraftHover={setHighlightedDraft}
+                      />
+                    </div>
+
+                    {/* Curve Display Area - Right Side */}
+                    <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-2">
                     {selectedCurveType === "hydrostatic" && (
                       <div>
                         <ResponsiveContainer width="100%" height={300}>
@@ -726,6 +747,7 @@ export const ConsolidatedHydrostaticsTab = observer(
                         </div>
                       </div>
                     )}
+                    </div>
                   </div>
                 </div>
 
@@ -772,7 +794,17 @@ export const ConsolidatedHydrostaticsTab = observer(
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                         {results.map((result, idx) => (
-                          <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <tr
+                            key={idx}
+                            className={`cursor-pointer transition-colors ${
+                              highlightedDraft !== null &&
+                              Math.abs(highlightedDraft - result.draft) < 0.5
+                                ? "bg-blue-100 dark:bg-blue-900"
+                                : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                            }`}
+                            onMouseEnter={() => setHighlightedDraft(result.draft)}
+                            onMouseLeave={() => setHighlightedDraft(null)}
+                          >
                             <td className="px-2 py-1 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
                               {formatNumber(result.draft)}
                             </td>
