@@ -181,35 +181,75 @@ public class ExportController : ControllerBase
     }
 
     /// <summary>
-    /// Exports comprehensive report to PDF (future implementation)
+    /// Exports comprehensive report to PDF
     /// </summary>
     [HttpPost("pdf")]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public Task<IActionResult> ExportToPdf(
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ExportToPdf(
         Guid vesselId,
         [FromBody] ExportReportRequest request,
         CancellationToken cancellationToken)
     {
-        return Task.FromResult<IActionResult>(StatusCode(StatusCodes.Status501NotImplemented, new
+        try
         {
-            error = "PDF export is planned for a future release. Please use CSV or JSON export for now."
-        }));
+            var stopwatch = Stopwatch.StartNew();
+
+            var pdfData = await _exportService.ExportToPdfAsync(
+                vesselId,
+                request.LoadcaseId,
+                request.IncludeCurves,
+                cancellationToken);
+
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "Exported PDF report for vessel {VesselId} ({Size} bytes, {ElapsedMs}ms)",
+                vesselId, pdfData.Length, stopwatch.ElapsedMilliseconds);
+
+            return File(pdfData, "application/pdf", $"hydrostatics_{vesselId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.pdf");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting PDF report for vessel {VesselId}", vesselId);
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     /// <summary>
-    /// Exports comprehensive report to Excel (future implementation)
+    /// Exports comprehensive report to Excel
     /// </summary>
     [HttpPost("excel")]
-    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public Task<IActionResult> ExportToExcel(
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ExportToExcel(
         Guid vesselId,
         [FromBody] ExportReportRequest request,
         CancellationToken cancellationToken)
     {
-        return Task.FromResult<IActionResult>(StatusCode(StatusCodes.Status501NotImplemented, new
+        try
         {
-            error = "Excel export is planned for a future release. Please use CSV or JSON export for now."
-        }));
+            var stopwatch = Stopwatch.StartNew();
+
+            var excelData = await _exportService.ExportToExcelAsync(
+                vesselId,
+                request.LoadcaseId,
+                request.IncludeCurves,
+                cancellationToken);
+
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "Exported Excel report for vessel {VesselId} ({Size} bytes, {ElapsedMs}ms)",
+                vesselId, excelData.Length, stopwatch.ElapsedMilliseconds);
+
+            return File(excelData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"hydrostatics_{vesselId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting Excel report for vessel {VesselId}", vesselId);
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     private async Task<List<Shared.DTOs.CurveDto>> GenerateCurvesAsync(
