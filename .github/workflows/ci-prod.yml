@@ -47,7 +47,7 @@ jobs:
         id: build-identity
         run: |
           IMAGE_TAG="${{ github.event.inputs.version }}"
-          docker build -f backend/IdentityService/Dockerfile -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:prod ./backend
+          docker build -f backend/IdentityService/Dockerfile -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:prod .
           docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:prod
           echo "image=${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -56,7 +56,7 @@ jobs:
         id: build-gateway
         run: |
           IMAGE_TAG="${{ github.event.inputs.version }}"
-          docker build -f backend/ApiGateway/Dockerfile -t ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_API_GATEWAY_URL }}:prod ./backend
+          docker build -f backend/ApiGateway/Dockerfile -t ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_API_GATEWAY_URL }}:prod .
           docker push ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_API_GATEWAY_URL }}:prod
           echo "image=${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -65,7 +65,8 @@ jobs:
         id: build-data
         run: |
           IMAGE_TAG="${{ github.event.inputs.version }}"
-          docker build -f backend/DataService/Dockerfile -t ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_DATA_SERVICE_URL }}:prod ./backend
+          docker build -f backend/DataService/Dockerfile -t ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_DATA_SERVICE_URL }}:prod .
+          docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:prod
           echo "image=${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
