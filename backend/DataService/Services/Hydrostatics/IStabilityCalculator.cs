@@ -51,3 +51,6 @@ public interface IStabilityCalculator
     List<StabilityMethodDto> GetAvailableMethods();
 }
 
+
+
+

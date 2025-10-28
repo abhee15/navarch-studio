@@ -173,3 +173,6 @@ public record StabilityCriteriaCheckResponse
     public StabilityCriteriaResultDto Criteria { get; init; } = new();
 }
 
+
+
+

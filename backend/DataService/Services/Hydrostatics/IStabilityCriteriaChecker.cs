@@ -39,3 +39,6 @@ public interface IStabilityCriteriaChecker
     decimal InterpolateGZ(List<StabilityPointDto> points, decimal angle);
 }
 
+
+
+

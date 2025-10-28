@@ -188,7 +188,7 @@ try
 
                 // In production/staging, apply migrations automatically
                 // In development (local), just warn
-                if (!builder.Environment.IsDevelopment())
+                if (!app.Environment.IsDevelopment())
                 {
                     logger.LogInformation("Applying pending migrations...");
                     await dbContext.Database.MigrateAsync();

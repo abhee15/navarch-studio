@@ -259,7 +259,7 @@ try
 
                 // In production, apply migrations automatically
                 // In development, just warn
-                if (!builder.Environment.IsDevelopment())
+                if (!app.Environment.IsDevelopment())
                 {
                     logger.LogInformation("Applying pending migrations...");
                     await dbContext.Database.MigrateAsync();

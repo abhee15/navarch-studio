@@ -94,4 +94,3 @@ public static class BargeGZReference
         return (20m, 5m, 10.0m); // High KG (10m > KMT 9.17m) → GMT = -0.83m (unstable)
     }
 }
-
