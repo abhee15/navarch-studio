@@ -423,7 +423,17 @@ jobs:
           else
             echo "has_migrations=false" >> $GITHUB_OUTPUT
             echo "⚠️ No Flyway migrations found. Skipping migration step."
-            echo "💡 Note: This project uses EF Core migrations. Services will need to run migrations on first startup."
+            echo ""
+            echo "💡 Note: This project uses EF Core migrations for DataService."
+            echo "✅ Migrations are applied AUTOMATICALLY when services start:"
+            echo "   - DataService checks for pending migrations at startup"
+            echo "   - Applies them automatically in production/staging"
+            echo "   - Logs migration status to CloudWatch"
+            echo "   - Service health check verifies successful migration"
+            echo ""
+            echo "📋 To verify migrations after deployment:"
+            echo "   aws logs tail /aws/apprunner/navarch-studio-dev-data-service --since 5m --region us-east-1"
+            echo "   Look for: '✅ Migrations applied successfully' or '✅ Database schema is up to date'"
           fi
 
       - name: Run database migrations

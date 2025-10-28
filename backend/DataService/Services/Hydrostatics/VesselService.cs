@@ -72,26 +72,42 @@ public class VesselService : IVesselService
 
     public async Task<VesselDetailsDto?> GetVesselDetailsAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        // First, get the vessel with basic properties
         var vessel = await _context.Vessels
             .Where(v => v.Id == id)
-            .Select(v => new VesselDetailsDto
-            {
-                Id = v.Id,
-                Name = v.Name,
-                Description = v.Description,
-                Lpp = v.Lpp,  // Stored in SI, filter will convert to user's preference
-                Beam = v.Beam,
-                DesignDraft = v.DesignDraft,
-                Units = "SI",  // Data comes from DB in SI
-                StationsCount = v.Stations.Count,
-                WaterlinesCount = v.Waterlines.Count,
-                OffsetsCount = v.Offsets.Count,
-                CreatedAt = v.CreatedAt,
-                UpdatedAt = v.UpdatedAt
-            })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return vessel;
+        if (vessel == null)
+        {
+            return null;
+        }
+
+        // Get counts using separate efficient queries
+        // EF Core will translate these to SQL COUNT queries
+        var stationsCount = await _context.Stations
+            .CountAsync(s => s.VesselId == id, cancellationToken);
+
+        var waterlinesCount = await _context.Waterlines
+            .CountAsync(w => w.VesselId == id, cancellationToken);
+
+        var offsetsCount = await _context.Offsets
+            .CountAsync(o => o.VesselId == id, cancellationToken);
+
+        return new VesselDetailsDto
+        {
+            Id = vessel.Id,
+            Name = vessel.Name,
+            Description = vessel.Description,
+            Lpp = vessel.Lpp,  // Stored in SI, filter will convert to user's preference
+            Beam = vessel.Beam,
+            DesignDraft = vessel.DesignDraft,
+            Units = "SI",  // Data comes from DB in SI
+            StationsCount = stationsCount,
+            WaterlinesCount = waterlinesCount,
+            OffsetsCount = offsetsCount,
+            CreatedAt = vessel.CreatedAt,
+            UpdatedAt = vessel.UpdatedAt
+        };
     }
 
     public async Task<List<Vessel>> ListVesselsAsync(Guid userId, CancellationToken cancellationToken = default)

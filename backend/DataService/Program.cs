@@ -73,8 +73,27 @@ try
 
     // Database - Use snake_case naming convention for PostgreSQL
     builder.Services.AddDbContext<DataDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-            .UseSnakeCaseNamingConvention());
+    {
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+        options.UseNpgsql(connectionString, npgsqlOptions =>
+        {
+            // Set command timeout to 60 seconds (default is 30)
+            npgsqlOptions.CommandTimeout(60);
+
+            // Enable retry on failure for transient errors
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null);
+
+            // Use connection pooling (default, but explicit for clarity)
+            npgsqlOptions.MaxBatchSize(100);
+        })
+        .UseSnakeCaseNamingConvention()
+        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+        .EnableDetailedErrors(builder.Environment.IsDevelopment());
+    });
 
     // Memory Cache for JWT key caching
     builder.Services.AddMemoryCache();
@@ -213,6 +232,55 @@ try
     });
 
     var app = builder.Build();
+
+    // Verify database connectivity and migrations at startup
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<DataDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        try
+        {
+            // Check if database is accessible
+            await dbContext.Database.CanConnectAsync();
+            logger.LogInformation("✅ Database connection successful");
+
+            // Get pending migrations
+            var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+            var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
+
+            logger.LogInformation("Applied migrations: {Count}", appliedMigrations.Count());
+            logger.LogInformation("Pending migrations: {Count}", pendingMigrations.Count());
+
+            if (pendingMigrations.Any())
+            {
+                logger.LogWarning("⚠️ Database has pending migrations: {Migrations}",
+                    string.Join(", ", pendingMigrations));
+
+                // In production, apply migrations automatically
+                // In development, just warn
+                if (!builder.Environment.IsDevelopment())
+                {
+                    logger.LogInformation("Applying pending migrations...");
+                    await dbContext.Database.MigrateAsync();
+                    logger.LogInformation("✅ Migrations applied successfully");
+                }
+                else
+                {
+                    logger.LogWarning("⚠️ Running with pending migrations. Run 'dotnet ef database update' to apply them.");
+                }
+            }
+            else
+            {
+                logger.LogInformation("✅ Database schema is up to date");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "❌ Failed to connect to database or check migrations");
+            // Don't throw - let the app start and health checks will catch the issue
+        }
+    }
 
     // Add Correlation ID middleware (FIRST - so all logs have correlation ID)
     app.UseMiddleware<CorrelationIdMiddleware>();

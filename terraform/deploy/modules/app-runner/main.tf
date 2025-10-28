@@ -119,6 +119,8 @@ resource "aws_apprunner_service" "identity_service" {
     instance_role_arn = aws_iam_role.app_runner_instance.arn
   }
 
+  # Identity Service uses VPC egress to access RDS database in private subnet
+  # Does not need internet access, so VPC connector is sufficient
   network_configuration {
     egress_configuration {
       egress_type       = "VPC"
@@ -176,6 +178,8 @@ resource "aws_apprunner_service" "data_service" {
     instance_role_arn = aws_iam_role.app_runner_instance.arn
   }
 
+  # Data Service uses VPC egress to access RDS database in private subnet
+  # Does not need internet access, so VPC connector is sufficient
   network_configuration {
     egress_configuration {
       egress_type       = "VPC"
@@ -239,10 +243,12 @@ resource "aws_apprunner_service" "api_gateway" {
     instance_role_arn = aws_iam_role.app_runner_instance.arn
   }
 
+  # API Gateway uses DEFAULT egress (public internet) to reach AWS Cognito for JWT validation
+  # This avoids the need for an expensive NAT Gateway while allowing Cognito access
+  # Service-to-service calls use public HTTPS URLs (no VPC needed)
   network_configuration {
     egress_configuration {
-      egress_type       = "VPC"
-      vpc_connector_arn = aws_apprunner_vpc_connector.main.arn
+      egress_type = "DEFAULT"
     }
   }
 

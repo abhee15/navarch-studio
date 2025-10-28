@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using DataService.Services.Hydrostatics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
 
 namespace DataService.Controllers;
@@ -37,11 +38,18 @@ public class VesselsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("Creating vessel: {VesselName}", vesselDto.Name);
+
             // TODO: Get actual user ID from auth context
             var userId = Guid.Parse("00000000-0000-0000-0000-000000000001"); // Placeholder
 
+            var startTime = DateTime.UtcNow;
             var vessel = await _vesselService.CreateVesselAsync(vesselDto, userId, cancellationToken);
+            _logger.LogInformation("Vessel created in {Elapsed}ms", (DateTime.UtcNow - startTime).TotalMilliseconds);
+
+            startTime = DateTime.UtcNow;
             var details = await _vesselService.GetVesselDetailsAsync(vessel.Id, cancellationToken);
+            _logger.LogInformation("Vessel details fetched in {Elapsed}ms", (DateTime.UtcNow - startTime).TotalMilliseconds);
 
             return CreatedAtAction(nameof(GetVessel), new { id = vessel.Id }, details);
         }
@@ -49,6 +57,20 @@ public class VesselsController : ControllerBase
         {
             _logger.LogWarning(ex, "Validation error creating vessel");
             return BadRequest(new { error = ex.Message });
+        }
+        catch (Npgsql.NpgsqlException ex)
+        {
+            _logger.LogError(ex, "Database error creating vessel: {Message}", ex.Message);
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { error = "Database error occurred", details = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database update error creating vessel: {Message}", ex.Message);
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { error = "Failed to save vessel to database", details = ex.InnerException?.Message ?? ex.Message });
         }
         catch (Exception ex)
         {
