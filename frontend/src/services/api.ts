@@ -58,10 +58,15 @@ const createApiClient = (): AxiosInstance => {
 
   // Request interceptor - Add JWT token, version, and unit preference
   client.interceptors.request.use(async (config) => {
+    console.log(`[API] Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${config.url}`);
+    
     try {
       const token = await getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log("[API] Added auth token to request");
+      } else {
+        console.log("[API] No auth token available");
       }
       // Add client version header for tracking
       config.headers["X-Client-Version"] = "1.0.0";
@@ -73,26 +78,56 @@ const createApiClient = (): AxiosInstance => {
           // Import settingsStore dynamically to avoid circular dependency
           const { settingsStore } = await import("../stores/SettingsStore");
           config.headers["X-Preferred-Units"] = settingsStore.preferredUnits;
-          console.debug("Request with units:", settingsStore.preferredUnits);
+          console.debug("[API] Request with units:", settingsStore.preferredUnits);
         } catch {
           // If settingsStore is not available yet, use default
           config.headers["X-Preferred-Units"] = "SI";
+          console.debug("[API] Using default units: SI");
         }
       } else {
         // For settings endpoint, always use default to avoid circular dependency
         config.headers["X-Preferred-Units"] = "SI";
+        console.log("[API] Settings endpoint - using default units");
       }
     } catch (error) {
-      console.log("No auth token available", error);
+      console.log("[API] Error setting up request headers:", error);
     }
+    
+    console.log("[API] Request config:", {
+      url: config.url,
+      method: config.method,
+      baseURL: config.baseURL,
+      headers: {
+        ...config.headers,
+        Authorization: config.headers.Authorization ? "Bearer ***" : undefined,
+      },
+    });
+    
     return config;
   });
 
-  // Response interceptor - Handle 401 errors
+  // Response interceptor - Handle 401 errors and log responses
   client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      console.log(`[API] Response received from ${response.config.url}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+      });
+      return response;
+    },
     (error) => {
+      console.error("[API] Request failed:", {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      });
+      
       if (error.response?.status === 401) {
+        console.log("[API] Unauthorized - redirecting to login");
         // Clear session and redirect to login based on auth mode
         const authMode = getAuthMode();
         if (authMode === "local") {
