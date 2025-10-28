@@ -45,10 +45,10 @@ public class HydroCalculatorTests : IDisposable
         var expectedVolume = 100m * 20m * 5m; // 10,000 m³
         var expectedDisplacement = expectedVolume * rho; // 10,250,000 kg
 
-        Assert.True(Math.Abs(result.DispVolume - expectedVolume) / expectedVolume < 0.005m,
+        Assert.True(Math.Abs((result.DispVolume ?? 0) - expectedVolume) / expectedVolume < 0.005m,
             $"Volume error: Expected {expectedVolume}, got {result.DispVolume}");
 
-        Assert.True(Math.Abs(result.DispWeight - expectedDisplacement) / expectedDisplacement < 0.005m,
+        Assert.True(Math.Abs((result.DispWeight ?? 0) - expectedDisplacement) / expectedDisplacement < 0.005m,
             $"Displacement error: Expected {expectedDisplacement}, got {result.DispWeight}");
     }
 
@@ -64,7 +64,7 @@ public class HydroCalculatorTests : IDisposable
         // Assert: KB for rectangular barge = T/2 = 2.5m
         var expectedKB = 2.5m;
 
-        Assert.True(Math.Abs(result.KBz - expectedKB) < 0.01m,
+        Assert.True(Math.Abs((result.KBz ?? 0) - expectedKB) < 0.01m,
             $"KB error: Expected {expectedKB}, got {result.KBz}");
     }
 
@@ -80,8 +80,8 @@ public class HydroCalculatorTests : IDisposable
         // Assert: BM_t = (B²/12) / T = (20²/12) / 5 = 400/12/5 ≈ 6.667m
         var expectedBMt = (20m * 20m / 12m) / 5m; // 6.667m
 
-        Assert.True(Math.Abs(result.BMt - expectedBMt) / expectedBMt < 0.05m,
-            $"BMt error: Expected {expectedBMt}, got {result.BMt}. Error: {Math.Abs(result.BMt - expectedBMt) / expectedBMt * 100:F2}%");
+        Assert.True(Math.Abs((result.BMt ?? 0) - expectedBMt) / expectedBMt < 0.05m,
+            $"BMt error: Expected {expectedBMt}, got {result.BMt}. Error: {Math.Abs((result.BMt ?? 0) - expectedBMt) / expectedBMt * 100:F2}%");
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class HydroCalculatorTests : IDisposable
         // Assert: LCB should be at midship (50m)
         var expectedLCB = 50m;
 
-        Assert.True(Math.Abs(result.LCBx - expectedLCB) < 1m,
+        Assert.True(Math.Abs((result.LCBx ?? 0) - expectedLCB) < 1m,
             $"LCB error: Expected {expectedLCB}, got {result.LCBx}");
     }
 
@@ -110,7 +110,7 @@ public class HydroCalculatorTests : IDisposable
         var result = await _hydroCalculator.ComputeAtDraftAsync(barge.Id, null, draft: 5.0m);
 
         // Assert: Cb = 1.0 for rectangular barge
-        Assert.True(Math.Abs(result.Cb - 1.0m) < 0.01m,
+        Assert.True(Math.Abs((result.Cb ?? 0) - 1.0m) < 0.01m,
             $"Cb error: Expected 1.0, got {result.Cb}");
     }
 

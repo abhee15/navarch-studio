@@ -115,7 +115,7 @@ public class WigleyHullTests : IDisposable
         var computed = await _hydroCalculator.ComputeAtDraftAsync(_vesselId, null, draft);
 
         // Assert - Volume within 2%
-        decimal volumeError = Math.Abs(computed.DispVolume - analytical.Volume) / analytical.Volume;
+        decimal volumeError = Math.Abs((computed.DispVolume ?? 0) - analytical.Volume) / analytical.Volume;
         Assert.True(volumeError < 0.02m,
             $"Volume error {volumeError:P2} exceeds 2% tolerance. " +
             $"Expected: {analytical.Volume:F2}, Got: {computed.DispVolume:F2}");
@@ -135,7 +135,7 @@ public class WigleyHullTests : IDisposable
         var computed = await _hydroCalculator.ComputeAtDraftAsync(_vesselId, null, draft);
 
         // Assert - Cb within 2%
-        decimal cbError = Math.Abs(computed.Cb - analytical.Cb) / analytical.Cb;
+        decimal cbError = Math.Abs((computed.Cb ?? 0) - analytical.Cb) / analytical.Cb;
         Assert.True(cbError < 0.02m,
             $"Block coefficient error {cbError:P2} exceeds 2% tolerance. " +
             $"Expected: {analytical.Cb:F4}, Got: {computed.Cb:F4}");
@@ -155,13 +155,13 @@ public class WigleyHullTests : IDisposable
         var computed = await _hydroCalculator.ComputeAtDraftAsync(_vesselId, null, draft);
 
         // Assert - KB within 2%
-        decimal kbError = Math.Abs(computed.KBz - analytical.KB) / analytical.KB;
+        decimal kbError = Math.Abs((computed.KBz ?? 0) - analytical.KB) / analytical.KB;
         Assert.True(kbError < 0.02m,
             $"KB error {kbError:P2} exceeds 2% tolerance. " +
             $"Expected: {analytical.KB:F3}, Got: {computed.KBz:F3}");
 
         // LCB should be at midship (within 1m)
-        decimal lcbError = Math.Abs(computed.LCBx - analytical.LCB);
+        decimal lcbError = Math.Abs((computed.LCBx ?? 0) - analytical.LCB);
         Assert.True(lcbError < 1.0m,
             $"LCB error {lcbError:F2}m exceeds 1m tolerance. " +
             $"Expected: {analytical.LCB:F2}, Got: {computed.LCBx:F2}");
@@ -181,7 +181,7 @@ public class WigleyHullTests : IDisposable
         var computed = await _hydroCalculator.ComputeAtDraftAsync(_vesselId, null, draft);
 
         // Assert - Awp within 2%
-        decimal awpError = Math.Abs(computed.Awp - analytical.Awp) / analytical.Awp;
+        decimal awpError = Math.Abs((computed.Awp ?? 0) - analytical.Awp) / analytical.Awp;
         Assert.True(awpError < 0.02m,
             $"Waterplane area error {awpError:P2} exceeds 2% tolerance. " +
             $"Expected: {analytical.Awp:F2}, Got: {computed.Awp:F2}");
@@ -202,7 +202,7 @@ public class WigleyHullTests : IDisposable
         var computed = await _hydroCalculator.ComputeAtDraftAsync(_vesselId, null, draft);
 
         // Assert - BMt within 5% (relaxed tolerance)
-        decimal bmtError = Math.Abs(computed.BMt - analytical.BMt) / analytical.BMt;
+        decimal bmtError = Math.Abs((computed.BMt ?? 0) - analytical.BMt) / analytical.BMt;
         Assert.True(bmtError < 0.05m,
             $"BMt error {bmtError:P2} exceeds 5% tolerance. " +
             $"Expected: {analytical.BMt:F3}, Got: {computed.BMt:F3}");
@@ -222,13 +222,13 @@ public class WigleyHullTests : IDisposable
         var computed = await _hydroCalculator.ComputeAtDraftAsync(_vesselId, null, draft);
 
         // Assert - Cp within 2%
-        decimal cpError = Math.Abs(computed.Cp - analytical.Cp) / analytical.Cp;
+        decimal cpError = Math.Abs((computed.Cp ?? 0) - analytical.Cp) / analytical.Cp;
         Assert.True(cpError < 0.02m,
             $"Prismatic coefficient error {cpError:P2} exceeds 2% tolerance. " +
             $"Expected: {analytical.Cp:F4}, Got: {computed.Cp:F4}");
 
         // Cwp within 2%
-        decimal cwpError = Math.Abs(computed.Cwp - analytical.Cwp) / analytical.Cwp;
+        decimal cwpError = Math.Abs((computed.Cwp ?? 0) - analytical.Cwp) / analytical.Cwp;
         Assert.True(cwpError < 0.02m,
             $"Waterplane coefficient error {cwpError:P2} exceeds 2% tolerance. " +
             $"Expected: {analytical.Cwp:F4}, Got: {computed.Cwp:F4}");
