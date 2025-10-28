@@ -29,7 +29,7 @@ const getBaseUrl = () => {
 // Create a simple axios instance for auth endpoints (no interceptors to avoid circular deps)
 const authAxios = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 10000,
+  timeout: 30000, // 30 seconds - consistent with main API client
 });
 
 export class LocalAuthService {

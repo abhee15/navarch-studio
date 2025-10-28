@@ -53,7 +53,7 @@ const createApiClient = (): AxiosInstance => {
 
   const client = axios.create({
     baseURL,
-    timeout: 10000,
+    timeout: 30000, // 30 seconds - increased for operations like vessel creation that may take time
   });
 
   // Request interceptor - Add JWT token, version, and unit preference

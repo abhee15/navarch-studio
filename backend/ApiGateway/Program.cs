@@ -70,8 +70,11 @@ try
     // Memory Cache for JWT key caching
     builder.Services.AddMemoryCache();
 
-    // HTTP Client
-    builder.Services.AddHttpClient<IHttpClientService, HttpClientService>();
+    // HTTP Client - Configure with generous timeout for backend operations
+    builder.Services.AddHttpClient<IHttpClientService, HttpClientService>(client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(60); // 60 seconds for backend operations
+    });
     builder.Services.AddHttpClient();
 
     // Services
