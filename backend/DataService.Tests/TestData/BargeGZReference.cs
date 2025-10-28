@@ -86,10 +86,12 @@ public static class BargeGZReference
 
     /// <summary>
     /// Test case: Unstable barge (high KG)
+    /// For this barge: KMT = KB + BMT = 2.5 + 6.67 = 9.17m
+    /// To be unstable (GMT < 0), KG must be > 9.17m
     /// </summary>
     public static (decimal beam, decimal draft, decimal kg) GetUnstableBarge()
     {
-        return (20m, 5m, 7.0m); // High KG → negative GMT
+        return (20m, 5m, 10.0m); // High KG (10m > KMT 9.17m) → GMT = -0.83m (unstable)
     }
 }
 

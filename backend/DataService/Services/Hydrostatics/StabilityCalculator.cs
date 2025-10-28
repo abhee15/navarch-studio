@@ -174,14 +174,14 @@ public class StabilityCalculator : IStabilityCalculator
 
     public decimal ComputeGZWallSided(decimal gmt, decimal bmt, decimal heelAngle)
     {
-        // Wall-sided formula: GZ = (GM + 0.5 * BM * tan²φ) * sin φ
+        // Wall-sided formula: GZ = (GM + 0.5 * BM * sin²φ) * sin φ
+        // Equivalent to: GZ = GM·sinφ + 0.5·BM·sin³φ
         // Valid for small angles (typically < 15-20 degrees)
 
         var angleRad = (double)heelAngle * Math.PI / 180.0;
         var sinPhi = (decimal)Math.Sin(angleRad);
-        var tanPhi = (decimal)Math.Tan(angleRad);
 
-        var gz = (gmt + 0.5m * bmt * tanPhi * tanPhi) * sinPhi;
+        var gz = (gmt + 0.5m * bmt * sinPhi * sinPhi) * sinPhi;
 
         return gz;
     }
