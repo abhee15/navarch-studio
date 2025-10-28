@@ -189,6 +189,106 @@ export const curvesApi = {
   },
 };
 
+// Export API
+export const exportApi = {
+  async exportCsv(_vesselId: string, results: HydroResult[]): Promise<Blob> {
+    // Convert results to CSV on client side for now
+    const csvContent = convertToCSV(results);
+    return new Blob([csvContent], { type: "text/csv" });
+  },
+
+  async exportJson(_vesselId: string, results: HydroResult[]): Promise<Blob> {
+    const jsonContent = JSON.stringify(results, null, 2);
+    return new Blob([jsonContent], { type: "application/json" });
+  },
+
+  async exportPdf(
+    vesselId: string,
+    loadcaseId: string | undefined,
+    includeCurves: boolean
+  ): Promise<Blob> {
+    const response = await api.post(
+      `/vessels/${vesselId}/export/pdf`,
+      {
+        loadcaseId,
+        includeCurves,
+      },
+      {
+        responseType: "blob",
+      }
+    );
+    return response.data;
+  },
+
+  async exportExcel(
+    vesselId: string,
+    loadcaseId: string | undefined,
+    includeCurves: boolean
+  ): Promise<Blob> {
+    const response = await api.post(
+      `/vessels/${vesselId}/export/excel`,
+      {
+        loadcaseId,
+        includeCurves,
+      },
+      {
+        responseType: "blob",
+      }
+    );
+    return response.data;
+  },
+};
+
+// Helper function to convert results to CSV
+function convertToCSV(results: HydroResult[]): string {
+  if (results.length === 0) return "";
+
+  const headers = [
+    "Draft (m)",
+    "Displacement (kg)",
+    "Volume (m³)",
+    "KB (m)",
+    "LCB (m)",
+    "TCB (m)",
+    "BMt (m)",
+    "BMl (m)",
+    "GMt (m)",
+    "GMl (m)",
+    "Awp (m²)",
+    "Iwp (m⁴)",
+    "Cb",
+    "Cp",
+    "Cm",
+    "Cwp",
+  ];
+
+  const csvRows = [headers.join(",")];
+
+  for (const result of results) {
+    const row = [
+      result.draft?.toFixed(3) || "",
+      result.dispWeight?.toFixed(0) || "",
+      result.dispVolume?.toFixed(3) || "",
+      result.kBz?.toFixed(3) || "",
+      result.lCBx?.toFixed(3) || "",
+      result.tCBy?.toFixed(3) || "",
+      result.bMt?.toFixed(3) || "",
+      result.bMl?.toFixed(3) || "",
+      result.gMt?.toFixed(3) || "",
+      result.gMl?.toFixed(3) || "",
+      result.awp?.toFixed(3) || "",
+      result.iwp?.toFixed(3) || "",
+      result.cb?.toFixed(4) || "",
+      result.cp?.toFixed(4) || "",
+      result.cm?.toFixed(4) || "",
+      result.cwp?.toFixed(4) || "",
+    ];
+    csvRows.push(row.join(","));
+  }
+
+  return csvRows.join("\n");
+}
+
 // Export combined API object
 export const hydrostaticsApiClient = {
   vessels: vesselsApi,
@@ -196,6 +296,7 @@ export const hydrostaticsApiClient = {
   loadcases: loadcasesApi,
   hydrostatics: hydrostaticsApi,
   curves: curvesApi,
+  export: exportApi,
 };
 
 export default hydrostaticsApiClient;
