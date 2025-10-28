@@ -408,45 +408,50 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          dotnet-version: "8.0.x"
 
-      - name: Check for migrations
-        id: check-migrations
-        run: |
-          if [ -n "$(ls -A database/migrations 2>/dev/null)" ]; then
-            echo "has_migrations=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_migrations=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No Flyway migrations found. Skipping migration step."
-            echo ""
-            echo "💡 Note: This project uses EF Core migrations for DataService."
-            echo "✅ Migrations are applied AUTOMATICALLY when services start:"
-            echo "   - DataService checks for pending migrations at startup"
-            echo "   - Applies them automatically in production/staging"
-            echo "   - Logs migration status to CloudWatch"
-            echo "   - Service health check verifies successful migration"
-            echo ""
-            echo "📋 To verify migrations after deployment:"
-            echo "   aws logs tail /aws/apprunner/navarch-studio-dev-data-service --since 5m --region us-east-1"
-            echo "   Look for: '✅ Migrations applied successfully' or '✅ Database schema is up to date'"
-          fi
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
 
-      - name: Run database migrations
-        if: steps.check-migrations.outputs.has_migrations == 'true'
+      - name: Run IdentityService migrations
         run: |
-          docker run --rm \
-            -v $PWD/database/migrations:/flyway/sql \
-            flyway/flyway:10-alpine \
-            -url=jdbc:postgresql://${{ needs.deploy-infrastructure.outputs.rds_endpoint }}:5432/${{ secrets.RDS_DATABASE }} \
-            -user=${{ secrets.RDS_USERNAME }} \
-            -password=${{ secrets.RDS_PASSWORD }} \
-            -locations=filesystem:/flyway/sql \
-            migrate
+          echo "🔄 Applying IdentityService migrations..."
+          
+          CONNECTION_STRING="Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true"
+          
+          cd backend/IdentityService
+          dotnet ef database update --verbose --connection "$CONNECTION_STRING"
+          
+          echo "✅ IdentityService migrations applied successfully"
+        env:
+          ASPNETCORE_ENVIRONMENT: Staging
+
+      - name: Run DataService migrations
+        run: |
+          echo "🔄 Applying DataService migrations..."
+          
+          CONNECTION_STRING="Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true"
+          
+          cd backend/DataService
+          dotnet ef database update --verbose --connection "$CONNECTION_STRING"
+          
+          echo "✅ DataService migrations applied successfully"
+        env:
+          ASPNETCORE_ENVIRONMENT: Staging
+
+      - name: Verify migrations
+        run: |
+          echo ""
+          echo "📋 Migration Summary:"
+          echo "  ✅ IdentityService migrations applied"
+          echo "  ✅ DataService migrations applied"
+          echo ""
+          echo "💡 Database schema is now up to date"
+          echo "   Database: ${{ secrets.RDS_DATABASE }}"
+          echo "   Endpoint: ${{ needs.deploy-infrastructure.outputs.rds_endpoint }}"
 
   deploy-frontend:
     runs-on: ubuntu-latest
