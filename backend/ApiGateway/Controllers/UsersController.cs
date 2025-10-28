@@ -98,7 +98,7 @@ public class UsersController : ControllerBase
         // For now, just echo back the settings
         // TODO: Store user preferences in database
         _logger.LogInformation("Settings updated: {Settings}", settings);
-        
+
         var responseSettings = new UserSettingsDto
         {
             PreferredUnits = settings.PreferredUnits

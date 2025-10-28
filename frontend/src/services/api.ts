@@ -68,7 +68,7 @@ const createApiClient = (): AxiosInstance => {
 
       // Add preferred units header for backend conversion
       // Only add if not requesting settings (to avoid circular dependency)
-      if (!config.url?.includes('/users/settings')) {
+      if (!config.url?.includes("/users/settings")) {
         try {
           // Import settingsStore dynamically to avoid circular dependency
           const { settingsStore } = await import("../stores/SettingsStore");

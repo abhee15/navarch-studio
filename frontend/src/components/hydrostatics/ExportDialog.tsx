@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { exportApi } from "../../services/hydrostaticsApi";
 import type { HydroResult } from "../../types/hydrostatics";
+import { toast } from "../common/Toast";
 
 interface ExportDialogProps {
   isOpen: boolean;
@@ -24,14 +25,14 @@ export function ExportDialog({
   const [format, setFormat] = useState<ExportFormat>("csv");
   const [includeCurves, setIncludeCurves] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleExport = async () => {
+    const toastId = toast.loading("Preparing export...");
+
     try {
       setExporting(true);
-      setError(null);
 
       let blob: Blob;
       let filename: string;
@@ -46,10 +47,12 @@ export function ExportDialog({
           filename = `${vesselName.replace(/\s+/g, "_")}_hydrostatics.json`;
           break;
         case "pdf":
+          toast.loading("Generating PDF report...", { id: toastId });
           blob = await exportApi.exportPdf(vesselId, loadcaseId, includeCurves);
           filename = `${vesselName.replace(/\s+/g, "_")}_hydrostatics.pdf`;
           break;
         case "excel":
+          toast.loading("Generating Excel workbook...", { id: toastId });
           blob = await exportApi.exportExcel(vesselId, loadcaseId, includeCurves);
           filename = `${vesselName.replace(/\s+/g, "_")}_hydrostatics.xlsx`;
           break;
@@ -67,11 +70,14 @@ export function ExportDialog({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
+      toast.success(`Export successful! Downloaded ${filename}`, { id: toastId });
+
       // Close dialog on success
       onClose();
     } catch (err) {
       console.error("Export failed:", err);
-      setError(err instanceof Error ? err.message : "Export failed");
+      const errorMessage = err instanceof Error ? err.message : "Export failed";
+      toast.error(`Export failed: ${errorMessage}`, { id: toastId });
     } finally {
       setExporting(false);
     }
@@ -177,13 +183,6 @@ export function ExportDialog({
                   Adds displacement, KB, LCB, AWP, and GM curves to the export
                 </p>
               </label>
-            </div>
-          )}
-
-          {/* Error message */}
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
             </div>
           )}
         </div>

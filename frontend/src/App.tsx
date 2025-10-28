@@ -8,6 +8,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { VesselsList } from "./pages/hydrostatics/VesselsList";
 import { VesselDetail } from "./pages/hydrostatics/VesselDetail";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { ToastProvider } from "./components/common/Toast";
 
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { authStore } = useStore();
@@ -17,6 +18,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
 export const App: React.FC = observer(() => (
   <ThemeProvider>
     <BrowserRouter>
+      <ToastProvider />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
