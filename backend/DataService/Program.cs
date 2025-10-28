@@ -114,6 +114,8 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ICurvesGenerator, DataService.Services.Hydrostatics.CurvesGenerator>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ITrimSolver, DataService.Services.Hydrostatics.TrimSolver>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IExportService, DataService.Services.Hydrostatics.ExportService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCalculator, DataService.Services.Hydrostatics.StabilityCalculator>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCriteriaChecker, DataService.Services.Hydrostatics.StabilityCriteriaChecker>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
