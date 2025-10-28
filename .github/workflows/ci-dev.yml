@@ -419,8 +419,7 @@ jobs:
       - name: Run IdentityService migrations
         run: |
           echo "🔄 Applying IdentityService migrations..."
-          
-          CONNECTION_STRING="Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true"
+          echo "RDS Endpoint: $RDS_ENDPOINT"
           
           cd backend/IdentityService
           dotnet ef database update --verbose --connection "$CONNECTION_STRING"
@@ -428,12 +427,13 @@ jobs:
           echo "✅ IdentityService migrations applied successfully"
         env:
           ASPNETCORE_ENVIRONMENT: Staging
+          RDS_ENDPOINT: ${{ needs.deploy-infrastructure.outputs.rds_endpoint }}
+          CONNECTION_STRING: Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
 
       - name: Run DataService migrations
         run: |
           echo "🔄 Applying DataService migrations..."
-          
-          CONNECTION_STRING="Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true"
+          echo "RDS Endpoint: $RDS_ENDPOINT"
           
           cd backend/DataService
           dotnet ef database update --verbose --connection "$CONNECTION_STRING"
@@ -441,6 +441,8 @@ jobs:
           echo "✅ DataService migrations applied successfully"
         env:
           ASPNETCORE_ENVIRONMENT: Staging
+          RDS_ENDPOINT: ${{ needs.deploy-infrastructure.outputs.rds_endpoint }}
+          CONNECTION_STRING: Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
 
       - name: Verify migrations
         run: |
