@@ -47,7 +47,7 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
       setError(null);
       const data = await curvesApi.getBonjean(vesselId);
       setCurves(data.curves);
-      
+
       // Select all stations by default
       if (data.curves.length > 0) {
         setSelectedStations(data.curves.map((c) => c.stationIndex));
@@ -223,10 +223,7 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
         <div className="border-t border-gray-200 pt-4">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm font-medium text-gray-700">Select Stations</label>
-            <button
-              onClick={handleToggleAll}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
+            <button onClick={handleToggleAll} className="text-sm text-blue-600 hover:text-blue-800">
               {showAllStations ? "Deselect All" : "Select All"}
             </button>
           </div>
@@ -252,9 +249,7 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
       {/* Chart */}
       {selectedStations.length > 0 && (
         <div className="bg-white shadow rounded-lg p-6">
-          <h4 className="text-lg font-medium text-gray-900 mb-4">
-            Sectional Area vs Draft
-          </h4>
+          <h4 className="text-lg font-medium text-gray-900 mb-4">Sectional Area vs Draft</h4>
           <ResponsiveContainer width="100%" height={600}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -298,8 +293,8 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
         <h4 className="text-sm font-medium text-blue-900 mb-2">About Bonjean Curves</h4>
         <div className="text-sm text-blue-800 space-y-2">
           <p>
-            Bonjean curves show the immersed cross-sectional area at each station as a function
-            of draft. They are fundamental to naval architecture and are used to:
+            Bonjean curves show the immersed cross-sectional area at each station as a function of
+            draft. They are fundamental to naval architecture and are used to:
           </p>
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li>Calculate displacement and buoyancy distribution</li>
@@ -319,4 +314,3 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
 }
 
 export default BonjeanCurvesTab;
-
