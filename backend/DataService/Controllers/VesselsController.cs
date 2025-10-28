@@ -30,6 +30,7 @@ public class VesselsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(VesselDetailsDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateVessel(
         [FromBody] VesselDto vesselDto,
         CancellationToken cancellationToken)
@@ -48,6 +49,12 @@ public class VesselsController : ControllerBase
         {
             _logger.LogWarning(ex, "Validation error creating vessel");
             return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error creating vessel");
+            return StatusCode(StatusCodes.Status500InternalServerError, 
+                new { error = "An unexpected error occurred while creating the vessel", details = ex.Message });
         }
     }
 

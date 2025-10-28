@@ -39,12 +39,12 @@ export class SettingsStore {
       });
     } catch (err: unknown) {
       let errorMessage = "Failed to load settings";
-      
+
       // Log the full error for debugging
       console.error("[SettingsStore] Failed to load settings - Full error:", err);
       console.error("[SettingsStore] Error type:", typeof err);
       console.error("[SettingsStore] Error constructor:", (err as Error)?.constructor?.name);
-      
+
       // Handle axios errors
       if (axios.isAxiosError(err)) {
         console.error("[SettingsStore] Axios error details:", {
@@ -59,13 +59,13 @@ export class SettingsStore {
             baseURL: err.config?.baseURL,
           },
         });
-        
+
         if (err.response) {
           // Server responded with error
           errorMessage = `Failed to load settings: Server error (${err.response.status})`;
           if (err.response.data?.message) {
             errorMessage = err.response.data.message;
-          } else if (typeof err.response.data === 'string') {
+          } else if (typeof err.response.data === "string") {
             errorMessage = `Failed to load settings: ${err.response.data}`;
           }
         } else if (err.request) {
@@ -77,10 +77,10 @@ export class SettingsStore {
         }
       } else if (err instanceof Error) {
         errorMessage = `Failed to load settings: ${err.message}`;
-      } else if (typeof err === 'string') {
+      } else if (typeof err === "string") {
         errorMessage = `Failed to load settings: ${err}`;
       }
-      
+
       // Use default settings and continue - don't break the app
       console.warn("[SettingsStore] Using default settings due to error:", errorMessage);
       runInAction(() => {
@@ -108,16 +108,16 @@ export class SettingsStore {
       });
     } catch (err: unknown) {
       let errorMessage = "Failed to update settings";
-      
+
       console.error("[SettingsStore] Failed to update settings - Full error:", err);
-      
+
       if (axios.isAxiosError(err)) {
         console.error("[SettingsStore] Axios error details:", {
           message: err.message,
           status: err.response?.status,
           data: err.response?.data,
         });
-        
+
         if (err.response) {
           errorMessage = `Failed to update settings: Server error (${err.response.status})`;
           if (err.response.data?.message) {
@@ -130,10 +130,10 @@ export class SettingsStore {
         }
       } else if (err instanceof Error) {
         errorMessage = `Failed to update settings: ${err.message}`;
-      } else if (typeof err === 'string') {
+      } else if (typeof err === "string") {
         errorMessage = `Failed to update settings: ${err}`;
       }
-      
+
       runInAction(() => {
         this.error = errorMessage;
         this.loading = false;

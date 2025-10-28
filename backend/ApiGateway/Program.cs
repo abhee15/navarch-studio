@@ -90,10 +90,10 @@ try
     }
 
     // Unit Conversion Service (NavArch.UnitConversion)
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, "unit-systems.xml");
+    // Pass null to use default path (config/unit-systems.xml) which is where the file is copied
     builder.Services.AddSingleton<NavArch.UnitConversion.Services.IUnitConverter>(sp =>
-        new NavArch.UnitConversion.Services.UnitConverter(xmlPath));
-    Log.Information("Unit conversion service registered with config: {XmlPath}", xmlPath);
+        new NavArch.UnitConversion.Services.UnitConverter(null));
+    Log.Information("Unit conversion service registered with default config path");
 
     // FluentValidation - Register all validators from Shared assembly
     builder.Services.AddValidatorsFromAssemblyContaining<Shared.Validators.LoginDtoValidator>();

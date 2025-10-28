@@ -28,8 +28,8 @@ describe("ExportDialog", () => {
       iwp: 25000,
       cb: 0.65,
       cp: 0.72,
-      cm: 0.90,
-      cwp: 0.90,
+      cm: 0.9,
+      cwp: 0.9,
     },
   ];
 
@@ -95,7 +95,7 @@ describe("ExportDialog", () => {
   describe("Format Selection", () => {
     it("should allow selecting different formats", () => {
       render(<ExportDialog {...defaultProps} />);
-      
+
       const jsonRadio = screen.getByLabelText(/JSON/) as HTMLInputElement;
       fireEvent.click(jsonRadio);
       expect(jsonRadio.checked).toBe(true);
@@ -107,20 +107,20 @@ describe("ExportDialog", () => {
 
     it("should enable include curves checkbox for PDF", () => {
       render(<ExportDialog {...defaultProps} />);
-      
+
       const pdfRadio = screen.getByLabelText(/PDF/);
       fireEvent.click(pdfRadio);
-      
+
       const checkbox = screen.getByLabelText(/Include hydrostatic curves/) as HTMLInputElement;
       expect(checkbox.disabled).toBe(false);
     });
 
     it("should enable include curves checkbox for Excel", () => {
       render(<ExportDialog {...defaultProps} />);
-      
+
       const excelRadio = screen.getByLabelText(/Excel/);
       fireEvent.click(excelRadio);
-      
+
       const checkbox = screen.getByLabelText(/Include hydrostatic curves/) as HTMLInputElement;
       expect(checkbox.disabled).toBe(false);
     });
@@ -136,7 +136,7 @@ describe("ExportDialog", () => {
       global.URL.revokeObjectURL = jest.fn();
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -153,7 +153,7 @@ describe("ExportDialog", () => {
       mockExportApi.exportCsv.mockRejectedValue(new Error("Export failed"));
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -177,11 +177,11 @@ describe("ExportDialog", () => {
       global.URL.revokeObjectURL = jest.fn();
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       // Select JSON format
       const jsonRadio = screen.getByLabelText(/JSON/);
       fireEvent.click(jsonRadio);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -203,11 +203,11 @@ describe("ExportDialog", () => {
       global.URL.revokeObjectURL = jest.fn();
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       // Select PDF format
       const pdfRadio = screen.getByLabelText(/PDF/);
       fireEvent.click(pdfRadio);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -215,7 +215,10 @@ describe("ExportDialog", () => {
         expect(mockExportApi.exportPdf).toHaveBeenCalledWith("vessel-123", undefined, false);
       });
 
-      expect(mockToast.loading).toHaveBeenCalledWith("Generating PDF report...", expect.any(Object));
+      expect(mockToast.loading).toHaveBeenCalledWith(
+        "Generating PDF report...",
+        expect.any(Object)
+      );
       expect(mockToast.success).toHaveBeenCalled();
       expect(mockOnClose).toHaveBeenCalled();
     });
@@ -228,15 +231,15 @@ describe("ExportDialog", () => {
       global.URL.revokeObjectURL = jest.fn();
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       // Select PDF format
       const pdfRadio = screen.getByLabelText(/PDF/);
       fireEvent.click(pdfRadio);
-      
+
       // Check include curves
       const checkbox = screen.getByLabelText(/Include hydrostatic curves/);
       fireEvent.click(checkbox);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -248,18 +251,20 @@ describe("ExportDialog", () => {
 
   describe("Excel Export", () => {
     it("should export Excel successfully", async () => {
-      const mockBlob = new Blob(["excel data"], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const mockBlob = new Blob(["excel data"], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
       mockExportApi.exportExcel.mockResolvedValue(mockBlob);
 
       global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
       global.URL.revokeObjectURL = jest.fn();
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       // Select Excel format
       const excelRadio = screen.getByLabelText(/Excel/);
       fireEvent.click(excelRadio);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -267,24 +272,29 @@ describe("ExportDialog", () => {
         expect(mockExportApi.exportExcel).toHaveBeenCalledWith("vessel-123", undefined, false);
       });
 
-      expect(mockToast.loading).toHaveBeenCalledWith("Generating Excel workbook...", expect.any(Object));
+      expect(mockToast.loading).toHaveBeenCalledWith(
+        "Generating Excel workbook...",
+        expect.any(Object)
+      );
       expect(mockToast.success).toHaveBeenCalled();
       expect(mockOnClose).toHaveBeenCalled();
     });
 
     it("should pass loadcaseId if provided", async () => {
-      const mockBlob = new Blob(["excel data"], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const mockBlob = new Blob(["excel data"], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
       mockExportApi.exportExcel.mockResolvedValue(mockBlob);
 
       global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
       global.URL.revokeObjectURL = jest.fn();
 
       render(<ExportDialog {...defaultProps} loadcaseId="loadcase-123" />);
-      
+
       // Select Excel format
       const excelRadio = screen.getByLabelText(/Excel/);
       fireEvent.click(excelRadio);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -297,7 +307,7 @@ describe("ExportDialog", () => {
   describe("Dialog Controls", () => {
     it("should call onClose when Cancel button is clicked", () => {
       render(<ExportDialog {...defaultProps} />);
-      
+
       const cancelButton = screen.getByRole("button", { name: /Cancel/ });
       fireEvent.click(cancelButton);
 
@@ -306,7 +316,7 @@ describe("ExportDialog", () => {
 
     it("should call onClose when close button (X) is clicked", () => {
       render(<ExportDialog {...defaultProps} />);
-      
+
       const closeButton = screen.getByRole("button", { name: /Close/ });
       fireEvent.click(closeButton);
 
@@ -320,7 +330,7 @@ describe("ExportDialog", () => {
       );
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -345,7 +355,7 @@ describe("ExportDialog", () => {
       const appendChildSpy = jest.spyOn(document.body, "appendChild");
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -368,7 +378,7 @@ describe("ExportDialog", () => {
       global.URL.revokeObjectURL = jest.fn();
 
       render(<ExportDialog {...defaultProps} />);
-      
+
       const exportButton = screen.getByRole("button", { name: /Export/ });
       fireEvent.click(exportButton);
 
@@ -378,4 +388,3 @@ describe("ExportDialog", () => {
     });
   });
 });
-

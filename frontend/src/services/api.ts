@@ -58,8 +58,10 @@ const createApiClient = (): AxiosInstance => {
 
   // Request interceptor - Add JWT token, version, and unit preference
   client.interceptors.request.use(async (config) => {
-    console.log(`[API] Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${config.url}`);
-    
+    console.log(
+      `[API] Making ${config.method?.toUpperCase()} request to: ${config.baseURL}${config.url}`
+    );
+
     try {
       const token = await getAuthToken();
       if (token) {
@@ -92,7 +94,7 @@ const createApiClient = (): AxiosInstance => {
     } catch (error) {
       console.log("[API] Error setting up request headers:", error);
     }
-    
+
     console.log("[API] Request config:", {
       url: config.url,
       method: config.method,
@@ -102,7 +104,7 @@ const createApiClient = (): AxiosInstance => {
         Authorization: config.headers.Authorization ? "Bearer ***" : undefined,
       },
     });
-    
+
     return config;
   });
 
@@ -125,7 +127,7 @@ const createApiClient = (): AxiosInstance => {
         data: error.response?.data,
         message: error.message,
       });
-      
+
       if (error.response?.status === 401) {
         console.log("[API] Unauthorized - redirecting to login");
         // Clear session and redirect to login based on auth mode

@@ -75,7 +75,7 @@ export function InteractiveChart({
       {/* Header with Title and Controls */}
       <div className="flex justify-between items-start mb-4">
         <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">{title}</h4>
-        
+
         <div className="flex items-center space-x-2">
           {/* Chart Controls */}
           <div className="flex items-center space-x-3 text-sm mr-4">
@@ -88,7 +88,7 @@ export function InteractiveChart({
               />
               <span className="ml-2 text-gray-700 dark:text-gray-300">Grid</span>
             </label>
-            
+
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -98,7 +98,7 @@ export function InteractiveChart({
               />
               <span className="ml-2 text-gray-700 dark:text-gray-300">Points</span>
             </label>
-            
+
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -126,7 +126,7 @@ export function InteractiveChart({
             </svg>
             SVG
           </button>
-          
+
           <button
             onClick={downloadChartData}
             className="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -155,10 +155,7 @@ export function InteractiveChart({
               label={{ value: xLabel, position: "insideBottom", offset: -5 }}
               stroke="#6B7280"
             />
-            <YAxis
-              label={{ value: yLabel, angle: -90, position: "insideLeft" }}
-              stroke="#6B7280"
-            />
+            <YAxis label={{ value: yLabel, angle: -90, position: "insideLeft" }} stroke="#6B7280" />
             <Tooltip
               contentStyle={{
                 backgroundColor: "#FFF",
@@ -179,13 +176,7 @@ export function InteractiveChart({
               activeDot={{ r: 6 }}
             />
             {showBrush && (
-              <Brush
-                dataKey="x"
-                height={30}
-                stroke={color}
-                fill="#F3F4F6"
-                travellerWidth={10}
-              />
+              <Brush dataKey="x" height={30} stroke={color} fill="#F3F4F6" travellerWidth={10} />
             )}
           </LineChart>
         </ResponsiveContainer>
@@ -196,9 +187,7 @@ export function InteractiveChart({
         <div className="grid grid-cols-4 gap-4 text-sm">
           <div>
             <span className="text-gray-600 dark:text-gray-400">Points:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-              {data.length}
-            </span>
+            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{data.length}</span>
           </div>
           <div>
             <span className="text-gray-600 dark:text-gray-400">Min Y:</span>
@@ -223,4 +212,3 @@ export function InteractiveChart({
     </div>
   );
 }
-
