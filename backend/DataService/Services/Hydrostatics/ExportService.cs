@@ -109,36 +109,144 @@ public class ExportService : IExportService
         }, cancellationToken);
     }
 
-    public Task<byte[]> ExportToPdfAsync(
+    public async Task<byte[]> ExportToPdfAsync(
         Guid vesselId,
         Guid? loadcaseId,
         bool includeCurves,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Implement PDF export using iText7 or QuestPDF
-        // For MVP, throw NotImplementedException with guidance
-        _logger.LogWarning("PDF export not yet implemented. Use CSV/JSON export for now.");
+        _logger.LogInformation("Generating PDF report for vessel {VesselId}", vesselId);
 
-        throw new NotImplementedException(
-            "PDF export is planned for a future release. " +
-            "Please use CSV or JSON export formats for now. " +
-            "Libraries like iText7, QuestPDF, or PdfSharp can be added later.");
+        // Load vessel
+        var vessel = await _context.Vessels
+            .FirstOrDefaultAsync(v => v.Id == vesselId, cancellationToken);
+
+        if (vessel == null)
+            throw new ArgumentException($"Vessel {vesselId} not found");
+
+        // Load loadcase if specified
+        Loadcase? loadcase = null;
+        if (loadcaseId.HasValue)
+        {
+            loadcase = await _context.Loadcases
+                .FirstOrDefaultAsync(lc => lc.Id == loadcaseId, cancellationToken);
+        }
+
+        // Generate hydrostatic table (use design draft range)
+        var minDraft = vessel.DesignDraft * 0.3m;
+        var maxDraft = vessel.DesignDraft * 1.2m;
+        var draftStep = (maxDraft - minDraft) / 10;
+        var drafts = new List<decimal>();
+        for (var d = minDraft; d <= maxDraft; d += draftStep)
+        {
+            drafts.Add(Math.Round(d, 2));
+        }
+
+        var results = await _hydroCalculator.ComputeTableAsync(
+            vesselId,
+            loadcaseId,
+            drafts,
+            cancellationToken);
+
+        // Generate curves if requested
+        List<CurveDto>? curves = null;
+        if (includeCurves)
+        {
+            try
+            {
+                var curveTypes = new[] { "displacement", "kb", "lcb", "awp", "gmt" };
+                curves = await _curvesGenerator.GenerateCurvesAsync(
+                    vesselId,
+                    loadcaseId,
+                    curveTypes.ToList(),
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to generate curves for PDF report");
+                // Continue without curves
+            }
+        }
+
+        // Generate PDF
+        var pdfBytes = await Task.Run(() =>
+            PdfReportBuilder.GenerateReport(vessel, loadcase, results, curves),
+            cancellationToken);
+
+        _logger.LogInformation("PDF report generated successfully for vessel {VesselId}, size: {Size} bytes",
+            vesselId, pdfBytes.Length);
+
+        return pdfBytes;
     }
 
-    public Task<byte[]> ExportToExcelAsync(
+    public async Task<byte[]> ExportToExcelAsync(
         Guid vesselId,
         Guid? loadcaseId,
         bool includeCurves,
         CancellationToken cancellationToken = default)
     {
-        // TODO: Implement Excel export using EPPlus or ClosedXML
-        // For MVP, throw NotImplementedException with guidance
-        _logger.LogWarning("Excel export not yet implemented. Use CSV/JSON export for now.");
+        _logger.LogInformation("Generating Excel report for vessel {VesselId}", vesselId);
 
-        throw new NotImplementedException(
-            "Excel export is planned for a future release. " +
-            "Please use CSV or JSON export formats for now. " +
-            "Libraries like EPPlus or ClosedXML can be added later.");
+        // Load vessel
+        var vessel = await _context.Vessels
+            .FirstOrDefaultAsync(v => v.Id == vesselId, cancellationToken);
+
+        if (vessel == null)
+            throw new ArgumentException($"Vessel {vesselId} not found");
+
+        // Load loadcase if specified
+        Loadcase? loadcase = null;
+        if (loadcaseId.HasValue)
+        {
+            loadcase = await _context.Loadcases
+                .FirstOrDefaultAsync(lc => lc.Id == loadcaseId, cancellationToken);
+        }
+
+        // Generate hydrostatic table (use design draft range)
+        var minDraft = vessel.DesignDraft * 0.3m;
+        var maxDraft = vessel.DesignDraft * 1.2m;
+        var draftStep = (maxDraft - minDraft) / 10;
+        var drafts = new List<decimal>();
+        for (var d = minDraft; d <= maxDraft; d += draftStep)
+        {
+            drafts.Add(Math.Round(d, 2));
+        }
+
+        var results = await _hydroCalculator.ComputeTableAsync(
+            vesselId,
+            loadcaseId,
+            drafts,
+            cancellationToken);
+
+        // Generate curves if requested
+        List<CurveDto>? curves = null;
+        if (includeCurves)
+        {
+            try
+            {
+                var curveTypes = new[] { "displacement", "kb", "lcb", "awp", "gmt" };
+                curves = await _curvesGenerator.GenerateCurvesAsync(
+                    vesselId,
+                    loadcaseId,
+                    curveTypes.ToList(),
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to generate curves for Excel report");
+                // Continue without curves
+            }
+        }
+
+        // Generate Excel
+        var excelBytes = await Task.Run(() =>
+            ExcelReportBuilder.GenerateReport(vessel, loadcase, results, curves),
+            cancellationToken);
+
+        _logger.LogInformation("Excel report generated successfully for vessel {VesselId}, size: {Size} bytes",
+            vesselId, excelBytes.Length);
+
+        return excelBytes;
     }
 }
 
