@@ -105,7 +105,7 @@ public class ExportServiceTests : IDisposable
         // Assert
         pdfData.Should().NotBeNull();
         pdfData.Length.Should().BeGreaterThan(1000); // PDF should be at least 1KB
-        
+
         // Check PDF magic bytes
         var header = System.Text.Encoding.ASCII.GetString(pdfData.Take(4).ToArray());
         header.Should().Be("%PDF"); // PDF files start with %PDF
@@ -133,7 +133,7 @@ public class ExportServiceTests : IDisposable
         // Assert
         excelData.Should().NotBeNull();
         excelData.Length.Should().BeGreaterThan(1000); // Excel should be at least 1KB
-        
+
         // Check ZIP magic bytes (Excel files are ZIP archives)
         var header = excelData.Take(2).ToArray();
         header.Should().BeEquivalentTo(new byte[] { 0x50, 0x4B }); // PK signature
@@ -172,7 +172,7 @@ public class ExportServiceTests : IDisposable
         // Assert
         pdfData.Should().NotBeNull();
         pdfData.Length.Should().BeGreaterThan(1000);
-        
+
         // PDF should still be generated even if curves fail
         var header = System.Text.Encoding.ASCII.GetString(pdfData.Take(4).ToArray());
         header.Should().Be("%PDF");
