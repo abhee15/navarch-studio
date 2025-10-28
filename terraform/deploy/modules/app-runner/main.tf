@@ -246,6 +246,7 @@ resource "aws_apprunner_service" "api_gateway" {
   # API Gateway uses DEFAULT egress (public internet) to reach AWS Cognito for JWT validation
   # This avoids the need for an expensive NAT Gateway while allowing Cognito access
   # Service-to-service calls use public HTTPS URLs (no VPC needed)
+  # Last updated: 2025-10-28 to fix timeout issues
   network_configuration {
     egress_configuration {
       egress_type = "DEFAULT"
