@@ -15,6 +15,8 @@ RUN dotnet restore "backend/DataService/DataService.csproj"
 COPY packages/unit-conversion/dotnet/NavArch.UnitConversion/ packages/unit-conversion/dotnet/NavArch.UnitConversion/
 COPY backend/Shared/ backend/Shared/
 COPY backend/DataService/ backend/DataService/
+# Copy database templates for serving to users
+COPY database/templates/ database/templates/
 WORKDIR /src/backend/DataService
 RUN dotnet build "DataService.csproj" -c Release -o /app/build
 
@@ -26,4 +28,6 @@ WORKDIR /app
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 COPY --from=publish /app/publish .
+# Copy CSV template files from build stage
+COPY --from=build /src/database/templates/ ./templates/
 ENTRYPOINT ["dotnet", "DataService.dll"]

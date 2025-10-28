@@ -248,6 +248,42 @@ public class GeometryController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Downloads a CSV template file (independent of vessel - does not use vesselId)
+    /// </summary>
+    /// <param name="templateName">Template name: stations, waterlines, offsets, offsets_only, or offsets_template</param>
+    /// <param name="vesselId">Not used - templates are global</param>
+    [HttpGet("~/api/v{version:apiVersion}/hydrostatics/templates/{templateName}")]
+    [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult DownloadTemplate(string templateName, Guid vesselId = default)
+    {
+        var templateFiles = new Dictionary<string, string>
+        {
+            ["stations"] = "stations_template.csv",
+            ["waterlines"] = "waterlines_template.csv",
+            ["offsets"] = "offsets_template.csv",
+            ["offsets_only"] = "offsets_only_template.csv",
+            ["offsets_template"] = "offsets_template.csv"
+        };
+
+        if (!templateFiles.TryGetValue(templateName.ToLower(), out var fileName))
+        {
+            return NotFound(new { error = $"Template '{templateName}' not found. Available templates: {string.Join(", ", templateFiles.Keys)}" });
+        }
+
+        var filePath = Path.Combine(AppContext.BaseDirectory, "templates", fileName);
+
+        if (!System.IO.File.Exists(filePath))
+        {
+            _logger.LogError("Template file not found at path: {FilePath}", filePath);
+            return NotFound(new { error = $"Template file '{fileName}' not found on server" });
+        }
+
+        var fileBytes = System.IO.File.ReadAllBytes(filePath);
+        return File(fileBytes, "text/csv", fileName);
+    }
 }
 
 /// <summary>
