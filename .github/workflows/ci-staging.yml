@@ -129,7 +129,7 @@ jobs:
         id: build-frontend
         run: |
           IMAGE_TAG="${GITHUB_SHA:0:7}-staging"
-          docker build -t ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_FRONTEND_URL }}:staging ./frontend
+          docker build -f frontend/Dockerfile -t ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_FRONTEND_URL }}:staging .
           docker push ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_FRONTEND_URL }}:staging
           echo "image=${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT

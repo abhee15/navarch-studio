@@ -75,7 +75,7 @@ jobs:
         id: build-frontend
         run: |
           IMAGE_TAG="${{ github.event.inputs.version }}"
-          docker build -t ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_FRONTEND_URL }}:prod ./frontend
+          docker build -f frontend/Dockerfile -t ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_FRONTEND_URL }}:prod .
           docker push ${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_FRONTEND_URL }}:prod
           echo "image=${{ secrets.ECR_FRONTEND_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
