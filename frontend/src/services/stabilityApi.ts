@@ -64,10 +64,7 @@ export const stabilityApi = {
   /**
    * Generate GZ curve for a vessel
    */
-  async generateGZCurve(
-    vesselId: string,
-    request: StabilityRequest
-  ): Promise<StabilityCurve> {
+  async generateGZCurve(vesselId: string, request: StabilityRequest): Promise<StabilityCurve> {
     const response = await axios.post<StabilityCurve>(
       `${API_BASE_URL}/api/v1/stability/vessels/${vesselId}/gz-curve`,
       request
@@ -99,4 +96,3 @@ export const stabilityApi = {
     return response.data;
   },
 };
-
