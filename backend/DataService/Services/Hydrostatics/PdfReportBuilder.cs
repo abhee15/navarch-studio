@@ -18,7 +18,9 @@ public class PdfReportBuilder
         Vessel vessel,
         Loadcase? loadcase,
         List<HydroResultDto> results,
-        List<CurveDto>? curves = null)
+        List<CurveDto>? curves = null,
+        StabilityCurveDto? stabilityCurve = null,
+        StabilityCriteriaResultDto? stabilityCriteria = null)
     {
         // Configure QuestPDF license (Community license for open source projects)
         QuestPDF.Settings.License = LicenseType.Community;
@@ -61,6 +63,15 @@ public class PdfReportBuilder
                         // Vessel Information Section
                         column.Item().Element(c => RenderVesselInfo(c, vessel, loadcase));
 
+                        // Inputs Summary Section
+                        column.Item().Element(c => RenderInputsSummary(c, vessel, loadcase, results));
+
+                        // Methodology Notes Section
+                        column.Item().Element(c => RenderMethodologyNotes(c, vessel, results));
+
+                        // Standards Reference Section
+                        column.Item().Element(c => RenderStandardsReference(c));
+
                         // Hydrostatic Table Section
                         column.Item().Element(c => RenderHydrostaticTable(c, results));
 
@@ -75,6 +86,13 @@ public class PdfReportBuilder
                         {
                             column.Item().PageBreak();
                             column.Item().Element(c => RenderCurvesSection(c, curves));
+                        }
+
+                        // Stability Section (if provided)
+                        if (stabilityCurve != null && stabilityCriteria != null)
+                        {
+                            column.Item().PageBreak();
+                            column.Item().Element(c => RenderStabilitySection(c, stabilityCurve, stabilityCriteria));
                         }
                     });
 
@@ -274,6 +292,203 @@ public class PdfReportBuilder
     {
         table.Cell().Border(1).Padding(5).Text(label).FontSize(9);
         table.Cell().Border(1).Padding(5).Text(value).FontSize(9);
+    }
+
+    private static void RenderInputsSummary(IContainer container, Vessel vessel, Loadcase? loadcase, List<HydroResultDto> results)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Inputs Summary")
+                .FontSize(12)
+                .Bold()
+                .FontColor(Colors.Blue.Darken1);
+
+            column.Item().PaddingTop(5).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(3);
+                });
+
+                table.Cell().Border(1).Padding(5).Text("Parameter").FontSize(9).Bold();
+                table.Cell().Border(1).Padding(5).Text("Value").FontSize(9).Bold();
+
+                AddTableRow(table, "Principal Dimensions", "");
+                AddTableRow(table, "Length (Lpp)", $"{vessel.Lpp:F2} m");
+                AddTableRow(table, "Beam", $"{vessel.Beam:F2} m");
+                AddTableRow(table, "Design Draft", $"{vessel.DesignDraft:F2} m");
+
+                if (loadcase != null)
+                {
+                    AddTableRow(table, "Loadcase Parameters", "");
+                    AddTableRow(table, "Density (ρ)", $"{loadcase.Rho:F2} kg/m³");
+                    if (loadcase.KG.HasValue)
+                    {
+                        AddTableRow(table, "Center of Gravity (KG)", $"{loadcase.KG.Value:F3} m");
+                    }
+                }
+
+                AddTableRow(table, "Computation Range", "");
+                AddTableRow(table, "Draft Range", $"{results.Min(r => r.Draft):F2} - {results.Max(r => r.Draft):F2} m");
+                AddTableRow(table, "Number of Drafts", $"{results.Count}");
+            });
+        });
+    }
+
+    private static void RenderMethodologyNotes(IContainer container, Vessel vessel, List<HydroResultDto> results)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Methodology Notes")
+                .FontSize(12)
+                .Bold()
+                .FontColor(Colors.Blue.Darken1);
+
+            column.Item().PaddingTop(5).Column(c =>
+            {
+                c.Item().Text("Integration Method:")
+                    .FontSize(9)
+                    .Bold();
+                c.Item().PaddingLeft(10).Text("Simpson's Rule with trapezoidal fallback for non-uniform spacing")
+                    .FontSize(9);
+
+                c.Item().PaddingTop(5).Text("Symmetry Assumptions:")
+                    .FontSize(9)
+                    .Bold();
+                c.Item().PaddingLeft(10).Text("Port/starboard symmetry assumed (TCB = 0)")
+                    .FontSize(9);
+
+                c.Item().PaddingTop(5).Text("Coordinate System:")
+                    .FontSize(9)
+                    .Bold();
+                c.Item().PaddingLeft(10).Text("X: Longitudinal (forward positive), Y: Transverse (starboard positive), Z: Vertical (up positive)")
+                    .FontSize(9);
+
+                c.Item().PaddingTop(5).Text("Units:")
+                    .FontSize(9)
+                    .Bold();
+                c.Item().PaddingLeft(10).Text("All values in SI units (meters, kilograms, cubic meters)")
+                    .FontSize(9);
+            });
+        });
+    }
+
+    private static void RenderStandardsReference(IContainer container)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Standards Reference")
+                .FontSize(12)
+                .Bold()
+                .FontColor(Colors.Blue.Darken1);
+
+            column.Item().PaddingTop(5).Column(c =>
+            {
+                c.Item().Text("Calculations follow recognized naval architecture standards:")
+                    .FontSize(9);
+
+                c.Item().PaddingTop(3).PaddingLeft(10).Text("• IMO MSC.267(85) - International Code on Intact Stability (terminology)")
+                    .FontSize(8);
+
+                c.Item().PaddingLeft(10).Text("• IMO A.749(18) - Code on Intact Stability for All Types of Ships (criteria)")
+                    .FontSize(8);
+
+                c.Item().PaddingLeft(10).Text("• ISO 12217 - Small Craft Stability (methodology reference)")
+                    .FontSize(8);
+
+                c.Item().PaddingTop(5).Text("Note: These references are informative. Users should consult applicable classification society rules and national regulations for specific requirements.")
+                    .FontSize(7)
+                    .Italic()
+                    .FontColor(Colors.Grey.Darken1);
+            });
+        });
+    }
+
+    private static void RenderStabilitySection(IContainer container, StabilityCurveDto stabilityCurve, StabilityCriteriaResultDto stabilityCriteria)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Stability Analysis")
+                .FontSize(14)
+                .Bold()
+                .FontColor(Colors.Blue.Darken1);
+
+            // Key Metrics
+            column.Item().PaddingTop(10).Text("Key Stability Parameters")
+                .FontSize(12)
+                .SemiBold()
+                .FontColor(Colors.Blue.Darken1);
+
+            column.Item().PaddingTop(5).Row(row =>
+            {
+                row.RelativeItem().Column(c =>
+                {
+                    c.Item().Text($"Initial GMT: {stabilityCurve.InitialGMT:F3} m").FontSize(9);
+                    c.Item().Text($"Method: {stabilityCurve.Method}").FontSize(9);
+                });
+                row.RelativeItem().Column(c =>
+                {
+                    c.Item().Text($"Max GZ: {stabilityCurve.MaxGZ:F3} m").FontSize(9);
+                    c.Item().Text($"Angle at Max GZ: {stabilityCurve.AngleAtMaxGZ:F1}°").FontSize(9);
+                });
+            });
+
+            // Criteria Checklist
+            column.Item().PaddingTop(15).Text("IMO A.749(18) Intact Stability Criteria")
+                .FontSize(12)
+                .SemiBold()
+                .FontColor(Colors.Blue.Darken1);
+
+            column.Item().PaddingTop(5).Text($"Overall Status: {(stabilityCriteria.AllCriteriaPassed ? "PASS" : "FAIL")}")
+                .FontSize(10)
+                .Bold()
+                .FontColor(stabilityCriteria.AllCriteriaPassed ? Colors.Green.Darken2 : Colors.Red.Darken2);
+
+            column.Item().PaddingTop(5).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(1);
+                    columns.RelativeColumn(1);
+                    columns.RelativeColumn(1);
+                });
+
+                table.Cell().Border(1).Padding(5).Text("Criterion").FontSize(8).Bold();
+                table.Cell().Border(1).Padding(5).Text("Required").FontSize(8).Bold();
+                table.Cell().Border(1).Padding(5).Text("Actual").FontSize(8).Bold();
+                table.Cell().Border(1).Padding(5).Text("Status").FontSize(8).Bold();
+
+                foreach (var criterion in stabilityCriteria.Criteria)
+                {
+                    table.Cell().Border(1).Padding(5).Text(criterion.Name).FontSize(8);
+                    table.Cell().Border(1).Padding(5).Text($"{criterion.RequiredValue:F3}").FontSize(8);
+                    table.Cell().Border(1).Padding(5).Text($"{criterion.ActualValue:F3}").FontSize(8);
+                    table.Cell().Border(1).Padding(5).Text(criterion.Passed ? "✓ Pass" : "✗ Fail")
+                        .FontSize(8)
+                        .FontColor(criterion.Passed ? Colors.Green.Darken2 : Colors.Red.Darken2);
+                }
+            });
+
+            column.Item().PaddingTop(10).Text($"Summary: {stabilityCriteria.Summary}")
+                .FontSize(9)
+                .Italic()
+                .FontColor(Colors.Grey.Darken1);
+
+            // GZ Curve Data Summary
+            column.Item().PaddingTop(15).Text("GZ Curve Data")
+                .FontSize(12)
+                .SemiBold()
+                .FontColor(Colors.Blue.Darken1);
+
+            column.Item().PaddingTop(5).Text($"Angle Range: {stabilityCurve.Points.Min(p => p.HeelAngle):F0}° to {stabilityCurve.Points.Max(p => p.HeelAngle):F0}°")
+                .FontSize(9);
+            column.Item().Text($"Number of Points: {stabilityCurve.Points.Count}")
+                .FontSize(9);
+            column.Item().Text($"Computation Time: {stabilityCurve.ComputationTimeMs} ms")
+                .FontSize(9);
+        });
     }
 }
 
