@@ -578,175 +578,175 @@ export const ConsolidatedHydrostaticsTab = observer(
 
                     {/* Curve Display Area - Right Side */}
                     <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 p-2">
-                    {selectedCurveType === "hydrostatic" && (
-                      <div>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <LineChart
-                            data={results.map((r) => ({
-                              draft: r.draft,
-                              displacement: r.dispWeight / 1000, // Convert to tonnes for readability
-                              kb: r.kBz,
-                              lcb: r.lCBx,
-                              bmt: r.bMt,
-                              gmt: r.gMt,
-                              wpa: r.awp,
-                            }))}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis
-                              dataKey="draft"
-                              label={{
-                                value: `Draft (${lengthUnit})`,
-                                position: "insideBottom",
-                                offset: -5,
-                                style: { fontSize: "11px" },
-                              }}
-                              tick={{ fontSize: 10 }}
-                              stroke="#6b7280"
-                            />
-                            <YAxis
-                              yAxisId="left"
-                              label={{
-                                value: `Displacement (tonnes), KB, LCB, BMt, GMt (${lengthUnit})`,
-                                angle: -90,
-                                position: "insideLeft",
-                                style: { fontSize: "10px" },
-                              }}
-                              tick={{ fontSize: 10 }}
-                              stroke="#6b7280"
-                            />
-                            <YAxis
-                              yAxisId="right"
-                              orientation="right"
-                              label={{
-                                value: `WPA (${areaUnit})`,
-                                angle: 90,
-                                position: "insideRight",
-                                style: { fontSize: "10px" },
-                              }}
-                              tick={{ fontSize: 10 }}
-                              stroke="#6b7280"
-                            />
-                            <Tooltip
-                              contentStyle={{ fontSize: "11px", padding: "4px 8px" }}
-                              formatter={(value: number) => formatNumber(value, 2)}
-                            />
-                            <Legend
-                              wrapperStyle={{ fontSize: "10px", paddingTop: "8px" }}
-                              iconSize={10}
-                            />
-                            <Line
-                              yAxisId="left"
-                              type="monotone"
-                              dataKey="displacement"
-                              stroke="#3B82F6"
-                              strokeWidth={1.5}
-                              dot={false}
-                              name="Disp (t)"
-                            />
-                            <Line
-                              yAxisId="left"
-                              type="monotone"
-                              dataKey="kb"
-                              stroke="#10B981"
-                              strokeWidth={1.5}
-                              dot={false}
-                              name="KB"
-                            />
-                            <Line
-                              yAxisId="left"
-                              type="monotone"
-                              dataKey="lcb"
-                              stroke="#F59E0B"
-                              strokeWidth={1.5}
-                              dot={false}
-                              name="LCB"
-                            />
-                            <Line
-                              yAxisId="left"
-                              type="monotone"
-                              dataKey="bmt"
-                              stroke="#8B5CF6"
-                              strokeWidth={1.5}
-                              dot={false}
-                              name="BMt"
-                            />
-                            <Line
-                              yAxisId="left"
-                              type="monotone"
-                              dataKey="gmt"
-                              stroke="#EF4444"
-                              strokeWidth={1.5}
-                              dot={false}
-                              name="GMt"
-                            />
-                            <Line
-                              yAxisId="right"
-                              type="monotone"
-                              dataKey="wpa"
-                              stroke="#EC4899"
-                              strokeWidth={1.5}
-                              dot={false}
-                              name="WPA"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    )}
-
-                    {selectedCurveType === "bonjean" && (
-                      <div className="flex items-center justify-center h-64">
-                        <div className="text-center text-gray-500">
-                          <svg
-                            className="mx-auto h-8 w-8 text-gray-400 mb-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                          </svg>
-                          <p className="text-xs font-medium">Bonjean Curves</p>
-                          <p className="text-[10px] text-gray-400 mt-1">
-                            Sectional areas vs waterline height at each station
-                          </p>
-                          <p className="text-[10px] text-gray-400 mt-2">
-                            Requires station-level computation
-                          </p>
+                      {selectedCurveType === "hydrostatic" && (
+                        <div>
+                          <ResponsiveContainer width="100%" height={300}>
+                            <LineChart
+                              data={results.map((r) => ({
+                                draft: r.draft,
+                                displacement: r.dispWeight / 1000, // Convert to tonnes for readability
+                                kb: r.kBz,
+                                lcb: r.lCBx,
+                                bmt: r.bMt,
+                                gmt: r.gMt,
+                                wpa: r.awp,
+                              }))}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                              <XAxis
+                                dataKey="draft"
+                                label={{
+                                  value: `Draft (${lengthUnit})`,
+                                  position: "insideBottom",
+                                  offset: -5,
+                                  style: { fontSize: "11px" },
+                                }}
+                                tick={{ fontSize: 10 }}
+                                stroke="#6b7280"
+                              />
+                              <YAxis
+                                yAxisId="left"
+                                label={{
+                                  value: `Displacement (tonnes), KB, LCB, BMt, GMt (${lengthUnit})`,
+                                  angle: -90,
+                                  position: "insideLeft",
+                                  style: { fontSize: "10px" },
+                                }}
+                                tick={{ fontSize: 10 }}
+                                stroke="#6b7280"
+                              />
+                              <YAxis
+                                yAxisId="right"
+                                orientation="right"
+                                label={{
+                                  value: `WPA (${areaUnit})`,
+                                  angle: 90,
+                                  position: "insideRight",
+                                  style: { fontSize: "10px" },
+                                }}
+                                tick={{ fontSize: 10 }}
+                                stroke="#6b7280"
+                              />
+                              <Tooltip
+                                contentStyle={{ fontSize: "11px", padding: "4px 8px" }}
+                                formatter={(value: number) => formatNumber(value, 2)}
+                              />
+                              <Legend
+                                wrapperStyle={{ fontSize: "10px", paddingTop: "8px" }}
+                                iconSize={10}
+                              />
+                              <Line
+                                yAxisId="left"
+                                type="monotone"
+                                dataKey="displacement"
+                                stroke="#3B82F6"
+                                strokeWidth={1.5}
+                                dot={false}
+                                name="Disp (t)"
+                              />
+                              <Line
+                                yAxisId="left"
+                                type="monotone"
+                                dataKey="kb"
+                                stroke="#10B981"
+                                strokeWidth={1.5}
+                                dot={false}
+                                name="KB"
+                              />
+                              <Line
+                                yAxisId="left"
+                                type="monotone"
+                                dataKey="lcb"
+                                stroke="#F59E0B"
+                                strokeWidth={1.5}
+                                dot={false}
+                                name="LCB"
+                              />
+                              <Line
+                                yAxisId="left"
+                                type="monotone"
+                                dataKey="bmt"
+                                stroke="#8B5CF6"
+                                strokeWidth={1.5}
+                                dot={false}
+                                name="BMt"
+                              />
+                              <Line
+                                yAxisId="left"
+                                type="monotone"
+                                dataKey="gmt"
+                                stroke="#EF4444"
+                                strokeWidth={1.5}
+                                dot={false}
+                                name="GMt"
+                              />
+                              <Line
+                                yAxisId="right"
+                                type="monotone"
+                                dataKey="wpa"
+                                stroke="#EC4899"
+                                strokeWidth={1.5}
+                                dot={false}
+                                name="WPA"
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {selectedCurveType === "cross-curves" && (
-                      <div className="flex items-center justify-center h-64">
-                        <div className="text-center text-gray-500">
-                          <svg
-                            className="mx-auto h-8 w-8 text-gray-400 mb-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                            />
-                          </svg>
-                          <p className="text-xs font-medium">Cross-Curves of Stability (KN)</p>
-                          <p className="text-[10px] text-gray-400 mt-1">
-                            Righting lever vs heel angle for various displacements
-                          </p>
-                          <p className="text-[10px] text-gray-400 mt-2">
-                            Requires stability computation
-                          </p>
+                      {selectedCurveType === "bonjean" && (
+                        <div className="flex items-center justify-center h-64">
+                          <div className="text-center text-gray-500">
+                            <svg
+                              className="mx-auto h-8 w-8 text-gray-400 mb-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                              />
+                            </svg>
+                            <p className="text-xs font-medium">Bonjean Curves</p>
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              Sectional areas vs waterline height at each station
+                            </p>
+                            <p className="text-[10px] text-gray-400 mt-2">
+                              Requires station-level computation
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {selectedCurveType === "cross-curves" && (
+                        <div className="flex items-center justify-center h-64">
+                          <div className="text-center text-gray-500">
+                            <svg
+                              className="mx-auto h-8 w-8 text-gray-400 mb-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                              />
+                            </svg>
+                            <p className="text-xs font-medium">Cross-Curves of Stability (KN)</p>
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              Righting lever vs heel angle for various displacements
+                            </p>
+                            <p className="text-[10px] text-gray-400 mt-2">
+                              Requires stability computation
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

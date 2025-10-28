@@ -67,7 +67,10 @@ export const HullDiagram = observer(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const toSvgX = useCallback((x: number) => margin.left + x * scaleX, [scaleX]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    const toSvgY = useCallback((z: number) => margin.top + drawHeight - z * scaleY, [drawHeight, scaleY]);
+    const toSvgY = useCallback(
+      (z: number) => margin.top + drawHeight - z * scaleY,
+      [drawHeight, scaleY]
+    );
 
     // Generate simplified hull profile (parabolic shape for better visualization)
     const generateHullProfile = useMemo(() => {
@@ -550,4 +553,3 @@ export const HullDiagram = observer(
 );
 
 export default HullDiagram;
-
