@@ -74,3 +74,6 @@ secrets/
 # Template config (should be customized per project)
 template-config.yml
 temp/
+
+# Diagnostic files
+DIAGNOSTIC_STEPS.md
