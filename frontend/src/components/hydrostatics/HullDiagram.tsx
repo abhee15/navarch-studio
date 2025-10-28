@@ -64,12 +64,10 @@ export const HullDiagram = observer(
     const stationSpacing = lpp / (numStations - 1);
 
     // Coordinate transformation: naval arch → SVG
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const toSvgX = useCallback((x: number) => margin.left + x * scaleX, [scaleX]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const toSvgX = useCallback((x: number) => margin.left + x * scaleX, [scaleX, margin.left]);
     const toSvgY = useCallback(
       (z: number) => margin.top + drawHeight - z * scaleY,
-      [drawHeight, scaleY]
+      [drawHeight, scaleY, margin.top]
     );
 
     // Generate simplified hull profile (parabolic shape for better visualization)
