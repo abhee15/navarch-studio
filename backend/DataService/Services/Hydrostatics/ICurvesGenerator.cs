@@ -10,7 +10,7 @@ public interface ICurvesGenerator
     /// <summary>
     /// Generates displacement curve: ∆(T)
     /// </summary>
-    Task<CurveDataDto> GenerateDisplacementCurveAsync(
+    Task<CurveDto> GenerateDisplacementCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -21,7 +21,7 @@ public interface ICurvesGenerator
     /// <summary>
     /// Generates KB curve: KB(T)
     /// </summary>
-    Task<CurveDataDto> GenerateKBCurveAsync(
+    Task<CurveDto> GenerateKBCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -32,7 +32,7 @@ public interface ICurvesGenerator
     /// <summary>
     /// Generates LCB curve: LCB(T)
     /// </summary>
-    Task<CurveDataDto> GenerateLCBCurveAsync(
+    Task<CurveDto> GenerateLCBCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -43,7 +43,7 @@ public interface ICurvesGenerator
     /// <summary>
     /// Generates GMt curve: GMt(T)
     /// </summary>
-    Task<CurveDataDto> GenerateGMtCurveAsync(
+    Task<CurveDto> GenerateGMtCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -54,7 +54,7 @@ public interface ICurvesGenerator
     /// <summary>
     /// Generates waterplane area curve: Awp(T)
     /// </summary>
-    Task<CurveDataDto> GenerateAwpCurveAsync(
+    Task<CurveDto> GenerateAwpCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -72,7 +72,7 @@ public interface ICurvesGenerator
     /// <summary>
     /// Generates multiple curves at once
     /// </summary>
-    Task<Dictionary<string, CurveDataDto>> GenerateMultipleCurvesAsync(
+    Task<Dictionary<string, CurveDto>> GenerateMultipleCurvesAsync(
         Guid vesselId,
         Guid? loadcaseId,
         List<string> curveTypes, // "displacement", "kb", "lcb", "gmt", "awp"
@@ -80,35 +80,5 @@ public interface ICurvesGenerator
         decimal maxDraft,
         int points = 100,
         CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Curve data with X/Y points
-/// </summary>
-public record CurveDataDto
-{
-    public string Type { get; init; } = string.Empty;
-    public string XLabel { get; init; } = string.Empty;
-    public string YLabel { get; init; } = string.Empty;
-    public List<CurvePointDto> Points { get; init; } = new();
-}
-
-/// <summary>
-/// Single point on a curve
-/// </summary>
-public record CurvePointDto
-{
-    public decimal X { get; init; }
-    public decimal Y { get; init; }
-}
-
-/// <summary>
-/// Bonjean curve (sectional area vs draft) for a single station
-/// </summary>
-public record BonjeanCurveDto
-{
-    public int StationIndex { get; init; }
-    public decimal StationX { get; init; }
-    public List<CurvePointDto> Points { get; init; } = new(); // X=draft, Y=sectional area
 }
 

@@ -6,10 +6,11 @@ import type { VesselDetails } from "../../types/hydrostatics";
 import { ConsolidatedHydrostaticsTab } from "../../components/hydrostatics/tabs/ConsolidatedHydrostaticsTab";
 import { GeometryTab } from "../../components/hydrostatics/tabs/GeometryTab";
 import { LoadcasesTab } from "../../components/hydrostatics/tabs/LoadcasesTab";
+import { BonjeanCurvesTab } from "../../components/hydrostatics/tabs/BonjeanCurvesTab";
 import { useStore } from "../../stores";
 import { ThemeToggle } from "../../components/ThemeToggle";
 
-type TabName = "hydrostatics" | "geometry" | "loadcases";
+type TabName = "hydrostatics" | "geometry" | "loadcases" | "bonjean";
 
 export const VesselDetail = observer(function VesselDetail() {
   const { vesselId } = useParams<{ vesselId: string }>();
@@ -57,6 +58,7 @@ export const VesselDetail = observer(function VesselDetail() {
     { id: "hydrostatics", label: "Hydrostatics", count: null },
     { id: "geometry", label: "Geometry", count: vessel?.offsetsCount || 0 },
     { id: "loadcases", label: "Loadcases", count: null },
+    { id: "bonjean", label: "Bonjean Curves", count: null },
   ] as const;
 
   if (loading) {
@@ -257,6 +259,11 @@ export const VesselDetail = observer(function VesselDetail() {
         {activeTab === "loadcases" && (
           <div className="max-w-7xl mx-auto px-3 py-4 h-full">
             <LoadcasesTab vesselId={vessel.id} />
+          </div>
+        )}
+        {activeTab === "bonjean" && (
+          <div className="max-w-7xl mx-auto px-3 py-4 h-full">
+            <BonjeanCurvesTab vesselId={vessel.id} />
           </div>
         )}
       </div>

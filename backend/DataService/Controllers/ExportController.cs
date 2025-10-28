@@ -230,31 +230,31 @@ public class ExportController : ControllerBase
                 case "displacement":
                     var dispCurve = await _curvesGenerator.GenerateDisplacementCurveAsync(
                         vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken);
-                    curves.Add(MapCurveDto(dispCurve));
+                    curves.Add(dispCurve);
                     break;
 
                 case "kb":
                     var kbCurve = await _curvesGenerator.GenerateKBCurveAsync(
                         vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken);
-                    curves.Add(MapCurveDto(kbCurve));
+                    curves.Add(kbCurve);
                     break;
 
                 case "lcb":
                     var lcbCurve = await _curvesGenerator.GenerateLCBCurveAsync(
                         vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken);
-                    curves.Add(MapCurveDto(lcbCurve));
+                    curves.Add(lcbCurve);
                     break;
 
                 case "awp":
                     var awpCurve = await _curvesGenerator.GenerateAwpCurveAsync(
                         vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken);
-                    curves.Add(MapCurveDto(awpCurve));
+                    curves.Add(awpCurve);
                     break;
 
                 case "gmt":
                     var gmtCurve = await _curvesGenerator.GenerateGMtCurveAsync(
                         vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken);
-                    curves.Add(MapCurveDto(gmtCurve));
+                    curves.Add(gmtCurve);
                     break;
             }
         }
@@ -262,23 +262,6 @@ public class ExportController : ControllerBase
         return curves;
     }
 
-    /// <summary>
-    /// Maps service layer CurveDataDto to shared CurveDto
-    /// </summary>
-    private Shared.DTOs.CurveDto MapCurveDto(Services.Hydrostatics.CurveDataDto source)
-    {
-        return new Shared.DTOs.CurveDto
-        {
-            Type = source.Type,
-            XLabel = source.XLabel,
-            YLabel = source.YLabel,
-            Points = source.Points.Select(p => new Shared.DTOs.CurvePointDto
-            {
-                X = p.X,
-                Y = p.Y
-            }).ToList()
-        };
-    }
 }
 
 /// <summary>

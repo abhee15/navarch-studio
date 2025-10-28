@@ -1,5 +1,6 @@
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
+using Shared.DTOs;
 
 namespace DataService.Services.Hydrostatics;
 
@@ -25,7 +26,7 @@ public class CurvesGenerator : ICurvesGenerator
         _logger = logger;
     }
 
-    public async Task<CurveDataDto> GenerateDisplacementCurveAsync(
+    public async Task<CurveDto> GenerateDisplacementCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -42,7 +43,7 @@ public class CurvesGenerator : ICurvesGenerator
             Y = r.DispWeight
         }).ToList();
 
-        return new CurveDataDto
+        return new CurveDto
         {
             Type = "displacement",
             XLabel = "Draft (m)",
@@ -51,7 +52,7 @@ public class CurvesGenerator : ICurvesGenerator
         };
     }
 
-    public async Task<CurveDataDto> GenerateKBCurveAsync(
+    public async Task<CurveDto> GenerateKBCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -68,7 +69,7 @@ public class CurvesGenerator : ICurvesGenerator
             Y = r.KBz
         }).ToList();
 
-        return new CurveDataDto
+        return new CurveDto
         {
             Type = "kb",
             XLabel = "Draft (m)",
@@ -77,7 +78,7 @@ public class CurvesGenerator : ICurvesGenerator
         };
     }
 
-    public async Task<CurveDataDto> GenerateLCBCurveAsync(
+    public async Task<CurveDto> GenerateLCBCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -94,7 +95,7 @@ public class CurvesGenerator : ICurvesGenerator
             Y = r.LCBx
         }).ToList();
 
-        return new CurveDataDto
+        return new CurveDto
         {
             Type = "lcb",
             XLabel = "Draft (m)",
@@ -103,7 +104,7 @@ public class CurvesGenerator : ICurvesGenerator
         };
     }
 
-    public async Task<CurveDataDto> GenerateGMtCurveAsync(
+    public async Task<CurveDto> GenerateGMtCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -127,7 +128,7 @@ public class CurvesGenerator : ICurvesGenerator
                 Y = r.GMt!.Value
             }).ToList();
 
-        return new CurveDataDto
+        return new CurveDto
         {
             Type = "gmt",
             XLabel = "Draft (m)",
@@ -136,7 +137,7 @@ public class CurvesGenerator : ICurvesGenerator
         };
     }
 
-    public async Task<CurveDataDto> GenerateAwpCurveAsync(
+    public async Task<CurveDto> GenerateAwpCurveAsync(
         Guid vesselId,
         Guid? loadcaseId,
         decimal minDraft,
@@ -153,7 +154,7 @@ public class CurvesGenerator : ICurvesGenerator
             Y = r.Awp
         }).ToList();
 
-        return new CurveDataDto
+        return new CurveDto
         {
             Type = "awp",
             XLabel = "Draft (m)",
@@ -244,7 +245,7 @@ public class CurvesGenerator : ICurvesGenerator
         return bonjeanCurves;
     }
 
-    public async Task<Dictionary<string, CurveDataDto>> GenerateMultipleCurvesAsync(
+    public async Task<Dictionary<string, CurveDto>> GenerateMultipleCurvesAsync(
         Guid vesselId,
         Guid? loadcaseId,
         List<string> curveTypes,
@@ -253,11 +254,11 @@ public class CurvesGenerator : ICurvesGenerator
         int points = 100,
         CancellationToken cancellationToken = default)
     {
-        var curves = new Dictionary<string, CurveDataDto>();
+        var curves = new Dictionary<string, CurveDto>();
 
         foreach (var type in curveTypes)
         {
-            CurveDataDto? curve = type.ToLower() switch
+            CurveDto? curve = type.ToLower() switch
             {
                 "displacement" => await GenerateDisplacementCurveAsync(vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken),
                 "kb" => await GenerateKBCurveAsync(vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken),

@@ -28,3 +28,13 @@ public record CurveGenerationResponseDto
     public List<CurveDto> Curves { get; init; } = new();
 }
 
+/// <summary>
+/// Bonjean curve (sectional area vs draft) for a single station
+/// </summary>
+public record BonjeanCurveDto
+{
+    public int StationIndex { get; init; }
+    public decimal StationX { get; init; }
+    public List<CurvePointDto> Points { get; init; } = new(); // X=draft, Y=sectional area
+}
+
