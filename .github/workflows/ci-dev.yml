@@ -405,78 +405,33 @@ jobs:
     needs: deploy-infrastructure
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Get RDS endpoint from AWS
-        id: get-rds
+      - name: Migrations handled automatically by services
         run: |
-          echo "🔍 Querying AWS for RDS instance..."
-          
-          RDS_ENDPOINT=$(aws rds describe-db-instances \
-            --region ${{ env.AWS_REGION }} \
-            --query "DBInstances[?contains(DBInstanceIdentifier, '${{ env.ENVIRONMENT }}')].Endpoint.Address | [0]" \
-            --output text)
-          
-          if [ -z "$RDS_ENDPOINT" ] || [ "$RDS_ENDPOINT" == "None" ]; then
-            echo "❌ ERROR: Could not find RDS instance"
-            exit 1
-          fi
-          
-          echo "✅ Found RDS endpoint: $RDS_ENDPOINT"
-          echo "rds_endpoint=$RDS_ENDPOINT" >> $GITHUB_OUTPUT
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-
-      - name: Install EF Core tools
-        run: dotnet tool install --global dotnet-ef
-
-      - name: Run IdentityService migrations
-        run: |
-          echo "🔄 Applying IdentityService migrations..."
-          echo "RDS Endpoint: ${{ steps.get-rds.outputs.rds_endpoint }}"
-          
-          cd backend/IdentityService
-          dotnet ef database update --verbose --connection "$CONNECTION_STRING"
-          
-          echo "✅ IdentityService migrations applied successfully"
-        env:
-          ASPNETCORE_ENVIRONMENT: Staging
-          CONNECTION_STRING: Host=${{ steps.get-rds.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
-
-      - name: Run DataService migrations
-        run: |
-          echo "🔄 Applying DataService migrations..."
-          echo "RDS Endpoint: ${{ steps.get-rds.outputs.rds_endpoint }}"
-          
-          cd backend/DataService
-          dotnet ef database update --verbose --connection "$CONNECTION_STRING"
-          
-          echo "✅ DataService migrations applied successfully"
-        env:
-          ASPNETCORE_ENVIRONMENT: Staging
-          CONNECTION_STRING: Host=${{ steps.get-rds.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
-
-      - name: Verify migrations
-        run: |
+          echo "ℹ️ Database migrations are applied automatically when services start"
           echo ""
-          echo "📋 Migration Summary:"
-          echo "  ✅ IdentityService migrations applied"
-          echo "  ✅ DataService migrations applied"
+          echo "💡 How it works:"
+          echo "   - Each service (IdentityService, DataService) checks for pending migrations at startup"
+          echo "   - In Staging/Production environments, migrations are applied automatically"
+          echo "   - In Development (local), migrations must be applied manually"
+          echo "   - Migration status is logged to CloudWatch for verification"
           echo ""
-          echo "💡 Database schema is now up to date"
-          echo "   Database: ${{ secrets.RDS_DATABASE }}"
-          echo "   Endpoint: ${{ needs.deploy-infrastructure.outputs.rds_endpoint }}"
+          echo "🔧 Implementation:"
+          echo "   - Services run 'dbContext.Database.MigrateAsync()' at startup"
+          echo "   - Only when environment is NOT Development"
+          echo "   - Located in: backend/IdentityService/Program.cs and backend/DataService/Program.cs"
+          echo ""
+          echo "📋 To verify migrations after deployment:"
+          echo "   aws logs tail /aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-identity-service --since 10m --region ${{ env.AWS_REGION }} --filter-pattern 'migration'"
+          echo "   aws logs tail /aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-data-service --since 10m --region ${{ env.AWS_REGION }} --filter-pattern 'migration'"
+          echo ""
+          echo "   Look for log messages:"
+          echo "     ✅ 'Database connection successful'"
+          echo "     ✅ 'Applied migrations: X'"
+          echo "     ✅ 'Pending migrations: X'"
+          echo "     ✅ 'Migrations applied successfully'"
+          echo "     ✅ 'Database schema is up to date'"
+          echo ""
+          echo "✅ Migration step complete - services will handle schema updates automatically"
 
   deploy-frontend:
     runs-on: ubuntu-latest
