@@ -147,7 +147,7 @@ public class StabilityIntegrationTests : IDisposable
     }
 
     [Fact]
-    public void TestExtremeAngles_FullMethod_ProducesSmoothCurve()
+    public async Task TestExtremeAngles_FullMethod_ProducesSmoothCurve()
     {
         // This test verifies that the full method can handle large angles
         // without throwing exceptions and produces a smooth curve
@@ -167,14 +167,14 @@ public class StabilityIntegrationTests : IDisposable
         };
 
         // This is a basic smoke test - full method should handle extreme angles
-        var exception = Record.ExceptionAsync(async () =>
+        var exception = await Record.ExceptionAsync(async () =>
             await _stabilityCalculator.ComputeGZCurveAsync(vesselId, request));
 
-        Assert.Null(exception.Result); // Should complete without exceptions
+        Assert.Null(exception); // Should complete without exceptions
     }
 
     [Fact]
-    public void TestZeroGM_UnstableVessel()
+    public async Task TestZeroGM_UnstableVessel()
     {
         // Arrange - Create vessel with very high KG (unstable)
         var (vesselId, loadcaseId) = CreateTestVessel(kg: 10.0m); // Very high KG
@@ -190,7 +190,7 @@ public class StabilityIntegrationTests : IDisposable
         };
 
         // Act & Assert - Should compute GZ curve even for unstable vessel
-        var exception = Record.ExceptionAsync(async () =>
+        var exception = await Record.ExceptionAsync(async () =>
         {
             var result = await _stabilityCalculator.ComputeGZCurveAsync(vesselId, request);
             Assert.NotNull(result);
@@ -202,7 +202,7 @@ public class StabilityIntegrationTests : IDisposable
             // Just verify computation completes
         });
 
-        Assert.Null(exception.Result);
+        Assert.Null(exception);
     }
 
     private (Guid vesselId, Guid loadcaseId) CreateTestVessel(decimal kg = 2.5m)
