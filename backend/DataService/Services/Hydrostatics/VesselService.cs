@@ -33,7 +33,7 @@ public class VesselService : IVesselService
     {
         // Convert from user's units to SI for storage
         UnitConversionHelper.ConvertToSI(dto, _converter);
-        
+
         // Validate
         var validationResult = _validationService.ValidateVessel(dto);
         if (!validationResult.IsValid)
@@ -106,7 +106,7 @@ public class VesselService : IVesselService
     {
         // Convert from user's units to SI for storage
         UnitConversionHelper.ConvertToSI(dto, _converter);
-        
+
         // Validate
         var validationResult = _validationService.ValidateVessel(dto);
         if (!validationResult.IsValid)

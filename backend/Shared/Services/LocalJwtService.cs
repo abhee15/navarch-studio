@@ -25,18 +25,18 @@ public class LocalJwtService : IJwtService
     {
         _configuration = configuration;
         _logger = logger;
-        
+
         // Use configuration or default values for local development
-        _secretKey = _configuration["Jwt:SecretKey"] 
+        _secretKey = _configuration["Jwt:SecretKey"]
             ?? "navarch-studio-local-development-secret-key-min-32-chars";
         _issuer = _configuration["Jwt:Issuer"] ?? "navarch-studio-local";
         _audience = _configuration["Jwt:Audience"] ?? "navarch-studio-api";
-        
+
         if (_secretKey.Length < 32)
         {
             throw new InvalidOperationException("JWT secret key must be at least 32 characters");
         }
-        
+
         _logger.LogInformation("LocalJwtService initialized for local development");
     }
 

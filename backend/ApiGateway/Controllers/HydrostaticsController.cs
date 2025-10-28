@@ -54,22 +54,22 @@ public class HydrostaticsController : ControllerBase
             _logger.LogInformation("Proxying POST /hydrostatics/{Path} to DataService", path);
 
             var contentType = Request.ContentType;
-            
+
             // For multipart/form-data (file uploads), parse and reconstruct the form
             if (!string.IsNullOrEmpty(contentType) && contentType.StartsWith("multipart/form-data", StringComparison.OrdinalIgnoreCase))
             {
                 // Read the form from the request
                 var form = await Request.ReadFormAsync(cancellationToken);
-                
+
                 // Create MultipartFormDataContent to properly reconstruct the form
                 var multipartContent = new MultipartFormDataContent();
-                
+
                 // Add all form fields
                 foreach (var field in form)
                 {
                     multipartContent.Add(new StringContent(field.Value), field.Key);
                 }
-                
+
                 // Add all files
                 foreach (var file in form.Files)
                 {

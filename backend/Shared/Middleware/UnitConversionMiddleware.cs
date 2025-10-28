@@ -25,31 +25,31 @@ public class UnitConversionMiddleware
     {
         // Skip processing for file uploads (multipart/form-data)
         var contentType = context.Request.ContentType;
-        if (!string.IsNullOrEmpty(contentType) && 
+        if (!string.IsNullOrEmpty(contentType) &&
             contentType.StartsWith("multipart/form-data", StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogDebug("Skipping unit conversion for file upload");
             await _next(context);
             return;
         }
-        
+
         // Read preferred units from X-Preferred-Units header
         var preferredUnits = context.Request.Headers["X-Preferred-Units"].FirstOrDefault();
-        
+
         // If header not present, try to get from user's stored preference
         if (string.IsNullOrEmpty(preferredUnits))
         {
             preferredUnits = GetUserPreferredUnits(context);
         }
-        
+
         // Default to SI if nothing specified
         preferredUnits ??= "SI";
-        
+
         // Store in HttpContext.Items for downstream use
         context.Items["PreferredUnits"] = preferredUnits;
-        
+
         _logger.LogDebug("Unit preference set to: {PreferredUnits}", preferredUnits);
-        
+
         await _next(context);
     }
 
@@ -69,7 +69,7 @@ public class UnitConversionMiddleware
                 return unitsClaim;
             }
         }
-        
+
         // Could also query database here if needed, but for now we rely on header
         // or the frontend to send the preference
         return null;

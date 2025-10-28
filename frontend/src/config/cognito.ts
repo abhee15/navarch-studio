@@ -8,9 +8,8 @@ const poolData = {
 };
 
 // Only initialize CognitoUserPool if in cognito mode
-export const userPool = authMode === "cognito" 
-  ? new CognitoUserPool(poolData)
-  : null as any; // Dummy value for local mode
+export const userPool: CognitoUserPool | null =
+  authMode === "cognito" ? new CognitoUserPool(poolData) : null; // Dummy value for local mode
 
 export const getCognitoConfig = () => ({
   userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,

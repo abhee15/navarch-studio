@@ -72,7 +72,7 @@ try
 
     // Services
     builder.Services.AddScoped<IUserService, UserService>();
-    
+
     // JWT Service - Use LocalJwtService in development, CognitoJwtService in production
     if (builder.Environment.IsDevelopment())
     {
@@ -84,10 +84,10 @@ try
         builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
         Log.Information("Using CognitoJwtService for production");
     }
-    
+
     // Unit Conversion Service (NavArch.UnitConversion)
     var xmlPath = Path.Combine(AppContext.BaseDirectory, "unit-systems.xml");
-    builder.Services.AddSingleton<NavArch.UnitConversion.Services.IUnitConverter>(sp => 
+    builder.Services.AddSingleton<NavArch.UnitConversion.Services.IUnitConverter>(sp =>
         new NavArch.UnitConversion.Services.UnitConverter(xmlPath));
     Log.Information("Unit conversion service registered with config: {XmlPath}", xmlPath);
 
@@ -191,7 +191,7 @@ try
 
     // JWT Authentication Middleware
     app.UseMiddleware<JwtAuthenticationMiddleware>();
-    
+
     // Unit Conversion Middleware (after JWT so we have user context)
     app.UseMiddleware<UnitConversionMiddleware>();
 

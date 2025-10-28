@@ -131,12 +131,13 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
   }, [offsetData]);
 
   const handleCellValueChanged = (event: CellValueChangedEvent<GridRow>) => {
-    if (!offsetData || !event.colDef.field) return;
+    const field = event.colDef.field;
+    if (!offsetData || !field) return;
 
     // Update the offsetData with the changed value
-    const { data, colDef } = event;
+    const { data } = event;
     const stationIndex = data.stationIndex;
-    const waterlineIndex = parseInt(colDef.field.replace("wl_", ""));
+    const waterlineIndex = parseInt(field.replace("wl_", ""));
     const newValue = event.newValue;
 
     console.log(
@@ -167,11 +168,11 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
       // Call the update API
       await geometryApi.updateOffsetsGrid(vesselId, offsetData);
 
-      console.log("Changes saved successfully");
+      console.log("Changes saved successfully for vessel:", vesselId);
       setHasChanges(false);
 
-      // Show success message (you can add a toast notification here)
-      alert("Changes saved successfully!");
+      // Show success message
+      alert(`Changes saved successfully for vessel "${vessel.name}"!`);
     } catch (err) {
       console.error("Error saving changes:", err);
       setError(err instanceof Error ? err.message : "Failed to save changes");
@@ -181,8 +182,8 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
   };
 
   const handleDiscardChanges = () => {
-    if (confirm("Are you sure you want to discard all changes?")) {
-      loadOffsets(); // Reload original data
+    if (confirm(`Discard all unsaved changes to ${vessel.name}'s geometry?`)) {
+      loadOffsets(); // Reload original data from this vessel
       setHasChanges(false);
     }
   };
@@ -291,7 +292,12 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
         <div className="text-xs text-gray-500">
           {vessel.stationsCount} stations × {vessel.waterlinesCount} waterlines
           {hasChanges && (
-            <span className="ml-2 text-orange-600 font-medium">• Unsaved changes</span>
+            <span
+              className="ml-2 text-orange-600 font-medium"
+              title={`Unsaved changes for ${vessel.name}`}
+            >
+              • Unsaved changes (vessel-specific)
+            </span>
           )}
         </div>
       </div>

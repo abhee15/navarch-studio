@@ -14,7 +14,7 @@ public class UserService : IUserService
     private readonly IJwtService? _jwtService;
 
     public UserService(
-        IdentityDbContext context, 
+        IdentityDbContext context,
         ILogger<UserService> logger,
         IJwtService? jwtService = null)
     {

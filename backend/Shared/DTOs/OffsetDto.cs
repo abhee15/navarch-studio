@@ -6,7 +6,7 @@ public record OffsetDto
 {
     public int StationIndex { get; init; }
     public int WaterlineIndex { get; init; }
-    
+
     [Convertible("Length")]
     public decimal HalfBreadthY { get; init; }
 }

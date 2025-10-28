@@ -52,7 +52,6 @@ public class WigleyHullTests : IDisposable
             Lpp = length,
             Beam = beam,
             DesignDraft = draft,
-            UnitsSystem = "SI",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

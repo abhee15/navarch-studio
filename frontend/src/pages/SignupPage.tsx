@@ -28,10 +28,10 @@ export const SignupPage: React.FC = observer(() => {
 
     try {
       await authStore.signup(email, password, name);
-      
+
       // In local mode, skip verification and go straight to success
-      const authMode = import.meta.env.VITE_AUTH_MODE || 'cognito';
-      if (authMode === 'local') {
+      const authMode = import.meta.env.VITE_AUTH_MODE || "cognito";
+      if (authMode === "local") {
         setSignupSuccess(true);
       } else {
         setNeedsVerification(true);

@@ -32,7 +32,7 @@ public class UnitConversionFilter : IAsyncActionFilter
         if (resultContext.Result is ObjectResult objectResult && objectResult.StatusCode is >= 200 and < 300)
         {
             var preferredUnits = context.HttpContext.Items["PreferredUnits"]?.ToString() ?? "SI";
-            
+
             // Convert the response if it's a UnitAwareDto
             if (objectResult.Value != null)
             {
@@ -76,7 +76,7 @@ public class UnitConversionFilter : IAsyncActionFilter
         if (dto.Units == targetUnits) return;
 
         var sourceUnits = dto.Units;
-        
+
         // Convert all properties with [Convertible] attribute
         var properties = dto.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<ConvertibleAttribute>() != null);
@@ -115,7 +115,7 @@ public class UnitConversionFilter : IAsyncActionFilter
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to convert property {PropertyName} from {SourceUnits} to {TargetUnits}", 
+                _logger.LogWarning(ex, "Failed to convert property {PropertyName} from {SourceUnits} to {TargetUnits}",
                     prop.Name, sourceUnits, targetUnits);
             }
         }

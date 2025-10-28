@@ -3,7 +3,7 @@
  * Uses the IdentityService backend instead of AWS Cognito
  */
 
-import axios from 'axios';
+import axios from "axios";
 
 export interface LocalAuthUser {
   id: string;
@@ -33,17 +33,14 @@ const authAxios = axios.create({
 });
 
 export class LocalAuthService {
-  private static TOKEN_KEY = 'jwt_token';
-  private static USER_KEY = 'user_data';
+  private static TOKEN_KEY = "jwt_token";
+  private static USER_KEY = "user_data";
 
   /**
    * Login with email and password
    */
   static async login(email: string, password: string): Promise<LocalAuthUser> {
-    const response = await authAxios.post<LoginResponse>(
-      '/auth/login',
-      { email, password }
-    );
+    const response = await authAxios.post<LoginResponse>("/auth/login", { email, password });
 
     const token = response.data.token;
     this.setToken(token);
@@ -59,10 +56,7 @@ export class LocalAuthService {
    * Create a new user account
    */
   static async signup(email: string, password: string, name: string): Promise<void> {
-    await authAxios.post<CreateUserResponse>(
-      '/users',
-      { email, password, name }
-    );
+    await authAxios.post<CreateUserResponse>("/users", { email, password, name });
     // Note: User must still login after signup
   }
 
@@ -72,17 +66,14 @@ export class LocalAuthService {
   static async getCurrentUser(): Promise<LocalAuthUser> {
     const token = this.getToken();
     if (!token) {
-      throw new Error('No authentication token found');
+      throw new Error("No authentication token found");
     }
 
-    const response = await authAxios.get<LocalAuthUser>(
-      '/users/me',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await authAxios.get<LocalAuthUser>("/users/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     return response.data;
   }
@@ -115,7 +106,7 @@ export class LocalAuthService {
   static getUser(): LocalAuthUser | null {
     const userData = localStorage.getItem(this.USER_KEY);
     if (!userData) return null;
-    
+
     try {
       return JSON.parse(userData);
     } catch {
@@ -137,4 +128,3 @@ export class LocalAuthService {
     return !!this.getToken();
   }
 }
-

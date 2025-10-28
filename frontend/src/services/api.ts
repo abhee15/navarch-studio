@@ -3,21 +3,21 @@ import { CognitoUserSession } from "amazon-cognito-identity-js";
 import { userPool } from "../config/cognito";
 import { LocalAuthService } from "./localAuthService";
 
-type AuthMode = 'cognito' | 'local';
+type AuthMode = "cognito" | "local";
 
 // Get auth mode from environment
 const getAuthMode = (): AuthMode => {
-  return (import.meta.env.VITE_AUTH_MODE || 'local') as AuthMode;
+  return (import.meta.env.VITE_AUTH_MODE || "local") as AuthMode;
 };
 
 // Function to get current JWT token based on auth mode
 const getAuthToken = async (): Promise<string | null> => {
   const authMode = getAuthMode();
-  
-  if (authMode === 'local') {
+
+  if (authMode === "local") {
     return LocalAuthService.getToken();
   }
-  
+
   // Cognito token
   return getCognitoToken();
 };
@@ -25,6 +25,10 @@ const getAuthToken = async (): Promise<string | null> => {
 // Function to get current Cognito JWT token
 const getCognitoToken = (): Promise<string | null> => {
   return new Promise((resolve) => {
+    if (!userPool) {
+      resolve(null);
+      return;
+    }
     const cognitoUser = userPool.getCurrentUser();
     if (!cognitoUser) {
       resolve(null);
@@ -66,7 +70,7 @@ const createApiClient = (): AxiosInstance => {
       // Import settingsStore dynamically to avoid circular dependency
       const { settingsStore } = await import("../stores/SettingsStore");
       config.headers["X-Preferred-Units"] = settingsStore.preferredUnits;
-      
+
       console.debug("Request with units:", settingsStore.preferredUnits);
     } catch (error) {
       console.log("No auth token or settings available", error);
@@ -81,9 +85,9 @@ const createApiClient = (): AxiosInstance => {
       if (error.response?.status === 401) {
         // Clear session and redirect to login based on auth mode
         const authMode = getAuthMode();
-        if (authMode === 'local') {
+        if (authMode === "local") {
           LocalAuthService.logout();
-        } else {
+        } else if (userPool) {
           const cognitoUser = userPool.getCurrentUser();
           if (cognitoUser) {
             cognitoUser.signOut();

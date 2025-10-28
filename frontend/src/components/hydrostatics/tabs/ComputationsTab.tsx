@@ -122,9 +122,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
             </select>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Future: Export, Settings buttons */}
-        </div>
+        <div className="flex items-center gap-2">{/* Future: Export, Settings buttons */}</div>
       </div>
 
       {/* Error Message */}
@@ -177,7 +175,10 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                 </div>
                 {results.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-gray-200 text-[11px] text-gray-600 space-y-0.5">
-                    <div>Draft range: {formatNumber(results[0].draft)} - {formatNumber(results[results.length - 1].draft)} {lengthUnit}</div>
+                    <div>
+                      Draft range: {formatNumber(results[0].draft)} -{" "}
+                      {formatNumber(results[results.length - 1].draft)} {lengthUnit}
+                    </div>
                     <div>{results.length} computed points</div>
                   </div>
                 )}
@@ -186,11 +187,19 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
           </CollapsibleSection>
 
           {/* Computation Range Section */}
-          <CollapsibleSection title="Computation Range" defaultExpanded={true} badge={draftCount > 0 ? `${draftCount} pts` : undefined}>
+          <CollapsibleSection
+            title="Computation Range"
+            defaultExpanded={true}
+            badge={draftCount > 0 ? `${draftCount} pts` : undefined}
+          >
             {loadcases.length === 0 ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-[11px]">
                 <div className="flex items-start">
-                  <svg className="h-3.5 w-3.5 text-yellow-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="h-3.5 w-3.5 text-yellow-400 mt-0.5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -209,7 +218,10 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
               <div className="space-y-2">
                 {/* Min Draft */}
                 <div>
-                  <label htmlFor="minDraft" className="block text-[11px] font-medium text-gray-600 mb-0.5">
+                  <label
+                    htmlFor="minDraft"
+                    className="block text-[11px] font-medium text-gray-600 mb-0.5"
+                  >
                     Min Draft ({lengthUnit})
                   </label>
                   <input
@@ -225,7 +237,10 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
 
                 {/* Max Draft */}
                 <div>
-                  <label htmlFor="maxDraft" className="block text-[11px] font-medium text-gray-600 mb-0.5">
+                  <label
+                    htmlFor="maxDraft"
+                    className="block text-[11px] font-medium text-gray-600 mb-0.5"
+                  >
                     Max Draft ({lengthUnit})
                   </label>
                   <input
@@ -241,7 +256,10 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
 
                 {/* Draft Step */}
                 <div>
-                  <label htmlFor="draftStep" className="block text-[11px] font-medium text-gray-600 mb-0.5">
+                  <label
+                    htmlFor="draftStep"
+                    className="block text-[11px] font-medium text-gray-600 mb-0.5"
+                  >
                     Draft Step ({lengthUnit})
                   </label>
                   <input
@@ -338,7 +356,9 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                   <div>
                     <h3 className="text-xs font-medium text-gray-900">Hydrostatic Table</h3>
                     {computationTime && (
-                      <p className="text-[10px] text-gray-500">Computed in {computationTime.toFixed(0)} ms</p>
+                      <p className="text-[10px] text-gray-500">
+                        Computed in {computationTime.toFixed(0)} ms
+                      </p>
                     )}
                   </div>
                   <span className="text-[10px] text-gray-500">{results.length} rows</span>

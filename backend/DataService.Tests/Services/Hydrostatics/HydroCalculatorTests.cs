@@ -148,8 +148,7 @@ public class HydroCalculatorTests : IDisposable
             Name = "Rectangular Barge Test",
             Lpp = length,
             Beam = beam,
-            DesignDraft = draft,
-            UnitsSystem = "SI"
+            DesignDraft = draft
         };
 
         _context.Vessels.Add(vessel);

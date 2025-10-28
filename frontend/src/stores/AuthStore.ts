@@ -15,7 +15,7 @@ export interface User {
   preferredUnits?: string;
 }
 
-type AuthMode = 'cognito' | 'local';
+type AuthMode = "cognito" | "local";
 
 export class AuthStore {
   user: User | null = null;
@@ -28,12 +28,12 @@ export class AuthStore {
   constructor() {
     makeAutoObservable(this);
     // Determine auth mode from environment
-    this.authMode = (import.meta.env.VITE_AUTH_MODE || 'local') as AuthMode;
+    this.authMode = (import.meta.env.VITE_AUTH_MODE || "local") as AuthMode;
     this.initializeAuth();
   }
 
   private initializeAuth(): void {
-    if (this.authMode === 'local') {
+    if (this.authMode === "local") {
       // Local JWT auth - check for stored token
       const user = LocalAuthService.getUser();
       if (user && LocalAuthService.isAuthenticated()) {
@@ -42,7 +42,7 @@ export class AuthStore {
           this.isAuthenticated = true;
         });
       }
-    } else {
+    } else if (userPool) {
       // Cognito auth - check for existing session
       const cognitoUser = userPool.getCurrentUser();
       if (cognitoUser) {
@@ -81,21 +81,22 @@ export class AuthStore {
     this.error = null;
 
     try {
-      if (this.authMode === 'local') {
+      if (this.authMode === "local") {
         // Local JWT auth
         const user = await LocalAuthService.login(email, password);
-        
+
         runInAction(() => {
           this.user = user;
           this.isAuthenticated = true;
           this.loading = false;
         });
-        
+
         // Load user settings including preferred units
         const { settingsStore } = await import("./SettingsStore");
         await settingsStore.loadSettings();
-      } else {
+      } else if (userPool) {
         // Cognito auth
+        const pool = userPool; // Capture non-null value
         return new Promise((resolve, reject) => {
           const authenticationDetails = new AuthenticationDetails({
             Username: email,
@@ -104,7 +105,7 @@ export class AuthStore {
 
           const userData = {
             Username: email,
-            Pool: userPool,
+            Pool: pool,
           };
 
           const cognitoUser = new CognitoUser(userData);
@@ -169,15 +170,16 @@ export class AuthStore {
     this.error = null;
 
     try {
-      if (this.authMode === 'local') {
+      if (this.authMode === "local") {
         // Local JWT auth
         await LocalAuthService.signup(email, password, name);
-        
+
         runInAction(() => {
           this.loading = false;
         });
-      } else {
+      } else if (userPool) {
         // Cognito auth
+        const pool = userPool; // Capture non-null value
         return new Promise((resolve, reject) => {
           const attributeList: CognitoUserAttribute[] = [
             new CognitoUserAttribute({
@@ -190,7 +192,7 @@ export class AuthStore {
             }),
           ];
 
-          userPool.signUp(email, password, attributeList, [], (err, _result) => {
+          pool.signUp(email, password, attributeList, [], (err, _result) => {
             if (err) {
               runInAction(() => {
                 this.error = err.message || "Signup failed";
@@ -221,7 +223,7 @@ export class AuthStore {
     this.error = null;
 
     try {
-      if (this.authMode === 'local') {
+      if (this.authMode === "local") {
         // Local JWT auth doesn't require email confirmation
         runInAction(() => {
           this.loading = false;
@@ -230,10 +232,15 @@ export class AuthStore {
       }
 
       // Cognito auth - requires email confirmation
+      if (!userPool) {
+        throw new Error("Cognito user pool not initialized");
+      }
+
+      const pool = userPool; // Capture non-null value
       return new Promise((resolve, reject) => {
         const cognitoUser = new CognitoUser({
           Username: email,
-          Pool: userPool,
+          Pool: pool,
         });
 
         cognitoUser.confirmRegistration(code, true, (err, _result) => {
@@ -262,9 +269,9 @@ export class AuthStore {
   }
 
   logout(): void {
-    if (this.authMode === 'local') {
+    if (this.authMode === "local") {
       LocalAuthService.logout();
-    } else {
+    } else if (userPool) {
       const cognitoUser = userPool.getCurrentUser();
       if (cognitoUser) {
         cognitoUser.signOut();
@@ -279,7 +286,7 @@ export class AuthStore {
   }
 
   async getIdToken(): Promise<string | null> {
-    if (this.authMode === 'local') {
+    if (this.authMode === "local") {
       return LocalAuthService.getToken();
     }
 
@@ -289,6 +296,9 @@ export class AuthStore {
 
     // Check if token needs refresh
     if (!this.currentSession.isValid()) {
+      if (!userPool) {
+        return null;
+      }
       const cognitoUser = userPool.getCurrentUser();
       if (!cognitoUser) {
         return null;
