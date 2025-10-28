@@ -107,6 +107,11 @@ export const geometryApi = {
     const response = await api.get(`/vessels/${vesselId}/offsets`);
     return response.data;
   },
+
+  async updateOffsetsGrid(vesselId: string, offsetsGrid: OffsetsGrid): Promise<OffsetsGrid> {
+    const response = await api.put(`/vessels/${vesselId}/offsets`, offsetsGrid);
+    return response.data;
+  },
 };
 
 // Loadcases API

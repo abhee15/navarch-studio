@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { UserSettingsDialog } from "../components/UserSettingsDialog";
 import { settingsStore } from "../stores/SettingsStore";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 export const DashboardPage: React.FC = observer(() => {
   const { authStore } = useStore();
@@ -23,9 +24,9 @@ export const DashboardPage: React.FC = observer(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header/Navigation */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -33,13 +34,14 @@ export const DashboardPage: React.FC = observer(() => {
                 <ShoppingBag className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Dashboard</h1>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                <p className="text-sm text-muted-foreground dark:text-gray-400">
                   Welcome back, {authStore.user?.name}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <ThemeToggle />
               <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
@@ -62,7 +64,7 @@ export const DashboardPage: React.FC = observer(() => {
       <main className="container mx-auto px-4 py-8">
         {/* Quick Access Cards */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Applications</h2>
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Applications</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <Card
               className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
@@ -102,9 +104,9 @@ export const DashboardPage: React.FC = observer(() => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-white/80 backdrop-blur-sm mt-12">
+      <footer className="border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mt-12">
         <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground dark:text-gray-400">
             © 2024 Your Company. All rights reserved.
           </p>
         </div>

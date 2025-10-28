@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, CellValueChangedEvent } from "ag-grid-community";
 import type { VesselDetails, OffsetsGrid } from "../../../types/hydrostatics";
 import { geometryApi } from "../../../services/hydrostaticsApi";
 import CsvImportWizard from "../CsvImportWizard";
@@ -32,6 +32,8 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
   const [offsetData, setOffsetData] = useState<OffsetsGrid | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (vessel.offsetsCount > 0 && activeView === "grid") {
@@ -72,7 +74,11 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
         stationX: offsetData.stations[stationIndex],
       };
 
-      for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+      for (
+        let waterlineIndex = 0;
+        waterlineIndex < offsetData.waterlines.length;
+        waterlineIndex++
+      ) {
         const halfBreadth = offsetData.offsets[stationIndex]?.[waterlineIndex] ?? 0;
         row[`wl_${waterlineIndex}`] = halfBreadth;
       }
@@ -124,6 +130,63 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
     return cols;
   }, [offsetData]);
 
+  const handleCellValueChanged = (event: CellValueChangedEvent<GridRow>) => {
+    if (!offsetData || !event.colDef.field) return;
+
+    // Update the offsetData with the changed value
+    const { data, colDef } = event;
+    const stationIndex = data.stationIndex;
+    const waterlineIndex = parseInt(colDef.field.replace("wl_", ""));
+    const newValue = event.newValue;
+
+    console.log(
+      `Cell changed: Station ${stationIndex}, Waterline ${waterlineIndex}, New value: ${newValue}`
+    );
+
+    // Update the offsets array
+    const updatedOffsets = [...offsetData.offsets];
+    if (!updatedOffsets[stationIndex]) {
+      updatedOffsets[stationIndex] = [];
+    }
+    updatedOffsets[stationIndex][waterlineIndex] = parseFloat(newValue) || 0;
+
+    setOffsetData({
+      ...offsetData,
+      offsets: updatedOffsets,
+    });
+    setHasChanges(true);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!offsetData) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Call the update API
+      await geometryApi.updateOffsetsGrid(vesselId, offsetData);
+
+      console.log("Changes saved successfully");
+      setHasChanges(false);
+
+      // Show success message (you can add a toast notification here)
+      alert("Changes saved successfully!");
+    } catch (err) {
+      console.error("Error saving changes:", err);
+      setError(err instanceof Error ? err.message : "Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    if (confirm("Are you sure you want to discard all changes?")) {
+      loadOffsets(); // Reload original data
+      setHasChanges(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gray-50">
       {/* Compact Toolbar */}
@@ -150,9 +213,86 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
           >
             Import CSV
           </button>
+
+          {/* Save/Discard buttons - only show when there are changes */}
+          {hasChanges && activeView === "grid" && (
+            <>
+              <div className="h-5 w-px bg-gray-300 mx-1"></div>
+              <button
+                onClick={handleSaveChanges}
+                disabled={saving}
+                className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {saving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-1.5 h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="-ml-0.5 mr-1.5 h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Save Changes
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleDiscardChanges}
+                disabled={saving}
+                className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg
+                  className="-ml-0.5 mr-1.5 h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                Discard
+              </button>
+            </>
+          )}
         </div>
         <div className="text-xs text-gray-500">
           {vessel.stationsCount} stations × {vessel.waterlinesCount} waterlines
+          {hasChanges && (
+            <span className="ml-2 text-orange-600 font-medium">• Unsaved changes</span>
+          )}
         </div>
       </div>
 
@@ -226,7 +366,10 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
             </div>
           ) : (
             <div className="h-full p-3">
-              <div className="ag-theme-alpine rounded border border-gray-200" style={{ height: 'calc(100% - 0px)' }}>
+              <div
+                className="ag-theme-alpine rounded border border-gray-200"
+                style={{ height: "calc(100% - 0px)" }}
+              >
                 <AgGridReact
                   rowData={rowData}
                   columnDefs={columnDefs}
@@ -236,6 +379,7 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
                   }}
                   suppressMovableColumns={true}
                   domLayout="normal"
+                  onCellValueChanged={handleCellValueChanged}
                 />
               </div>
             </div>

@@ -7,6 +7,7 @@ import { SignupPage } from "./pages/SignupPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { VesselsList } from "./pages/hydrostatics/VesselsList";
 import { VesselDetail } from "./pages/hydrostatics/VesselDetail";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { authStore } = useStore();
@@ -14,35 +15,37 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
 };
 
 export const App: React.FC = observer(() => (
-  <BrowserRouter>
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hydrostatics/vessels"
-        element={
-          <ProtectedRoute>
-            <VesselsList />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hydrostatics/vessels/:vesselId"
-        element={
-          <ProtectedRoute>
-            <VesselDetail />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/" element={<Navigate to="/dashboard" />} />
-    </Routes>
-  </BrowserRouter>
+  <ThemeProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hydrostatics/vessels"
+          element={
+            <ProtectedRoute>
+              <VesselsList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hydrostatics/vessels/:vesselId"
+          element={
+            <ProtectedRoute>
+              <VesselDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" />} />
+      </Routes>
+    </BrowserRouter>
+  </ThemeProvider>
 ));
