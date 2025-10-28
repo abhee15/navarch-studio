@@ -37,13 +37,13 @@ export class SettingsStore {
         this.settings = response.data;
         this.loading = false;
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMessage = "Failed to load settings";
       
       // Log the full error for debugging
       console.error("[SettingsStore] Failed to load settings - Full error:", err);
       console.error("[SettingsStore] Error type:", typeof err);
-      console.error("[SettingsStore] Error constructor:", err?.constructor?.name);
+      console.error("[SettingsStore] Error constructor:", (err as Error)?.constructor?.name);
       
       // Handle axios errors
       if (axios.isAxiosError(err)) {
@@ -75,7 +75,7 @@ export class SettingsStore {
           // Error setting up request
           errorMessage = `Failed to load settings: ${err.message}`;
         }
-      } else if (err?.message) {
+      } else if (err instanceof Error) {
         errorMessage = `Failed to load settings: ${err.message}`;
       } else if (typeof err === 'string') {
         errorMessage = `Failed to load settings: ${err}`;
@@ -106,7 +106,7 @@ export class SettingsStore {
         this.settings = response.data;
         this.loading = false;
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMessage = "Failed to update settings";
       
       console.error("[SettingsStore] Failed to update settings - Full error:", err);
@@ -128,7 +128,7 @@ export class SettingsStore {
         } else {
           errorMessage = `Failed to update settings: ${err.message}`;
         }
-      } else if (err?.message) {
+      } else if (err instanceof Error) {
         errorMessage = `Failed to update settings: ${err.message}`;
       } else if (typeof err === 'string') {
         errorMessage = `Failed to update settings: ${err}`;

@@ -1,16 +1,7 @@
 import { useState, useEffect } from "react";
 import { curvesApi, loadcasesApi } from "../../../services/hydrostaticsApi";
 import type { Loadcase, CurveData } from "../../../types/hydrostatics";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { InteractiveChart } from "../../common/InteractiveChart";
 
 interface CurvesTabProps {
   vesselId: string;
@@ -286,33 +277,15 @@ export function CurvesTab({ vesselId }: CurvesTabProps) {
           {Object.entries(curves).map(([curveType, curveData]) => {
             const curveInfo = CURVE_TYPES.find((t) => t.id === curveType);
             return (
-              <div key={curveType} className="bg-white shadow rounded-lg p-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">
-                  {curveInfo?.label || curveType}
-                </h4>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={curveData.points}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="x"
-                      label={{ value: curveData.xLabel, position: "insideBottom", offset: -5 }}
-                    />
-                    <YAxis
-                      label={{ value: curveData.yLabel, angle: -90, position: "insideLeft" }}
-                    />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="y"
-                      stroke={curveInfo?.color || "#3B82F6"}
-                      strokeWidth={2}
-                      dot={false}
-                      name={curveData.yLabel}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <InteractiveChart
+                key={curveType}
+                data={curveData.points}
+                title={curveInfo?.label || curveType}
+                xLabel={curveData.xLabel}
+                yLabel={curveData.yLabel}
+                color={curveInfo?.color || "#3B82F6"}
+                height={400}
+              />
             );
           })}
         </div>

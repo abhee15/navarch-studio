@@ -29,6 +29,7 @@ The error "rt" was a truncated/improperly parsed error message, likely due to:
 - ✅ Improved error message extraction from various error formats
 - ✅ **Added graceful fallback** - app now uses default settings (SI units) if API fails
 - ✅ Added console logging throughout the load/update flow
+- ✅ Fixed TypeScript linting errors (using `unknown` instead of `any` in catch blocks)
 
 #### `frontend/src/services/api.ts`
 
