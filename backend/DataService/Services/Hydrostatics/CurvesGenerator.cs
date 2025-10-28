@@ -40,7 +40,7 @@ public class CurvesGenerator : ICurvesGenerator
         var curvePoints = results.Select(r => new CurvePointDto
         {
             X = r.Draft,
-            Y = r.DispWeight
+            Y = r.DispWeight ?? 0
         }).ToList();
 
         return new CurveDto
@@ -66,7 +66,7 @@ public class CurvesGenerator : ICurvesGenerator
         var curvePoints = results.Select(r => new CurvePointDto
         {
             X = r.Draft,
-            Y = r.KBz
+            Y = r.KBz ?? 0
         }).ToList();
 
         return new CurveDto
@@ -92,7 +92,7 @@ public class CurvesGenerator : ICurvesGenerator
         var curvePoints = results.Select(r => new CurvePointDto
         {
             X = r.Draft,
-            Y = r.LCBx
+            Y = r.LCBx ?? 0
         }).ToList();
 
         return new CurveDto
@@ -151,7 +151,7 @@ public class CurvesGenerator : ICurvesGenerator
         var curvePoints = results.Select(r => new CurvePointDto
         {
             X = r.Draft,
-            Y = r.Awp
+            Y = r.Awp ?? 0
         }).ToList();
 
         return new CurveDto

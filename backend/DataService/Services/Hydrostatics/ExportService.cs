@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Shared.DTOs;
+using Shared.Models;
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -155,11 +156,15 @@ public class ExportService : IExportService
             try
             {
                 var curveTypes = new[] { "displacement", "kb", "lcb", "awp", "gmt" };
-                curves = await _curvesGenerator.GenerateCurvesAsync(
+                var curvesDict = await _curvesGenerator.GenerateMultipleCurvesAsync(
                     vesselId,
                     loadcaseId,
                     curveTypes.ToList(),
+                    minDraft,
+                    maxDraft,
+                    100, // points
                     cancellationToken);
+                curves = curvesDict.Values.ToList();
             }
             catch (Exception ex)
             {
@@ -225,11 +230,15 @@ public class ExportService : IExportService
             try
             {
                 var curveTypes = new[] { "displacement", "kb", "lcb", "awp", "gmt" };
-                curves = await _curvesGenerator.GenerateCurvesAsync(
+                var curvesDict = await _curvesGenerator.GenerateMultipleCurvesAsync(
                     vesselId,
                     loadcaseId,
                     curveTypes.ToList(),
+                    minDraft,
+                    maxDraft,
+                    100, // points
                     cancellationToken);
+                curves = curvesDict.Values.ToList();
             }
             catch (Exception ex)
             {

@@ -93,12 +93,11 @@ public class PdfReportBuilder
                             .AlignRight()
                             .Text(x =>
                             {
-                                x.Span("Page ");
-                                x.CurrentPageNumber();
-                                x.Span(" of ");
-                                x.TotalPages();
-                            })
-                            .FontSize(8);
+                                x.Span("Page ").FontSize(8).FontColor(Colors.Grey.Darken1);
+                                x.CurrentPageNumber().FontSize(8).FontColor(Colors.Grey.Darken1);
+                                x.Span(" of ").FontSize(8).FontColor(Colors.Grey.Darken1);
+                                x.TotalPages().FontSize(8).FontColor(Colors.Grey.Darken1);
+                            });
                     });
             });
         });

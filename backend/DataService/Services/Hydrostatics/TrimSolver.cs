@@ -75,7 +75,7 @@ public class TrimSolver : ITrimSolver
                 vesselId, loadcaseId, meanDraft, cancellationToken);
 
             // Calculate error (difference from target)
-            error = hydroResult.DispWeight - targetDisplacement;
+            error = (hydroResult.DispWeight ?? 0) - targetDisplacement;
 
             // Log iteration
             _logger.LogDebug(
@@ -95,12 +95,12 @@ public class TrimSolver : ITrimSolver
 
                 // Calculate LCF (Longitudinal Center of Floatation) from hydro result
                 // For simplified approach, use LCB as approximation
-                decimal lcf = hydroResult.LCBx;
+                decimal lcf = hydroResult.LCBx ?? 0;
 
                 // Calculate MTC (Moment to Change Trim by 1cm)
                 // MTC = (rho * g * I_l) / (100 * Lpp)
                 // Using approximate formula: MTC ≈ (Disp * BML) / (100 * Lpp)
-                decimal mtc = (hydroResult.DispWeight * hydroResult.BMl) / (100m * vessel.Lpp);
+                decimal mtc = ((hydroResult.DispWeight ?? 0) * (hydroResult.BMl ?? 0)) / (100m * vessel.Lpp);
 
                 return new TrimSolutionDto
                 {
@@ -121,7 +121,7 @@ public class TrimSolver : ITrimSolver
             var hydroResultPerturbed = await _hydroCalculator.ComputeAtDraftAsync(
                 vesselId, loadcaseId, meanDraft + delta, cancellationToken);
 
-            decimal derivative = (hydroResultPerturbed.DispWeight - hydroResult.DispWeight) / delta;
+            decimal derivative = ((hydroResultPerturbed.DispWeight ?? 0) - (hydroResult.DispWeight ?? 0)) / delta;
 
             if (Math.Abs(derivative) < 0.01m)
             {
@@ -154,8 +154,8 @@ public class TrimSolver : ITrimSolver
             vesselId, loadcaseId, finalMeanDraft, cancellationToken);
 
         decimal finalTrimAngle = draftAP - draftFP;
-        decimal finalLcf = finalHydroResult.LCBx;
-        decimal finalMtc = (finalHydroResult.DispWeight * finalHydroResult.BMl) / (100m * vessel.Lpp);
+        decimal finalLcf = finalHydroResult.LCBx ?? 0;
+        decimal finalMtc = ((finalHydroResult.DispWeight ?? 0) * (finalHydroResult.BMl ?? 0)) / (100m * vessel.Lpp);
 
         return new TrimSolutionDto
         {
