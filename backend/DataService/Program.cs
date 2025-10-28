@@ -53,6 +53,8 @@ try
     {
         // Handle circular references in entity relationships
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        // Use camelCase for JSON serialization (matches JavaScript convention)
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
     // API Versioning

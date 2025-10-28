@@ -67,13 +67,23 @@ const createApiClient = (): AxiosInstance => {
       config.headers["X-Client-Version"] = "1.0.0";
 
       // Add preferred units header for backend conversion
-      // Import settingsStore dynamically to avoid circular dependency
-      const { settingsStore } = await import("../stores/SettingsStore");
-      config.headers["X-Preferred-Units"] = settingsStore.preferredUnits;
-
-      console.debug("Request with units:", settingsStore.preferredUnits);
+      // Only add if not requesting settings (to avoid circular dependency)
+      if (!config.url?.includes('/users/settings')) {
+        try {
+          // Import settingsStore dynamically to avoid circular dependency
+          const { settingsStore } = await import("../stores/SettingsStore");
+          config.headers["X-Preferred-Units"] = settingsStore.preferredUnits;
+          console.debug("Request with units:", settingsStore.preferredUnits);
+        } catch (error) {
+          // If settingsStore is not available yet, use default
+          config.headers["X-Preferred-Units"] = "SI";
+        }
+      } else {
+        // For settings endpoint, always use default to avoid circular dependency
+        config.headers["X-Preferred-Units"] = "SI";
+      }
     } catch (error) {
-      console.log("No auth token or settings available", error);
+      console.log("No auth token available", error);
     }
     return config;
   });

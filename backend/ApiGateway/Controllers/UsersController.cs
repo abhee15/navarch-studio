@@ -76,28 +76,34 @@ public class UsersController : ControllerBase
     /// Get user settings
     /// </summary>
     [HttpGet("settings")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserSettingsDto), StatusCodes.Status200OK)]
     public IActionResult GetSettings()
     {
         // For now, return default settings
         // TODO: Store and retrieve user preferences from database
-        return Ok(new
+        var settings = new UserSettingsDto
         {
-            preferredUnits = "SI"
-        });
+            PreferredUnits = "SI"
+        };
+        return Ok(settings);
     }
 
     /// <summary>
     /// Update user settings
     /// </summary>
     [HttpPut("settings")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult UpdateSettings([FromBody] JsonElement settings)
+    [ProducesResponseType(typeof(UserSettingsDto), StatusCodes.Status200OK)]
+    public IActionResult UpdateSettings([FromBody] UpdateUserSettingsDto settings)
     {
         // For now, just echo back the settings
         // TODO: Store user preferences in database
         _logger.LogInformation("Settings updated: {Settings}", settings);
-        return Ok(settings);
+        
+        var responseSettings = new UserSettingsDto
+        {
+            PreferredUnits = settings.PreferredUnits
+        };
+        return Ok(responseSettings);
     }
 }
 

@@ -43,7 +43,12 @@ try
     });
 
     // Add services to the container.
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            // Use camelCase for JSON serialization (matches JavaScript convention)
+            options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        });
 
     // HTTP Context Accessor (needed for forwarding headers)
     builder.Services.AddHttpContextAccessor();
