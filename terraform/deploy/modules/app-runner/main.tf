@@ -100,7 +100,8 @@ resource "aws_apprunner_service" "identity_service" {
         port = "8080"
 
         runtime_environment_variables = {
-          ASPNETCORE_ENVIRONMENT               = title(var.environment)
+          # Use Staging for dev/staging so auto-migrations run, Production for prod
+          ASPNETCORE_ENVIRONMENT               = var.environment == "prod" ? "Production" : "Staging"
           ConnectionStrings__DefaultConnection = "Host=${var.rds_endpoint};Port=${var.rds_port};Database=${var.rds_database};Username=${var.rds_username};Password=${var.rds_password}"
           Cognito__UserPoolId                  = var.cognito_user_pool_id
           Cognito__AppClientId                 = var.cognito_user_pool_client_id
@@ -159,7 +160,8 @@ resource "aws_apprunner_service" "data_service" {
         port = "8080"
 
         runtime_environment_variables = {
-          ASPNETCORE_ENVIRONMENT               = title(var.environment)
+          # Use Staging for dev/staging so auto-migrations run, Production for prod
+          ASPNETCORE_ENVIRONMENT               = var.environment == "prod" ? "Production" : "Staging"
           ConnectionStrings__DefaultConnection = "Host=${var.rds_endpoint};Port=${var.rds_port};Database=${var.rds_database};Username=${var.rds_username};Password=${var.rds_password}"
           Cognito__UserPoolId                  = var.cognito_user_pool_id
           Cognito__AppClientId                 = var.cognito_user_pool_client_id
@@ -218,7 +220,8 @@ resource "aws_apprunner_service" "api_gateway" {
         port = "8080"
 
         runtime_environment_variables = merge({
-          ASPNETCORE_ENVIRONMENT    = title(var.environment)
+          # Use Staging for dev/staging so auto-migrations run, Production for prod
+          ASPNETCORE_ENVIRONMENT    = var.environment == "prod" ? "Production" : "Staging"
           Services__IdentityService = "https://${aws_apprunner_service.identity_service.service_url}"
           Services__DataService     = "https://${aws_apprunner_service.data_service.service_url}"
           Cognito__UserPoolId       = var.cognito_user_pool_id
