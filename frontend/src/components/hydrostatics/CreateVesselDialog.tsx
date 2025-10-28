@@ -87,7 +87,10 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
               </svg>
             </div>
             <div className="mt-3 text-center sm:mt-5">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" id="modal-title">
+              <h3
+                className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                id="modal-title"
+              >
                 Create New Vessel
               </h3>
               <div className="mt-2">
@@ -108,7 +111,10 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
             <div className="space-y-4">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Vessel Name *
                 </label>
                 <input
@@ -125,7 +131,10 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Description
                 </label>
                 <textarea
@@ -142,7 +151,10 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
               {/* Principal Particulars */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="lpp" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="lpp"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Lpp (m) *
                   </label>
                   <input
@@ -156,11 +168,16 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
                     onChange={handleChange}
                     className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Length between perpendiculars</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Length between perpendiculars
+                  </p>
                 </div>
 
                 <div>
-                  <label htmlFor="beam" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="beam"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Beam (m) *
                   </label>
                   <input
@@ -179,7 +196,10 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
               </div>
 
               <div>
-                <label htmlFor="designDraft" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="designDraft"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Design Draft (m) *
                 </label>
                 <input

@@ -93,7 +93,10 @@ export function CreateLoadcaseDialog({
               </svg>
             </div>
             <div className="mt-3 text-center sm:mt-5">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" id="modal-title">
+              <h3
+                className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                id="modal-title"
+              >
                 Create New Loadcase
               </h3>
               <div className="mt-2">
@@ -114,7 +117,10 @@ export function CreateLoadcaseDialog({
             <div className="space-y-4">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Loadcase Name *
                 </label>
                 <input
@@ -131,7 +137,10 @@ export function CreateLoadcaseDialog({
 
               {/* Rho (density) */}
               <div>
-                <label htmlFor="rho" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="rho"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Water Density (ρ) *
                 </label>
                 <input
@@ -152,7 +161,10 @@ export function CreateLoadcaseDialog({
 
               {/* KG (center of gravity) */}
               <div>
-                <label htmlFor="kg" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="kg"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Vertical Center of Gravity (KG)
                 </label>
                 <input
@@ -173,7 +185,10 @@ export function CreateLoadcaseDialog({
 
               {/* Notes */}
               <div>
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="notes"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Notes
                 </label>
                 <textarea
