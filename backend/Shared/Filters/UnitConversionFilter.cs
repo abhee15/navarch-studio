@@ -1,24 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
-using Shared.Services;
-using System.Text.Json;
+using NavArch.UnitConversion.Services;
+using Shared.Attributes;
+using Shared.DTOs;
+using System.Collections;
+using System.Reflection;
 
 namespace Shared.Filters;
 
 /// <summary>
-/// Action filter that automatically converts response DTOs based on X-Preferred-Units header
+/// Filter that automatically converts unit-aware DTOs from SI to user's preferred units
 /// </summary>
 public class UnitConversionFilter : IAsyncActionFilter
 {
-    private readonly IUnitConversionService _conversionService;
+    private readonly IUnitConverter _converter;
     private readonly ILogger<UnitConversionFilter> _logger;
 
-    public UnitConversionFilter(
-        IUnitConversionService conversionService,
-        ILogger<UnitConversionFilter> logger)
+    public UnitConversionFilter(IUnitConverter converter, ILogger<UnitConversionFilter> logger)
     {
-        _conversionService = conversionService;
+        _converter = converter;
         _logger = logger;
     }
 
@@ -27,91 +28,99 @@ public class UnitConversionFilter : IAsyncActionFilter
         // Execute the action
         var resultContext = await next();
 
-        if (resultContext.Result is ObjectResult objectResult && objectResult.Value != null)
+        // Only convert on successful responses
+        if (resultContext.Result is ObjectResult objectResult && objectResult.StatusCode is >= 200 and < 300)
         {
-            // Get preferred units from header
-            var preferredUnits = context.HttpContext.Request.Headers["X-Preferred-Units"].FirstOrDefault();
-
-            if (string.IsNullOrEmpty(preferredUnits))
+            var preferredUnits = context.HttpContext.Items["PreferredUnits"]?.ToString() ?? "SI";
+            
+            // Convert the response if it's a UnitAwareDto
+            if (objectResult.Value != null)
             {
-                // No preference specified, return as-is
-                return;
+                ConvertResponseToPreferredUnits(objectResult.Value, preferredUnits);
             }
+        }
+    }
+
+    private void ConvertResponseToPreferredUnits(object obj, string targetUnits)
+    {
+        if (obj == null) return;
+
+        var objType = obj.GetType();
+
+        // Handle single UnitAwareDto
+        if (obj is UnitAwareDto dto)
+        {
+            ConvertDto(dto, targetUnits);
+            return;
+        }
+
+        // Handle collections of UnitAwareDto
+        if (obj is IEnumerable enumerable && objType.IsGenericType)
+        {
+            var genericArg = objType.GetGenericArguments().FirstOrDefault();
+            if (genericArg != null && typeof(UnitAwareDto).IsAssignableFrom(genericArg))
+            {
+                foreach (var item in enumerable)
+                {
+                    if (item is UnitAwareDto itemDto)
+                    {
+                        ConvertDto(itemDto, targetUnits);
+                    }
+                }
+            }
+        }
+    }
+
+    private void ConvertDto(UnitAwareDto dto, string targetUnits)
+    {
+        if (dto.Units == targetUnits) return;
+
+        var sourceUnits = dto.Units;
+        
+        // Convert all properties with [Convertible] attribute
+        var properties = dto.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<ConvertibleAttribute>() != null);
+
+        foreach (var prop in properties)
+        {
+            var attr = prop.GetCustomAttribute<ConvertibleAttribute>();
+            if (attr == null) continue;
+
+            var value = prop.GetValue(dto);
+            if (value == null) continue;
 
             try
             {
-                // Get the source unit system from the response object
-                var sourceUnits = GetSourceUnits(objectResult.Value);
-
-                if (sourceUnits == null)
+                if (prop.PropertyType == typeof(decimal))
                 {
-                    _logger.LogDebug("No source unit system found in response, skipping conversion");
-                    return;
+                    var decimalValue = (decimal)value;
+                    var converted = _converter.Convert(decimalValue, sourceUnits, targetUnits, attr.QuantityType);
+                    prop.SetValue(dto, converted);
                 }
-
-                // Validate preferred units
-                preferredUnits = _conversionService.GetPreferredUnits(preferredUnits, sourceUnits);
-
-                // If same units, no conversion needed
-                if (string.Equals(sourceUnits, preferredUnits, StringComparison.OrdinalIgnoreCase))
+                else if (prop.PropertyType == typeof(decimal?))
                 {
-                    return;
-                }
-
-                // Convert the response
-                _logger.LogDebug("Converting response from {SourceUnits} to {PreferredUnits}", sourceUnits, preferredUnits);
-
-                // For records/immutable DTOs, we need to serialize and deserialize with converted values
-                var json = JsonSerializer.Serialize(objectResult.Value);
-                var converted = JsonSerializer.Deserialize(json, objectResult.Value.GetType());
-
-                if (converted != null)
-                {
-                    _conversionService.ConvertDto(converted, sourceUnits, preferredUnits);
-
-                    // Update the result
-                    resultContext.Result = new ObjectResult(converted)
+                    var nullableValue = (decimal?)value;
+                    if (nullableValue.HasValue)
                     {
-                        StatusCode = objectResult.StatusCode,
-                        DeclaredType = objectResult.DeclaredType
-                    };
+                        var converted = _converter.Convert(nullableValue.Value, sourceUnits, targetUnits, attr.QuantityType);
+                        prop.SetValue(dto, converted);
+                    }
+                }
+                else if (prop.PropertyType == typeof(List<decimal>))
+                {
+                    var list = (List<decimal>)value;
+                    var convertedList = list.Select(v => _converter.Convert(v, sourceUnits, targetUnits, attr.QuantityType)).ToList();
+                    prop.SetValue(dto, convertedList);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error converting units in response");
-                // Don't fail the request, just return unconverted data
+                _logger.LogWarning(ex, "Failed to convert property {PropertyName} from {SourceUnits} to {TargetUnits}", 
+                    prop.Name, sourceUnits, targetUnits);
             }
         }
-    }
 
-    private string? GetSourceUnits(object obj)
-    {
-        if (obj == null) return null;
-
-        // Try to get UnitsSystem property using reflection
-        var type = obj.GetType();
-
-        // Handle collections - get units from first item
-        if (obj is System.Collections.IEnumerable enumerable and not string)
-        {
-            foreach (var item in enumerable)
-            {
-                var units = GetSourceUnits(item);
-                if (units != null) return units;
-                break; // Just check first item
-            }
-            return null;
-        }
-
-        // Try common property names
-        var unitsProperty = type.GetProperty("UnitsSystem") ?? type.GetProperty("UnitSystem");
-        if (unitsProperty != null && unitsProperty.PropertyType == typeof(string))
-        {
-            return unitsProperty.GetValue(obj) as string;
-        }
-
-        return null;
+        // Update the Units property to reflect the conversion
+        dto.Units = targetUnits;
     }
 }
-

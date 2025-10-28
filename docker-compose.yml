@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -27,62 +27,89 @@ services:
 
   identity-service:
     build:
-      context: ./backend
-      dockerfile: IdentityService/Dockerfile
+      context: .
+      dockerfile: ./backend/IdentityService/Dockerfile
     ports:
       - "5001:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=sri_template_dev;Username=postgres;Password=postgres
+      - Jwt__SecretKey=navarch-studio-local-development-secret-key-min-32-chars
+      - Jwt__Issuer=navarch-studio-local
+      - Jwt__Audience=navarch-studio-api
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   data-service:
     build:
-      context: ./backend
-      dockerfile: DataService/Dockerfile
+      context: .
+      dockerfile: ./backend/DataService/Dockerfile
     ports:
       - "5003:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=sri_template_dev;Username=postgres;Password=postgres
+      - Jwt__SecretKey=navarch-studio-local-development-secret-key-min-32-chars
+      - Jwt__Issuer=navarch-studio-local
+      - Jwt__Audience=navarch-studio-api
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   api-gateway:
     build:
-      context: ./backend
-      dockerfile: ApiGateway/Dockerfile
+      context: .
+      dockerfile: ./backend/ApiGateway/Dockerfile
     ports:
       - "5002:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - Services__IdentityService=http://identity-service:8080
       - Services__DataService=http://data-service:8080
+      - Jwt__SecretKey=navarch-studio-local-development-secret-key-min-32-chars
+      - Jwt__Issuer=navarch-studio-local
+      - Jwt__Audience=navarch-studio-api
     depends_on:
-      - identity-service
-      - data-service
+      identity-service:
+        condition: service_healthy
+      data-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./frontend/Dockerfile
     ports:
       - "3000:3000"
     environment:
       - VITE_API_URL=http://localhost:5002
+      - VITE_AUTH_MODE=local
     volumes:
       - ./frontend:/app
+      - ./packages:/packages
       - /app/node_modules
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-
-
-
-
-

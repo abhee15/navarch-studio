@@ -1,7 +1,9 @@
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
+using NavArch.UnitConversion.Services;
 using Shared.DTOs;
 using Shared.Models;
+using Shared.Services;
 
 namespace DataService.Services.Hydrostatics;
 
@@ -12,20 +14,26 @@ public class VesselService : IVesselService
 {
     private readonly DataDbContext _context;
     private readonly IValidationService _validationService;
+    private readonly IUnitConverter _converter;
     private readonly ILogger<VesselService> _logger;
 
     public VesselService(
         DataDbContext context,
         IValidationService validationService,
+        IUnitConverter converter,
         ILogger<VesselService> logger)
     {
         _context = context;
         _validationService = validationService;
+        _converter = converter;
         _logger = logger;
     }
 
     public async Task<Vessel> CreateVesselAsync(VesselDto dto, Guid userId, CancellationToken cancellationToken = default)
     {
+        // Convert from user's units to SI for storage
+        UnitConversionHelper.ConvertToSI(dto, _converter);
+        
         // Validate
         var validationResult = _validationService.ValidateVessel(dto);
         if (!validationResult.IsValid)
@@ -40,10 +48,9 @@ public class VesselService : IVesselService
             UserId = userId,
             Name = dto.Name,
             Description = dto.Description,
-            Lpp = dto.Lpp,
-            Beam = dto.Beam,
-            DesignDraft = dto.DesignDraft,
-            UnitsSystem = dto.UnitsSystem,
+            Lpp = dto.Lpp,  // Now in SI (meters)
+            Beam = dto.Beam,  // Now in SI (meters)
+            DesignDraft = dto.DesignDraft,  // Now in SI (meters)
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -51,7 +58,7 @@ public class VesselService : IVesselService
         _context.Vessels.Add(vessel);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Created vessel {VesselId} '{VesselName}' for user {UserId}",
+        _logger.LogInformation("Created vessel {VesselId} '{VesselName}' for user {UserId} (stored in SI units)",
             vessel.Id, vessel.Name, userId);
 
         return vessel;
@@ -72,10 +79,10 @@ public class VesselService : IVesselService
                 Id = v.Id,
                 Name = v.Name,
                 Description = v.Description,
-                Lpp = v.Lpp,
+                Lpp = v.Lpp,  // Stored in SI, filter will convert to user's preference
                 Beam = v.Beam,
                 DesignDraft = v.DesignDraft,
-                UnitsSystem = v.UnitsSystem,
+                Units = "SI",  // Data comes from DB in SI
                 StationsCount = v.Stations.Count,
                 WaterlinesCount = v.Waterlines.Count,
                 OffsetsCount = v.Offsets.Count,
@@ -97,6 +104,9 @@ public class VesselService : IVesselService
 
     public async Task<Vessel?> UpdateVesselAsync(Guid id, VesselDto dto, CancellationToken cancellationToken = default)
     {
+        // Convert from user's units to SI for storage
+        UnitConversionHelper.ConvertToSI(dto, _converter);
+        
         // Validate
         var validationResult = _validationService.ValidateVessel(dto);
         if (!validationResult.IsValid)
@@ -113,15 +123,14 @@ public class VesselService : IVesselService
 
         vessel.Name = dto.Name;
         vessel.Description = dto.Description;
-        vessel.Lpp = dto.Lpp;
-        vessel.Beam = dto.Beam;
-        vessel.DesignDraft = dto.DesignDraft;
-        vessel.UnitsSystem = dto.UnitsSystem;
+        vessel.Lpp = dto.Lpp;  // Now in SI (meters)
+        vessel.Beam = dto.Beam;  // Now in SI (meters)
+        vessel.DesignDraft = dto.DesignDraft;  // Now in SI (meters)
         vessel.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Updated vessel {VesselId} '{VesselName}'", vessel.Id, vessel.Name);
+        _logger.LogInformation("Updated vessel {VesselId} '{VesselName}' (stored in SI units)", vessel.Id, vessel.Name);
 
         return vessel;
     }

@@ -29,6 +29,8 @@ public class CsvParserService : ICsvParserService
                 BadDataFound = null // Ignore bad data
             });
 
+            csv.Context.RegisterClassMap<CombinedOffsetRecordMap>();
+
             var records = new List<CombinedOffsetRecord>();
             await foreach (var record in csv.GetRecordsAsync<CombinedOffsetRecord>(cancellationToken))
             {
@@ -95,6 +97,8 @@ public class CsvParserService : ICsvParserService
                 TrimOptions = TrimOptions.Trim
             });
 
+            csv.Context.RegisterClassMap<StationCsvRecordMap>();
+
             var stations = new List<StationDto>();
             await foreach (var record in csv.GetRecordsAsync<StationCsvRecord>(cancellationToken))
             {
@@ -126,6 +130,8 @@ public class CsvParserService : ICsvParserService
                 TrimOptions = TrimOptions.Trim
             });
 
+            csv.Context.RegisterClassMap<WaterlineCsvRecordMap>();
+
             var waterlines = new List<WaterlineDto>();
             await foreach (var record in csv.GetRecordsAsync<WaterlineCsvRecord>(cancellationToken))
             {
@@ -156,6 +162,8 @@ public class CsvParserService : ICsvParserService
                 HasHeaderRecord = true,
                 TrimOptions = TrimOptions.Trim
             });
+
+            csv.Context.RegisterClassMap<OffsetCsvRecordMap>();
 
             var offsets = new List<OffsetDto>();
             await foreach (var record in csv.GetRecordsAsync<OffsetCsvRecord>(cancellationToken))
@@ -206,5 +214,46 @@ internal class OffsetCsvRecord
     public int StationIndex { get; set; }
     public int WaterlineIndex { get; set; }
     public decimal HalfBreadthY { get; set; }
+}
+
+// CSV Class Maps for snake_case headers
+internal sealed class CombinedOffsetRecordMap : ClassMap<CombinedOffsetRecord>
+{
+    public CombinedOffsetRecordMap()
+    {
+        Map(m => m.StationIndex).Name("station_index");
+        Map(m => m.StationX).Name("station_x");
+        Map(m => m.WaterlineIndex).Name("waterline_index");
+        Map(m => m.WaterlineZ).Name("waterline_z");
+        Map(m => m.HalfBreadthY).Name("half_breadth_y");
+    }
+}
+
+internal sealed class StationCsvRecordMap : ClassMap<StationCsvRecord>
+{
+    public StationCsvRecordMap()
+    {
+        Map(m => m.StationIndex).Name("station_index");
+        Map(m => m.X).Name("x");
+    }
+}
+
+internal sealed class WaterlineCsvRecordMap : ClassMap<WaterlineCsvRecord>
+{
+    public WaterlineCsvRecordMap()
+    {
+        Map(m => m.WaterlineIndex).Name("waterline_index");
+        Map(m => m.Z).Name("z");
+    }
+}
+
+internal sealed class OffsetCsvRecordMap : ClassMap<OffsetCsvRecord>
+{
+    public OffsetCsvRecordMap()
+    {
+        Map(m => m.StationIndex).Name("station_index");
+        Map(m => m.WaterlineIndex).Name("waterline_index");
+        Map(m => m.HalfBreadthY).Name("half_breadth_y");
+    }
 }
 

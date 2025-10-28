@@ -4,10 +4,9 @@ export interface Vessel {
   id: string;
   name: string;
   description?: string;
-  lpp: number;
+  lpp: number;  // Always in user's preferred units
   beam: number;
   designDraft: number;
-  unitsSystem: "SI" | "Imperial";
   createdAt: string;
   updatedAt: string;
 }
@@ -21,10 +20,9 @@ export interface VesselDetails extends Vessel {
 export interface CreateVesselDto {
   name: string;
   description?: string;
-  lpp: number;
+  lpp: number;  // In user's preferred units
   beam: number;
   designDraft: number;
-  unitsSystem: "SI" | "Imperial";
 }
 
 export interface Station {

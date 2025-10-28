@@ -30,12 +30,12 @@ public class DataDbContext : DbContext
         // Vessel configuration
         modelBuilder.Entity<Vessel>(entity =>
         {
+            entity.ToTable("vessels");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Lpp).HasColumnType("decimal(10,3)");
             entity.Property(e => e.Beam).HasColumnType("decimal(10,3)");
             entity.Property(e => e.DesignDraft).HasColumnType("decimal(10,3)");
-            entity.Property(e => e.UnitsSystem).HasMaxLength(10).HasDefaultValue("SI");
 
             entity.HasIndex(e => e.UserId);
             entity.HasQueryFilter(e => e.DeletedAt == null);
@@ -65,6 +65,7 @@ public class DataDbContext : DbContext
         // Loadcase configuration
         modelBuilder.Entity<Loadcase>(entity =>
         {
+            entity.ToTable("loadcases");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Rho).HasColumnType("decimal(10,3)");
@@ -76,6 +77,7 @@ public class DataDbContext : DbContext
         // Station configuration
         modelBuilder.Entity<Station>(entity =>
         {
+            entity.ToTable("stations");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.X).HasColumnType("decimal(10,4)");
 
@@ -85,6 +87,7 @@ public class DataDbContext : DbContext
         // Waterline configuration
         modelBuilder.Entity<Waterline>(entity =>
         {
+            entity.ToTable("waterlines");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Z).HasColumnType("decimal(10,4)");
 
@@ -94,6 +97,7 @@ public class DataDbContext : DbContext
         // Offset configuration
         modelBuilder.Entity<Offset>(entity =>
         {
+            entity.ToTable("offsets");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.HalfBreadthY).HasColumnType("decimal(10,4)");
 
@@ -103,6 +107,7 @@ public class DataDbContext : DbContext
         // HydroResult configuration
         modelBuilder.Entity<HydroResult>(entity =>
         {
+            entity.ToTable("hydro_results");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Draft).HasColumnType("decimal(10,4)");
             entity.Property(e => e.DispVolume).HasColumnType("decimal(15,4)");
@@ -129,6 +134,7 @@ public class DataDbContext : DbContext
         // Curve configuration
         modelBuilder.Entity<Curve>(entity =>
         {
+            entity.ToTable("curves");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
             entity.Property(e => e.XLabel).HasMaxLength(100);
@@ -145,6 +151,7 @@ public class DataDbContext : DbContext
         // CurvePoint configuration
         modelBuilder.Entity<CurvePoint>(entity =>
         {
+            entity.ToTable("curve_points");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.X).HasColumnType("decimal(15,6)");
             entity.Property(e => e.Y).HasColumnType("decimal(15,6)");

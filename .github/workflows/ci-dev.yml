@@ -512,8 +512,10 @@ jobs:
         working-directory: ./frontend
         env:
           VITE_API_URL: ${{ env.API_GATEWAY_URL }}
+          VITE_AUTH_MODE: cognito
           VITE_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
           VITE_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}
+          VITE_AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Deploy to S3
         run: |

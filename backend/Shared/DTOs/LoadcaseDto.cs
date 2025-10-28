@@ -2,7 +2,7 @@ using Shared.Attributes;
 
 namespace Shared.DTOs;
 
-public class LoadcaseDto
+public class LoadcaseDto : UnitAwareDto
 {
     public Guid? Id { get; set; }
     public Guid VesselId { get; set; }

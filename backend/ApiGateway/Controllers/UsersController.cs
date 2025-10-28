@@ -26,6 +26,15 @@ public class UsersController : ControllerBase
         _createUserValidator = createUserValidator;
     }
 
+    [HttpGet("me")]
+    public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
+    {
+        var response = await _httpClientService.GetAsync("identity", "api/v1/users/me", cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        return StatusCode((int)response.StatusCode, content);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUser(string id, CancellationToken cancellationToken)
     {

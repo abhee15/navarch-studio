@@ -1,134 +1,169 @@
-import { useState } from "react";
-import type { VesselDetails } from "../../../types/hydrostatics";
+import { useState, useEffect, useMemo } from "react";
+import { AgGridReact } from "ag-grid-react";
+import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
+import type { VesselDetails, OffsetsGrid } from "../../../types/hydrostatics";
+import { geometryApi } from "../../../services/hydrostaticsApi";
 import CsvImportWizard from "../CsvImportWizard";
-import OffsetsGridEditor from "../OffsetsGridEditor";
+
+// Import AG Grid styles
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+
+// Register AG Grid modules
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface GeometryTabProps {
   vesselId: string;
   vessel: VesselDetails;
 }
 
+interface GridRow {
+  stationIndex: number;
+  stationX: number;
+  [key: string]: number; // Dynamic waterline columns
+}
+
 export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
-  const [activeView, setActiveView] = useState<"grid" | "import">("grid");
+  const [activeView, setActiveView] = useState<"grid" | "import">(
+    vessel.offsetsCount > 0 ? "grid" : "import"
+  );
   const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
-  const [isGridEditorOpen, setIsGridEditorOpen] = useState(false);
+  const [offsetData, setOffsetData] = useState<OffsetsGrid | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (vessel.offsetsCount > 0 && activeView === "grid") {
+      loadOffsets();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vesselId, activeView]);
+
+  const loadOffsets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await geometryApi.getOffsetsGrid(vesselId);
+      console.log("Loaded offset data:", data);
+      console.log("Stations:", data.stations?.length);
+      console.log("Waterlines:", data.waterlines?.length);
+      console.log("Offsets:", data.offsets?.length);
+      setOffsetData(data);
+    } catch (err) {
+      console.error("Error loading offsets:", err);
+      setError(err instanceof Error ? err.message : "Failed to load offsets");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rowData = useMemo(() => {
+    if (!offsetData) {
+      console.log("No offset data available");
+      return [];
+    }
+
+    const rows: GridRow[] = [];
+
+    for (let stationIndex = 0; stationIndex < offsetData.stations.length; stationIndex++) {
+      const row: GridRow = {
+        stationIndex,
+        stationX: offsetData.stations[stationIndex],
+      };
+
+      for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+        const halfBreadth = offsetData.offsets[stationIndex]?.[waterlineIndex] ?? 0;
+        row[`wl_${waterlineIndex}`] = halfBreadth;
+      }
+
+      rows.push(row);
+    }
+
+    console.log("Generated rows:", rows.length, "Sample:", rows[0]);
+    return rows;
+  }, [offsetData]);
+
+  const columnDefs = useMemo<ColDef[]>(() => {
+    if (!offsetData) {
+      console.log("No offset data for columns");
+      return [];
+    }
+
+    const cols: ColDef[] = [
+      {
+        field: "stationIndex",
+        headerName: "Station #",
+        width: 100,
+        editable: false,
+        pinned: "left",
+      },
+      {
+        field: "stationX",
+        headerName: "Station X (m)",
+        width: 130,
+        editable: false,
+        pinned: "left",
+      },
+    ];
+
+    for (let waterlineIndex = 0; waterlineIndex < offsetData.waterlines.length; waterlineIndex++) {
+      const waterlineZ = offsetData.waterlines[waterlineIndex];
+      cols.push({
+        field: `wl_${waterlineIndex}`,
+        headerName: `WL ${waterlineZ}m`,
+        width: 110,
+        editable: true,
+        valueFormatter: (params) => {
+          return params.value ? params.value.toFixed(3) : "0.000";
+        },
+      });
+    }
+
+    console.log("Generated columns:", cols.length);
+    return cols;
+  }, [offsetData]);
 
   return (
-    <div className="space-y-6">
-      {/* Action Bar */}
-      <div className="bg-white shadow rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setActiveView("grid")}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                activeView === "grid"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Offsets Grid
-            </button>
-            <button
-              onClick={() => setActiveView("import")}
-              className={`px-4 py-2 rounded-md text-sm font-medium ${
-                activeView === "import"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Import CSV
-            </button>
-          </div>
-          <div className="text-sm text-gray-500">
-            {vessel.stationsCount} stations × {vessel.waterlinesCount} waterlines ={" "}
-            {vessel.offsetsCount} offsets
-          </div>
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+      {/* Compact Toolbar */}
+      <div className="bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveView("grid")}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              activeView === "grid"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+            disabled={vessel.offsetsCount === 0}
+          >
+            Offsets Grid ({vessel.offsetsCount})
+          </button>
+          <button
+            onClick={() => setActiveView("import")}
+            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              activeView === "import"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Import CSV
+          </button>
+        </div>
+        <div className="text-xs text-gray-500">
+          {vessel.stationsCount} stations × {vessel.waterlinesCount} waterlines
         </div>
       </div>
 
       {/* Content */}
-      {activeView === "grid" ? (
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="text-center py-12">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Offsets Grid Editor</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {vessel.offsetsCount === 0
-                ? "No geometry defined yet. Import CSV data to get started."
-                : "View and edit hull offsets in an interactive spreadsheet"}
-            </p>
-            <div className="mt-6 flex gap-3 justify-center">
-              {vessel.offsetsCount > 0 && (
-                <button
-                  onClick={() => setIsGridEditorOpen(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  <svg
-                    className="-ml-1 mr-2 h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  Open Grid Editor
-                </button>
-              )}
-              <button
-                onClick={() => setActiveView("import")}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Import from CSV
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="text-center py-12">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">CSV Import Wizard</h3>
-            <p className="mt-1 text-sm text-gray-500">Upload a CSV file with hull offset data</p>
-            <p className="mt-2 text-xs text-gray-400">
-              Supported formats: Combined (stations + waterlines + offsets) or Offsets only
-            </p>
-            <div className="mt-6">
-              <button
-                onClick={() => setIsImportWizardOpen(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
+      <div className="flex-1 overflow-hidden">
+        {activeView === "grid" ? (
+          vessel.offsetsCount === 0 ? (
+            <div className="flex items-center justify-center h-full p-6">
+              <div className="text-center">
                 <svg
-                  className="-ml-1 mr-2 h-5 w-5"
+                  className="mx-auto h-12 w-12 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -137,15 +172,120 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
                   />
                 </svg>
-                Import CSV File
-              </button>
+                <h3 className="mt-3 text-sm font-medium text-gray-900">No Geometry Data</h3>
+                <p className="mt-2 text-xs text-gray-500">
+                  Import CSV data to get started with hull offsets
+                </p>
+                <div className="mt-4">
+                  <button
+                    onClick={() => setActiveView("import")}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Import from CSV
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-3 text-xs text-gray-500">Loading offsets grid...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full p-6">
+              <div className="text-center">
+                <svg
+                  className="mx-auto h-10 w-10 text-red-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h3 className="mt-3 text-sm font-medium text-gray-900">Error</h3>
+                <p className="mt-2 text-xs text-gray-500">{error}</p>
+                <div className="mt-4">
+                  <button
+                    onClick={loadOffsets}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full p-3">
+              <div className="ag-theme-alpine rounded border border-gray-200" style={{ height: 'calc(100% - 0px)' }}>
+                <AgGridReact
+                  rowData={rowData}
+                  columnDefs={columnDefs}
+                  defaultColDef={{
+                    sortable: true,
+                    resizable: true,
+                  }}
+                  suppressMovableColumns={true}
+                  domLayout="normal"
+                />
+              </div>
+            </div>
+          )
+        ) : (
+          <div className="flex items-center justify-center h-full p-6">
+            <div className="text-center">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <h3 className="mt-3 text-sm font-medium text-gray-900">CSV Import Wizard</h3>
+              <p className="mt-2 text-xs text-gray-500">Upload a CSV file with hull offset data</p>
+              <p className="mt-1 text-xs text-gray-400">
+                Supported formats: Combined (stations + waterlines + offsets) or Offsets only
+              </p>
+              <div className="mt-4">
+                <button
+                  onClick={() => setIsImportWizardOpen(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <svg
+                    className="-ml-1 mr-2 h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  Import CSV File
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* CSV Import Wizard */}
       <CsvImportWizard
@@ -154,17 +294,7 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
         onClose={() => setIsImportWizardOpen(false)}
         onImportComplete={() => {
           setIsImportWizardOpen(false);
-          window.location.reload(); // Reload to update geometry counts
-        }}
-      />
-
-      {/* Offsets Grid Editor */}
-      <OffsetsGridEditor
-        vesselId={vesselId}
-        isOpen={isGridEditorOpen}
-        onClose={() => {
-          setIsGridEditorOpen(false);
-          window.location.reload(); // Reload to update geometry counts
+          window.location.reload();
         }}
       />
     </div>

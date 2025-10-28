@@ -4,8 +4,10 @@ namespace Shared.DTOs;
 
 /// <summary>
 /// DTO for creating/updating a vessel
+/// NOTE: All values are in user's preferred units (from User.PreferredUnits)
+/// Backend will convert to SI for storage
 /// </summary>
-public class VesselDto
+public class VesselDto : UnitAwareDto
 {
     public Guid? Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -19,14 +21,13 @@ public class VesselDto
 
     [Convertible("Length")]
     public decimal DesignDraft { get; set; }
-
-    public string UnitsSystem { get; set; } = "SI";
 }
 
 /// <summary>
 /// DTO for vessel details with geometry counts
+/// NOTE: All values are converted to user's preferred units for display
 /// </summary>
-public class VesselDetailsDto
+public class VesselDetailsDto : UnitAwareDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -41,7 +42,6 @@ public class VesselDetailsDto
     [Convertible("Length")]
     public decimal DesignDraft { get; set; }
 
-    public string UnitsSystem { get; set; } = "SI";
     public int StationsCount { get; set; }
     public int WaterlinesCount { get; set; }
     public int OffsetsCount { get; set; }

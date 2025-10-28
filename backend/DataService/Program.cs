@@ -48,6 +48,11 @@ try
     {
         // Add global filter for automatic unit conversion
         options.Filters.Add<Shared.Filters.UnitConversionFilter>();
+    })
+    .AddJsonOptions(options =>
+    {
+        // Handle circular references in entity relationships
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
     // API Versioning
@@ -64,9 +69,10 @@ try
         options.ApiVersionReader = new Asp.Versioning.UrlSegmentApiVersionReader();
     }).AddMvc();
 
-    // Database
+    // Database - Use snake_case naming convention for PostgreSQL
     builder.Services.AddDbContext<DataDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+            .UseSnakeCaseNamingConvention());
 
     // Memory Cache for JWT key caching
     builder.Services.AddMemoryCache();
@@ -75,7 +81,24 @@ try
     builder.Services.AddHttpClient();
 
     // Services
-    builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
+    // JWT Service - Use LocalJwtService in development, CognitoJwtService in production
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Services.AddSingleton<IJwtService, LocalJwtService>();
+        Log.Information("Using LocalJwtService for development");
+    }
+    else
+    {
+        builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
+        Log.Information("Using CognitoJwtService for production");
+    }
+    
+    // Unit Conversion Service (NavArch.UnitConversion)
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, "unit-systems.xml");
+    builder.Services.AddSingleton<NavArch.UnitConversion.Services.IUnitConverter>(sp => 
+        new NavArch.UnitConversion.Services.UnitConverter(xmlPath));
+    Log.Information("Unit conversion service registered with config: {XmlPath}", xmlPath);
+    
     builder.Services.AddScoped<IUnitConversionService, UnitConversionService>();
 
     // Hydrostatics Services
@@ -221,6 +244,9 @@ try
 
     // JWT Authentication Middleware
     app.UseMiddleware<JwtAuthenticationMiddleware>();
+    
+    // Unit Conversion Middleware (after JWT so we have user context)
+    app.UseMiddleware<UnitConversionMiddleware>();
 
     app.UseAuthorization();
 

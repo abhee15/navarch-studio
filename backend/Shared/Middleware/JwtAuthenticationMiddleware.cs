@@ -23,24 +23,29 @@ public class JwtAuthenticationMiddleware
 
         if (!string.IsNullOrEmpty(token))
         {
+            _logger.LogInformation("JWT token found in request to {Path}, attempting validation", context.Request.Path);
             try
             {
                 var principal = await jwtService.ValidateTokenAsync(token, context.RequestAborted);
                 if (principal != null)
                 {
                     context.User = principal;
-                    _logger.LogDebug("JWT token validated successfully for user: {UserId}",
-                        jwtService.GetUserId(principal));
+                    var userId = jwtService.GetUserId(principal);
+                    _logger.LogInformation("JWT token validated successfully for user: {UserId}", userId);
                 }
                 else
                 {
-                    _logger.LogWarning("JWT token validation failed");
+                    _logger.LogWarning("JWT token validation failed for {Path}", context.Request.Path);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error validating JWT token");
+                _logger.LogError(ex, "Error validating JWT token for {Path}", context.Request.Path);
             }
+        }
+        else
+        {
+            _logger.LogInformation("No JWT token found in request to {Path}", context.Request.Path);
         }
 
         await _next(context);

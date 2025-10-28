@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
+import type { ColDef } from "ag-grid-community";
+import { geometryApi } from "../../services/hydrostaticsApi";
+
+// Import AG Grid styles
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import { geometryApi } from "../../services/hydrostaticsApi";
-import type { ColDef } from "ag-grid-community";
 
 interface OffsetsGridEditorProps {
   vesselId: string;
@@ -238,20 +240,26 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
                     </p>
                   </div>
                 ) : (
-                  <div className="ag-theme-alpine" style={{ height: "500px", width: "100%" }}>
-                    <AgGridReact
-                      rowData={rowData}
-                      columnDefs={columnDefs}
-                      defaultColDef={{
-                        sortable: true,
-                        filter: true,
-                        resizable: true,
-                      }}
-                      enableCellTextSelection={true}
-                      ensureDomOrder={true}
-                      animateRows={true}
-                    />
-                  </div>
+                  <>
+                    {/* Debug Info */}
+                    <div className="mb-2 text-xs text-gray-500">
+                      Rows: {rowData.length}, Columns: {columnDefs.length}
+                    </div>
+                    <div className="ag-theme-alpine" style={{ height: "500px", width: "100%" }}>
+                      <AgGridReact
+                        rowData={rowData}
+                        columnDefs={columnDefs}
+                        defaultColDef={{
+                          sortable: true,
+                          filter: true,
+                          resizable: true,
+                        }}
+                        enableCellTextSelection={true}
+                        ensureDomOrder={true}
+                        animateRows={true}
+                      />
+                    </div>
+                  </>
                 )}
 
                 {/* Info */}
@@ -272,8 +280,8 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
                       <div className="ml-3">
                         <p className="text-sm text-blue-700">
                           <strong>Grid Info:</strong> {offsetData.stations.length} stations ×{" "}
-                          {offsetData.waterlines.length} waterlines = {offsetData.offsets.length}{" "}
-                          offsets
+                          {offsetData.waterlines.length} waterlines ={" "}
+                          {offsetData.stations.length * offsetData.waterlines.length} offsets
                         </p>
                         <p className="text-xs text-blue-600 mt-1">
                           Double-click cells to edit. Values are half-breadth (m) from centerline.

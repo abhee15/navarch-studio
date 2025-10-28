@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
 using Shared.Models;
 using Shared.Utilities;
+using Shared.Services;
 using IdentityService.Data;
 
 namespace IdentityService.Services;
@@ -10,11 +11,16 @@ public class UserService : IUserService
 {
     private readonly IdentityDbContext _context;
     private readonly ILogger<UserService> _logger;
+    private readonly IJwtService? _jwtService;
 
-    public UserService(IdentityDbContext context, ILogger<UserService> logger)
+    public UserService(
+        IdentityDbContext context, 
+        ILogger<UserService> logger,
+        IJwtService? jwtService = null)
     {
         _context = context;
         _logger = logger;
+        _jwtService = jwtService;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(string id, CancellationToken cancellationToken)
@@ -51,10 +57,20 @@ public class UserService : IUserService
 
         if (user == null || !PasswordHasher.Verify(dto.Password, user.PasswordHash))
         {
+            _logger.LogWarning("Authentication failed for user: {Email}", dto.Email);
             return null;
         }
 
-        // For now, return a simple token (will be replaced with JWT in Phase 6)
+        // Generate JWT token if LocalJwtService is available
+        if (_jwtService is LocalJwtService localJwtService)
+        {
+            var token = localJwtService.GenerateToken(user.Id, user.Email, user.Name);
+            _logger.LogInformation("User authenticated successfully: {UserId}", user.Id);
+            return token;
+        }
+
+        // Fallback to simple token (for backwards compatibility)
+        _logger.LogWarning("JWT service not available, using fallback token");
         return $"token_{user.Id}_{DateTime.UtcNow:yyyyMMddHHmmss}";
     }
 

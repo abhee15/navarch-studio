@@ -1,6 +1,26 @@
 import axios, { AxiosInstance } from "axios";
 import { CognitoUserSession } from "amazon-cognito-identity-js";
 import { userPool } from "../config/cognito";
+import { LocalAuthService } from "./localAuthService";
+
+type AuthMode = 'cognito' | 'local';
+
+// Get auth mode from environment
+const getAuthMode = (): AuthMode => {
+  return (import.meta.env.VITE_AUTH_MODE || 'local') as AuthMode;
+};
+
+// Function to get current JWT token based on auth mode
+const getAuthToken = async (): Promise<string | null> => {
+  const authMode = getAuthMode();
+  
+  if (authMode === 'local') {
+    return LocalAuthService.getToken();
+  }
+  
+  // Cognito token
+  return getCognitoToken();
+};
 
 // Function to get current Cognito JWT token
 const getCognitoToken = (): Promise<string | null> => {
@@ -32,10 +52,10 @@ const createApiClient = (): AxiosInstance => {
     timeout: 10000,
   });
 
-  // Request interceptor - Add Cognito JWT token, version, and unit preference
+  // Request interceptor - Add JWT token, version, and unit preference
   client.interceptors.request.use(async (config) => {
     try {
-      const token = await getCognitoToken();
+      const token = await getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -46,8 +66,10 @@ const createApiClient = (): AxiosInstance => {
       // Import settingsStore dynamically to avoid circular dependency
       const { settingsStore } = await import("../stores/SettingsStore");
       config.headers["X-Preferred-Units"] = settingsStore.preferredUnits;
-    } catch {
-      console.log("No auth token available");
+      
+      console.debug("Request with units:", settingsStore.preferredUnits);
+    } catch (error) {
+      console.log("No auth token or settings available", error);
     }
     return config;
   });
@@ -57,10 +79,15 @@ const createApiClient = (): AxiosInstance => {
     (response) => response,
     (error) => {
       if (error.response?.status === 401) {
-        // Clear Cognito session and redirect to login
-        const cognitoUser = userPool.getCurrentUser();
-        if (cognitoUser) {
-          cognitoUser.signOut();
+        // Clear session and redirect to login based on auth mode
+        const authMode = getAuthMode();
+        if (authMode === 'local') {
+          LocalAuthService.logout();
+        } else {
+          const cognitoUser = userPool.getCurrentUser();
+          if (cognitoUser) {
+            cognitoUser.signOut();
+          }
         }
         window.location.href = "/login";
       }

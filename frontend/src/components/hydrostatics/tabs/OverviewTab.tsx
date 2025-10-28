@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import type { VesselDetails } from "../../../types/hydrostatics";
 import { settingsStore } from "../../../stores/SettingsStore";
-import { unitConverter } from "@navarch/unit-conversion";
+import { getUnitSymbol } from "../../../utils/unitSymbols";
 
 interface OverviewTabProps {
   vessel: VesselDetails;
@@ -15,7 +15,7 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
 
   // Backend automatically converts values to user's preferred units
   const displayUnits = settingsStore.preferredUnits;
-  const lengthUnit = unitConverter.getUnitSymbol(displayUnits, "Length");
+  const lengthUnit = getUnitSymbol(displayUnits, "Length");
 
   return (
     <div className="space-y-6">

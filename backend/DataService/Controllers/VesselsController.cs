@@ -94,7 +94,6 @@ public class VesselsController : ControllerBase
                 vessel.Lpp,
                 vessel.Beam,
                 vessel.DesignDraft,
-                vessel.UnitsSystem,
                 vessel.CreatedAt,
                 vessel.UpdatedAt
             });

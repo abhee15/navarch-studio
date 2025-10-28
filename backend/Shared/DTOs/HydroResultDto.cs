@@ -2,7 +2,7 @@ using Shared.Attributes;
 
 namespace Shared.DTOs;
 
-public class HydroResultDto
+public class HydroResultDto : UnitAwareDto
 {
     [Convertible("Length")]
     public decimal Draft { get; set; }
@@ -55,10 +55,9 @@ public class HydroTableRequestDto
     public List<decimal> Drafts { get; set; } = new();
 }
 
-public class HydroTableResponseDto
+public class HydroTableResponseDto : UnitAwareDto
 {
     public List<HydroResultDto> Results { get; set; } = new();
     public int ComputationTimeMs { get; set; }
-    public string UnitsSystem { get; set; } = "SI";  // Track source units
 }
 

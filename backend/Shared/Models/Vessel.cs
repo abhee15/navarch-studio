@@ -34,13 +34,10 @@ public class Vessel
 
     /// <summary>
     /// Design draft (m)
+    /// NOTE: All vessel dimensions stored in SI units (meters, kg, etc.)
+    /// User's preferred unit system is stored in User.PreferredUnits
     /// </summary>
     public decimal DesignDraft { get; set; }
-
-    /// <summary>
-    /// Units system: 'SI' or 'Imperial'
-    /// </summary>
-    public string UnitsSystem { get; set; } = "SI";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

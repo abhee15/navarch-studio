@@ -44,6 +44,9 @@ try
 
     // Add services to the container.
     builder.Services.AddControllers();
+    
+    // HTTP Context Accessor (needed for forwarding headers)
+    builder.Services.AddHttpContextAccessor();
 
     // API Versioning
     builder.Services.AddApiVersioning(options =>
@@ -68,7 +71,24 @@ try
 
     // Services
     builder.Services.AddScoped<IHttpClientService, HttpClientService>();
-    builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
+    
+    // JWT Service - Use LocalJwtService in development, CognitoJwtService in production
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Services.AddSingleton<IJwtService, LocalJwtService>();
+        Log.Information("Using LocalJwtService for development");
+    }
+    else
+    {
+        builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
+        Log.Information("Using CognitoJwtService for production");
+    }
+    
+    // Unit Conversion Service (NavArch.UnitConversion)
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, "unit-systems.xml");
+    builder.Services.AddSingleton<NavArch.UnitConversion.Services.IUnitConverter>(sp => 
+        new NavArch.UnitConversion.Services.UnitConverter(xmlPath));
+    Log.Information("Unit conversion service registered with config: {XmlPath}", xmlPath);
 
     // FluentValidation - Register all validators from Shared assembly
     builder.Services.AddValidatorsFromAssemblyContaining<Shared.Validators.LoginDtoValidator>();
@@ -183,6 +203,9 @@ try
 
     // JWT Authentication Middleware
     app.UseMiddleware<JwtAuthenticationMiddleware>();
+    
+    // Unit Conversion Middleware (after JWT so we have user context)
+    app.UseMiddleware<UnitConversionMiddleware>();
 
     app.UseAuthorization();
 

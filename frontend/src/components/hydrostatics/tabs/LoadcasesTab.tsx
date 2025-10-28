@@ -4,7 +4,7 @@ import { loadcasesApi } from "../../../services/hydrostaticsApi";
 import type { Loadcase } from "../../../types/hydrostatics";
 import CreateLoadcaseDialog from "../CreateLoadcaseDialog";
 import { settingsStore } from "../../../stores/SettingsStore";
-import { unitConverter } from "@navarch/unit-conversion";
+import { getUnitSymbol } from "../../../utils/unitSymbols";
 
 interface LoadcasesTabProps {
   vesselId: string;
@@ -57,8 +57,8 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
 
   // Backend automatically converts values to user's preferred units
   const displayUnits = settingsStore.preferredUnits;
-  const densityUnit = unitConverter.getUnitSymbol(displayUnits, "Density");
-  const lengthUnit = unitConverter.getUnitSymbol(displayUnits, "Length");
+  const densityUnit = getUnitSymbol(displayUnits, "Density");
+  const lengthUnit = getUnitSymbol(displayUnits, "Length");
 
   if (loading) {
     return (

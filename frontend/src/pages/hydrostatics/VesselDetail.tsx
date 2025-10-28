@@ -1,23 +1,23 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { observer } from "mobx-react-lite";
 import { vesselsApi } from "../../services/hydrostaticsApi";
 import type { VesselDetails } from "../../types/hydrostatics";
-import { OverviewTab } from "../../components/hydrostatics/tabs/OverviewTab";
+import { ConsolidatedHydrostaticsTab } from "../../components/hydrostatics/tabs/ConsolidatedHydrostaticsTab";
 import { GeometryTab } from "../../components/hydrostatics/tabs/GeometryTab";
 import { LoadcasesTab } from "../../components/hydrostatics/tabs/LoadcasesTab";
-import { ComputationsTab } from "../../components/hydrostatics/tabs/ComputationsTab";
-import { CurvesTab } from "../../components/hydrostatics/tabs/CurvesTab";
-import { TrimSolverTab } from "../../components/hydrostatics/tabs/TrimSolverTab";
+import { useStore } from "../../stores";
 
-type TabName = "overview" | "geometry" | "loadcases" | "computations" | "curves" | "trim";
+type TabName = "hydrostatics" | "geometry" | "loadcases";
 
-export function VesselDetail() {
+export const VesselDetail = observer(function VesselDetail() {
   const { vesselId } = useParams<{ vesselId: string }>();
   const navigate = useNavigate();
+  const { authStore } = useStore();
   const [vessel, setVessel] = useState<VesselDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabName>("overview");
+  const [activeTab, setActiveTab] = useState<TabName>("hydrostatics");
 
   const loadVessel = async () => {
     if (!vesselId) return;
@@ -43,13 +43,19 @@ export function VesselDetail() {
     navigate("/hydrostatics/vessels");
   };
 
+  const handleHome = () => {
+    navigate("/dashboard");
+  };
+
+  const handleLogout = () => {
+    authStore.logout();
+    navigate("/login");
+  };
+
   const tabs = [
-    { id: "overview", label: "Overview", count: null },
+    { id: "hydrostatics", label: "Hydrostatics", count: null },
     { id: "geometry", label: "Geometry", count: vessel?.offsetsCount || 0 },
     { id: "loadcases", label: "Loadcases", count: null },
-    { id: "computations", label: "Computations", count: null },
-    { id: "curves", label: "Curves", count: null },
-    { id: "trim", label: "Trim Solver", count: null },
   ] as const;
 
   if (loading) {
@@ -93,57 +99,83 @@ export function VesselDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-4">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      {/* Main Navigation Header */}
+      <header className="border-b bg-white/80 backdrop-blur-sm flex-shrink-0">
+        <div className="px-4 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <h1 className="text-lg font-bold">NavArch Studio</h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleHome}
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded hover:bg-gray-50"
+              >
+                <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Home
+              </button>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded hover:bg-gray-50"
+              >
+                <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Vessel Header - Compact Command Rail */}
+      <div className="bg-white shadow flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          {/* Single Row: Back | Title | Description | Principal Dims | Units Badge */}
+          <div className="flex items-center gap-3">
             <button
               onClick={handleBack}
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
+              className="inline-flex items-center text-xs text-gray-500 hover:text-gray-700 flex-shrink-0"
             >
-              <svg className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
+              <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Back
             </button>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{vessel.name}</h1>
-              {vessel.description && (
-                <p className="mt-1 text-sm text-gray-500">{vessel.description}</p>
-              )}
+            
+            <div className="h-5 w-px bg-gray-300"></div>
+            
+            <h1 className="text-lg font-bold text-gray-900 flex-shrink-0">{vessel.name}</h1>
+            
+            {vessel.description && (
+              <>
+                <span className="text-xs text-gray-400">•</span>
+                <p className="text-xs text-gray-500 truncate flex-shrink-0 max-w-xs">{vessel.description}</p>
+              </>
+            )}
+            
+            <div className="flex items-center gap-2 text-xs text-gray-600 ml-auto">
+              <span className="text-gray-400">Lpp:</span>
+              <span className="font-medium">{vessel.lpp}m</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-gray-400">B:</span>
+              <span className="font-medium">{vessel.beam}m</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-gray-400">T:</span>
+              <span className="font-medium">{vessel.designDraft}m</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {vessel.unitsSystem}
-              </span>
-            </div>
-          </div>
-
-          {/* Principal Particulars Summary */}
-          <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-            <div className="bg-gray-50 px-3 py-2 rounded">
-              <span className="text-gray-500">Lpp:</span>
-              <span className="ml-2 font-semibold text-gray-900">{vessel.lpp} m</span>
-            </div>
-            <div className="bg-gray-50 px-3 py-2 rounded">
-              <span className="text-gray-500">Beam:</span>
-              <span className="ml-2 font-semibold text-gray-900">{vessel.beam} m</span>
-            </div>
-            <div className="bg-gray-50 px-3 py-2 rounded">
-              <span className="text-gray-500">Design Draft:</span>
-              <span className="ml-2 font-semibold text-gray-900">{vessel.designDraft} m</span>
-            </div>
+            
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 flex-shrink-0">
+              {vessel.unitsSystem}
+            </span>
           </div>
 
           {/* Tabs */}
-          <div className="mt-6 border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <div className="mt-3 border-b border-gray-200">
+            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -154,14 +186,14 @@ export function VesselDetail() {
                         ? "border-blue-500 text-blue-600"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }
-                    whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                    whitespace-nowrap py-2 px-1 border-b-2 font-medium text-xs transition-colors
                   `}
                 >
                   {tab.label}
                   {tab.count !== null && (
                     <span
                       className={`
-                        ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium
+                        ml-1.5 py-0.5 px-1.5 rounded-full text-[10px] font-medium
                         ${
                           activeTab === tab.id
                             ? "bg-blue-100 text-blue-600"
@@ -179,17 +211,22 @@ export function VesselDetail() {
         </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "overview" && <OverviewTab vessel={vessel} onUpdate={loadVessel} />}
-        {activeTab === "geometry" && <GeometryTab vesselId={vessel.id} vessel={vessel} />}
-        {activeTab === "loadcases" && <LoadcasesTab vesselId={vessel.id} />}
-        {activeTab === "computations" && <ComputationsTab vesselId={vessel.id} />}
-        {activeTab === "curves" && <CurvesTab vesselId={vessel.id} />}
-        {activeTab === "trim" && <TrimSolverTab vesselId={vessel.id} />}
+      {/* Tab Content - Flex-1 to fill remaining space */}
+      <div className={activeTab === "hydrostatics" ? "flex-1 overflow-hidden" : "flex-1 overflow-auto"}>
+        {activeTab === "hydrostatics" && <ConsolidatedHydrostaticsTab vesselId={vessel.id} vessel={vessel} />}
+        {activeTab === "geometry" && (
+          <div className="max-w-7xl mx-auto px-3 py-4 h-full">
+            <GeometryTab vesselId={vessel.id} vessel={vessel} />
+          </div>
+        )}
+        {activeTab === "loadcases" && (
+          <div className="max-w-7xl mx-auto px-3 py-4 h-full">
+            <LoadcasesTab vesselId={vessel.id} />
+          </div>
+        )}
       </div>
     </div>
   );
-}
+});
 
 export default VesselDetail;

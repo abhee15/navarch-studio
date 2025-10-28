@@ -15,7 +15,6 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
     lpp: 100,
     beam: 20,
     designDraft: 10,
-    unitsSystem: "SI",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -179,42 +178,24 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="designDraft" className="block text-sm font-medium text-gray-700">
-                    Design Draft (m) *
-                  </label>
-                  <input
-                    type="number"
-                    name="designDraft"
-                    id="designDraft"
-                    required
-                    step="0.1"
-                    min="0"
-                    value={formData.designDraft}
-                    onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="unitsSystem" className="block text-sm font-medium text-gray-700">
-                    Units System *
-                  </label>
-                  <p className="text-xs text-gray-500 mb-1">
-                    Native units for this vessel. You can view it in any unit system via Settings.
-                  </p>
-                  <select
-                    name="unitsSystem"
-                    id="unitsSystem"
-                    value={formData.unitsSystem}
-                    onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value="SI">SI (meters, kg)</option>
-                    <option value="Imperial">Imperial (feet, lb)</option>
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="designDraft" className="block text-sm font-medium text-gray-700">
+                  Design Draft (m) *
+                </label>
+                <input
+                  type="number"
+                  name="designDraft"
+                  id="designDraft"
+                  required
+                  step="0.1"
+                  min="0"
+                  value={formData.designDraft}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Values are in your preferred unit system (see Settings)
+                </p>
               </div>
             </div>
 

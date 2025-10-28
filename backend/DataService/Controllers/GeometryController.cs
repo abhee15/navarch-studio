@@ -170,6 +170,7 @@ public class GeometryController : ControllerBase
     /// Uploads and imports geometry from a CSV file
     /// </summary>
     [HttpPost("offsets:upload")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UploadCsv(

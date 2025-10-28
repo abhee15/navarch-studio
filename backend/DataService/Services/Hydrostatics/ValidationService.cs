@@ -298,16 +298,6 @@ public class ValidationService : IValidationService
             });
         }
 
-        var validUnitsSystems = new[] { "SI", "Imperial" };
-        if (!validUnitsSystems.Contains(vessel.UnitsSystem))
-        {
-            errors.Add(new ValidationError
-            {
-                Field = "UnitsSystem",
-                Message = $"Units system must be one of: {string.Join(", ", validUnitsSystems)}"
-            });
-        }
-
         return errors.Any()
             ? ValidationResult.Failure(errors.ToArray())
             : ValidationResult.Success();

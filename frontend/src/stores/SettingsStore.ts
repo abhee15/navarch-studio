@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import { api } from "../services/api";
-import type { UnitSystemId } from "@navarch/unit-conversion";
+import type { UnitSystemId } from "../utils/unitSymbols";
 
 // Type alias for compatibility
 export type UnitSystem = UnitSystemId;
