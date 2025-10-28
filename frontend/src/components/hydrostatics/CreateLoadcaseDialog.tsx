@@ -75,11 +75,11 @@ export function CreateLoadcaseDialog({
           &#8203;
         </span>
 
-        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
           <div>
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900">
               <svg
-                className="h-6 w-6 text-green-600"
+                className="h-6 w-6 text-green-600 dark:text-green-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -93,11 +93,11 @@ export function CreateLoadcaseDialog({
               </svg>
             </div>
             <div className="mt-3 text-center sm:mt-5">
-              <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" id="modal-title">
                 Create New Loadcase
               </h3>
               <div className="mt-2">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Define a load condition for hydrostatic analysis
                 </p>
               </div>
@@ -106,7 +106,7 @@ export function CreateLoadcaseDialog({
 
           <form onSubmit={handleSubmit} className="mt-5 sm:mt-6">
             {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
+              <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded text-sm">
                 {error}
               </div>
             )}
@@ -114,7 +114,7 @@ export function CreateLoadcaseDialog({
             <div className="space-y-4">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Loadcase Name *
                 </label>
                 <input
@@ -124,14 +124,14 @@ export function CreateLoadcaseDialog({
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="e.g., Full Load, Ballast, Design"
                 />
               </div>
 
               {/* Rho (density) */}
               <div>
-                <label htmlFor="rho" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="rho" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Water Density (ρ) *
                 </label>
                 <input
@@ -143,16 +143,16 @@ export function CreateLoadcaseDialog({
                   min="0"
                   value={formData.rho || ""}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   kg/m³ (1025 for seawater, 1000 for freshwater)
                 </p>
               </div>
 
               {/* KG (center of gravity) */}
               <div>
-                <label htmlFor="kg" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="kg" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Vertical Center of Gravity (KG)
                 </label>
                 <input
@@ -163,17 +163,17 @@ export function CreateLoadcaseDialog({
                   min="0"
                   value={formData.kg || ""}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Optional"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Meters from keel. Required for GM calculations.
                 </p>
               </div>
 
               {/* Notes */}
               <div>
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Notes
                 </label>
                 <textarea
@@ -182,7 +182,7 @@ export function CreateLoadcaseDialog({
                   rows={3}
                   value={formData.notes}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Optional description or notes"
                 />
               </div>
