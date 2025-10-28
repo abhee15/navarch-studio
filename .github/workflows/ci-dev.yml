@@ -408,6 +408,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get RDS endpoint from AWS
+        id: get-rds
+        run: |
+          echo "🔍 Querying AWS for RDS instance..."
+          
+          RDS_ENDPOINT=$(aws rds describe-db-instances \
+            --region ${{ env.AWS_REGION }} \
+            --query "DBInstances[?contains(DBInstanceIdentifier, '${{ env.ENVIRONMENT }}')].Endpoint.Address | [0]" \
+            --output text)
+          
+          if [ -z "$RDS_ENDPOINT" ] || [ "$RDS_ENDPOINT" == "None" ]; then
+            echo "❌ ERROR: Could not find RDS instance"
+            exit 1
+          fi
+          
+          echo "✅ Found RDS endpoint: $RDS_ENDPOINT"
+          echo "rds_endpoint=$RDS_ENDPOINT" >> $GITHUB_OUTPUT
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -419,7 +444,7 @@ jobs:
       - name: Run IdentityService migrations
         run: |
           echo "🔄 Applying IdentityService migrations..."
-          echo "RDS Endpoint: $RDS_ENDPOINT"
+          echo "RDS Endpoint: ${{ steps.get-rds.outputs.rds_endpoint }}"
           
           cd backend/IdentityService
           dotnet ef database update --verbose --connection "$CONNECTION_STRING"
@@ -427,13 +452,12 @@ jobs:
           echo "✅ IdentityService migrations applied successfully"
         env:
           ASPNETCORE_ENVIRONMENT: Staging
-          RDS_ENDPOINT: ${{ needs.deploy-infrastructure.outputs.rds_endpoint }}
-          CONNECTION_STRING: Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
+          CONNECTION_STRING: Host=${{ steps.get-rds.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
 
       - name: Run DataService migrations
         run: |
           echo "🔄 Applying DataService migrations..."
-          echo "RDS Endpoint: $RDS_ENDPOINT"
+          echo "RDS Endpoint: ${{ steps.get-rds.outputs.rds_endpoint }}"
           
           cd backend/DataService
           dotnet ef database update --verbose --connection "$CONNECTION_STRING"
@@ -441,8 +465,7 @@ jobs:
           echo "✅ DataService migrations applied successfully"
         env:
           ASPNETCORE_ENVIRONMENT: Staging
-          RDS_ENDPOINT: ${{ needs.deploy-infrastructure.outputs.rds_endpoint }}
-          CONNECTION_STRING: Host=${{ needs.deploy-infrastructure.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
+          CONNECTION_STRING: Host=${{ steps.get-rds.outputs.rds_endpoint }};Port=5432;Database=${{ secrets.RDS_DATABASE }};Username=${{ secrets.RDS_USERNAME }};Password=${{ secrets.RDS_PASSWORD }};SSL Mode=Require;Trust Server Certificate=true
 
       - name: Verify migrations
         run: |
