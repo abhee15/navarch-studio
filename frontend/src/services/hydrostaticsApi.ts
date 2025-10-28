@@ -129,7 +129,10 @@ export const loadcasesApi = {
     loadcaseId: string,
     loadcase: CreateLoadcaseDto
   ): Promise<Loadcase> {
-    const response = await api.put(`/hydrostatics/vessels/${vesselId}/loadcases/${loadcaseId}`, loadcase);
+    const response = await api.put(
+      `/hydrostatics/vessels/${vesselId}/loadcases/${loadcaseId}`,
+      loadcase
+    );
     return response.data;
   },
 

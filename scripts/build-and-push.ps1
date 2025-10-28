@@ -2,7 +2,7 @@
 # This script builds Docker images for all services and pushes them to ECR
 
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$Environment = "dev"
 )
 
@@ -41,7 +41,7 @@ Write-Host "Successfully logged into ECR" -ForegroundColor Green
 # Get project name from terraform output
 Write-Host "`n[3/6] Getting project configuration..." -ForegroundColor Yellow
 Push-Location terraform/setup
-$PROJECT_NAME = terraform output -raw s3_bucket_name | ForEach-Object { $_.Split('-')[0..($_.Split('-').Count-4)] -join '-' }
+$PROJECT_NAME = terraform output -raw s3_bucket_name | ForEach-Object { $_.Split('-')[0..($_.Split('-').Count - 4)] -join '-' }
 Pop-Location
 
 if (-not $PROJECT_NAME) {
@@ -53,7 +53,7 @@ Write-Host "Project Name: $PROJECT_NAME" -ForegroundColor Green
 # Build and Push Identity Service
 Write-Host "`n[4/6] Building and pushing Identity Service..." -ForegroundColor Yellow
 $IDENTITY_REPO = "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-identity-service"
-docker build -t $IDENTITY_REPO:latest -f backend/IdentityService/Dockerfile backend/
+docker build -t $IDENTITY_REPO:latest -f backend/IdentityService/Dockerfile .
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Failed to build Identity Service" -ForegroundColor Red
     exit 1
@@ -68,7 +68,7 @@ Write-Host "Identity Service pushed successfully" -ForegroundColor Green
 # Build and Push API Gateway
 Write-Host "`n[5/6] Building and pushing API Gateway..." -ForegroundColor Yellow
 $API_GATEWAY_REPO = "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-api-gateway"
-docker build -t $API_GATEWAY_REPO:latest -f backend/ApiGateway/Dockerfile backend/
+docker build -t $API_GATEWAY_REPO:latest -f backend/ApiGateway/Dockerfile .
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Failed to build API Gateway" -ForegroundColor Red
     exit 1
@@ -83,7 +83,7 @@ Write-Host "API Gateway pushed successfully" -ForegroundColor Green
 # Build and Push Data Service
 Write-Host "`n[6/6] Building and pushing Data Service..." -ForegroundColor Yellow
 $DATA_SERVICE_REPO = "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-data-service"
-docker build -t $DATA_SERVICE_REPO:latest -f backend/DataService/Dockerfile backend/
+docker build -t $DATA_SERVICE_REPO:latest -f backend/DataService/Dockerfile .
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Failed to build Data Service" -ForegroundColor Red
     exit 1

@@ -53,7 +53,8 @@ public class VesselsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error creating vessel");
-            return StatusCode(StatusCodes.Status500InternalServerError, 
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
                 new { error = "An unexpected error occurred while creating the vessel", details = ex.Message });
         }
     }
