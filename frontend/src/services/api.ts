@@ -74,7 +74,7 @@ const createApiClient = (): AxiosInstance => {
           const { settingsStore } = await import("../stores/SettingsStore");
           config.headers["X-Preferred-Units"] = settingsStore.preferredUnits;
           console.debug("Request with units:", settingsStore.preferredUnits);
-        } catch (error) {
+        } catch {
           // If settingsStore is not available yet, use default
           config.headers["X-Preferred-Units"] = "SI";
         }
