@@ -436,6 +436,146 @@ terraform destroy -var-file=environments/dev.tfvars
 terraform import aws_s3_bucket.example my-bucket-name
 ```
 
+## Debugging Terraform-Managed Infrastructure
+
+### Core Principle
+**Always check Terraform configuration first when debugging cloud issues.**
+
+### When to Read Terraform Files
+
+Before debugging application issues, read Terraform if:
+- Services can't connect to resources (RDS, S3, etc.)
+- Logs are not available
+- Resources seem to be "missing"
+- Network connectivity issues
+- Permission denied errors
+
+### Common Scenarios
+
+#### 1. No CloudWatch Logs Available
+
+**Symptom**: All log queries return empty
+
+**Debug Steps**:
+```bash
+# 1. Check if observability is configured
+cat terraform/deploy/modules/app-runner/main.tf | grep -A 5 "observability_configuration"
+
+# 2. If missing, add to Terraform
+resource "aws_apprunner_observability_configuration" "main" {
+  observability_configuration_name = "${var.project_name}-${var.environment}-observability"
+  
+  trace_configuration {
+    vendor = "AWSXRAY"
+  }
+}
+
+# 3. Reference in service
+observability_configuration {
+  observability_enabled           = true
+  observability_configuration_arn = aws_apprunner_observability_configuration.main.arn
+}
+```
+
+#### 2. Database Connection Timeout
+
+**Symptom**: App can't connect to RDS
+
+**Debug Steps**:
+```bash
+# 1. Verify RDS exists in Terraform
+cat terraform/deploy/main.tf | grep -A 20 "module \"rds\""
+
+# 2. Check security groups allow traffic
+cat terraform/deploy/modules/rds/main.tf | grep -A 5 "security_group"
+
+# 3. Verify VPC connector is configured
+cat terraform/deploy/modules/app-runner/main.tf | grep -A 5 "vpc_connector"
+
+# 4. Check if services use VPC egress
+cat terraform/deploy/modules/app-runner/main.tf | grep -A 3 "egress_configuration"
+```
+
+#### 3. Service Can't Access AWS Services
+
+**Symptom**: Access denied to Cognito, Secrets Manager, etc.
+
+**Debug Steps**:
+```bash
+# 1. Check IAM role has required policies
+cat terraform/deploy/modules/app-runner/main.tf | grep -A 30 "aws_iam_role"
+
+# 2. Verify policy attachments
+cat terraform/deploy/modules/app-runner/main.tf | grep "aws_iam_role_policy_attachment"
+
+# 3. Check if service uses the role
+cat terraform/deploy/modules/app-runner/main.tf | grep "instance_role_arn"
+```
+
+### Infrastructure Verification Commands
+
+```bash
+# Verify resources exist in AWS
+aws apprunner list-services --region us-east-1
+aws rds describe-db-instances --region us-east-1
+aws logs describe-log-groups --region us-east-1
+aws secretsmanager list-secrets --region us-east-1
+
+# Check specific resource configuration
+aws apprunner describe-service --service-arn <arn>
+aws rds describe-db-instances --db-instance-identifier <id>
+
+# Verify security groups
+aws ec2 describe-security-groups --group-ids <sg-id>
+
+# Check VPC configuration
+aws ec2 describe-vpcs
+aws ec2 describe-subnets
+aws ec2 describe-route-tables
+```
+
+### Debugging Checklist
+
+Before assuming application code is wrong:
+
+- [ ] Read the relevant Terraform module configuration
+- [ ] Verify the resource exists in AWS (`aws <service> describe-*`)
+- [ ] Check if required features are enabled (logging, networking, etc.)
+- [ ] Verify security groups and VPC configuration
+- [ ] Check IAM permissions for service roles
+- [ ] Confirm environment variables are set in Terraform
+- [ ] Validate connection strings and service URLs
+
+### Red Flags Indicating Infrastructure Issues
+
+- ✅ **Resource not found** → Check Terraform deployment
+- ✅ **No logs anywhere** → Check observability configuration in Terraform
+- ✅ **Connection timeout immediately** → Check security groups in Terraform
+- ✅ **Access denied** → Check IAM roles in Terraform
+- ✅ **Works locally, fails in cloud** → Check cloud-specific configuration in Terraform
+
+### Common Mistakes
+
+❌ **Assuming infrastructure is correct** - Always verify
+❌ **Not reading Terraform before debugging** - IaC is your source of truth
+❌ **Debugging application code first** - Check foundation first
+❌ **Ignoring AWS Console** - Verify resources actually exist
+❌ **Not checking state file** - Terraform may think it deployed, but AWS might disagree
+
+### Best Practice Workflow
+
+1. **Issue Reported** → Check Terraform configuration
+2. **Feature Missing** → Add to Terraform
+3. **Resource Misconfigured** → Fix in Terraform
+4. **Deploy Changes** → `terraform apply`
+5. **Verify in AWS** → Use AWS CLI/Console
+6. **Only Then** → Debug application code
+
+### Cross-References
+
+- [Full Debugging Methodology](./debugging-methodology.md)
+- [Troubleshooting Flowchart](./troubleshooting-flowchart.md)
+
 
 
 

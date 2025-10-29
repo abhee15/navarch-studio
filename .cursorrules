@@ -9,6 +9,34 @@ This is a full-stack template project with:
 - **Infrastructure**: AWS (App Runner, RDS, S3, CloudFront, Cognito) via Terraform
 - **CI/CD**: GitHub Actions
 
+## Debugging & Problem-Solving
+
+**CRITICAL**: Before debugging any issue, consult `.cursor/rules/debugging-methodology.md`
+
+### Core Principle
+**Infrastructure → Configuration → Application** (always work top-down, never skip layers)
+
+### When Troubleshooting
+1. **Check Infrastructure First** (Terraform/IaC) - Does the resource exist? Is the feature enabled?
+2. **Check Configuration Second** (env vars, secrets) - Are settings correct?
+3. **Check Application Last** (code logic) - Only after layers 1 & 2 are verified
+
+### Red Flags That Require Infrastructure Review
+- ALL queries/commands return empty (not just one)
+- Commands work locally but fail in cloud
+- "Resource not found" errors
+- No logs/metrics/traces anywhere
+- Connection timeout immediately (< 5 seconds)
+
+**Rule**: If you see these patterns, STOP and review infrastructure before continuing.
+
+### Resources
+- [Full Debugging Methodology](.cursor/rules/debugging-methodology.md)
+- [Troubleshooting Flowchart](.cursor/rules/troubleshooting-flowchart.md)
+- [Terraform Debugging](.cursor/rules/terraform.md#debugging-terraform-managed-infrastructure)
+- [.NET Cloud Debugging](.cursor/rules/dotnet.md#debugging-net-applications-in-cloud)
+- [React Debugging](.cursor/rules/react-typescript.md#debugging-frontend-issues)
+
 ## Code Style
 
 ### TypeScript/React

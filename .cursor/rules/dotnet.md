@@ -505,6 +505,238 @@ public class CorrelationIdMiddleware
 - ❌ Not handling exceptions
 - ❌ Using `DateTime.Now` (use `DateTime.UtcNow`)
 
+## Debugging .NET Applications in Cloud
+
+### Core Principle
+**Check infrastructure and configuration before debugging application code.**
+
+### When Application Fails in Cloud But Works Locally
+
+Follow this order:
+
+1. **Check Infrastructure** (Is logging enabled?)
+2. **Check Configuration** (Are env vars set?)
+3. **Check Application** (Is there a code bug?)
+
+### Common Cloud Scenarios
+
+#### 1. No Logs in CloudWatch
+
+**Symptom**: Application logs not appearing in CloudWatch
+
+**Debug Steps**:
+```bash
+# 1. Verify observability is configured in Terraform
+cat terraform/deploy/modules/app-runner/main.tf | grep -A 3 "observability_configuration"
+
+# 2. If missing, this is an infrastructure issue, not application
+# Fix: Add observability configuration to Terraform
+
+# 3. Only if observability exists, check application logging
+# Verify Serilog is configured in Program.cs
+```
+
+**Do NOT**:
+- ❌ Try different log levels
+- ❌ Add more logging statements
+- ❌ Modify logging configuration
+- ✅ First verify infrastructure supports logging
+
+#### 2. Database Connection Fails
+
+**Symptom**: `Npgsql.NpgsqlException: Failed to connect` or timeout
+
+**Debug Steps**:
+```bash
+# Layer 1: Infrastructure
+# 1. Verify RDS exists and is available
+aws rds describe-db-instances --region us-east-1
+
+# 2. Check security groups allow App Runner → RDS traffic
+cat terraform/deploy/modules/rds/main.tf | grep security_group
+
+# 3. Verify VPC connector is configured
+cat terraform/deploy/modules/app-runner/main.tf | grep vpc_connector
+
+# Layer 2: Configuration
+# 4. Check connection string format
+# Should be: Host=<endpoint>;Port=5432;Database=<db>;Username=<user>;Password=<pass>
+aws apprunner describe-service --service-arn <arn> | grep ConnectionStrings
+
+# 5. Verify password is accessible from Secrets Manager
+aws secretsmanager get-secret-value --secret-id <id>
+
+# Layer 3: Application
+# 6. Only if all above pass, check EF Core configuration
+# Review Program.cs DbContext setup
+```
+
+**Connection Timeout Decision Tree**:
+- Timeout < 5 seconds → Infrastructure (security groups/VPC)
+- "password authentication failed" → Configuration (wrong credentials)
+- "database does not exist" → Configuration (wrong database name)
+- "relation does not exist" → Application (migrations not run)
+
+#### 3. Migrations Not Running
+
+**Symptom**: "relation does not exist" errors
+
+**Debug Steps**:
+```csharp
+// 1. Check ASPNETCORE_ENVIRONMENT in Terraform
+// Must be "Staging" or "Production" for auto-migrations
+cat terraform/deploy/modules/app-runner/main.tf | grep ASPNETCORE_ENVIRONMENT
+
+// 2. Verify auto-migration code in Program.cs
+if (app.Environment.EnvironmentName != "Development")
+{
+    Log.Information("Auto-applying migrations in {Environment}...", 
+        app.Environment.EnvironmentName);
+    await dbContext.Database.MigrateAsync();
+    Log.Information("✅ Migrations applied successfully!");
+}
+
+// 3. Check CloudWatch logs for migration status
+aws logs tail /aws/apprunner/<service>/service --since 10m | grep -i migration
+```
+
+**Common Issues**:
+- `ASPNETCORE_ENVIRONMENT = "Dev"` → Won't run migrations (use "Staging")
+- Missing `await dbContext.Database.MigrateAsync()` → Migrations don't run
+- Using `builder.Environment` instead of `app.Environment` → Wrong environment check
+
+#### 4. Environment Variables Not Set
+
+**Symptom**: `NullReferenceException` or configuration errors
+
+**Debug Steps**:
+```bash
+# 1. Check Terraform configuration
+cat terraform/deploy/modules/app-runner/main.tf | grep -A 20 "runtime_environment_variables"
+
+# 2. Verify in AWS
+aws apprunner describe-service --service-arn <arn> --query "Service.SourceConfiguration.ImageRepository.ImageConfiguration.RuntimeEnvironmentVariables"
+
+# 3. Only if set correctly, check application code
+# Review appsettings.json and Program.cs configuration binding
+```
+
+#### 5. Service Returns 500 Error
+
+**Symptom**: API returns 500 Internal Server Error
+
+**Debug Steps**:
+```bash
+# 1. Check if logs are available (infrastructure)
+aws logs tail /aws/apprunner/<service>/service --since 5m
+
+# 2. If no logs, fix observability first (infrastructure issue)
+
+# 3. If logs exist, look for exceptions
+aws logs tail /aws/apprunner/<service>/service --since 5m | grep -i exception
+
+# 4. Identify exception type:
+# - NullReferenceException → Configuration (missing env var)
+# - NpgsqlException → Infrastructure (database connectivity)
+# - Custom exception → Application (code bug)
+```
+
+### Health Check Debugging
+
+**Symptom**: App Runner service keeps restarting
+
+**Debug Steps**:
+```bash
+# 1. Check health endpoint configuration in Terraform
+cat terraform/deploy/modules/app-runner/main.tf | grep -A 6 "health_check_configuration"
+
+# 2. Verify health endpoint exists in application
+# Should have: app.MapHealthChecks("/health");
+
+# 3. Check health check timeout
+# If migrations run on startup, timeout must be sufficient (30+ seconds)
+
+# 4. Test health endpoint locally
+curl http://localhost:8080/health
+```
+
+### Structured Logging Best Practices
+
+```csharp
+// ✅ Good: Structured logging with context
+Log.Information("Processing order {OrderId} for user {UserId}", orderId, userId);
+
+// ❌ Bad: String concatenation
+Log.Information($"Processing order {orderId} for user {userId}");
+
+// ✅ Good: Log important lifecycle events
+Log.Information("🔄 Starting database migration check...");
+Log.Information("✅ Database schema is up to date");
+Log.Error(ex, "❌ Migration check failed: {Message}", ex.Message);
+
+// ✅ Good: Include environment context
+Log.Information("Running in {Environment} environment", app.Environment.EnvironmentName);
+```
+
+### Configuration Validation
+
+Always validate critical configuration on startup:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// Validate required configuration
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("ConnectionString 'DefaultConnection' not configured");
+}
+
+var cognitoUserPoolId = builder.Configuration["Cognito:UserPoolId"];
+if (string.IsNullOrEmpty(cognitoUserPoolId))
+{
+    throw new InvalidOperationException("Cognito:UserPoolId not configured");
+}
+
+Log.Information("✅ Configuration validated successfully");
+```
+
+### Debugging Checklist
+
+Before debugging .NET code in cloud:
+
+- [ ] Verify CloudWatch logs are available
+- [ ] Check `ASPNETCORE_ENVIRONMENT` is set correctly
+- [ ] Verify connection strings are formatted correctly
+- [ ] Confirm database exists and is accessible
+- [ ] Check if migrations have run
+- [ ] Validate all required environment variables are set
+- [ ] Review CloudWatch logs for exceptions
+- [ ] Only then debug application code
+
+### Common Mistakes
+
+❌ **Assuming configuration is correct** - Always verify env vars in Terraform
+❌ **Not checking logs first** - Logs tell you exactly what's wrong
+❌ **Debugging locally** - Local and cloud have different configurations
+❌ **Ignoring environment name** - Dev/Staging/Production behave differently
+❌ **Not using structured logging** - Makes cloud debugging much harder
+
+### Best Practice Workflow
+
+1. **Issue in Cloud** → Check CloudWatch logs first
+2. **No Logs** → Infrastructure issue (observability not configured)
+3. **Exception in Logs** → Identify exception type
+4. **Connection Error** → Check infrastructure (security groups, VPC)
+5. **Configuration Error** → Check Terraform env vars
+6. **Application Error** → Debug code (only after 1-5 verified)
+
+### Cross-References
+
+- [Full Debugging Methodology](./debugging-methodology.md)
+- [Troubleshooting Flowchart](./troubleshooting-flowchart.md)
+- [Terraform Debugging](./terraform.md#debugging-terraform-managed-infrastructure)
+
 
 
 

@@ -32,15 +32,25 @@ provider "aws" {
 # Data sources
 data "aws_caller_identity" "current" {}
 
+# Reference setup infrastructure (single source of truth)
+data "terraform_remote_state" "setup" {
+  backend = "s3"
+  config = {
+    bucket = "${var.project_name}-terraform-state-${data.aws_caller_identity.current.account_id}"
+    key    = "setup/terraform.tfstate"
+    region = var.aws_region
+  }
+}
+
 # RDS Module
 module "rds" {
   source = "./modules/rds"
 
   project_name       = var.project_name
   environment        = var.environment
-  vpc_id             = var.vpc_id
-  subnet_ids         = var.public_subnet_ids
-  security_group_ids = [var.rds_security_group_id]
+  vpc_id             = data.terraform_remote_state.setup.outputs.vpc_id
+  subnet_ids         = data.terraform_remote_state.setup.outputs.public_subnet_ids
+  security_group_ids = [data.terraform_remote_state.setup.outputs.rds_security_group_id]
 
   instance_class        = var.db_instance_class
   allocated_storage     = var.db_allocated_storage
@@ -55,11 +65,11 @@ module "app_runner" {
 
   project_name       = var.project_name
   environment        = var.environment
-  vpc_id             = var.vpc_id
-  subnet_ids         = var.public_subnet_ids
-  security_group_ids = [var.app_runner_security_group_id]
+  vpc_id             = data.terraform_remote_state.setup.outputs.vpc_id
+  subnet_ids         = data.terraform_remote_state.setup.outputs.public_subnet_ids
+  security_group_ids = [data.terraform_remote_state.setup.outputs.app_runner_security_group_id]
 
-  ecr_repository_urls = var.ecr_repository_urls
+  ecr_repository_urls = data.terraform_remote_state.setup.outputs.ecr_repository_urls
 
   # Database connection
   rds_endpoint = module.rds.endpoint
@@ -69,9 +79,9 @@ module "app_runner" {
   rds_password = module.rds.password
 
   # Cognito configuration
-  cognito_user_pool_id        = var.cognito_user_pool_id
-  cognito_user_pool_client_id = var.cognito_user_pool_client_id
-  cognito_domain              = var.cognito_domain
+  cognito_user_pool_id        = data.terraform_remote_state.setup.outputs.cognito_user_pool_id
+  cognito_user_pool_client_id = data.terraform_remote_state.setup.outputs.cognito_user_pool_client_id
+  cognito_domain              = data.terraform_remote_state.setup.outputs.cognito_domain
 
   # CORS - CloudFront URL for browser-based requests
   # NOTE: Leave empty on first deployment to avoid circular dependency
@@ -95,9 +105,3 @@ module "s3_cloudfront" {
   # API Gateway URL for frontend config
   api_gateway_url = module.app_runner.api_gateway_url
 }
-
-
-
-
-
-

@@ -146,7 +146,7 @@ resource "aws_apprunner_service" "identity_service" {
     protocol            = "HTTP"
     path                = "/health"
     interval            = 10
-    timeout             = 30 # Increased to allow migrations to complete during startup
+    timeout             = 20 # Maximum allowed by AWS App Runner (1-20 seconds)
     healthy_threshold   = 1
     unhealthy_threshold = 5
   }
@@ -211,7 +211,7 @@ resource "aws_apprunner_service" "data_service" {
     protocol            = "HTTP"
     path                = "/health"
     interval            = 10
-    timeout             = 30 # Increased to allow migrations to complete during startup
+    timeout             = 20 # Maximum allowed by AWS App Runner (1-20 seconds)
     healthy_threshold   = 1
     unhealthy_threshold = 5
   }
@@ -283,7 +283,7 @@ resource "aws_apprunner_service" "api_gateway" {
     protocol            = "HTTP"
     path                = "/health"
     interval            = 10
-    timeout             = 30 # Increased to allow migrations to complete during startup
+    timeout             = 20 # Maximum allowed by AWS App Runner (1-20 seconds)
     healthy_threshold   = 1
     unhealthy_threshold = 5
   }

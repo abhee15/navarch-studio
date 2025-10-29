@@ -6,30 +6,9 @@ environment  = "dev"
 aws_region   = "us-east-1"
 cost_center  = "engineering"
 
-# Backend Configuration
-# NOTE: Update these values after running terraform/setup
-s3_bucket_name      = "navarch-studio-terraform-state-{ACCOUNT_ID}"
-dynamodb_table_name = "navarch-studio-terraform-locks"
-
-# Infrastructure from terraform/setup (UPDATE AFTER SETUP)
-# Run: terraform output -state=../setup/terraform.tfstate
-vpc_id                       = "UPDATE_AFTER_SETUP"
-public_subnet_ids            = ["UPDATE_AFTER_SETUP"]
-app_runner_security_group_id = "UPDATE_AFTER_SETUP"
-rds_security_group_id        = "UPDATE_AFTER_SETUP"
-
-# ECR Repository URLs (UPDATE AFTER SETUP)
-ecr_repository_urls = {
-  identity_service = "{ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/navarch-studio-identity-service"
-  api_gateway      = "{ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/navarch-studio-api-gateway"
-  data_service     = "{ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/navarch-studio-data-service"
-  frontend         = "{ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/navarch-studio-frontend"
-}
-
-# Cognito Configuration (UPDATE AFTER SETUP)
-cognito_user_pool_id        = "UPDATE_AFTER_SETUP"
-cognito_user_pool_client_id = "UPDATE_AFTER_SETUP"
-cognito_domain              = "UPDATE_AFTER_SETUP"
+# NOTE: All setup infrastructure values (VPC, subnets, security groups, ECR, Cognito)
+# are automatically pulled from terraform_remote_state - no manual configuration needed!
+# This ensures single source of truth and automatic updates when setup changes.
 
 # Database Configuration (cost-optimized for dev)
 db_instance_class     = "db.t3.micro" # Free Tier eligible

@@ -11,6 +11,14 @@ terraform {
       version = "~> 3.0"
     }
   }
+
+  backend "s3" {
+    # Backend configuration will be provided via command line or backend-config file
+    # terraform init -backend-config=backend-config.tfvars
+    # Or: terraform init -backend-config="bucket=..." -backend-config="key=..." -backend-config="region=..."
+    key     = "setup/terraform.tfstate"
+    encrypt = true
+  }
 }
 
 provider "aws" {
@@ -34,8 +42,3 @@ data "aws_availability_zones" "available" {
 
 # Note: Common tags are defined in provider default_tags block above
 # No need for locals.common_tags
-
-
-
-
-

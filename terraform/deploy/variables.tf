@@ -26,62 +26,9 @@ variable "cost_center" {
   default     = "engineering"
 }
 
-# Backend Configuration (passed but not used directly - used by backend config)
-variable "s3_bucket_name" {
-  description = "S3 bucket name for Terraform state (used in backend config)"
-  type        = string
-}
-
-variable "dynamodb_table_name" {
-  description = "DynamoDB table name for Terraform state locking (used in backend config)"
-  type        = string
-}
-
-# Setup Infrastructure References (from Phase 4)
-variable "vpc_id" {
-  description = "VPC ID from setup"
-  type        = string
-}
-
-variable "public_subnet_ids" {
-  description = "Public subnet IDs from setup (used for both App Runner and RDS)"
-  type        = list(string)
-}
-
-variable "app_runner_security_group_id" {
-  description = "App Runner security group ID from setup"
-  type        = string
-}
-
-variable "rds_security_group_id" {
-  description = "RDS security group ID from setup"
-  type        = string
-}
-
-variable "ecr_repository_urls" {
-  description = "ECR repository URLs from setup"
-  type = object({
-    identity_service = string
-    api_gateway      = string
-    data_service     = string
-    frontend         = string
-  })
-}
-
-variable "cognito_user_pool_id" {
-  description = "Cognito User Pool ID from setup"
-  type        = string
-}
-
-variable "cognito_user_pool_client_id" {
-  description = "Cognito User Pool Client ID from setup"
-  type        = string
-}
-
-variable "cognito_domain" {
-  description = "Cognito Domain from setup"
-  type        = string
-}
+# NOTE: All setup infrastructure values (VPC, subnets, security groups, ECR, Cognito)
+# are now pulled from terraform_remote_state in main.tf - no need to pass as variables!
+# This ensures single source of truth and automatic updates when setup changes.
 
 # RDS Configuration
 variable "db_instance_class" {
@@ -127,9 +74,3 @@ variable "domain_name" {
   type        = string
   default     = ""
 }
-
-
-
-
-
-
