@@ -394,6 +394,70 @@ jobs:
             -locations=filesystem:/flyway/sql \
             migrate
 
+  deploy-services:
+    runs-on: ubuntu-latest
+    needs: [deploy-infrastructure, build-and-push]
+    if: needs.build-and-push.result == 'success'
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Trigger App Runner service deployments
+        run: |
+          echo "🚀 Triggering App Runner service deployments..."
+          echo "This will pull the latest :latest tagged images from ECR"
+          echo ""
+          
+          # Get service ARNs
+          IDENTITY_ARN=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-identity-service')].ServiceArn | [0]" \
+            --output text)
+          
+          DATA_ARN=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-data-service')].ServiceArn | [0]" \
+            --output text)
+          
+          API_ARN=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceArn | [0]" \
+            --output text)
+          
+          # Trigger deployments
+          echo "📦 Deploying Identity Service..."
+          if [ -n "$IDENTITY_ARN" ] && [ "$IDENTITY_ARN" != "None" ]; then
+            aws apprunner start-deployment --service-arn "$IDENTITY_ARN"
+            echo "✅ Identity Service deployment initiated"
+          else
+            echo "⚠️  Identity Service not found, skipping"
+          fi
+          
+          echo ""
+          echo "📦 Deploying Data Service..."
+          if [ -n "$DATA_ARN" ] && [ "$DATA_ARN" != "None" ]; then
+            aws apprunner start-deployment --service-arn "$DATA_ARN"
+            echo "✅ Data Service deployment initiated"
+          else
+            echo "⚠️  Data Service not found, skipping"
+          fi
+          
+          echo ""
+          echo "📦 Deploying API Gateway..."
+          if [ -n "$API_ARN" ] && [ "$API_ARN" != "None" ]; then
+            aws apprunner start-deployment --service-arn "$API_ARN"
+            echo "✅ API Gateway deployment initiated"
+          else
+            echo "⚠️  API Gateway not found, skipping"
+          fi
+          
+          echo ""
+          echo "⏳ Note: Deployments take ~3-5 minutes to complete"
+          echo "   Services will automatically apply database migrations on startup"
+          echo "   Monitor logs: aws logs tail /aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-data-service --since 5m --region ${{ env.AWS_REGION }}"
+
   deploy-frontend:
     runs-on: ubuntu-latest
     needs: [build-and-push, deploy-infrastructure, update-cors]
