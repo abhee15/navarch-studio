@@ -231,7 +231,7 @@ resource "aws_apprunner_service" "api_gateway" {
           },
           # CORS - Add CloudFront origin (use index 10 to ADD to appsettings origins, not replace)
           var.cloudfront_distribution_domain != "" ? {
-            Cors__AllowedOrigins__10 = var.cloudfront_distribution_domain
+            Cors__AllowedOrigins__10 = "https://${var.cloudfront_distribution_domain}"
           } : {}
         )
       }
