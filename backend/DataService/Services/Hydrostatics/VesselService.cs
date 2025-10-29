@@ -67,14 +67,40 @@ public class VesselService : IVesselService
     public async Task<Vessel?> GetVesselAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Vessels
+            .AsNoTracking()
+            .Select(v => new Vessel
+            {
+                Id = v.Id,
+                UserId = v.UserId,
+                Name = v.Name,
+                Description = v.Description,
+                Lpp = v.Lpp,
+                Beam = v.Beam,
+                DesignDraft = v.DesignDraft,
+                CreatedAt = v.CreatedAt,
+                UpdatedAt = v.UpdatedAt,
+                DeletedAt = v.DeletedAt
+            })
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
     }
 
     public async Task<VesselDetailsDto?> GetVesselDetailsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        // First, get the vessel with basic properties
+        // First, get the vessel with basic properties (no navigation properties)
         var vessel = await _context.Vessels
+            .AsNoTracking()
             .Where(v => v.Id == id)
+            .Select(v => new
+            {
+                v.Id,
+                v.Name,
+                v.Description,
+                v.Lpp,
+                v.Beam,
+                v.DesignDraft,
+                v.CreatedAt,
+                v.UpdatedAt
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (vessel == null)
@@ -113,8 +139,23 @@ public class VesselService : IVesselService
     public async Task<List<Vessel>> ListVesselsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _context.Vessels
+            .AsNoTracking()  // Don't track for read-only query
             .Where(v => v.UserId == userId)
             .OrderByDescending(v => v.UpdatedAt)
+            .Select(v => new Vessel
+            {
+                Id = v.Id,
+                UserId = v.UserId,
+                Name = v.Name,
+                Description = v.Description,
+                Lpp = v.Lpp,
+                Beam = v.Beam,
+                DesignDraft = v.DesignDraft,
+                CreatedAt = v.CreatedAt,
+                UpdatedAt = v.UpdatedAt,
+                DeletedAt = v.DeletedAt
+                // Explicitly exclude navigation properties to avoid lazy loading
+            })
             .ToListAsync(cancellationToken);
     }
 
