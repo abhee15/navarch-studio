@@ -249,19 +249,19 @@ try
             var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
             var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
 
-            Log.Information("📊 Migration status - Applied: {Applied}, Pending: {Pending}", 
+            Log.Information("📊 Migration status - Applied: {Applied}, Pending: {Pending}",
                 appliedMigrations.Count(), pendingMigrations.Count());
 
             if (pendingMigrations.Any())
             {
-                Log.Warning("⚠️ Pending migrations: {Migrations}", 
+                Log.Warning("⚠️ Pending migrations: {Migrations}",
                     string.Join(", ", pendingMigrations));
 
                 // In Staging/Production, apply migrations automatically
                 // In Development, just warn
                 if (!app.Environment.IsDevelopment())
                 {
-                    Log.Information("🔄 Auto-applying {Count} pending migrations in {Environment} environment...", 
+                    Log.Information("🔄 Auto-applying {Count} pending migrations in {Environment} environment...",
                         pendingMigrations.Count(), app.Environment.EnvironmentName);
                     await dbContext.Database.MigrateAsync();
                     Log.Information("✅ Migrations applied successfully!");
