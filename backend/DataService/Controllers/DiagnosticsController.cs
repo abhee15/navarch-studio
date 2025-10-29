@@ -65,18 +65,21 @@ public class DiagnosticsController : ControllerBase
     {
         _logger.LogInformation("[DIAGNOSTICS] Status endpoint called");
 
+        var database = await GetDatabaseStatus(cancellationToken);
+        var migrations = await GetMigrationStatus(cancellationToken);
+        var tables = await GetTableStatus(cancellationToken);
+
         var diagnostics = new
         {
             service = "DataService",
             timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC"),
             environment = _configuration["ASPNETCORE_ENVIRONMENT"] ?? "Unknown",
-            database = await GetDatabaseStatus(cancellationToken),
-            migrations = await GetMigrationStatus(cancellationToken),
-            tables = await GetTableStatus(cancellationToken)
+            database = database,
+            migrations = migrations,
+            tables = tables
         };
 
-        _logger.LogInformation("[DIAGNOSTICS] Status check complete - Database: {DbStatus}, Migrations: {MigrationCount}, Tables: {TableCount}",
-            diagnostics.database.connected, diagnostics.migrations.appliedCount, diagnostics.tables.vesselTableExists ? "OK" : "MISSING");
+        _logger.LogInformation("[DIAGNOSTICS] Status check complete");
 
         return Ok(diagnostics);
     }
