@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 
 namespace Shared.Controllers;
@@ -16,10 +18,10 @@ public class DiagnosticsController : ControllerBase
 
     public DiagnosticsController(
         ILogger<DiagnosticsController> logger,
-        IConfiguration _configuration)
+        IConfiguration configuration)
     {
         _logger = logger;
-        this._configuration = _configuration;
+        _configuration = configuration;
     }
 
     /// <summary>
