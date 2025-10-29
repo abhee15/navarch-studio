@@ -189,16 +189,16 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+    <div className="h-full flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* Compact Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between flex-shrink-0">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveView("grid")}
             className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
               activeView === "grid"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
             disabled={vessel.offsetsCount === 0}
           >
@@ -209,7 +209,7 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
             className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
               activeView === "import"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
             Import CSV
@@ -218,11 +218,11 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
           {/* Save/Discard buttons - only show when there are changes */}
           {hasChanges && activeView === "grid" && (
             <>
-              <div className="h-5 w-px bg-gray-300 mx-1"></div>
+              <div className="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
               <button
                 onClick={handleSaveChanges}
                 disabled={saving}
-                className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? (
                   <>
@@ -269,7 +269,7 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
               <button
                 onClick={handleDiscardChanges}
                 disabled={saving}
-                className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <svg
                   className="-ml-0.5 mr-1.5 h-3.5 w-3.5"
@@ -321,14 +321,14 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
                     d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
                   />
                 </svg>
-                <h3 className="mt-3 text-sm font-medium text-gray-900">No Geometry Data</h3>
-                <p className="mt-2 text-xs text-gray-500">
+                <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">No Geometry Data</h3>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   Import CSV data to get started with hull offsets
                 </p>
                 <div className="mt-4">
                   <button
                     onClick={() => setActiveView("import")}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Import from CSV
                   </button>
@@ -339,7 +339,7 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-3 text-xs text-gray-500">Loading offsets grid...</p>
+                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Loading offsets grid...</p>
               </div>
             </div>
           ) : error ? (
@@ -358,8 +358,8 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <h3 className="mt-3 text-sm font-medium text-gray-900">Error</h3>
-                <p className="mt-2 text-xs text-gray-500">{error}</p>
+                <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">Error</h3>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{error}</p>
                 <div className="mt-4">
                   <button
                     onClick={loadOffsets}
@@ -406,8 +406,8 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <h3 className="mt-3 text-sm font-medium text-gray-900">CSV Import Wizard</h3>
-              <p className="mt-2 text-xs text-gray-500">Upload a CSV file with hull offset data</p>
+              <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">CSV Import Wizard</h3>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Upload a CSV file with hull offset data</p>
               <p className="mt-1 text-xs text-gray-400">
                 Supported formats: Combined (stations + waterlines + offsets) or Offsets only
               </p>
