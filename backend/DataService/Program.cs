@@ -54,9 +54,15 @@ try
 
     // Log key configuration (redact sensitive data)
     var connString = builder.Configuration.GetConnectionString("DefaultConnection");
-    var safeConnString = connString?
-        .Replace(builder.Configuration["DatabasePassword"] ?? "", "***")
-        ?? "NOT SET";
+    var dbPassword = builder.Configuration["DatabasePassword"];
+    var safeConnString = connString ?? "NOT SET";
+    
+    // Only redact password if it's not null or empty
+    if (!string.IsNullOrEmpty(dbPassword) && !string.IsNullOrEmpty(connString))
+    {
+        safeConnString = connString.Replace(dbPassword, "***");
+    }
+    
     Console.WriteLine($"[STARTUP] Connection String: {safeConnString}");
     Console.WriteLine($"[STARTUP] DatabaseHost: {builder.Configuration["DatabaseHost"] ?? "NOT SET"}");
     Console.WriteLine($"[STARTUP] DatabaseName: {builder.Configuration["DatabaseName"] ?? "NOT SET"}");

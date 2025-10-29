@@ -63,8 +63,8 @@ echo "=================================="
 echo "2. Checking Schemas"
 echo "=================================="
 psql -h "$RDS_ENDPOINT" -U "$DB_USERNAME" -d "$DB_NAME" -c "
-SELECT schema_name 
-FROM information_schema.schemata 
+SELECT schema_name
+FROM information_schema.schemata
 WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
 ORDER BY schema_name;"
 
@@ -73,8 +73,8 @@ echo "=================================="
 echo "3. Checking All Tables"
 echo "=================================="
 psql -h "$RDS_ENDPOINT" -U "$DB_USERNAME" -d "$DB_NAME" -c "
-SELECT table_schema, table_name 
-FROM information_schema.tables 
+SELECT table_schema, table_name
+FROM information_schema.tables
 WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
 ORDER BY table_schema, table_name;"
 
@@ -84,7 +84,7 @@ echo "4. Checking 'vessels' Table"
 echo "=================================="
 psql -h "$RDS_ENDPOINT" -U "$DB_USERNAME" -d "$DB_NAME" -c "
 SELECT table_schema, table_name, column_name, data_type, is_nullable
-FROM information_schema.columns 
+FROM information_schema.columns
 WHERE table_name = 'vessels'
 ORDER BY table_schema, ordinal_position;"
 
@@ -108,7 +108,7 @@ echo "7. Testing Query from VesselService"
 echo "=================================="
 psql -h "$RDS_ENDPOINT" -U "$DB_USERNAME" -d "$DB_NAME" -c "
 SELECT id, user_id, name, lpp, beam, design_draft, created_at, updated_at, deleted_at
-FROM data.vessels 
+FROM data.vessels
 WHERE user_id = '00000000-0000-0000-0000-000000000001' AND deleted_at IS NULL
 ORDER BY updated_at DESC;" 2>&1
 
@@ -121,4 +121,3 @@ echo "💡 Check CloudWatch logs for actual error: [VESSELS] ERROR"
 
 # Clean up
 unset PGPASSWORD
-
