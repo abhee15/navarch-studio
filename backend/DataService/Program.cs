@@ -237,7 +237,7 @@ try
     // Health check timeout is set to 30 seconds in Terraform to allow migrations to complete
     Console.WriteLine("[MIGRATION] Starting database migration check...");
     Log.Information("[MIGRATION] Starting database migration check...");
-    
+
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<DataDbContext>();
@@ -246,7 +246,7 @@ try
         {
             Console.WriteLine("[MIGRATION] Checking database connectivity...");
             Log.Information("[MIGRATION] Checking database connectivity...");
-            
+
             var canConnect = await dbContext.Database.CanConnectAsync();
             Console.WriteLine($"[MIGRATION] Database connection successful: {canConnect}");
             Log.Information("[MIGRATION] Database connection successful: {CanConnect}", canConnect);
@@ -272,9 +272,9 @@ try
                     Console.WriteLine($"[MIGRATION] Auto-applying {pendingMigrations.Count()} pending migrations in {app.Environment.EnvironmentName} environment...");
                     Log.Information("[MIGRATION] Auto-applying {Count} pending migrations in {Environment} environment...",
                         pendingMigrations.Count(), app.Environment.EnvironmentName);
-                    
+
                     await dbContext.Database.MigrateAsync();
-                    
+
                     Console.WriteLine("[MIGRATION] Migrations applied successfully!");
                     Log.Information("[MIGRATION] Migrations applied successfully!");
                 }
@@ -298,7 +298,7 @@ try
             // Don't throw - let the app start and health checks will catch the issue
         }
     }
-    
+
     Console.WriteLine("[MIGRATION] Database migration check complete");
     Log.Information("[MIGRATION] Database migration check complete");
 
