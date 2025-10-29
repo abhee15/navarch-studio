@@ -36,7 +36,9 @@ data "aws_caller_identity" "current" {}
 data "terraform_remote_state" "setup" {
   backend = "s3"
   config = {
-    bucket = "${var.project_name}-terraform-state-${data.aws_caller_identity.current.account_id}"
+    # Note: Account ID is hardcoded to avoid circular dependency with data.aws_caller_identity
+    # This is the same bucket created by terraform/setup
+    bucket = "navarch-studio-terraform-state-344870914438"
     key    = "setup/terraform.tfstate"
     region = var.aws_region
   }
