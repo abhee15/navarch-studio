@@ -177,6 +177,22 @@ try
 
     var app = builder.Build();
 
+    // [STARTUP] Log environment and service configuration
+    Console.WriteLine($"[STARTUP] ===============================================");
+    Console.WriteLine($"[STARTUP] ApiGateway Starting");
+    Console.WriteLine($"[STARTUP] ===============================================");
+    Console.WriteLine($"[STARTUP] Environment: {app.Environment.EnvironmentName}");
+    Console.WriteLine($"[STARTUP] Machine: {Environment.MachineName}");
+    Console.WriteLine($"[STARTUP] OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
+    Console.WriteLine($"[STARTUP] Framework: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+    Console.WriteLine($"[STARTUP] IdentityService URL: {builder.Configuration["Services:IdentityService"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] DataService URL: {builder.Configuration["Services:DataService"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] CORS Allowed Origins: {string.Join(", ", allowedOrigins)}");
+    Console.WriteLine($"[STARTUP] ===============================================");
+
+    Log.Information("[STARTUP] ApiGateway starting - Environment: {Environment}, DataService: {DataServiceUrl}",
+        app.Environment.EnvironmentName, builder.Configuration["Services:DataService"] ?? "NOT SET");
+
     // Add Correlation ID middleware (FIRST - so all logs have correlation ID)
     app.UseMiddleware<CorrelationIdMiddleware>();
 

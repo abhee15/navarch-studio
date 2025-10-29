@@ -43,6 +43,29 @@ try
             );
     });
 
+    // [STARTUP] Log environment and configuration
+    Console.WriteLine($"[STARTUP] ===============================================");
+    Console.WriteLine($"[STARTUP] DataService Starting");
+    Console.WriteLine($"[STARTUP] ===============================================");
+    Console.WriteLine($"[STARTUP] Environment: {builder.Environment.EnvironmentName}");
+    Console.WriteLine($"[STARTUP] Machine: {Environment.MachineName}");
+    Console.WriteLine($"[STARTUP] OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
+    Console.WriteLine($"[STARTUP] Framework: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+
+    // Log key configuration (redact sensitive data)
+    var connString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var safeConnString = connString?
+        .Replace(builder.Configuration["DatabasePassword"] ?? "", "***")
+        ?? "NOT SET";
+    Console.WriteLine($"[STARTUP] Connection String: {safeConnString}");
+    Console.WriteLine($"[STARTUP] DatabaseHost: {builder.Configuration["DatabaseHost"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] DatabaseName: {builder.Configuration["DatabaseName"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] CognitoUserPoolId: {builder.Configuration["CognitoUserPoolId"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] CognitoRegion: {builder.Configuration["CognitoRegion"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] ===============================================");
+
+    Log.Information("[STARTUP] DataService starting - Environment: {Environment}", builder.Environment.EnvironmentName);
+
     // Add services to the container.
     builder.Services.AddControllers(options =>
     {
