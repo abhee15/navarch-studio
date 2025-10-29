@@ -146,10 +146,13 @@ const createApiClient = (): AxiosInstance => {
         const authMode = getAuthMode();
         if (authMode === "local") {
           LocalAuthService.logout();
-        } else if (userPool) {
-          const cognitoUser = userPool.getCurrentUser();
-          if (cognitoUser) {
-            cognitoUser.signOut();
+        } else {
+          const pool = getUserPool();
+          if (pool) {
+            const cognitoUser = pool.getCurrentUser();
+            if (cognitoUser) {
+              cognitoUser.signOut();
+            }
           }
         }
         window.location.href = "/login";

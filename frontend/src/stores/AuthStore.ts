@@ -5,7 +5,7 @@ import {
   AuthenticationDetails,
   CognitoUserSession,
 } from "amazon-cognito-identity-js";
-import { userPool } from "../config/cognito";
+import { getUserPool } from "../config/cognito";
 import { LocalAuthService } from "../services/localAuthService";
 
 export interface User {
@@ -42,8 +42,11 @@ export class AuthStore {
           this.isAuthenticated = true;
         });
       }
-    } else if (userPool) {
+    } else {
       // Cognito auth - check for existing session
+      const userPool = getUserPool();
+      if (!userPool) return;
+      
       const cognitoUser = userPool.getCurrentUser();
       if (cognitoUser) {
         cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
@@ -52,14 +55,14 @@ export class AuthStore {
             return;
           }
 
-          cognitoUser.getUserAttributes((err, attributes) => {
+          cognitoUser.getUserAttributes((err: Error | null, attributes: CognitoUserAttribute[] | undefined) => {
             if (err || !attributes) {
               console.log("Failed to get user attributes");
               return;
             }
 
-            const email = attributes.find((attr) => attr.Name === "email")?.Value || "";
-            const name = attributes.find((attr) => attr.Name === "name")?.Value || email;
+            const email = attributes.find((attr: CognitoUserAttribute) => attr.Name === "email")?.Value || "";
+            const name = attributes.find((attr: CognitoUserAttribute) => attr.Name === "name")?.Value || email;
 
             runInAction(() => {
               this.user = {
@@ -94,9 +97,12 @@ export class AuthStore {
         // Load user settings including preferred units
         const { settingsStore } = await import("./SettingsStore");
         await settingsStore.loadSettings();
-      } else if (userPool) {
+      } else {
         // Cognito auth
-        const pool = userPool; // Capture non-null value
+        const pool = getUserPool();
+        if (!pool) {
+          throw new Error("User pool not configured");
+        }
         return new Promise((resolve, reject) => {
           const authenticationDetails = new AuthenticationDetails({
             Username: email,
@@ -177,9 +183,12 @@ export class AuthStore {
         runInAction(() => {
           this.loading = false;
         });
-      } else if (userPool) {
+      } else {
         // Cognito auth
-        const pool = userPool; // Capture non-null value
+        const pool = getUserPool();
+        if (!pool) {
+          throw new Error("User pool not configured");
+        }
         return new Promise((resolve, reject) => {
           const attributeList: CognitoUserAttribute[] = [
             new CognitoUserAttribute({
@@ -232,11 +241,10 @@ export class AuthStore {
       }
 
       // Cognito auth - requires email confirmation
-      if (!userPool) {
+      const pool = getUserPool();
+      if (!pool) {
         throw new Error("Cognito user pool not initialized");
       }
-
-      const pool = userPool; // Capture non-null value
       return new Promise((resolve, reject) => {
         const cognitoUser = new CognitoUser({
           Username: email,
@@ -271,10 +279,13 @@ export class AuthStore {
   logout(): void {
     if (this.authMode === "local") {
       LocalAuthService.logout();
-    } else if (userPool) {
-      const cognitoUser = userPool.getCurrentUser();
-      if (cognitoUser) {
-        cognitoUser.signOut();
+    } else {
+      const pool = getUserPool();
+      if (pool) {
+        const cognitoUser = pool.getCurrentUser();
+        if (cognitoUser) {
+          cognitoUser.signOut();
+        }
       }
     }
 
@@ -296,10 +307,11 @@ export class AuthStore {
 
     // Check if token needs refresh
     if (!this.currentSession.isValid()) {
-      if (!userPool) {
+      const pool = getUserPool();
+      if (!pool) {
         return null;
       }
-      const cognitoUser = userPool.getCurrentUser();
+      const cognitoUser = pool.getCurrentUser();
       if (!cognitoUser) {
         return null;
       }
