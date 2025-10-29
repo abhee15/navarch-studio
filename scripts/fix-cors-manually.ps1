@@ -113,4 +113,3 @@ if ($LASTEXITCODE -eq 0) {
 
 # Clean up temp files
 Remove-Item source-config.json, updated-source-config.json -ErrorAction SilentlyContinue
-
