@@ -115,30 +115,10 @@ jobs:
           EOF
         working-directory: ./terraform/deploy
 
-      - name: Create terraform.tfvars
-        run: |
-          cat > terraform.tfvars <<EOF
-          project_name                 = "${{ secrets.PROJECT_NAME }}"
-          aws_region                   = "${{ env.AWS_REGION }}"
-          cost_center                  = "${{ secrets.COST_CENTER }}"
-          s3_bucket_name               = "${{ secrets.S3_BUCKET_NAME }}"
-          dynamodb_table_name          = "${{ secrets.DYNAMODB_TABLE_NAME }}"
-          vpc_id                       = "${{ secrets.VPC_ID }}"
-          public_subnet_ids            = ${{ secrets.PUBLIC_SUBNET_IDS }}
-          app_runner_security_group_id = "${{ secrets.APP_RUNNER_SECURITY_GROUP_ID }}"
-          rds_security_group_id        = "${{ secrets.RDS_SECURITY_GROUP_ID }}"
-          ecr_repository_urls = {
-            identity_service = "${{ secrets.ECR_IDENTITY_SERVICE_URL }}"
-            api_gateway      = "${{ secrets.ECR_API_GATEWAY_URL }}"
-            data_service     = "${{ secrets.ECR_DATA_SERVICE_URL }}"
-            frontend         = "${{ secrets.ECR_FRONTEND_URL }}"
-          }
-          cognito_user_pool_id        = "${{ secrets.COGNITO_USER_POOL_ID }}"
-          cognito_user_pool_client_id = "${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}"
-          cognito_domain              = "${{ secrets.COGNITO_DOMAIN }}"
-          domain_name                 = "${{ secrets.DOMAIN_NAME }}"
-          EOF
-        working-directory: ./terraform/deploy
+      # NOTE: No longer creating terraform.tfvars!
+      # All infrastructure values (VPC, ECR, Cognito, etc.) are now automatically
+      # pulled from terraform_remote_state in setup. Only environment-specific
+      # variables are in environments/prod.tfvars.
 
       - name: Check if backend resources exist
         id: check-backend
@@ -170,7 +150,7 @@ jobs:
         working-directory: ./terraform/deploy
 
       - name: Terraform Plan
-        run: terraform plan -var-file="environments/prod.tfvars" -var-file="terraform.tfvars" -out=tfplan
+        run: terraform plan -var-file="environments/prod.tfvars" -out=tfplan
         working-directory: ./terraform/deploy
 
       - name: Terraform Apply
