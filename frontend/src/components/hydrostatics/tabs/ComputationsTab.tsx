@@ -97,21 +97,21 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Workspace Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-2.5 py-1.5 flex items-center justify-between flex-shrink-0">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2.5 py-1.5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <label className="text-[11px] font-medium text-gray-600">Vessel:</label>
-            <div className="text-xs font-medium text-gray-900">{vessel?.name || "Unknown"}</div>
+            <label className="text-[11px] font-medium text-gray-600 dark:text-gray-400">Vessel:</label>
+            <div className="text-xs font-medium text-gray-900 dark:text-gray-100">{vessel?.name || "Unknown"}</div>
           </div>
           <div className="flex items-center gap-1.5">
-            <label htmlFor="condition-select" className="text-[11px] font-medium text-gray-600">
+            <label htmlFor="condition-select" className="text-[11px] font-medium text-gray-600 dark:text-gray-400">
               Condition:
             </label>
             <select
               id="condition-select"
               value={selectedLoadcaseId}
               onChange={(e) => setSelectedLoadcaseId(e.target.value)}
-              className="border-gray-300 rounded text-xs py-0.5 px-1.5 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded text-xs py-0.5 px-1.5 bg-white text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Design Waterline (Geometry Only)</option>
               {loadcases.map((lc) => (
@@ -127,10 +127,10 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-2 mx-2 mt-2 flex-shrink-0">
+        <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 dark:border-red-600 p-2 mx-2 mt-2 flex-shrink-0">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-3.5 w-3.5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-3.5 w-3.5 text-red-400 dark:text-red-500" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -139,7 +139,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
               </svg>
             </div>
             <div className="ml-2">
-              <p className="text-xs text-red-700">{error}</p>
+              <p className="text-xs text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
@@ -148,33 +148,33 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
       {/* Main Content: Two-column layout with single scroll */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[340px_1fr] gap-0 overflow-auto">
         {/* Left Panel: Inputs */}
-        <div className="bg-white border-r border-gray-200">
+        <div className="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
           {/* Setup Section */}
           <CollapsibleSection title="Setup" defaultExpanded={true}>
             {vessel && (
               <div className="space-y-1.5">
                 <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                  <div className="bg-gray-50 px-1.5 py-0.5 rounded">
-                    <span className="text-gray-500">Lpp:</span>
-                    <span className="ml-1 font-semibold text-gray-900">
+                  <div className="bg-gray-50 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                    <span className="text-gray-500 dark:text-gray-400">Lpp:</span>
+                    <span className="ml-1 font-semibold text-gray-900 dark:text-gray-100">
                       {vessel.lpp} {lengthUnit}
                     </span>
                   </div>
-                  <div className="bg-gray-50 px-1.5 py-0.5 rounded">
-                    <span className="text-gray-500">Beam:</span>
-                    <span className="ml-1 font-semibold text-gray-900">
+                  <div className="bg-gray-50 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                    <span className="text-gray-500 dark:text-gray-400">Beam:</span>
+                    <span className="ml-1 font-semibold text-gray-900 dark:text-gray-100">
                       {vessel.beam} {lengthUnit}
                     </span>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-1.5 py-0.5 rounded text-[11px]">
-                  <span className="text-gray-500">Design Draft:</span>
-                  <span className="ml-1 font-semibold text-gray-900">
+                <div className="bg-gray-50 dark:bg-gray-700 px-1.5 py-0.5 rounded text-[11px]">
+                  <span className="text-gray-500 dark:text-gray-400">Design Draft:</span>
+                  <span className="ml-1 font-semibold text-gray-900 dark:text-gray-100">
                     {vessel.designDraft} {lengthUnit}
                   </span>
                 </div>
                 {results.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-200 text-[11px] text-gray-600 space-y-0.5">
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-[11px] text-gray-600 dark:text-gray-400 space-y-0.5">
                     <div>
                       Draft range: {formatNumber(results[0].draft)} -{" "}
                       {formatNumber(results[results.length - 1].draft)} {lengthUnit}
@@ -193,10 +193,10 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
             badge={draftCount > 0 ? `${draftCount} pts` : undefined}
           >
             {loadcases.length === 0 ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-[11px]">
+              <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded p-2 text-[11px]">
                 <div className="flex items-start">
                   <svg
-                    className="h-3.5 w-3.5 text-yellow-400 mt-0.5 flex-shrink-0"
+                    className="h-3.5 w-3.5 text-yellow-400 dark:text-yellow-500 mt-0.5 flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -207,8 +207,8 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                     />
                   </svg>
                   <div className="ml-1.5">
-                    <p className="font-medium text-yellow-800">No loadcases defined</p>
-                    <p className="mt-0.5 text-yellow-700">
+                    <p className="font-medium text-yellow-800 dark:text-yellow-200">No loadcases defined</p>
+                    <p className="mt-0.5 text-yellow-700 dark:text-yellow-300">
                       Create at least one loadcase in the <strong>Loadcases</strong> tab.
                     </p>
                   </div>
@@ -220,7 +220,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                 <div>
                   <label
                     htmlFor="minDraft"
-                    className="block text-[11px] font-medium text-gray-600 mb-0.5"
+                    className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5"
                   >
                     Min Draft ({lengthUnit})
                   </label>
@@ -231,7 +231,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                     onChange={(e) => setMinDraft(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     min="0"
-                    className="block w-full border-gray-300 rounded shadow-sm py-0.5 px-1.5 text-xs focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded shadow-sm py-0.5 px-1.5 text-xs bg-white text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -239,7 +239,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                 <div>
                   <label
                     htmlFor="maxDraft"
-                    className="block text-[11px] font-medium text-gray-600 mb-0.5"
+                    className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5"
                   >
                     Max Draft ({lengthUnit})
                   </label>
@@ -250,7 +250,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                     onChange={(e) => setMaxDraft(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     min="0"
-                    className="block w-full border-gray-300 rounded shadow-sm py-0.5 px-1.5 text-xs focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded shadow-sm py-0.5 px-1.5 text-xs bg-white text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -258,7 +258,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                 <div>
                   <label
                     htmlFor="draftStep"
-                    className="block text-[11px] font-medium text-gray-600 mb-0.5"
+                    className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5"
                   >
                     Draft Step ({lengthUnit})
                   </label>
@@ -269,7 +269,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                     onChange={(e) => setDraftStep(parseFloat(e.target.value) || 0.1)}
                     step="0.1"
                     min="0.1"
-                    className="block w-full border-gray-300 rounded shadow-sm py-0.5 px-1.5 text-xs focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded shadow-sm py-0.5 px-1.5 text-xs bg-white text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -330,16 +330,16 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
             <CollapsibleSection title="Hull Parameters" defaultExpanded={false}>
               <div className="space-y-1 text-[11px]">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Stations:</span>
-                  <span className="font-medium text-gray-900">{vessel.stationsCount || 0}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Stations:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{vessel.stationsCount || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Waterlines:</span>
-                  <span className="font-medium text-gray-900">{vessel.waterlinesCount || 0}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Waterlines:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{vessel.waterlinesCount || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Offsets:</span>
-                  <span className="font-medium text-gray-900">{vessel.offsetsCount || 0}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Offsets:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{vessel.offsetsCount || 0}</span>
                 </div>
               </div>
             </CollapsibleSection>
@@ -347,92 +347,92 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
         </div>
 
         {/* Right Panel: Results */}
-        <div className="bg-gray-50">
+        <div className="bg-gray-50 dark:bg-gray-900">
           {results.length > 0 ? (
             <div className="flex flex-col">
               {/* Results Header */}
-              <div className="bg-white border-b border-gray-200 px-2 py-1.5 sticky top-0 z-10">
+              <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 py-1.5 sticky top-0 z-10">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-medium text-gray-900">Hydrostatic Table</h3>
+                    <h3 className="text-xs font-medium text-gray-900 dark:text-gray-100">Hydrostatic Table</h3>
                     {computationTime && (
-                      <p className="text-[10px] text-gray-500">
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">
                         Computed in {computationTime.toFixed(0)} ms
                       </p>
                     )}
                   </div>
-                  <span className="text-[10px] text-gray-500">{results.length} rows</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400">{results.length} rows</span>
                 </div>
               </div>
 
               {/* Results Table */}
-              <div className="bg-white">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 sticky top-[44px] z-10">
+              <div className="bg-white dark:bg-gray-800">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900 sticky top-[44px] z-10">
                     <tr>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Draft ({lengthUnit})
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         ∆ ({massUnit})
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         KB ({lengthUnit})
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         LCB ({lengthUnit})
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         BMt ({lengthUnit})
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         GMt ({lengthUnit})
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Awp ({areaUnit})
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Cb
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Cp
                       </th>
-                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-1.5 py-1 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Cwp
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                     {results.map((result, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 font-medium whitespace-nowrap">
+                      <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
                           {formatNumber(result.draft)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.dispWeight, 0)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.kBz)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.lCBx)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.bMt)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.gMt)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.awp, 1)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.cb, 3)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.cp, 3)}
                         </td>
-                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 whitespace-nowrap">
+                        <td className="px-1.5 py-0.5 text-[11px] text-gray-900 dark:text-gray-100 whitespace-nowrap">
                           {formatNumber(result.cwp, 3)}
                         </td>
                       </tr>
@@ -442,11 +442,11 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
               </div>
 
               {/* Hydrostatic Curves Placeholder */}
-              <div className="bg-white border-t border-gray-200 p-2 mt-1">
-                <h3 className="text-xs font-medium text-gray-900 mb-1.5">Hydrostatic Curves</h3>
-                <div className="bg-gray-50 rounded border-2 border-dashed border-gray-300 p-6 text-center">
+              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 mt-1">
+                <h3 className="text-xs font-medium text-gray-900 dark:text-gray-100 mb-1.5">Hydrostatic Curves</h3>
+                <div className="bg-gray-50 dark:bg-gray-900 rounded border-2 border-dashed border-gray-300 dark:border-gray-600 p-6 text-center">
                   <svg
-                    className="mx-auto h-6 w-6 text-gray-400"
+                    className="mx-auto h-6 w-6 text-gray-400 dark:text-gray-500"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -458,7 +458,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                       d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
                     />
                   </svg>
-                  <p className="mt-1.5 text-[10px] text-gray-500">
+                  <p className="mt-1.5 text-[10px] text-gray-500 dark:text-gray-400">
                     Curve visualization will be available here
                   </p>
                 </div>
@@ -468,7 +468,7 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
             <div className="flex items-center justify-center p-6">
               <div className="text-center">
                 <svg
-                  className="mx-auto h-10 w-10 text-gray-400"
+                  className="mx-auto h-10 w-10 text-gray-400 dark:text-gray-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -480,8 +480,8 @@ export const ComputationsTab = observer(({ vesselId, vessel }: ComputationsTabPr
                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                <h3 className="mt-2 text-xs font-medium text-gray-900">No results yet</h3>
-                <p className="mt-1 text-[11px] text-gray-500">
+                <h3 className="mt-2 text-xs font-medium text-gray-900 dark:text-gray-100">No results yet</h3>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                   Set your computation parameters and click Compute to generate hydrostatic table
                 </p>
               </div>
