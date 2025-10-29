@@ -283,69 +283,66 @@ export const ConsolidatedHydrostaticsTab = observer(
             <CollapsibleSection title="Geometry & Reference" defaultExpanded={true}>
               <div className="space-y-2">
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     Hull Source
                   </label>
-                  <select className="w-full border-gray-300 rounded text-xs py-0.5 px-1.5 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <select
+                    disabled
+                    className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded text-xs py-0.5 px-1.5 bg-gray-100 text-gray-600 cursor-not-allowed opacity-75"
+                    title="Additional hull sources coming soon"
+                  >
                     <option>Offsets</option>
                     <option>3D Model</option>
                     <option>Lines Plan</option>
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 min-w-0">
-                  <div className="min-w-0">
-                    <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
-                      Lpp ({lengthUnit})
-                    </label>
-                    <input
-                      type="number"
-                      value={vessel?.lpp || 0}
-                      readOnly
-                      className="w-full border-gray-300 rounded text-xs py-0.5 px-1.5 bg-gray-50"
-                    />
+                <div className="space-y-1.5 min-w-0">
+                  <div className="text-[11px]">
+                    <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
+                    <span className="ml-1 font-medium text-gray-900 dark:text-gray-100">
+                      {vessel?.lpp || 0} {lengthUnit}
+                    </span>
                   </div>
-                  <div className="min-w-0">
-                    <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
-                      Beam ({lengthUnit})
-                    </label>
-                    <input
-                      type="number"
-                      value={vessel?.beam || 0}
-                      readOnly
-                      className="w-full border-gray-300 rounded text-xs py-0.5 px-1.5 bg-gray-50"
-                    />
+                  <div className="text-[11px]">
+                    <span className="text-gray-600 dark:text-gray-400">Beam:</span>
+                    <span className="ml-1 font-medium text-gray-900 dark:text-gray-100">
+                      {vessel?.beam || 0} {lengthUnit}
+                    </span>
                   </div>
                 </div>
 
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
-                    Draft ({lengthUnit})
-                  </label>
-                  <div className="flex gap-1 min-w-0">
-                    <input
-                      type="number"
-                      value={vessel?.designDraft || 0}
-                      readOnly
-                      className="flex-1 min-w-0 border-gray-300 rounded text-xs py-0.5 px-1.5 bg-gray-50"
-                    />
-                    <select className="flex-shrink-0 border-gray-300 rounded text-xs py-0.5 px-1 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                      <option>Design</option>
-                    </select>
+                  <div className="text-[11px] mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">Draft:</span>
+                    <span className="ml-1 font-medium text-gray-900 dark:text-gray-100">
+                      {vessel?.designDraft || 0} {lengthUnit}
+                    </span>
                   </div>
+                  <select
+                    disabled
+                    className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded text-xs py-0.5 px-1.5 bg-gray-100 text-gray-600 cursor-not-allowed opacity-75"
+                    title="Additional draft references coming soon"
+                  >
+                    <option>Design</option>
+                  </select>
                 </div>
 
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     Trim
                   </label>
                   <div className="flex gap-1 min-w-0">
                     <input
                       type="number"
                       value={0}
-                      className="flex-1 min-w-0 border-gray-300 rounded text-xs py-0.5 px-1.5"
+                      className="flex-1 min-w-0 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded text-xs py-0.5 px-1.5 bg-white text-gray-900"
                     />
-                    <select className="flex-shrink-0 border-gray-300 rounded text-xs py-0.5 px-1 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <select
+                      disabled
+                      className="flex-shrink-0 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded text-xs py-0.5 px-1 bg-gray-100 text-gray-600 cursor-not-allowed opacity-75"
+                      title="Additional trim types coming soon"
+                    >
                       <option>Fixed</option>
                     </select>
                   </div>
@@ -357,7 +354,7 @@ export const ConsolidatedHydrostaticsTab = observer(
             <CollapsibleSection title="Mass Properties" defaultExpanded={true}>
               <div className="space-y-2">
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     KG ({lengthUnit})
                   </label>
                   <div className="flex gap-1 min-w-0">
@@ -366,16 +363,20 @@ export const ConsolidatedHydrostaticsTab = observer(
                       value={kg}
                       onChange={(e) => setKg(parseFloat(e.target.value) || 0)}
                       step="0.1"
-                      className="flex-1 min-w-0 border-gray-300 rounded text-xs py-0.5 px-1.5"
+                      className="flex-1 min-w-0 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded text-xs py-0.5 px-1.5 bg-white text-gray-900"
                     />
-                    <select className="flex-shrink-0 border-gray-300 rounded text-xs py-0.5 px-1 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <select
+                      disabled
+                      className="flex-shrink-0 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded text-xs py-0.5 px-1 bg-gray-100 text-gray-600 cursor-not-allowed opacity-75"
+                      title="Additional KG reference points coming soon"
+                    >
                       <option>Above BL</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     LCG ({lengthUnit})
                   </label>
                   <div className="flex gap-1 min-w-0">
@@ -384,16 +385,20 @@ export const ConsolidatedHydrostaticsTab = observer(
                       value={lcg}
                       onChange={(e) => setLcg(parseFloat(e.target.value) || 0)}
                       step="0.1"
-                      className="flex-1 min-w-0 border-gray-300 rounded text-xs py-0.5 px-1.5"
+                      className="flex-1 min-w-0 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded text-xs py-0.5 px-1.5 bg-white text-gray-900"
                     />
-                    <select className="flex-shrink-0 border-gray-300 rounded text-xs py-0.5 px-1 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <select
+                      disabled
+                      className="flex-shrink-0 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded text-xs py-0.5 px-1 bg-gray-100 text-gray-600 cursor-not-allowed opacity-75"
+                      title="Additional LCG reference points coming soon"
+                    >
                       <option>Midship</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     TCG ({lengthUnit})
                   </label>
                   <div className="flex gap-1 min-w-0">
@@ -402,9 +407,13 @@ export const ConsolidatedHydrostaticsTab = observer(
                       value={tcg}
                       onChange={(e) => setTcg(parseFloat(e.target.value) || 0)}
                       step="0.1"
-                      className="flex-1 min-w-0 border-gray-300 rounded text-xs py-0.5 px-1.5"
+                      className="flex-1 min-w-0 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded text-xs py-0.5 px-1.5 bg-white text-gray-900"
                     />
-                    <select className="flex-shrink-0 border-gray-300 rounded text-xs py-0.5 px-1 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <select
+                      disabled
+                      className="flex-shrink-0 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded text-xs py-0.5 px-1 bg-gray-100 text-gray-600 cursor-not-allowed opacity-75"
+                      title="Additional TCG reference points coming soon"
+                    >
                       <option>From CL</option>
                     </select>
                   </div>
@@ -416,7 +425,7 @@ export const ConsolidatedHydrostaticsTab = observer(
             <CollapsibleSection title="Computation Controls" defaultExpanded={true}>
               <div className="space-y-2 min-w-0">
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     Range ({lengthUnit}) - {draftCount} pts
                   </label>
                   <div className="flex gap-0.5 items-center text-xs min-w-0">
@@ -426,37 +435,37 @@ export const ConsolidatedHydrostaticsTab = observer(
                       onChange={(e) => setMinDraft(parseFloat(e.target.value) || 0)}
                       step="0.1"
                       placeholder="Min"
-                      className="flex-1 min-w-0 border-gray-300 rounded py-0.5 px-1 text-[11px]"
+                      className="flex-1 min-w-0 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded py-0.5 px-1 text-[11px] bg-white text-gray-900"
                     />
-                    <span className="text-gray-400 text-[10px]">to</span>
+                    <span className="text-gray-400 dark:text-gray-500 text-[10px]">to</span>
                     <input
                       type="number"
                       value={maxDraft}
                       onChange={(e) => setMaxDraft(parseFloat(e.target.value) || 0)}
                       step="0.1"
                       placeholder="Max"
-                      className="flex-1 min-w-0 border-gray-300 rounded py-0.5 px-1 text-[11px]"
+                      className="flex-1 min-w-0 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded py-0.5 px-1 text-[11px] bg-white text-gray-900"
                     />
-                    <span className="text-gray-400 text-[10px]">by</span>
+                    <span className="text-gray-400 dark:text-gray-500 text-[10px]">by</span>
                     <input
                       type="number"
                       value={draftStep}
                       onChange={(e) => setDraftStep(parseFloat(e.target.value) || 0.1)}
                       step="0.1"
                       placeholder="Step"
-                      className="flex-1 min-w-0 border-gray-300 rounded py-0.5 px-1 text-[11px]"
+                      className="flex-1 min-w-0 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded py-0.5 px-1 text-[11px] bg-white text-gray-900"
                     />
                   </div>
                 </div>
 
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     Integration
                   </label>
                   <select
                     value={integrationRule}
                     onChange={(e) => setIntegrationRule(e.target.value)}
-                    className="w-full border-gray-300 rounded text-xs py-0.5 px-1.5 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded text-xs py-0.5 px-1.5 bg-white text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     {integrationRules.map((rule) => (
                       <option key={rule} value={rule}>
@@ -467,13 +476,13 @@ export const ConsolidatedHydrostaticsTab = observer(
                 </div>
 
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
+                  <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 truncate">
                     Smoothing
                   </label>
                   <select
                     value={smoothing}
                     onChange={(e) => setSmoothing(e.target.value)}
-                    className="w-full border-gray-300 rounded text-xs py-0.5 px-1.5 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded text-xs py-0.5 px-1.5 bg-white text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     {smoothingOptions.map((opt) => (
                       <option key={opt} value={opt}>
@@ -489,15 +498,12 @@ export const ConsolidatedHydrostaticsTab = observer(
             <CollapsibleSection title="Environment" defaultExpanded={false}>
               <div className="space-y-2">
                 <div className="min-w-0">
-                  <label className="block text-[11px] font-medium text-gray-600 mb-0.5 truncate">
-                    Density (kg/m³)
-                  </label>
-                  <input
-                    type="number"
-                    value={waterTypes.find((wt) => wt.label === waterType)?.density || 1025}
-                    readOnly
-                    className="w-full border-gray-300 rounded text-xs py-0.5 px-1.5 bg-gray-50"
-                  />
+                  <div className="text-[11px]">
+                    <span className="text-gray-600 dark:text-gray-400">Density:</span>
+                    <span className="ml-1 font-medium text-gray-900 dark:text-gray-100">
+                      {waterTypes.find((wt) => wt.label === waterType)?.density || 1025} kg/m³
+                    </span>
+                  </div>
                 </div>
               </div>
             </CollapsibleSection>
