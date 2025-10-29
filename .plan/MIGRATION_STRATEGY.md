@@ -18,11 +18,18 @@ This project uses **service-based auto-migrations** for database schema manageme
 When a service (IdentityService or DataService) starts:
 
 1. ✅ Build the application (`builder.Build()`)
-2. 🔄 **Check database connectivity**
-3. 📊 **Query pending migrations**
-4. **If in Development**: Log warning, require manual migration
-5. **If in Staging/Production**: Automatically apply pending migrations
-6. ✅ Start the service
+2. ✅ **Start service immediately** (respond to health checks)
+3. 🔄 **Background Task**: Check database connectivity (2-second delay)
+4. 📊 **Background Task**: Query pending migrations
+5. **If in Development**: Log warning, require manual migration
+6. **If in Staging/Production**: Automatically apply pending migrations in background
+7. ✅ Service remains healthy throughout migration
+
+**Why Background Task?**
+- App Runner health checks timeout after 5 seconds
+- Database migrations can take 10-30 seconds
+- Running migrations synchronously causes health check failures → restart loop
+- Background migrations allow service to respond to health checks immediately
 
 ### 2. Environment Behavior
 
