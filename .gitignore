@@ -52,6 +52,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+aws-logger-errors.txt
 
 # Docker
 docker-compose.override.yml
@@ -73,7 +74,15 @@ secrets/
 
 # Template config (should be customized per project)
 template-config.yml
+
+# Temporary files and issue-specific documentation
 temp/
 
-# Diagnostic files
-DIAGNOSTIC_STEPS.md
+# Issue-specific files (if any remain in root - should be in temp/)
+*_FIX.md
+*_ANALYSIS.md
+*_SUMMARY.md
+DIAGNOSTIC_*.md
+*.plan.md
+update-linear-issue.ps1
+Linear_Import_Clean.csv
