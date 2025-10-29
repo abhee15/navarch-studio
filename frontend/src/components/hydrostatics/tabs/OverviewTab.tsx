@@ -22,7 +22,9 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
       {/* Vessel Information Card */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Vessel Information</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+            Vessel Information
+          </h3>
         </div>
         <div className="px-6 py-5">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -31,20 +33,28 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
               <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{vessel.name}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Vessel Native Units</dt>
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Vessel Native Units
+              </dt>
               <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                   {vessel.unitsSystem}
                 </span>
                 {vessel.unitsSystem !== displayUnits && (
-                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Displaying in {displayUnits})</span>
+                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                    (Displaying in {displayUnits})
+                  </span>
                 )}
               </dd>
             </div>
             {vessel.description && (
               <div className="sm:col-span-2">
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{vessel.description}</dd>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Description
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                  {vessel.description}
+                </dd>
               </div>
             )}
           </dl>
@@ -54,7 +64,9 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
       {/* Principal Particulars Card */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Principal Particulars</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+            Principal Particulars
+          </h3>
         </div>
         <div className="px-6 py-5">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-3">
@@ -73,7 +85,9 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Design Draft (T)</dt>
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Design Draft (T)
+              </dt>
               <dd className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {vessel.designDraft.toFixed(2)} {lengthUnit}
               </dd>
@@ -85,14 +99,18 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
       {/* Geometry Status Card */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Geometry Status</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+            Geometry Status
+          </h3>
         </div>
         <div className="px-6 py-5">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-3">
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Stations</dt>
               <dd className="mt-1 flex items-baseline">
-                <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{vessel.stationsCount}</span>
+                <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                  {vessel.stationsCount}
+                </span>
                 {vessel.stationsCount === 0 && (
                   <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Not defined</span>
                 )}
@@ -112,7 +130,9 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Offsets</dt>
               <dd className="mt-1 flex items-baseline">
-                <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{vessel.offsetsCount}</span>
+                <span className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                  {vessel.offsetsCount}
+                </span>
                 {vessel.offsetsCount === 0 && (
                   <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Not defined</span>
                 )}
@@ -138,7 +158,9 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">No geometry defined</h3>
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    No geometry defined
+                  </h3>
                   <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                     <p>
                       Define hull geometry in the <strong>Geometry</strong> tab to enable
@@ -155,21 +177,29 @@ export const OverviewTab = observer(({ vessel }: OverviewTabProps) => {
       {/* Metadata Card */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Metadata</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+            Metadata
+          </h3>
         </div>
         <div className="px-6 py-5">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Vessel ID</dt>
-              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">{vessel.id}</dd>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">
+                {vessel.id}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
-              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{formatDate(vessel.createdAt)}</dd>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                {formatDate(vessel.createdAt)}
+              </dd>
             </div>
             <div className="sm:col-span-2">
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
-              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{formatDate(vessel.updatedAt)}</dd>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                {formatDate(vessel.updatedAt)}
+              </dd>
             </div>
           </dl>
         </div>

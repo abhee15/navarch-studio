@@ -59,7 +59,10 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
         <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
           <div>
             <div className="mt-3 text-center sm:mt-0 sm:text-left">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4" id="modal-title">
+              <h3
+                className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4"
+                id="modal-title"
+              >
                 User Settings
               </h3>
 
@@ -96,7 +99,9 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
 
                 {/* Preview */}
                 <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</h4>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Preview
+                  </h4>
                   <div className="text-sm text-gray-600 space-y-1">
                     <div className="flex justify-between">
                       <span>Length:</span>

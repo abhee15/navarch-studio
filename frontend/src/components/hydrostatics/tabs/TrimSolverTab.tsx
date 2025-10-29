@@ -121,7 +121,9 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
 
       {/* Input Parameters */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-4">Input Parameters</h4>
+        <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-4">
+          Input Parameters
+        </h4>
 
         {loadcases.length === 0 ? (
           <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-md p-4">
@@ -177,7 +179,9 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
                 min="0.1"
                 className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Initial guess for T_FP</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                Initial guess for T_FP
+              </p>
             </div>
 
             {/* Initial Draft Aft */}
@@ -193,12 +197,16 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
                 min="0.1"
                 className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Initial guess for T_AP</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                Initial guess for T_AP
+              </p>
             </div>
 
             {/* Advanced Options */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Iterations</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Max Iterations
+              </label>
               <input
                 type="number"
                 value={maxIterations}
@@ -210,7 +218,9 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tolerance (kg)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Tolerance (kg)
+              </label>
               <input
                 type="number"
                 value={tolerance}
@@ -219,7 +229,9 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
                 max="1000"
                 className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Convergence tolerance</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                Convergence tolerance
+              </p>
             </div>
           </div>
         )}
@@ -301,7 +313,9 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
           </div>
 
           {computationTime !== null && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-4">Computed in {computationTime}ms</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-4">
+              Computed in {computationTime}ms
+            </p>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -342,8 +356,12 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
 
             <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
               <div className="text-sm font-medium text-gray-600">LCF</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatNumber(solution.lcf)} m</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Longitudinal Center of Flotation</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {formatNumber(solution.lcf)} m
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
+                Longitudinal Center of Flotation
+              </div>
             </div>
 
             <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
@@ -351,13 +369,17 @@ export function TrimSolverTab({ vesselId }: TrimSolverTabProps) {
               <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {formatNumber(solution.mtc, 0)} kg·m
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Moment to Change Trim 1cm</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
+                Moment to Change Trim 1cm
+              </div>
             </div>
           </div>
 
           {/* Diagram */}
           <div className="mt-6 border-t pt-6">
-            <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Trim Diagram</h5>
+            <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Trim Diagram
+            </h5>
             <div className="relative h-32 bg-gray-50 dark:bg-gray-900 rounded">
               {/* Simple SVG representation of vessel trim */}
               <svg className="w-full h-full" viewBox="0 0 400 100">

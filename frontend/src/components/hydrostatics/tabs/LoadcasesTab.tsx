@@ -74,7 +74,9 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Load Conditions</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              Load Conditions
+            </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
               Define water density and center of gravity for computations
             </p>
@@ -126,8 +128,12 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No loadcases</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Get started by creating a new loadcase.</p>
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+              No loadcases
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
+              Get started by creating a new loadcase.
+            </p>
             <div className="mt-6">
               <button
                 onClick={() => setIsCreateDialogOpen(true)}
@@ -189,9 +195,13 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
               {loadcases.map((loadcase) => (
                 <tr key={loadcase.id} className="hover:bg-gray-50 dark:bg-gray-900">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{loadcase.name}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {loadcase.name}
+                    </div>
                     {loadcase.notes && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 line-clamp-1">{loadcase.notes}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 line-clamp-1">
+                        {loadcase.notes}
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

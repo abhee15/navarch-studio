@@ -321,7 +321,9 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
                     d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
                   />
                 </svg>
-                <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">No Geometry Data</h3>
+                <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                  No Geometry Data
+                </h3>
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   Import CSV data to get started with hull offsets
                 </p>
@@ -339,7 +341,9 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Loading offsets grid...</p>
+                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                  Loading offsets grid...
+                </p>
               </div>
             </div>
           ) : error ? (
@@ -406,8 +410,12 @@ export function GeometryTab({ vesselId, vessel }: GeometryTabProps) {
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">CSV Import Wizard</h3>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Upload a CSV file with hull offset data</p>
+              <h3 className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                CSV Import Wizard
+              </h3>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Upload a CSV file with hull offset data
+              </p>
               <p className="mt-1 text-xs text-gray-400">
                 Supported formats: Combined (stations + waterlines + offsets) or Offsets only
               </p>
