@@ -156,11 +156,11 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
 
   if (curves.length === 0) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+      <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
-              className="h-5 w-5 text-yellow-400"
+              className="h-5 w-5 text-yellow-400 dark:text-yellow-500"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -173,8 +173,8 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">No Geometry Data</h3>
-            <div className="mt-2 text-sm text-yellow-700">
+            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">No Geometry Data</h3>
+            <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
               Please import vessel geometry (stations, waterlines, and offsets) before generating
               Bonjean curves.
             </div>
@@ -189,17 +189,17 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Bonjean Curves</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Bonjean Curves</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
               Sectional area vs draft for each station along the vessel length
             </p>
           </div>
           <button
             onClick={loadBonjeanCurves}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white hover:bg-gray-50 dark:bg-gray-900"
           >
             <svg
               className="h-4 w-4 mr-2"
@@ -220,9 +220,9 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
         </div>
 
         {/* Station selection */}
-        <div className="border-t border-gray-200 pt-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-700">Select Stations</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Stations</label>
             <button onClick={handleToggleAll} className="text-sm text-blue-600 hover:text-blue-800">
               {showAllStations ? "Deselect All" : "Select All"}
             </button>
@@ -235,7 +235,7 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
                 className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
                   selectedStations.includes(curve.stationIndex)
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
                 }`}
               >
                 Station {curve.stationIndex}
@@ -248,8 +248,8 @@ export function BonjeanCurvesTab({ vesselId }: BonjeanCurvesTabProps) {
 
       {/* Chart */}
       {selectedStations.length > 0 && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h4 className="text-lg font-medium text-gray-900 mb-4">Sectional Area vs Draft</h4>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Sectional Area vs Draft</h4>
           <ResponsiveContainer width="100%" height={600}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />

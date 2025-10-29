@@ -71,11 +71,11 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-4">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Load Conditions</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Load Conditions</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
               Define water density and center of gravity for computations
             </p>
           </div>
@@ -111,10 +111,10 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
 
       {/* Loadcases List */}
       {loadcases.length === 0 ? (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="text-center py-12">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -126,8 +126,8 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No loadcases</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating a new loadcase.</p>
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No loadcases</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Get started by creating a new loadcase.</p>
             <div className="mt-6">
               <button
                 onClick={() => setIsCreateDialogOpen(true)}
@@ -152,31 +152,31 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
           </div>
         </div>
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider"
                 >
                   Name
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider"
                 >
                   Density (ρ)
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider"
                 >
                   KG
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider"
                 >
                   Created
                 </th>
@@ -187,18 +187,18 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loadcases.map((loadcase) => (
-                <tr key={loadcase.id} className="hover:bg-gray-50">
+                <tr key={loadcase.id} className="hover:bg-gray-50 dark:bg-gray-900">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{loadcase.name}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{loadcase.name}</div>
                     {loadcase.notes && (
-                      <div className="text-sm text-gray-500 line-clamp-1">{loadcase.notes}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 line-clamp-1">{loadcase.notes}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 dark:text-gray-100">
                       {loadcase.rho.toFixed(2)} {densityUnit}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       {Math.abs(loadcase.rho - 1025) < 1
                         ? "Seawater"
                         : Math.abs(loadcase.rho - 1000) < 1
@@ -206,12 +206,12 @@ export const LoadcasesTab = observer(({ vesselId }: LoadcasesTabProps) => {
                           : "Custom"}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {loadcase.kg !== null && loadcase.kg !== undefined
                       ? `${loadcase.kg.toFixed(2)} ${lengthUnit}`
                       : "—"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     {formatDate(loadcase.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
