@@ -46,7 +46,7 @@ export class AuthStore {
       // Cognito auth - check for existing session
       const userPool = getUserPool();
       if (!userPool) return;
-      
+
       const cognitoUser = userPool.getCurrentUser();
       if (cognitoUser) {
         cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {

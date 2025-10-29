@@ -144,20 +144,20 @@ const createApiClient = (): AxiosInstance => {
       // Run diagnostics to help identify the issue
       const diagnostic = await diagnoseApiIssue(error);
       logDiagnostics(diagnostic);
-      
+
       // Add user-friendly error message to the error object
       error.userMessage = getUserFriendlyError(error);
-      
+
       // Log specific guidance for common issues
       if (diagnostic.corsIssue) {
         console.warn('💡 CORS Issue Detected: This usually means the API Gateway service is stuck in deployment or CORS is not configured for your domain.');
         console.warn('   Check service status: aws apprunner list-services --region us-east-1');
       }
-      
+
       if (diagnostic.urlMismatch) {
         console.warn('💡 URL Mismatch: Frontend is calling a different URL than configured. Hard refresh your browser (Ctrl+Shift+R).');
       }
-      
+
       if (diagnostic.serviceReachable === false) {
         console.error('💡 Service Unreachable: The API service is not responding. It may be down, restarting, or stuck in deployment.');
         console.error('   Check CloudWatch logs or AWS Console for service status.');

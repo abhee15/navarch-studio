@@ -1,11 +1,12 @@
 /**
  * Diagnostic Utilities
- * 
+ *
  * Provides helpful error messages and diagnostic information
  * to make troubleshooting easier.
  */
 
 import { getConfig, isConfigLoaded } from '../config/runtime';
+import type { AxiosError } from 'axios';
 
 export interface DiagnosticInfo {
   timestamp: string;
@@ -39,14 +40,14 @@ async function testApiReachability(apiUrl: string): Promise<boolean> {
 /**
  * Analyze API connectivity issues and provide helpful diagnostics
  */
-export async function diagnoseApiIssue(error: any): Promise<DiagnosticInfo> {
+export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInfo> {
   const timestamp = new Date().toISOString();
   const configLoaded = isConfigLoaded();
   const apiUrl = configLoaded ? getConfig().apiUrl : null;
-  
+
   // Get the URL that was actually called from the error
   const attemptedUrl = error?.config?.baseURL || error?.config?.url || null;
-  
+
   const diagnostic: DiagnosticInfo = {
     timestamp,
     configLoaded,
@@ -60,7 +61,7 @@ export async function diagnoseApiIssue(error: any): Promise<DiagnosticInfo> {
   };
 
   // Check for CORS-specific errors
-  if (error?.message?.includes('CORS') || 
+  if (error?.message?.includes('CORS') ||
       error?.message?.includes('Access-Control-Allow-Origin') ||
       error?.code === 'ERR_NETWORK') {
     diagnostic.corsIssue = true;
@@ -100,7 +101,7 @@ export async function diagnoseApiIssue(error: any): Promise<DiagnosticInfo> {
   // Test if service is reachable
   if (apiUrl) {
     diagnostic.serviceReachable = await testApiReachability(apiUrl);
-    
+
     if (!diagnostic.serviceReachable) {
       diagnostic.diagnosticMessage = '🔴 API Service Not Reachable';
       diagnostic.recommendedActions.push(
@@ -150,25 +151,25 @@ export function logDiagnostics(diagnostic: DiagnosticInfo): void {
   console.log('Config Loaded:', diagnostic.configLoaded ? '✅' : '❌');
   console.log('Expected API URL:', diagnostic.apiUrl || 'Not loaded');
   console.log('Attempted URL:', diagnostic.expectedUrl || 'Unknown');
-  
+
   if (diagnostic.urlMismatch) {
     console.warn('⚠️ URL MISMATCH DETECTED!');
   }
-  
+
   if (diagnostic.corsIssue) {
     console.error('🚫 CORS ERROR DETECTED');
   }
-  
+
   if (diagnostic.serviceReachable === false) {
     console.error('🔴 SERVICE NOT REACHABLE');
   } else if (diagnostic.serviceReachable === true) {
     console.log('Service Reachable: ✅');
   }
-  
+
   if (diagnostic.diagnosticMessage) {
     console.log('\n' + diagnostic.diagnosticMessage);
   }
-  
+
   if (diagnostic.recommendedActions.length > 0) {
     console.log('\n📋 Recommended Actions:');
     diagnostic.recommendedActions.forEach(action => {
@@ -179,45 +180,45 @@ export function logDiagnostics(diagnostic: DiagnosticInfo): void {
       }
     });
   }
-  
+
   console.groupEnd();
 }
 
 /**
  * Enhanced error message for display in UI
  */
-export function getUserFriendlyError(error: any): string {
+export function getUserFriendlyError(error: AxiosError): string {
   // CORS errors
-  if (error?.message?.includes('CORS') || 
+  if (error?.message?.includes('CORS') ||
       error?.message?.includes('Access-Control-Allow-Origin')) {
     return '🚫 Connection Blocked: The API service is not accepting requests from this domain. This usually means the service is being deployed or has a configuration issue. Please try again in a few minutes.';
   }
-  
+
   // Network errors
   if (error?.code === 'ERR_NETWORK' || error?.message?.includes('Network Error')) {
     return '🔴 Cannot Reach API: Unable to connect to the backend service. The service may be restarting or experiencing issues. Please try again in a moment.';
   }
-  
+
   // Timeout errors
   if (error?.message?.includes('timeout') || error?.code === 'ECONNABORTED') {
     return '⏱️ Request Timeout: The request took too long to complete. The service may be starting up or under heavy load. Please try again.';
   }
-  
+
   // 500 errors
   if (error?.response?.status === 500) {
     return '⚠️ Server Error: The backend encountered an error processing your request. This has been logged and will be investigated.';
   }
-  
+
   // 401/403 errors
   if (error?.response?.status === 401 || error?.response?.status === 403) {
     return '🔒 Authentication Required: Your session may have expired. Please log in again.';
   }
-  
+
   // 404 errors
   if (error?.response?.status === 404) {
     return '❓ Not Found: The requested resource could not be found. This may indicate a configuration issue.';
   }
-  
+
   // Default
   return `❌ Request Failed: ${error?.message || 'Unknown error occurred'}. Please try again or contact support if the issue persists.`;
 }
@@ -227,21 +228,21 @@ export function getUserFriendlyError(error: any): string {
  */
 export async function checkSystemHealth(): Promise<void> {
   console.group('🏥 System Health Check');
-  
+
   // Check if runtime config is loaded
   const configLoaded = isConfigLoaded();
   console.log('Runtime Config:', configLoaded ? '✅ Loaded' : '❌ Not loaded');
-  
+
   if (configLoaded) {
     const config = getConfig();
     console.log('API URL:', config.apiUrl);
     console.log('Auth Mode:', config.authMode);
     console.log('AWS Region:', config.awsRegion);
-    
+
     // Test API reachability
     console.log('\nTesting API connectivity...');
     const reachable = await testApiReachability(config.apiUrl);
-    
+
     if (reachable) {
       console.log('✅ API is reachable and responding');
     } else {
@@ -255,7 +256,6 @@ export async function checkSystemHealth(): Promise<void> {
   } else {
     console.warn('⚠️ Runtime config not loaded - using fallback');
   }
-  
+
   console.groupEnd();
 }
-
