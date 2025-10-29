@@ -118,7 +118,7 @@ jobs:
           BUCKET_NAME=$(aws s3api list-buckets \
             --query "Buckets[?contains(Name, '-${{ github.event.inputs.environment }}-frontend')].Name | [0]" \
             --output text)
-          
+
           if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" == "None" ]; then
             echo "⚠️ No S3 bucket found for environment '${{ github.event.inputs.environment }}'"
             echo "Bucket may have already been deleted or never created"
@@ -139,21 +139,21 @@ jobs:
         if: failure() && steps.destroy.outcome == 'failure'
         run: |
           echo "🔓 Attempting to release state lock..."
-          
+
           # Query DynamoDB for the lock
           LOCK_INFO=$(aws dynamodb get-item \
             --table-name ${{ secrets.DYNAMODB_TABLE_NAME }} \
             --key '{"LockID":{"S":"${{ secrets.S3_BUCKET_NAME }}/deploy/${{ github.event.inputs.environment }}/terraform.tfstate-md5"}}' \
             --query 'Item.LockID.S' \
             --output text 2>/dev/null || echo "")
-          
+
           if [ -n "$LOCK_INFO" ] && [ "$LOCK_INFO" != "None" ]; then
             echo "🔒 State lock detected, attempting force unlock..."
             cd terraform/deploy
-            
+
             # Get the actual lock ID from terraform
             LOCK_ID=$(terraform force-unlock -force 2>&1 | grep -oP 'Lock ID: \K[a-f0-9-]+' | head -1 || echo "")
-            
+
             if [ -n "$LOCK_ID" ]; then
               echo "📋 Lock ID: $LOCK_ID"
               terraform force-unlock -force "$LOCK_ID" || echo "⚠️ Could not auto-unlock, manual intervention required"
@@ -191,26 +191,26 @@ jobs:
       - name: Delete ECR images for environment
         run: |
           ENV_TAG="${{ github.event.inputs.environment }}"
-          
+
           # Function to delete images from a repository
           delete_images() {
             REPO_NAME=$1
             echo "Deleting images tagged with '$ENV_TAG' from $REPO_NAME..."
             IMAGE_IDS=$(aws ecr list-images --repository-name $REPO_NAME --query "imageIds[?imageTag=='$ENV_TAG']" --output json)
-            
+
             if [ "$IMAGE_IDS" != "[]" ]; then
               aws ecr batch-delete-image --repository-name $REPO_NAME --image-ids "$IMAGE_IDS" || echo "Failed to delete images from $REPO_NAME"
             else
               echo "No images found with tag '$ENV_TAG' in $REPO_NAME"
             fi
           }
-          
+
           # Extract repository names from ECR URLs
           IDENTITY_REPO=$(echo "${{ secrets.ECR_IDENTITY_SERVICE_URL }}" | cut -d'/' -f2)
           GATEWAY_REPO=$(echo "${{ secrets.ECR_API_GATEWAY_URL }}" | cut -d'/' -f2)
           DATA_REPO=$(echo "${{ secrets.ECR_DATA_SERVICE_URL }}" | cut -d'/' -f2)
           FRONTEND_REPO=$(echo "${{ secrets.ECR_FRONTEND_URL }}" | cut -d'/' -f2)
-          
+
           delete_images "$IDENTITY_REPO"
           delete_images "$GATEWAY_REPO"
           delete_images "$DATA_REPO"
@@ -266,9 +266,3 @@ jobs:
             echo "  - State lock: Check DynamoDB table for locks"
             exit 1
           fi
-
-
-
-
-
-

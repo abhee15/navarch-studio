@@ -1,6 +1,6 @@
 # Terraform Variables Example (DEPRECATED - Use environment-specific tfvars instead)
-# 
-# NOTE: This file is no longer needed! 
+#
+# NOTE: This file is no longer needed!
 # All infrastructure values are automatically pulled from terraform_remote_state.
 # Use environment-specific files in environments/ directory instead:
 #   - environments/dev.tfvars
@@ -11,4 +11,3 @@
 #   terraform plan -var-file="environments/dev.tfvars" -out=tfplan
 #
 # No need for a root-level terraform.tfvars anymore!
-

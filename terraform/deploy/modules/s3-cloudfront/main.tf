@@ -136,25 +136,33 @@ resource "aws_s3_bucket_policy" "frontend" {
   })
 }
 
-# Create a config.js file with API Gateway URL
+# Create runtime config.json file
+# This file is fetched by the frontend at runtime to get current backend URLs
+# This allows backend services to be recreated with new URLs without rebuilding frontend
 resource "aws_s3_object" "config" {
   bucket       = aws_s3_bucket.frontend.id
-  key          = "config.js"
-  content_type = "application/javascript"
-  content      = <<-EOT
-window.APP_CONFIG = {
-  API_URL: '${var.api_gateway_url}',
-  ENVIRONMENT: '${var.environment}'
-};
-EOT
+  key          = "config.json"
+  content_type = "application/json"
 
-  etag = md5(<<-EOT
-window.APP_CONFIG = {
-  API_URL: '${var.api_gateway_url}',
-  ENVIRONMENT: '${var.environment}'
-};
-EOT
-  )
+  content = jsonencode({
+    apiUrl            = var.api_gateway_url
+    authMode          = var.auth_mode
+    cognitoUserPoolId = var.cognito_user_pool_id
+    cognitoClientId   = var.cognito_client_id
+    awsRegion         = var.aws_region
+  })
+
+  # Short cache TTL so config updates propagate quickly
+  cache_control = "public, max-age=300"
+
+  # Update etag when any config value changes
+  etag = md5(jsonencode({
+    apiUrl            = var.api_gateway_url
+    authMode          = var.auth_mode
+    cognitoUserPoolId = var.cognito_user_pool_id
+    cognitoClientId   = var.cognito_client_id
+    awsRegion         = var.aws_region
+  }))
 }
 
 

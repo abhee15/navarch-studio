@@ -22,29 +22,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
-      
+
       - name: Build unit-conversion package
         run: |
           cd ../packages/unit-conversion/typescript
           npm ci
           npm run build
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run ESLint
         run: npm run lint
-      
+
       - name: Run TypeScript check
         run: npm run type-check
-      
+
       - name: Run Prettier check
         run: npm run format-check
 
@@ -56,21 +56,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-      
+
       - name: Restore dependencies
         run: dotnet restore
-      
+
       - name: Run dotnet format check
         run: dotnet format --verify-no-changes --verbosity diagnostic
-      
+
       - name: Build solution
         run: dotnet build --no-restore
-      
+
       - name: Run tests
         run: dotnet test --no-build --verbosity normal
 
@@ -182,7 +182,7 @@ jobs:
             echo "  terraform apply"
             exit 1
           fi
-          
+
           # Check if DynamoDB table exists
           if ! aws dynamodb describe-table --table-name ${{ secrets.DYNAMODB_TABLE_NAME }} 2>/dev/null; then
             echo "❌ ERROR: DynamoDB table '${{ secrets.DYNAMODB_TABLE_NAME }}' does not exist!"
@@ -192,7 +192,7 @@ jobs:
             echo "  terraform apply"
             exit 1
           fi
-          
+
           echo "✅ Backend resources verified"
 
       - name: Terraform Init
@@ -207,7 +207,7 @@ jobs:
         run: |
           echo "🚀 Applying Terraform configuration..."
           terraform apply -auto-approve tfplan
-          
+
           echo ""
           echo "📋 Checking if S3/CloudFront module resources were created..."
           terraform state list | grep "module.s3_cloudfront" || echo "⚠️ No S3/CloudFront resources in state!"
@@ -217,15 +217,15 @@ jobs:
         id: tf-outputs
         run: |
           echo "📊 Getting Terraform outputs..."
-          
+
           # Show all outputs for debugging
           echo "All outputs:"
           terraform output
-          
+
           # Get individual outputs with explicit logging
           echo ""
           echo "Capturing outputs to GITHUB_OUTPUT..."
-          
+
           # Get outputs using environment variables as intermediate (avoids GitHub Actions metadata)
           export TF_RDS=$(terraform output -raw rds_endpoint)
           export TF_ID_SVC=$(terraform output -raw identity_service_url)
@@ -233,7 +233,7 @@ jobs:
           export TF_DATA_SVC=$(terraform output -raw data_service_url)
           export TF_CF_DOMAIN=$(terraform output -raw cloudfront_domain_name)
           export TF_S3_BUCKET=$(terraform output -raw frontend_s3_bucket_name)
-          
+
           echo "Captured values:"
           echo "  rds_endpoint: '$TF_RDS'"
           echo "  identity_service_url: '$TF_ID_SVC'"
@@ -241,7 +241,7 @@ jobs:
           echo "  data_service_url: '$TF_DATA_SVC'"
           echo "  cloudfront_domain: '$TF_CF_DOMAIN'"
           echo "  s3_bucket: '$TF_S3_BUCKET'"
-          
+
           # Write to GITHUB_OUTPUT using printf (more reliable than echo)
           printf "rds_endpoint=%s\n" "$TF_RDS" >> "$GITHUB_OUTPUT"
           printf "identity_service_url=%s\n" "$TF_ID_SVC" >> "$GITHUB_OUTPUT"
@@ -249,7 +249,7 @@ jobs:
           printf "data_service_url=%s\n" "$TF_DATA_SVC" >> "$GITHUB_OUTPUT"
           printf "cloudfront_domain=%s\n" "$TF_CF_DOMAIN" >> "$GITHUB_OUTPUT"
           printf "s3_bucket=%s\n" "$TF_S3_BUCKET" >> "$GITHUB_OUTPUT"
-          
+
           echo ""
           echo "✅ All outputs captured successfully"
         working-directory: ./terraform/deploy
@@ -283,7 +283,7 @@ jobs:
           else
             echo "✅ s3_bucket has value - frontend should RUN"
           fi
-          
+
           if [ -z "${{ needs.deploy-infrastructure.outputs.api_gateway_url }}" ]; then
             echo "❌ api_gateway_url is EMPTY - frontend will be SKIPPED"
           else
@@ -305,42 +305,42 @@ jobs:
       - name: Update API Gateway CORS with CloudFront URL
         run: |
           echo "🔧 Updating API Gateway CORS to allow CloudFront origin..."
-          
+
           CLOUDFRONT_URL="https://${{ needs.deploy-infrastructure.outputs.cloudfront_domain }}"
           echo "CloudFront URL: $CLOUDFRONT_URL"
-          
+
           # Get the API Gateway service ARN
           SERVICE_ARN=$(aws apprunner list-services \
             --query "ServiceSummaryList[?contains(ServiceName, 'staging-api-gateway')].ServiceArn | [0]" \
             --output text)
-          
+
           if [ -z "$SERVICE_ARN" ] || [ "$SERVICE_ARN" == "None" ]; then
             echo "❌ Could not find API Gateway service"
             exit 1
           fi
-          
+
           echo "✅ Found service: $SERVICE_ARN"
-          
+
           # Get full source configuration
           echo "📥 Getting current service configuration..."
           aws apprunner describe-service \
             --service-arn "$SERVICE_ARN" \
             --query 'Service.SourceConfiguration' \
             > source-config.json
-          
+
           # Add CloudFront URL to environment variables
           echo "🔄 Adding CloudFront URL to CORS configuration..."
           jq --arg cf_url "$CLOUDFRONT_URL" \
             '.ImageRepository.ImageConfiguration.RuntimeEnvironmentVariables["Cors__AllowedOrigins__10"] = $cf_url' \
             source-config.json > updated-source-config.json
-          
+
           # Update the service using file input
           echo "📤 Updating App Runner service..."
           aws apprunner update-service \
             --service-arn "$SERVICE_ARN" \
             --source-configuration file://updated-source-config.json \
             --no-cli-pager
-          
+
           echo "✅ API Gateway CORS updated successfully!"
           echo "   Allowed origins now include: $CLOUDFRONT_URL"
           echo ""
@@ -420,12 +420,12 @@ jobs:
           echo "🔍 Querying AWS for frontend S3 bucket..."
           # List buckets and filter for the pattern: *-staging-frontend
           BUCKET_NAME=$(aws s3api list-buckets --query "Buckets[?contains(Name, '-staging-frontend')].Name | [0]" --output text)
-          
+
           if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" == "None" ]; then
             echo "❌ ERROR: Could not find S3 bucket matching pattern '*-staging-frontend'"
             exit 1
           fi
-          
+
           echo "✅ Found S3 bucket: $BUCKET_NAME"
           echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
 
@@ -435,12 +435,12 @@ jobs:
           echo "S3 Bucket: '${{ steps.discover-s3.outputs.bucket_name }}'"
           echo "API Gateway URL: '$API_GATEWAY_URL'"
           echo "CloudFront Domain: '$CLOUDFRONT_DOMAIN'"
-          
+
           if [ -z "$API_GATEWAY_URL" ]; then
             echo "❌ ERROR: API Gateway URL is empty! Cannot deploy frontend."
             exit 1
           fi
-          
+
           echo "✅ All required configuration available"
 
       - name: Checkout code
@@ -483,16 +483,16 @@ jobs:
           # Query by bucket name in origin instead of aliases (distributions without custom domains don't have aliases)
           BUCKET_NAME="${{ steps.discover-s3.outputs.bucket_name }}"
           echo "Looking for CloudFront distribution with origin: $BUCKET_NAME"
-          
+
           DISTRIBUTION_ID=$(aws cloudfront list-distributions \
             --query "DistributionList.Items[?Origins.Items[?contains(DomainName, '$BUCKET_NAME')]].Id | [0]" \
             --output text)
-          
+
           if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" == "None" ]; then
             echo "❌ ERROR: Could not find CloudFront distribution for bucket $BUCKET_NAME"
             exit 1
           fi
-          
+
           echo "✅ Found CloudFront distribution: $DISTRIBUTION_ID"
           echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
 
@@ -532,7 +532,7 @@ jobs:
         run: |
           echo "Testing Frontend at https://${{ needs.deploy-infrastructure.outputs.cloudfront_domain }}"
           curl -f https://${{ needs.deploy-infrastructure.outputs.cloudfront_domain }} || exit 1
-      
+
       - name: Frontend deployment was skipped
         if: needs.deploy-infrastructure.outputs.s3_bucket == '' || needs.deploy-infrastructure.outputs.cloudfront_domain == ''
         run: |
@@ -561,15 +561,15 @@ jobs:
         run: |
           # Get S3 bucket
           S3_BUCKET=$(aws s3api list-buckets --query "Buckets[?contains(Name, '-staging-frontend')].Name | [0]" --output text)
-          
+
           # Get CloudFront distribution domain
           CF_DOMAIN=$(aws cloudfront list-distributions \
             --query "DistributionList.Items[?Origins.Items[?contains(DomainName, '$S3_BUCKET')]].DomainName | [0]" \
             --output text)
-          
+
           # Get API Gateway URL (from App Runner)
           API_GW=$(aws apprunner list-services --query "ServiceSummaryList[?contains(ServiceName, '-staging-api-gateway')].ServiceUrl | [0]" --output text)
-          
+
           echo "cloudfront_url=https://$CF_DOMAIN" >> $GITHUB_OUTPUT
           echo "api_gateway_url=https://$API_GW" >> $GITHUB_OUTPUT
 
@@ -591,9 +591,3 @@ jobs:
             echo "Check the logs above for details."
             exit 1
           fi
-
-
-
-
-
-

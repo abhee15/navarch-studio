@@ -83,7 +83,7 @@ jobs:
   deploy-infrastructure:
     runs-on: ubuntu-latest
     needs: build-and-push
-    environment: 
+    environment:
       name: production
       url: https://${{ steps.tf-outputs.outputs.cloudfront_domain }}
 
@@ -132,7 +132,7 @@ jobs:
             echo "  terraform apply"
             exit 1
           fi
-          
+
           # Check if DynamoDB table exists
           if ! aws dynamodb describe-table --table-name ${{ secrets.DYNAMODB_TABLE_NAME }} 2>/dev/null; then
             echo "❌ ERROR: DynamoDB table '${{ secrets.DYNAMODB_TABLE_NAME }}' does not exist!"
@@ -142,7 +142,7 @@ jobs:
             echo "  terraform apply"
             exit 1
           fi
-          
+
           echo "✅ Backend resources verified"
 
       - name: Terraform Init
@@ -331,9 +331,3 @@ jobs:
             echo "❌ Production deployment failed!"
             exit 1
           fi
-
-
-
-
-
-

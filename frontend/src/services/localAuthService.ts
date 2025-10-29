@@ -4,6 +4,7 @@
  */
 
 import axios from "axios";
+import { getConfig, isConfigLoaded } from "../config/runtime";
 
 export interface LocalAuthUser {
   id: string;
@@ -23,7 +24,10 @@ export interface CreateUserResponse {
 }
 
 const getBaseUrl = () => {
-  return `${import.meta.env.VITE_API_URL || "http://localhost:5002"}/api/v1`;
+  const apiUrl = isConfigLoaded()
+    ? getConfig().apiUrl
+    : (import.meta.env.VITE_API_URL || "http://localhost:5002");
+  return `${apiUrl}/api/v1`;
 };
 
 // Create a simple axios instance for auth endpoints (no interceptors to avoid circular deps)

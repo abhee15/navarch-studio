@@ -1,12 +1,16 @@
 import axios, { AxiosInstance } from "axios";
 import { CognitoUserSession } from "amazon-cognito-identity-js";
-import { userPool } from "../config/cognito";
+import { getUserPool } from "../config/cognito";
 import { LocalAuthService } from "./localAuthService";
+import { getConfig, isConfigLoaded } from "../config/runtime";
 
 type AuthMode = "cognito" | "local";
 
-// Get auth mode from environment
+// Get auth mode from runtime config (with fallback to environment for local dev)
 const getAuthMode = (): AuthMode => {
+  if (isConfigLoaded()) {
+    return getConfig().authMode;
+  }
   return (import.meta.env.VITE_AUTH_MODE || "local") as AuthMode;
 };
 
@@ -25,11 +29,12 @@ const getAuthToken = async (): Promise<string | null> => {
 // Function to get current Cognito JWT token
 const getCognitoToken = (): Promise<string | null> => {
   return new Promise((resolve) => {
-    if (!userPool) {
+    const pool = getUserPool();
+    if (!pool) {
       resolve(null);
       return;
     }
-    const cognitoUser = userPool.getCurrentUser();
+    const cognitoUser = pool.getCurrentUser();
     if (!cognitoUser) {
       resolve(null);
       return;
@@ -49,8 +54,14 @@ const getCognitoToken = (): Promise<string | null> => {
 const createApiClient = (): AxiosInstance => {
   // Explicitly use API v1
   const API_VERSION = "v1";
-  // Note: VITE_API_URL is set at build time and compiled into bundle
-  const baseURL = `${import.meta.env.VITE_API_URL || "http://localhost:5002"}/api/${API_VERSION}`;
+
+  // Use runtime config if loaded, otherwise fall back to environment variable
+  // This allows the frontend to adapt to infrastructure changes without rebuild
+  const apiUrl = isConfigLoaded()
+    ? getConfig().apiUrl
+    : (import.meta.env.VITE_API_URL || "http://localhost:5002");
+
+  const baseURL = `${apiUrl}/api/${API_VERSION}`;
 
   const client = axios.create({
     baseURL,

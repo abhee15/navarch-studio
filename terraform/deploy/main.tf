@@ -103,7 +103,11 @@ module "s3_cloudfront" {
   project_name = var.project_name
   environment  = var.environment
   domain_name  = var.domain_name
+  aws_region   = var.aws_region
 
-  # API Gateway URL for frontend config
-  api_gateway_url = module.app_runner.api_gateway_url
+  # Runtime configuration for frontend
+  api_gateway_url      = module.app_runner.api_gateway_url
+  auth_mode            = "cognito"
+  cognito_user_pool_id = data.terraform_remote_state.setup.outputs.cognito_user_pool_id
+  cognito_client_id    = data.terraform_remote_state.setup.outputs.cognito_user_pool_client_id
 }

@@ -32,6 +32,29 @@ variable "api_gateway_url" {
   default     = "" # Optional - frontend can be deployed without backend
 }
 
+variable "auth_mode" {
+  description = "Authentication mode (cognito or local)"
+  type        = string
+  default     = "cognito"
+}
+
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_client_id" {
+  description = "Cognito User Pool Client ID"
+  type        = string
+  default     = ""
+}
+
+variable "aws_region" {
+  description = "AWS Region"
+  type        = string
+}
+
 
 
 

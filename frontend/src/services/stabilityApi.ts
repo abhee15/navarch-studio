@@ -96,3 +96,4 @@ export const stabilityApi = {
     return response.data;
   },
 };
+
