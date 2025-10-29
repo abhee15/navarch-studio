@@ -60,7 +60,7 @@ const createApiClient = (): AxiosInstance => {
   // This allows the frontend to adapt to infrastructure changes without rebuild
   const apiUrl = isConfigLoaded()
     ? getConfig().apiUrl
-    : (import.meta.env.VITE_API_URL || "http://localhost:5002");
+    : import.meta.env.VITE_API_URL || "http://localhost:5002";
 
   const baseURL = `${apiUrl}/api/${API_VERSION}`;
 
@@ -150,17 +150,23 @@ const createApiClient = (): AxiosInstance => {
 
       // Log specific guidance for common issues
       if (diagnostic.corsIssue) {
-        console.warn('💡 CORS Issue Detected: This usually means the API Gateway service is stuck in deployment or CORS is not configured for your domain.');
-        console.warn('   Check service status: aws apprunner list-services --region us-east-1');
+        console.warn(
+          "💡 CORS Issue Detected: This usually means the API Gateway service is stuck in deployment or CORS is not configured for your domain."
+        );
+        console.warn("   Check service status: aws apprunner list-services --region us-east-1");
       }
 
       if (diagnostic.urlMismatch) {
-        console.warn('💡 URL Mismatch: Frontend is calling a different URL than configured. Hard refresh your browser (Ctrl+Shift+R).');
+        console.warn(
+          "💡 URL Mismatch: Frontend is calling a different URL than configured. Hard refresh your browser (Ctrl+Shift+R)."
+        );
       }
 
       if (diagnostic.serviceReachable === false) {
-        console.error('💡 Service Unreachable: The API service is not responding. It may be down, restarting, or stuck in deployment.');
-        console.error('   Check CloudWatch logs or AWS Console for service status.');
+        console.error(
+          "💡 Service Unreachable: The API service is not responding. It may be down, restarting, or stuck in deployment."
+        );
+        console.error("   Check CloudWatch logs or AWS Console for service status.");
       }
 
       if (error.response?.status === 401) {

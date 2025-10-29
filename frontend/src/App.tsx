@@ -42,7 +42,7 @@ const ConfigLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
         // Expose health check function in browser console for debugging
         window.checkHealth = checkSystemHealth;
-        console.log('💡 Run checkHealth() in console anytime to diagnose issues');
+        console.log("💡 Run checkHealth() in console anytime to diagnose issues");
 
         setConfigLoaded(true);
       })
@@ -56,19 +56,19 @@ const ConfigLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   if (!configLoaded) {
     return (
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-        flexDirection: "column",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          flexDirection: "column",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+        }}
+      >
         <div style={{ marginBottom: "1rem" }}>Loading configuration...</div>
         {error && (
-          <div style={{ color: "orange", fontSize: "0.875rem" }}>
-            Using fallback configuration
-          </div>
+          <div style={{ color: "orange", fontSize: "0.875rem" }}>Using fallback configuration</div>
         )}
       </div>
     );

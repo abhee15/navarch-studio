@@ -14,7 +14,7 @@ export const getUserPool = (): CognitoUserPool | null => {
 
   const authMode = isConfigLoaded()
     ? getConfig().authMode
-    : (import.meta.env.VITE_AUTH_MODE || "local");
+    : import.meta.env.VITE_AUTH_MODE || "local";
 
   if (authMode !== "cognito") {
     return null; // Local mode

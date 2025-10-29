@@ -12,7 +12,7 @@
 
 export interface AppConfig {
   apiUrl: string;
-  authMode: 'cognito' | 'local';
+  authMode: "cognito" | "local";
   cognitoUserPoolId: string;
   cognitoClientId: string;
   awsRegion: string;
@@ -46,12 +46,12 @@ export async function loadConfig(): Promise<AppConfig> {
 async function loadConfigInternal(): Promise<AppConfig> {
   try {
     // Try to fetch runtime config from CDN
-    console.log('[Config] Loading runtime configuration from /config.json...');
+    console.log("[Config] Loading runtime configuration from /config.json...");
 
-    const response = await fetch('/config.json', {
-      cache: 'no-cache', // Always fetch latest version
+    const response = await fetch("/config.json", {
+      cache: "no-cache", // Always fetch latest version
       headers: {
-        'Accept': 'application/json',
+        Accept: "application/json",
       },
     });
 
@@ -61,26 +61,29 @@ async function loadConfigInternal(): Promise<AppConfig> {
 
     const config = await response.json();
 
-    console.log('[Config] ✅ Runtime configuration loaded successfully');
-    console.log('[Config] API URL:', config.apiUrl);
-    console.log('[Config] Auth Mode:', config.authMode);
+    console.log("[Config] ✅ Runtime configuration loaded successfully");
+    console.log("[Config] API URL:", config.apiUrl);
+    console.log("[Config] Auth Mode:", config.authMode);
 
     return config;
   } catch (error) {
-    console.warn('[Config] ⚠️ Failed to load runtime config, falling back to build-time config:', error);
+    console.warn(
+      "[Config] ⚠️ Failed to load runtime config, falling back to build-time config:",
+      error
+    );
 
     // Fall back to build-time environment variables
     const fallbackConfig: AppConfig = {
-      apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:5002',
-      authMode: (import.meta.env.VITE_AUTH_MODE || 'local') as 'cognito' | 'local',
-      cognitoUserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || '',
-      cognitoClientId: import.meta.env.VITE_COGNITO_CLIENT_ID || '',
-      awsRegion: import.meta.env.VITE_AWS_REGION || 'us-east-1',
+      apiUrl: import.meta.env.VITE_API_URL || "http://localhost:5002",
+      authMode: (import.meta.env.VITE_AUTH_MODE || "local") as "cognito" | "local",
+      cognitoUserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || "",
+      cognitoClientId: import.meta.env.VITE_COGNITO_CLIENT_ID || "",
+      awsRegion: import.meta.env.VITE_AWS_REGION || "us-east-1",
     };
 
-    console.log('[Config] Using fallback configuration');
-    console.log('[Config] API URL:', fallbackConfig.apiUrl);
-    console.log('[Config] Auth Mode:', fallbackConfig.authMode);
+    console.log("[Config] Using fallback configuration");
+    console.log("[Config] API URL:", fallbackConfig.apiUrl);
+    console.log("[Config] Auth Mode:", fallbackConfig.authMode);
 
     return fallbackConfig;
   }
@@ -99,7 +102,7 @@ export function isConfigLoaded(): boolean {
  */
 export function getConfig(): AppConfig {
   if (!cachedConfig) {
-    throw new Error('Config not loaded! Call loadConfig() first during app initialization.');
+    throw new Error("Config not loaded! Call loadConfig() first during app initialization.");
   }
   return cachedConfig;
 }

@@ -55,25 +55,30 @@ export class AuthStore {
             return;
           }
 
-          cognitoUser.getUserAttributes((err: Error | undefined, attributes: CognitoUserAttribute[] | undefined) => {
-            if (err || !attributes) {
-              console.log("Failed to get user attributes");
-              return;
+          cognitoUser.getUserAttributes(
+            (err: Error | undefined, attributes: CognitoUserAttribute[] | undefined) => {
+              if (err || !attributes) {
+                console.log("Failed to get user attributes");
+                return;
+              }
+
+              const email =
+                attributes.find((attr: CognitoUserAttribute) => attr.Name === "email")?.Value || "";
+              const name =
+                attributes.find((attr: CognitoUserAttribute) => attr.Name === "name")?.Value ||
+                email;
+
+              runInAction(() => {
+                this.user = {
+                  id: session.getIdToken().payload.sub,
+                  email,
+                  name,
+                };
+                this.isAuthenticated = true;
+                this.currentSession = session;
+              });
             }
-
-            const email = attributes.find((attr: CognitoUserAttribute) => attr.Name === "email")?.Value || "";
-            const name = attributes.find((attr: CognitoUserAttribute) => attr.Name === "name")?.Value || email;
-
-            runInAction(() => {
-              this.user = {
-                id: session.getIdToken().payload.sub,
-                email,
-                name,
-              };
-              this.isAuthenticated = true;
-              this.currentSession = session;
-            });
-          });
+          );
         });
       }
     }
