@@ -3,6 +3,7 @@
 ## Project Context
 
 This is a full-stack template project with:
+
 - **Frontend**: React 18 + TypeScript + Vite + MobX + TailwindCSS
 - **Backend**: .NET 8 microservices (Identity, API Gateway, Data Service)
 - **Database**: PostgreSQL with Flyway migrations
@@ -14,14 +15,17 @@ This is a full-stack template project with:
 **CRITICAL**: Before debugging any issue, consult `.cursor/rules/debugging-methodology.md`
 
 ### Core Principle
+
 **Infrastructure → Configuration → Application** (always work top-down, never skip layers)
 
 ### When Troubleshooting
+
 1. **Check Infrastructure First** (Terraform/IaC) - Does the resource exist? Is the feature enabled?
 2. **Check Configuration Second** (env vars, secrets) - Are settings correct?
 3. **Check Application Last** (code logic) - Only after layers 1 & 2 are verified
 
 ### Red Flags That Require Infrastructure Review
+
 - ALL queries/commands return empty (not just one)
 - Commands work locally but fail in cloud
 - "Resource not found" errors
@@ -31,6 +35,7 @@ This is a full-stack template project with:
 **Rule**: If you see these patterns, STOP and review infrastructure before continuing.
 
 ### Resources
+
 - [Full Debugging Methodology](.cursor/rules/debugging-methodology.md)
 - [Troubleshooting Flowchart](.cursor/rules/troubleshooting-flowchart.md)
 - [Terraform Debugging](.cursor/rules/terraform.md#debugging-terraform-managed-infrastructure)
@@ -40,6 +45,7 @@ This is a full-stack template project with:
 ## Code Style
 
 ### TypeScript/React
+
 - Use functional components with hooks
 - Use TypeScript strict mode
 - Use MobX for state management
@@ -49,6 +55,7 @@ This is a full-stack template project with:
 - Use named exports (no default exports)
 
 ### .NET
+
 - Use .NET 8 features
 - Use async/await for all I/O
 - Follow controller → service → repository pattern
@@ -58,6 +65,7 @@ This is a full-stack template project with:
 - Always pass CancellationToken
 
 ### Terraform
+
 - Use Terraform 1.5+
 - Use modules for reusability
 - Follow rules in `.cursor/rules/terraform.md`
@@ -67,18 +75,21 @@ This is a full-stack template project with:
 ## File Organization
 
 ### React Components
+
 - One component per file
 - Place in `frontend/src/components/`
 - Name files in PascalCase
 - Include `.test.tsx` file for tests
 
 ### .NET Services
+
 - Controllers in `Controllers/`
 - Business logic in `Services/`
 - Data access in `Repositories/`
 - Shared code in `Shared/` project
 
 ### Terraform
+
 - Setup infrastructure in `terraform/setup/`
 - Deployment infrastructure in `terraform/deploy/`
 - Use modules in `terraform/deploy/modules/`
@@ -87,12 +98,14 @@ This is a full-stack template project with:
 ## Testing
 
 ### Frontend
+
 - Use Jest + React Testing Library
 - Test files: `*.test.tsx`
 - Mock API calls
 - Test user interactions
 
 ### Backend
+
 - Use xUnit
 - Test files: `*Tests.cs` in separate projects
 - Use Moq for mocking
@@ -108,11 +121,13 @@ This is a full-stack template project with:
 ## Environment Variables
 
 ### Frontend
+
 - Prefix with `VITE_`
 - Define in `.env.example`
 - Validate at runtime
 
 ### Backend
+
 - Define in `appsettings.json`
 - Override with environment variables
 - Use AWS Secrets Manager in production
@@ -128,6 +143,7 @@ This is a full-stack template project with:
 ## When Generating Code
 
 ### Always Include
+
 - TypeScript types
 - Error handling
 - Logging
@@ -136,6 +152,7 @@ This is a full-stack template project with:
 - Input validation
 
 ### Always Use
+
 - async/await (no blocking calls)
 - Dependency injection
 - Environment variables (no hardcoded values)
@@ -143,6 +160,7 @@ This is a full-stack template project with:
 - Cancellation tokens in .NET
 
 ### Never Use
+
 - `any` type in TypeScript
 - Hardcoded secrets
 - Blocking calls (.Result, .Wait())
@@ -179,10 +197,12 @@ This is a full-stack template project with:
 ## Logging
 
 ### Frontend
+
 - Log errors to console (development)
 - Send errors to backend (production)
 
 ### Backend
+
 - Use structured logging
 - Include correlation IDs
 - Log levels: Debug, Info, Warning, Error
@@ -198,6 +218,7 @@ This is a full-stack template project with:
 ## Special Placeholders
 
 These placeholders are replaced by the clone script:
+
 - `{{PROJECT_NAME}}` - Project name
 - `{{AWS_REGION}}` - AWS region
 - `{{AWS_ACCOUNT_ID}}` - AWS account ID
@@ -269,9 +290,9 @@ terraform apply      # Apply changes
 ## Questions to Ask
 
 Before implementing, consider:
+
 - Is this secure?
 - Is this testable?
 - Is this maintainable?
 - Does this follow the established patterns?
 - Will this work in all environments (dev/staging/prod)?
-

@@ -5,13 +5,15 @@
 **Always validate infrastructure exists before debugging configuration or application logic.**
 
 When troubleshooting issues, work from the foundation up:
+
 1. **Infrastructure Layer** (Terraform/IaC) - Check FIRST
-2. **Configuration Layer** (env vars, secrets) - Check SECOND  
+2. **Configuration Layer** (env vars, secrets) - Check SECOND
 3. **Application Layer** (code logic) - Check LAST
 
 ## The Problem This Solves
 
 Common anti-pattern:
+
 ```
 Issue: "Logs are empty"
 ❌ Wrong: Try 10 different log query variations
@@ -19,6 +21,7 @@ Issue: "Logs are empty"
 ```
 
 This methodology prevents:
+
 - Wasting time debugging symptoms
 - Chasing red herrings
 - Attempting to fix what isn't broken
@@ -29,12 +32,14 @@ This methodology prevents:
 ### Layer 1: Infrastructure (Check FIRST)
 
 **What to validate:**
+
 - Does the AWS resource exist?
 - Is the required feature enabled in IaC?
 - Are networking components configured (VPC, subnets, security groups)?
 - Is the infrastructure in the expected state?
 
 **How to validate:**
+
 ```bash
 # Read the Terraform configuration
 cat terraform/deploy/modules/<service>/main.tf
@@ -46,6 +51,7 @@ aws <service> describe-* --region <region>
 ```
 
 **Example - CloudWatch Logs Not Available:**
+
 ```
 Step 1: Read terraform/deploy/modules/app-runner/main.tf
 Step 2: Search for "observability_configuration"
@@ -56,12 +62,14 @@ Step 4: If present → Move to Layer 2
 ### Layer 2: Configuration (Check SECOND)
 
 **What to validate:**
+
 - Are environment variables set correctly?
 - Are secrets accessible?
 - Are connection strings formatted properly?
 - Are IAM permissions configured?
 
 **How to validate:**
+
 ```bash
 # Check environment variables
 aws apprunner describe-service --service-arn <arn> | grep -A 20 "RuntimeEnvironmentVariables"
@@ -74,6 +82,7 @@ aws iam get-role-policy --role-name <role> --policy-name <policy>
 ```
 
 **Example - Database Connection Failing:**
+
 ```
 Step 1: Verify RDS exists and is available (Layer 1) ✓
 Step 2: Check connection string format
@@ -85,11 +94,13 @@ Step 5: If all correct → Move to Layer 3
 ### Layer 3: Application (Check LAST)
 
 **What to validate:**
+
 - Is the application code correct?
 - Are there logic errors?
 - Are there runtime exceptions?
 
 **How to validate:**
+
 ```bash
 # Check application logs
 aws logs tail /aws/apprunner/<service>/service --since 10m
@@ -100,6 +111,7 @@ aws logs tail /aws/apprunner/<service>/service --since 10m
 ```
 
 **Example - API Endpoint Returns 500:**
+
 ```
 Step 1: Verify infrastructure exists (Layer 1) ✓
 Step 2: Verify configuration is correct (Layer 2) ✓
@@ -113,22 +125,27 @@ Step 5: Debug business logic
 **Stop and check infrastructure if you see:**
 
 1. **ALL queries/commands return empty** (not just one)
+
    - Example: All log queries return nothing
    - Likely cause: Logging not configured in infrastructure
 
 2. **Commands work locally but fail in cloud**
+
    - Example: App works in docker-compose, fails in App Runner
    - Likely cause: Missing cloud infrastructure configuration
 
 3. **"Resource not found" errors**
+
    - Example: `ResourceNotFoundException` from AWS
    - Likely cause: Resource not deployed or wrong identifier
 
 4. **No logs/metrics/traces anywhere**
+
    - Example: No CloudWatch logs, no X-Ray traces
    - Likely cause: Observability not enabled in Terraform
 
 5. **Connection timeouts on first request**
+
    - Example: Database connection times out immediately
    - Likely cause: Security groups, VPC configuration, or network routing
 
@@ -219,6 +236,7 @@ Is the issue affecting ALL services/resources?
 ### Scenario 1: No CloudWatch Logs Available
 
 ❌ **Wrong Approach:**
+
 ```
 1. Try aws logs tail with different time ranges
 2. Try different log group names
@@ -228,6 +246,7 @@ Is the issue affecting ALL services/resources?
 ```
 
 ✅ **Correct Approach:**
+
 ```
 1. Notice: ALL log queries return empty
 2. Red flag: This indicates infrastructure issue
@@ -242,6 +261,7 @@ Is the issue affecting ALL services/resources?
 ### Scenario 2: Database Connection Timeout
 
 ❌ **Wrong Approach:**
+
 ```
 1. Debug connection string format
 2. Try different database drivers
@@ -251,6 +271,7 @@ Is the issue affecting ALL services/resources?
 ```
 
 ✅ **Correct Approach:**
+
 ```
 1. Notice: Connection times out immediately (< 1 second)
 2. Red flag: Network/security issue, not application
@@ -265,14 +286,16 @@ Is the issue affecting ALL services/resources?
 ### Scenario 3: CORS Errors in Browser
 
 ❌ **Wrong Approach:**
+
 ```
 1. Try different CORS middleware configurations
-2. Add wildcard CORS (*) 
+2. Add wildcard CORS (*)
 3. Modify application code
 4. Debug for hours
 ```
 
 ✅ **Correct Approach:**
+
 ```
 1. Notice: CORS error for specific origin
 2. Check Layer 2: Environment variable `Cors__AllowedOrigins__*`
@@ -288,6 +311,7 @@ Is the issue affecting ALL services/resources?
 Before attempting to debug an issue, answer these questions:
 
 ### Infrastructure Validation
+
 - [ ] Have I read the relevant Terraform configuration?
 - [ ] Have I verified the resource exists in AWS?
 - [ ] Have I checked if the required feature is enabled?
@@ -295,12 +319,14 @@ Before attempting to debug an issue, answer these questions:
 - [ ] Have I checked IAM permissions?
 
 ### Configuration Validation
+
 - [ ] Have I verified all environment variables are set?
 - [ ] Have I checked secrets are accessible?
 - [ ] Have I validated connection strings?
 - [ ] Have I checked service-to-service connectivity?
 
 ### Application Validation
+
 - [ ] Have I checked application logs?
 - [ ] Have I reviewed recent code changes?
 - [ ] Have I tested locally?
@@ -311,22 +337,27 @@ Before attempting to debug an issue, answer these questions:
 ## Anti-Patterns to Avoid
 
 ### 1. Symptom Chasing
+
 ❌ Trying 10 variations of the same command that can't possibly work
 ✅ Check if infrastructure supports the command first
 
 ### 2. Assuming Infrastructure
+
 ❌ "The infrastructure must be fine, it's probably code"
 ✅ Always verify infrastructure explicitly
 
 ### 3. Skipping Layers
+
 ❌ Jumping straight to debugging application code
 ✅ Work through layers systematically
 
 ### 4. Not Reading IaC
+
 ❌ Guessing what infrastructure is deployed
 ✅ Read Terraform files to understand actual state
 
 ### 5. Local-First Debugging
+
 ❌ Assuming cloud works like local environment
 ✅ Verify cloud-specific configurations (observability, networking, IAM)
 
@@ -358,8 +389,8 @@ If after checking all three layers you still can't resolve:
 **Remember:** Time spent validating infrastructure is never wasted. Time spent debugging application code when infrastructure is broken is always wasted.
 
 **Cross-References:**
+
 - [Troubleshooting Flowchart](./troubleshooting-flowchart.md)
 - [Terraform Debugging](./terraform.md#debugging-terraform-managed-infrastructure)
 - [.NET Cloud Debugging](./dotnet.md#debugging-net-applications-in-cloud)
 - [React Debugging](./react-typescript.md#debugging-frontend-issues)
-

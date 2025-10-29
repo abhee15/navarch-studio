@@ -439,11 +439,13 @@ terraform import aws_s3_bucket.example my-bucket-name
 ## Debugging Terraform-Managed Infrastructure
 
 ### Core Principle
+
 **Always check Terraform configuration first when debugging cloud issues.**
 
 ### When to Read Terraform Files
 
 Before debugging application issues, read Terraform if:
+
 - Services can't connect to resources (RDS, S3, etc.)
 - Logs are not available
 - Resources seem to be "missing"
@@ -457,6 +459,7 @@ Before debugging application issues, read Terraform if:
 **Symptom**: All log queries return empty
 
 **Debug Steps**:
+
 ```bash
 # 1. Check if observability is configured
 cat terraform/deploy/modules/app-runner/main.tf | grep -A 5 "observability_configuration"
@@ -464,7 +467,7 @@ cat terraform/deploy/modules/app-runner/main.tf | grep -A 5 "observability_confi
 # 2. If missing, add to Terraform
 resource "aws_apprunner_observability_configuration" "main" {
   observability_configuration_name = "${var.project_name}-${var.environment}-observability"
-  
+
   trace_configuration {
     vendor = "AWSXRAY"
   }
@@ -482,6 +485,7 @@ observability_configuration {
 **Symptom**: App can't connect to RDS
 
 **Debug Steps**:
+
 ```bash
 # 1. Verify RDS exists in Terraform
 cat terraform/deploy/main.tf | grep -A 20 "module \"rds\""
@@ -501,6 +505,7 @@ cat terraform/deploy/modules/app-runner/main.tf | grep -A 3 "egress_configuratio
 **Symptom**: Access denied to Cognito, Secrets Manager, etc.
 
 **Debug Steps**:
+
 ```bash
 # 1. Check IAM role has required policies
 cat terraform/deploy/modules/app-runner/main.tf | grep -A 30 "aws_iam_role"
@@ -575,9 +580,3 @@ Before assuming application code is wrong:
 
 - [Full Debugging Methodology](./debugging-methodology.md)
 - [Troubleshooting Flowchart](./troubleshooting-flowchart.md)
-
-
-
-
-
-

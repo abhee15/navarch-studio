@@ -84,12 +84,12 @@ public class UsersController : ControllerBase
         CancellationToken cancellationToken)
     {
         var user = await _userService.GetUserByIdAsync(id, cancellationToken);
-        
+
         if (user == null)
         {
             return NotFound();
         }
-        
+
         return Ok(user);
     }
 
@@ -109,7 +109,7 @@ public class UsersController : ControllerBase
         }
 
         var user = await _userService.CreateUserAsync(dto, cancellationToken);
-        
+
         return CreatedAtAction(
             nameof(GetUser),
             new { id = user.Id },
@@ -175,9 +175,9 @@ public class UserService : IUserService
         };
 
         await _repository.AddAsync(user, cancellationToken);
-        
+
         _logger.LogInformation("User created: {UserId}", user.Id);
-        
+
         return MapToDto(user);
     }
 
@@ -401,7 +401,7 @@ public class UserServiceTests
         _repositoryMock = new Mock<IUserRepository>();
         _loggerMock = new Mock<ILogger<UserService>>();
         _passwordHasherMock = new Mock<IPasswordHasher>();
-        
+
         _sut = new UserService(
             _repositoryMock.Object,
             _loggerMock.Object,
@@ -508,6 +508,7 @@ public class CorrelationIdMiddleware
 ## Debugging .NET Applications in Cloud
 
 ### Core Principle
+
 **Check infrastructure and configuration before debugging application code.**
 
 ### When Application Fails in Cloud But Works Locally
@@ -525,6 +526,7 @@ Follow this order:
 **Symptom**: Application logs not appearing in CloudWatch
 
 **Debug Steps**:
+
 ```bash
 # 1. Verify observability is configured in Terraform
 cat terraform/deploy/modules/app-runner/main.tf | grep -A 3 "observability_configuration"
@@ -537,6 +539,7 @@ cat terraform/deploy/modules/app-runner/main.tf | grep -A 3 "observability_confi
 ```
 
 **Do NOT**:
+
 - ❌ Try different log levels
 - ❌ Add more logging statements
 - ❌ Modify logging configuration
@@ -547,6 +550,7 @@ cat terraform/deploy/modules/app-runner/main.tf | grep -A 3 "observability_confi
 **Symptom**: `Npgsql.NpgsqlException: Failed to connect` or timeout
 
 **Debug Steps**:
+
 ```bash
 # Layer 1: Infrastructure
 # 1. Verify RDS exists and is available
@@ -572,6 +576,7 @@ aws secretsmanager get-secret-value --secret-id <id>
 ```
 
 **Connection Timeout Decision Tree**:
+
 - Timeout < 5 seconds → Infrastructure (security groups/VPC)
 - "password authentication failed" → Configuration (wrong credentials)
 - "database does not exist" → Configuration (wrong database name)
@@ -582,6 +587,7 @@ aws secretsmanager get-secret-value --secret-id <id>
 **Symptom**: "relation does not exist" errors
 
 **Debug Steps**:
+
 ```csharp
 // 1. Check ASPNETCORE_ENVIRONMENT in Terraform
 // Must be "Staging" or "Production" for auto-migrations
@@ -590,7 +596,7 @@ cat terraform/deploy/modules/app-runner/main.tf | grep ASPNETCORE_ENVIRONMENT
 // 2. Verify auto-migration code in Program.cs
 if (app.Environment.EnvironmentName != "Development")
 {
-    Log.Information("Auto-applying migrations in {Environment}...", 
+    Log.Information("Auto-applying migrations in {Environment}...",
         app.Environment.EnvironmentName);
     await dbContext.Database.MigrateAsync();
     Log.Information("✅ Migrations applied successfully!");
@@ -601,6 +607,7 @@ aws logs tail /aws/apprunner/<service>/service --since 10m | grep -i migration
 ```
 
 **Common Issues**:
+
 - `ASPNETCORE_ENVIRONMENT = "Dev"` → Won't run migrations (use "Staging")
 - Missing `await dbContext.Database.MigrateAsync()` → Migrations don't run
 - Using `builder.Environment` instead of `app.Environment` → Wrong environment check
@@ -610,6 +617,7 @@ aws logs tail /aws/apprunner/<service>/service --since 10m | grep -i migration
 **Symptom**: `NullReferenceException` or configuration errors
 
 **Debug Steps**:
+
 ```bash
 # 1. Check Terraform configuration
 cat terraform/deploy/modules/app-runner/main.tf | grep -A 20 "runtime_environment_variables"
@@ -626,6 +634,7 @@ aws apprunner describe-service --service-arn <arn> --query "Service.SourceConfig
 **Symptom**: API returns 500 Internal Server Error
 
 **Debug Steps**:
+
 ```bash
 # 1. Check if logs are available (infrastructure)
 aws logs tail /aws/apprunner/<service>/service --since 5m
@@ -646,6 +655,7 @@ aws logs tail /aws/apprunner/<service>/service --since 5m | grep -i exception
 **Symptom**: App Runner service keeps restarting
 
 **Debug Steps**:
+
 ```bash
 # 1. Check health endpoint configuration in Terraform
 cat terraform/deploy/modules/app-runner/main.tf | grep -A 6 "health_check_configuration"
@@ -736,9 +746,3 @@ Before debugging .NET code in cloud:
 - [Full Debugging Methodology](./debugging-methodology.md)
 - [Troubleshooting Flowchart](./troubleshooting-flowchart.md)
 - [Terraform Debugging](./terraform.md#debugging-terraform-managed-infrastructure)
-
-
-
-
-
-

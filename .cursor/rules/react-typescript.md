@@ -19,8 +19,8 @@
 ## Component Structure
 
 ```typescript
-import React from 'react';
-import { observer } from 'mobx-react-lite';
+import React from "react";
+import { observer } from "mobx-react-lite";
 
 interface ComponentProps {
   // Props with explicit types
@@ -28,38 +28,36 @@ interface ComponentProps {
   onClick?: () => void;
 }
 
-export const Component: React.FC<ComponentProps> = observer(({ title, onClick }) => {
-  // 1. Hooks
-  const [state, setState] = React.useState<string>('');
-  
-  // 2. Computed values
-  const formattedTitle = title.toUpperCase();
-  
-  // 3. Handlers
-  const handleClick = () => {
-    onClick?.();
-  };
-  
-  // 4. Effects
-  React.useEffect(() => {
-    // Side effects
-  }, []);
-  
-  // 5. Render
-  return (
-    <div onClick={handleClick}>
-      {formattedTitle}
-    </div>
-  );
-});
+export const Component: React.FC<ComponentProps> = observer(
+  ({ title, onClick }) => {
+    // 1. Hooks
+    const [state, setState] = React.useState<string>("");
 
-Component.displayName = 'Component';
+    // 2. Computed values
+    const formattedTitle = title.toUpperCase();
+
+    // 3. Handlers
+    const handleClick = () => {
+      onClick?.();
+    };
+
+    // 4. Effects
+    React.useEffect(() => {
+      // Side effects
+    }, []);
+
+    // 5. Render
+    return <div onClick={handleClick}>{formattedTitle}</div>;
+  }
+);
+
+Component.displayName = "Component";
 ```
 
 ## MobX Store Pattern
 
 ```typescript
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, runInAction } from "mobx";
 
 export class UserStore {
   users: User[] = [];
@@ -72,14 +70,14 @@ export class UserStore {
 
   // Computed
   get activeUsers(): User[] {
-    return this.users.filter(u => u.isActive);
+    return this.users.filter((u) => u.isActive);
   }
 
   // Actions
   async fetchUsers(): Promise<void> {
     this.loading = true;
     this.error = null;
-    
+
     try {
       const response = await api.getUsers();
       runInAction(() => {
@@ -104,7 +102,7 @@ export class UserStore {
 
 ```typescript
 // services/api.ts
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
@@ -114,7 +112,7 @@ const createApiClient = (): AxiosInstance => {
 
   // Request interceptor
   client.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -156,7 +154,7 @@ export interface User {
   createdAt: Date;
 }
 
-export type UserRole = 'admin' | 'user' | 'guest';
+export type UserRole = "admin" | "user" | "guest";
 
 export interface ApiResponse<T> {
   data: T;
@@ -168,20 +166,20 @@ export interface ApiResponse<T> {
 ## Testing
 
 ```typescript
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Component } from './Component';
+import { render, screen, fireEvent } from "@testing-library/react";
+import { Component } from "./Component";
 
-describe('Component', () => {
-  it('renders title', () => {
+describe("Component", () => {
+  it("renders title", () => {
     render(<Component title="Test" />);
-    expect(screen.getByText('TEST')).toBeInTheDocument();
+    expect(screen.getByText("TEST")).toBeInTheDocument();
   });
 
-  it('handles click', () => {
+  it("handles click", () => {
     const handleClick = jest.fn();
     render(<Component title="Test" onClick={handleClick} />);
-    
-    fireEvent.click(screen.getByText('TEST'));
+
+    fireEvent.click(screen.getByText("TEST"));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 });
@@ -218,7 +216,7 @@ Object.entries(env).forEach(([key, value]) => {
 ## Error Boundaries
 
 ```typescript
-import React from 'react';
+import React from "react";
 
 interface Props {
   children: React.ReactNode;
@@ -237,7 +235,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error("Error caught by boundary:", error, errorInfo);
   }
 
   render() {
@@ -252,11 +250,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
 ## Routing (React Router v6)
 
 ```typescript
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { observer } from 'mobx-react-lite';
-import { useStore } from './stores';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { observer } from "mobx-react-lite";
+import { useStore } from "./stores";
 
-const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({
+  children,
+}) => {
   const { authStore } = useStore();
   return authStore.isAuthenticated ? children : <Navigate to="/login" />;
 };
@@ -299,6 +299,7 @@ export const App: React.FC = observer(() => (
 ## Debugging Frontend Issues
 
 ### Core Principle
+
 **Check backend infrastructure and configuration before debugging frontend code.**
 
 ### When Frontend Fails But Backend "Should" Work
@@ -316,6 +317,7 @@ Follow this order:
 **Symptom**: `Access to XMLHttpRequest ... has been blocked by CORS policy`
 
 **Debug Steps**:
+
 ```bash
 # Layer 1: Infrastructure - Check if API Gateway is deployed
 aws apprunner list-services --region us-east-1
@@ -333,6 +335,7 @@ cat frontend/src/config/api.ts
 ```
 
 **CORS Checklist**:
+
 - [ ] Origin includes `https://` protocol
 - [ ] Origin matches exactly (no trailing slash)
 - [ ] Backend CORS middleware is configured
@@ -340,6 +343,7 @@ cat frontend/src/config/api.ts
 - [ ] `Access-Control-Allow-Origin` header is present in response
 
 **Common Fix**:
+
 ```hcl
 # terraform/deploy/modules/app-runner/main.tf
 # Add CloudFront origin with protocol
@@ -351,6 +355,7 @@ Cors__AllowedOrigins__10 = "https://${var.cloudfront_distribution_domain}"
 **Symptom**: `GET https://api.example.com/api/v1/resource 404`
 
 **Debug Steps**:
+
 ```bash
 # 1. Verify API Gateway is deployed and healthy
 aws apprunner describe-service --service-arn <api-gateway-arn>
@@ -366,6 +371,7 @@ curl https://api-gateway-url/api/v1/resource
 ```
 
 **Common Issues**:
+
 - Wrong base URL in frontend config
 - Route doesn't exist in backend
 - API Gateway not routing to correct service
@@ -378,6 +384,7 @@ curl https://api-gateway-url/api/v1/resource
 **This is NOT a frontend issue!**
 
 **Debug Steps**:
+
 ```bash
 # 1. Check backend logs (infrastructure)
 aws logs tail /aws/apprunner/navarch-studio-dev-data-service/service --since 5m
@@ -391,6 +398,7 @@ aws logs tail /aws/apprunner/navarch-studio-dev-data-service/service --since 5m 
 ```
 
 **Do NOT**:
+
 - ❌ Add retry logic in frontend
 - ❌ Modify API call in frontend
 - ❌ Add error handling in frontend
@@ -401,6 +409,7 @@ aws logs tail /aws/apprunner/navarch-studio-dev-data-service/service --since 5m 
 **Symptom**: Cognito login fails or token validation fails
 
 **Debug Steps**:
+
 ```typescript
 // 1. Check Cognito configuration in environment
 console.log('Cognito User Pool ID:', import.meta.env.VITE_COGNITO_USER_POOL_ID);
@@ -418,6 +427,7 @@ cat terraform/deploy/modules/app-runner/main.tf | grep Cognito
 ```
 
 **Common Issues**:
+
 - User Pool ID or Client ID mismatch
 - Token expired (check expiration time)
 - Token not included in request headers
@@ -428,6 +438,7 @@ cat terraform/deploy/modules/app-runner/main.tf | grep Cognito
 **Symptom**: `timeout of 30000ms exceeded`
 
 **Debug Steps**:
+
 ```typescript
 // 1. Check if backend is responding at all
 curl https://api-gateway-url/health
@@ -444,6 +455,7 @@ aws logs tail /aws/apprunner/<service>/service --since 5m | grep -i timeout
 ```
 
 **Timeout Decision Tree**:
+
 - Health check fails → Infrastructure (backend down)
 - All endpoints timeout → Infrastructure (backend overloaded)
 - Specific endpoint times out → Application (backend code issue)
@@ -454,6 +466,7 @@ aws logs tail /aws/apprunner/<service>/service --since 5m | grep -i timeout
 **Symptom**: UI shows empty state but data should exist
 
 **Debug Steps**:
+
 ```typescript
 // 1. Check if API call is being made
 // Browser DevTools → Network tab
@@ -474,6 +487,7 @@ aws logs tail /aws/apprunner/<service>/service --since 5m | grep -i timeout
 ### Browser DevTools Debugging
 
 **Network Tab Checklist**:
+
 ```
 For each failed request, check:
 1. Status Code
@@ -496,6 +510,7 @@ For each failed request, check:
 ```
 
 **Console Tab Checklist**:
+
 ```
 Look for:
 1. Errors (red)
@@ -517,6 +532,7 @@ Look for:
 **Symptom**: `undefined` environment variables
 
 **Debug Steps**:
+
 ```bash
 # 1. Verify .env.local exists and has VITE_ prefix
 cat frontend/.env.local
@@ -534,6 +550,7 @@ console.log(import.meta.env.VITE_API_URL);
 ```
 
 **Common Issues**:
+
 - Missing `VITE_` prefix
 - Dev server not restarted after changing .env
 - .env.local not created (only .env.example exists)
@@ -541,27 +558,29 @@ console.log(import.meta.env.VITE_API_URL);
 ### API Configuration
 
 **Best Practice**:
+
 ```typescript
 // config/api.ts
 export const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 };
 
 // Validate on app startup
 if (!API_CONFIG.baseURL) {
-  throw new Error('VITE_API_URL environment variable not set');
+  throw new Error("VITE_API_URL environment variable not set");
 }
 
-console.log('✅ API configured:', API_CONFIG.baseURL);
+console.log("✅ API configured:", API_CONFIG.baseURL);
 ```
 
 ### MobX Store Debugging
 
 **Common Issues**:
+
 ```typescript
 // ❌ Bad: Not using runInAction for async updates
 async fetchData() {
@@ -667,9 +686,3 @@ async loadVessels() {
 - [Troubleshooting Flowchart](./troubleshooting-flowchart.md)
 - [.NET Cloud Debugging](./dotnet.md#debugging-net-applications-in-cloud)
 - [Terraform Debugging](./terraform.md#debugging-terraform-managed-infrastructure)
-
-
-
-
-
-
