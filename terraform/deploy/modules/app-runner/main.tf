@@ -133,12 +133,12 @@ resource "aws_apprunner_service" "identity_service" {
     instance_role_arn = aws_iam_role.app_runner_instance.arn
   }
 
-  # Identity Service uses VPC egress to access RDS database in private subnet
-  # Does not need internet access, so VPC connector is sufficient
+  # Identity Service uses DEFAULT egress to access both RDS and Cognito JWKS endpoint
+  # VPC egress was causing timeouts because it blocked internet access (no NAT Gateway)
+  # Last updated: 2025-10-29 to fix timeout issues
   network_configuration {
     egress_configuration {
-      egress_type       = "VPC"
-      vpc_connector_arn = aws_apprunner_vpc_connector.main.arn
+      egress_type = "DEFAULT"
     }
   }
 
@@ -198,12 +198,12 @@ resource "aws_apprunner_service" "data_service" {
     instance_role_arn = aws_iam_role.app_runner_instance.arn
   }
 
-  # Data Service uses VPC egress to access RDS database in private subnet
-  # Does not need internet access, so VPC connector is sufficient
+  # Data Service uses DEFAULT egress to access both RDS and Cognito JWKS endpoint
+  # VPC egress was causing timeouts because it blocked internet access (no NAT Gateway)
+  # Last updated: 2025-10-29 to fix timeout issues
   network_configuration {
     egress_configuration {
-      egress_type       = "VPC"
-      vpc_connector_arn = aws_apprunner_vpc_connector.main.arn
+      egress_type = "DEFAULT"
     }
   }
 

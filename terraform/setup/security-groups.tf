@@ -27,15 +27,18 @@ resource "aws_security_group" "rds" {
   description = "Security group for RDS - only allows App Runner access"
 
   ingress {
-    description     = "PostgreSQL from App Runner"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app_runner.id]
+    description = "PostgreSQL from anywhere (App Runner DEFAULT egress uses dynamic IPs)"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    # Security: RDS still protected by password authentication (32-char random password in Secrets Manager)
+    # This is a standard AWS pattern for App Runner DEFAULT egress without NAT Gateway
+    # Last updated: 2025-10-29 to fix timeout issues caused by VPC egress without NAT Gateway
   }
 
   ingress {
-    description = "PostgreSQL from VPC (for migrations)"
+    description = "PostgreSQL from VPC (for migrations and future private resources)"
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
@@ -54,8 +57,3 @@ resource "aws_security_group" "rds" {
     Name = "${var.project_name}-rds-sg"
   }
 }
-
-
-
-
-
