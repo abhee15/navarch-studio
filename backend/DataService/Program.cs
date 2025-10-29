@@ -89,9 +89,6 @@ try
 
             // Use connection pooling (default, but explicit for clarity)
             npgsqlOptions.MaxBatchSize(100);
-            
-            // Use a separate schema for DataService migrations history to avoid conflicts with IdentityService
-            npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "data");
         })
         .UseSnakeCaseNamingConvention()
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
@@ -237,53 +234,55 @@ try
     var app = builder.Build();
 
     // Verify database connectivity and migrations at startup
+    Log.Information("🔄 Starting database migration check...");
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<DataDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
         try
         {
-            // Check if database is accessible
-            await dbContext.Database.CanConnectAsync();
-            logger.LogInformation("✅ Database connection successful");
+            Log.Information("Checking database connectivity...");
+            var canConnect = await dbContext.Database.CanConnectAsync();
+            Log.Information("✅ Database connection successful: {CanConnect}", canConnect);
 
             // Get pending migrations
             var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
             var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
 
-            logger.LogInformation("Applied migrations: {Count}", appliedMigrations.Count());
-            logger.LogInformation("Pending migrations: {Count}", pendingMigrations.Count());
+            Log.Information("📊 Migration status - Applied: {Applied}, Pending: {Pending}", 
+                appliedMigrations.Count(), pendingMigrations.Count());
 
             if (pendingMigrations.Any())
             {
-                logger.LogWarning("⚠️ Database has pending migrations: {Migrations}",
+                Log.Warning("⚠️ Pending migrations: {Migrations}", 
                     string.Join(", ", pendingMigrations));
 
-                // In production, apply migrations automatically
-                // In development, just warn
+                // In Staging/Production, apply migrations automatically
+                // In Development, just warn
                 if (!app.Environment.IsDevelopment())
                 {
-                    logger.LogInformation("Applying pending migrations...");
+                    Log.Information("🔄 Auto-applying {Count} pending migrations in {Environment} environment...", 
+                        pendingMigrations.Count(), app.Environment.EnvironmentName);
                     await dbContext.Database.MigrateAsync();
-                    logger.LogInformation("✅ Migrations applied successfully");
+                    Log.Information("✅ Migrations applied successfully!");
                 }
                 else
                 {
-                    logger.LogWarning("⚠️ Running with pending migrations. Run 'dotnet ef database update' to apply them.");
+                    Log.Warning("⚠️ Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
                 }
             }
             else
             {
-                logger.LogInformation("✅ Database schema is up to date");
+                Log.Information("✅ Database schema is up to date (no pending migrations)");
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "❌ Failed to connect to database or check migrations");
+            Log.Error(ex, "❌ Migration check failed: {Message}", ex.Message);
             // Don't throw - let the app start and health checks will catch the issue
         }
     }
+    Log.Information("✅ Database migration check complete");
 
     // Add Correlation ID middleware (FIRST - so all logs have correlation ID)
     app.UseMiddleware<CorrelationIdMiddleware>();
