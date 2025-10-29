@@ -235,55 +235,72 @@ try
 
     // Run migrations synchronously before starting the service
     // Health check timeout is set to 30 seconds in Terraform to allow migrations to complete
-    Log.Information("🔄 Starting database migration check...");
+    Console.WriteLine("[MIGRATION] Starting database migration check...");
+    Log.Information("[MIGRATION] Starting database migration check...");
+    
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<DataDbContext>();
 
         try
         {
-            Log.Information("Checking database connectivity...");
+            Console.WriteLine("[MIGRATION] Checking database connectivity...");
+            Log.Information("[MIGRATION] Checking database connectivity...");
+            
             var canConnect = await dbContext.Database.CanConnectAsync();
-            Log.Information("✅ Database connection successful: {CanConnect}", canConnect);
+            Console.WriteLine($"[MIGRATION] Database connection successful: {canConnect}");
+            Log.Information("[MIGRATION] Database connection successful: {CanConnect}", canConnect);
 
             // Get pending migrations
             var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
             var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
 
-            Log.Information("📊 Migration status - Applied: {Applied}, Pending: {Pending}",
+            Console.WriteLine($"[MIGRATION] Migration status - Applied: {appliedMigrations.Count()}, Pending: {pendingMigrations.Count()}");
+            Log.Information("[MIGRATION] Migration status - Applied: {Applied}, Pending: {Pending}",
                 appliedMigrations.Count(), pendingMigrations.Count());
 
             if (pendingMigrations.Any())
             {
-                Log.Warning("⚠️ Pending migrations: {Migrations}",
+                Console.WriteLine($"[MIGRATION] Pending migrations: {string.Join(", ", pendingMigrations)}");
+                Log.Warning("[MIGRATION] Pending migrations: {Migrations}",
                     string.Join(", ", pendingMigrations));
 
                 // In Staging/Production, apply migrations automatically
                 // In Development, just warn
                 if (app.Environment.EnvironmentName != "Development")
                 {
-                    Log.Information("🔄 Auto-applying {Count} pending migrations in {Environment} environment...",
+                    Console.WriteLine($"[MIGRATION] Auto-applying {pendingMigrations.Count()} pending migrations in {app.Environment.EnvironmentName} environment...");
+                    Log.Information("[MIGRATION] Auto-applying {Count} pending migrations in {Environment} environment...",
                         pendingMigrations.Count(), app.Environment.EnvironmentName);
+                    
                     await dbContext.Database.MigrateAsync();
-                    Log.Information("✅ Migrations applied successfully!");
+                    
+                    Console.WriteLine("[MIGRATION] Migrations applied successfully!");
+                    Log.Information("[MIGRATION] Migrations applied successfully!");
                 }
                 else
                 {
-                    Log.Warning("⚠️ Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
+                    Console.WriteLine("[MIGRATION] Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
+                    Log.Warning("[MIGRATION] Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
                 }
             }
             else
             {
-                Log.Information("✅ Database schema is up to date (no pending migrations)");
+                Console.WriteLine("[MIGRATION] Database schema is up to date (no pending migrations)");
+                Log.Information("[MIGRATION] Database schema is up to date (no pending migrations)");
             }
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "❌ Migration check failed: {Message}", ex.Message);
+            Console.WriteLine($"[MIGRATION] ERROR: Migration check failed: {ex.Message}");
+            Console.WriteLine($"[MIGRATION] Stack trace: {ex.StackTrace}");
+            Log.Error(ex, "[MIGRATION] Migration check failed: {Message}", ex.Message);
             // Don't throw - let the app start and health checks will catch the issue
         }
     }
-    Log.Information("✅ Database migration check complete");
+    
+    Console.WriteLine("[MIGRATION] Database migration check complete");
+    Log.Information("[MIGRATION] Database migration check complete");
 
     // Add Correlation ID middleware (FIRST - so all logs have correlation ID)
     app.UseMiddleware<CorrelationIdMiddleware>();
