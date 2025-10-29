@@ -302,9 +302,3 @@ resource "aws_apprunner_service" "api_gateway" {
     aws_apprunner_service.data_service
   ]
 }
-
-
-
-
-
-
