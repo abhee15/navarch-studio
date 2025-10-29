@@ -45,7 +45,7 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
         <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          className="fixed inset-0 bg-gray-50 dark:bg-gray-9000 bg-opacity-75 transition-opacity"
           aria-hidden="true"
           onClick={onClose}
         ></div>
@@ -56,15 +56,15 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
         </span>
 
         {/* Modal panel */}
-        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
           <div>
             <div className="mt-3 text-center sm:mt-0 sm:text-left">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4" id="modal-title">
                 User Settings
               </h3>
 
               {error && (
-                <div className="mb-4 bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded">
                   {error}
                 </div>
               )}
@@ -74,11 +74,11 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
                 <div>
                   <label
                     htmlFor="preferredUnits"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Preferred Unit System
                   </label>
-                  <p className="text-sm text-gray-500 mb-3">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                     Choose how you want to view measurements throughout the application. Vessels
                     will display in your preferred units regardless of their native unit system.
                   </p>
@@ -87,7 +87,7 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
                     name="preferredUnits"
                     value={preferredUnits}
                     onChange={(e) => setPreferredUnits(e.target.value as UnitSystem)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   >
                     <option value="SI">SI (Metric) - meters, kg, m², m³</option>
                     <option value="Imperial">Imperial - feet, lb, ft², ft³</option>
@@ -95,8 +95,8 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
                 </div>
 
                 {/* Preview */}
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Preview</h4>
+                <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</h4>
                   <div className="text-sm text-gray-600 space-y-1">
                     <div className="flex justify-between">
                       <span>Length:</span>
@@ -142,7 +142,7 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
               type="button"
               disabled={saving}
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
