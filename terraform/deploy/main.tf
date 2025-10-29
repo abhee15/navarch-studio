@@ -86,8 +86,9 @@ module "app_runner" {
   cognito_domain              = data.terraform_remote_state.setup.outputs.cognito_domain
 
   # CORS - CloudFront URL for browser-based requests
-  # Use the output from the S3/CloudFront module
-  cloudfront_distribution_domain = module.s3_cloudfront.cloudfront_domain_name
+  # NOTE: Must be set to empty on first deployment to avoid circular dependency
+  # After infrastructure exists, GitHub Actions update-cors job will configure this
+  cloudfront_distribution_domain = ""
 
   # Service sizing
   cpu    = var.app_runner_cpu
