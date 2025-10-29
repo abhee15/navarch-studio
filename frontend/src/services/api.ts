@@ -3,6 +3,7 @@ import { CognitoUserSession } from "amazon-cognito-identity-js";
 import { getUserPool } from "../config/cognito";
 import { LocalAuthService } from "./localAuthService";
 import { getConfig, isConfigLoaded } from "../config/runtime";
+import { diagnoseApiIssue, logDiagnostics, getUserFriendlyError } from "../utils/diagnostics";
 
 type AuthMode = "cognito" | "local";
 
@@ -120,7 +121,7 @@ const createApiClient = (): AxiosInstance => {
     return config;
   });
 
-  // Response interceptor - Handle 401 errors and log responses
+  // Response interceptor - Handle 401 errors and log responses with diagnostics
   client.interceptors.response.use(
     (response) => {
       console.log(`[API] Response received from ${response.config.url}:`, {
@@ -130,7 +131,7 @@ const createApiClient = (): AxiosInstance => {
       });
       return response;
     },
-    (error) => {
+    async (error) => {
       console.error("[API] Request failed:", {
         url: error.config?.url,
         method: error.config?.method,
@@ -139,6 +140,28 @@ const createApiClient = (): AxiosInstance => {
         data: error.response?.data,
         message: error.message,
       });
+
+      // Run diagnostics to help identify the issue
+      const diagnostic = await diagnoseApiIssue(error);
+      logDiagnostics(diagnostic);
+      
+      // Add user-friendly error message to the error object
+      error.userMessage = getUserFriendlyError(error);
+      
+      // Log specific guidance for common issues
+      if (diagnostic.corsIssue) {
+        console.warn('💡 CORS Issue Detected: This usually means the API Gateway service is stuck in deployment or CORS is not configured for your domain.');
+        console.warn('   Check service status: aws apprunner list-services --region us-east-1');
+      }
+      
+      if (diagnostic.urlMismatch) {
+        console.warn('💡 URL Mismatch: Frontend is calling a different URL than configured. Hard refresh your browser (Ctrl+Shift+R).');
+      }
+      
+      if (diagnostic.serviceReachable === false) {
+        console.error('💡 Service Unreachable: The API service is not responding. It may be down, restarting, or stuck in deployment.');
+        console.error('   Check CloudWatch logs or AWS Console for service status.');
+      }
 
       if (error.response?.status === 401) {
         console.log("[API] Unauthorized - redirecting to login");

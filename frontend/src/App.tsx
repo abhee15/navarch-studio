@@ -10,6 +10,7 @@ import { VesselDetail } from "./pages/hydrostatics/VesselDetail";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/common/Toast";
 import { loadConfig } from "./config/runtime";
+import { checkSystemHealth } from "./utils/diagnostics";
 
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { authStore } = useStore();
@@ -28,6 +29,14 @@ const ConfigLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     loadConfig()
       .then(() => {
         console.log("[App] Configuration loaded successfully");
+        
+        // Run system health check and make it available globally
+        checkSystemHealth();
+        
+        // Expose health check function in browser console for debugging
+        (window as any).checkHealth = checkSystemHealth;
+        console.log('💡 Run checkHealth() in console anytime to diagnose issues');
+        
         setConfigLoaded(true);
       })
       .catch((err) => {

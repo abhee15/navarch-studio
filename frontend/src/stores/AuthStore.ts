@@ -55,7 +55,7 @@ export class AuthStore {
             return;
           }
 
-          cognitoUser.getUserAttributes((err: Error | null, attributes: CognitoUserAttribute[] | undefined) => {
+          cognitoUser.getUserAttributes((err: Error | undefined, attributes: CognitoUserAttribute[] | undefined) => {
             if (err || !attributes) {
               console.log("Failed to get user attributes");
               return;
