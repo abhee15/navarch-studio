@@ -1,6 +1,19 @@
 # Get current AWS region
 data "aws_region" "current" {}
 
+# Observability Configuration for CloudWatch Logs
+resource "aws_apprunner_observability_configuration" "main" {
+  observability_configuration_name = "${var.project_name}-${var.environment}-observability"
+
+  trace_configuration {
+    vendor = "AWSXRAY"
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-observability"
+  }
+}
+
 # VPC Connector for App Runner
 resource "aws_apprunner_vpc_connector" "main" {
   vpc_connector_name = "${var.project_name}-${var.environment}-vpc-connector"
@@ -133,9 +146,14 @@ resource "aws_apprunner_service" "identity_service" {
     protocol            = "HTTP"
     path                = "/health"
     interval            = 10
-    timeout             = 5
+    timeout             = 30 # Increased to allow migrations to complete during startup
     healthy_threshold   = 1
     unhealthy_threshold = 5
+  }
+
+  observability_configuration {
+    observability_enabled           = true
+    observability_configuration_arn = aws_apprunner_observability_configuration.main.arn
   }
 
   tags = {
@@ -193,9 +211,14 @@ resource "aws_apprunner_service" "data_service" {
     protocol            = "HTTP"
     path                = "/health"
     interval            = 10
-    timeout             = 5
+    timeout             = 30 # Increased to allow migrations to complete during startup
     healthy_threshold   = 1
     unhealthy_threshold = 5
+  }
+
+  observability_configuration {
+    observability_enabled           = true
+    observability_configuration_arn = aws_apprunner_observability_configuration.main.arn
   }
 
   tags = {
@@ -260,9 +283,14 @@ resource "aws_apprunner_service" "api_gateway" {
     protocol            = "HTTP"
     path                = "/health"
     interval            = 10
-    timeout             = 5
+    timeout             = 30 # Increased to allow migrations to complete during startup
     healthy_threshold   = 1
     unhealthy_threshold = 5
+  }
+
+  observability_configuration {
+    observability_enabled           = true
+    observability_configuration_arn = aws_apprunner_observability_configuration.main.arn
   }
 
   tags = {
