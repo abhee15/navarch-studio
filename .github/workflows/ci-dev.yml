@@ -492,6 +492,20 @@ jobs:
           VITE_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}
           VITE_AWS_REGION: ${{ env.AWS_REGION }}
 
+      - name: Create runtime config.json
+        run: |
+          cat > ./frontend/dist/config.json <<EOF
+          {
+            "apiUrl": "${{ env.API_GATEWAY_URL }}",
+            "authMode": "cognito",
+            "cognitoUserPoolId": "${{ secrets.COGNITO_USER_POOL_ID }}",
+            "cognitoClientId": "${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}",
+            "awsRegion": "${{ env.AWS_REGION }}"
+          }
+          EOF
+          echo "✅ Created config.json for runtime configuration"
+          cat ./frontend/dist/config.json
+
       - name: Deploy to S3
         run: |
           aws s3 sync ./frontend/dist/ s3://${{ steps.discover-s3.outputs.bucket_name }} --delete
