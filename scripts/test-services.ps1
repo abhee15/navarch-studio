@@ -25,7 +25,7 @@ foreach ($serviceName in $services.Keys) {
     $baseUrl = $services[$serviceName]
     Write-Host "`n--- Testing: $serviceName ---" -ForegroundColor Yellow
     Write-Host "Base URL: $baseUrl"
-    
+
     # Test /health endpoint
     Write-Host "Testing /health..."
     try {
@@ -95,4 +95,3 @@ else {
     Write-Host "`nAll services are healthy!" -ForegroundColor Green
     exit 0
 }
-

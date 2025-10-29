@@ -1,0 +1,7 @@
+{
+  "authMode": "cognito",
+  "cognitoClientId": "2kgtc0rkmi4apirt3bo8paemja",
+  "cognitoUserPoolId": "us-east-1_z5lKXcFsl",
+  "apiUrl": "https://https://ie2ijkwmns.us-east-1.awsapprunner.com",
+  "awsRegion": "us-east-1"
+}

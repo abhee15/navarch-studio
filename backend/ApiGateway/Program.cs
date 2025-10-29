@@ -248,8 +248,3 @@ finally
 {
     Log.CloseAndFlush();
 }
-
-
-
-
-
