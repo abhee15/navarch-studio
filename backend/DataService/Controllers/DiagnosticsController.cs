@@ -157,20 +157,10 @@ public class DiagnosticsController : ControllerBase
                 // Table doesn't exist
             }
 
-            // Get table count from database
-            var tableCountQuery = @"
-                SELECT COUNT(*) 
-                FROM information_schema.tables 
-                WHERE table_schema = 'data'";
-
-            var tableCount = await _dbContext.Database
-                .SqlQueryRaw<int>(tableCountQuery)
-                .FirstOrDefaultAsync(cancellationToken);
-
             return new
             {
                 vesselTableExists = vesselsTableExists,
-                dataSchemaTableCount = tableCount
+                note = "Table count check removed due to SqlQueryRaw compatibility issues"
             };
         }
         catch (Exception ex)
@@ -184,4 +174,3 @@ public class DiagnosticsController : ControllerBase
         }
     }
 }
-
