@@ -52,7 +52,7 @@ try
     Console.WriteLine($"[STARTUP] OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
     Console.WriteLine($"[STARTUP] Framework: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
 
-    // Log key configuration (redact sensitive data)
+    // Log key configuration (redact sensitive data from connection string)
     var connString = builder.Configuration.GetConnectionString("DefaultConnection");
     var dbPassword = builder.Configuration["DatabasePassword"];
     var safeConnString = connString ?? "NOT SET";
