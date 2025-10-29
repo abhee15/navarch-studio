@@ -49,6 +49,7 @@ const getCognitoToken = (): Promise<string | null> => {
 const createApiClient = (): AxiosInstance => {
   // Explicitly use API v1
   const API_VERSION = "v1";
+  // Note: VITE_API_URL is set at build time and compiled into bundle
   const baseURL = `${import.meta.env.VITE_API_URL || "http://localhost:5002"}/api/${API_VERSION}`;
 
   const client = axios.create({
