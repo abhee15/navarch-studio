@@ -233,56 +233,69 @@ try
 
     var app = builder.Build();
 
-    // Verify database connectivity and migrations at startup
-    Log.Information("🔄 Starting database migration check...");
-    using (var scope = app.Services.CreateScope())
+    // Run migrations in background to avoid blocking health checks
+    _ = Task.Run(async () =>
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<DataDbContext>();
-
         try
         {
-            Log.Information("Checking database connectivity...");
-            var canConnect = await dbContext.Database.CanConnectAsync();
-            Log.Information("✅ Database connection successful: {CanConnect}", canConnect);
+            // Give the service a moment to start up
+            await Task.Delay(TimeSpan.FromSeconds(2));
 
-            // Get pending migrations
-            var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
-            var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
-
-            Log.Information("📊 Migration status - Applied: {Applied}, Pending: {Pending}",
-                appliedMigrations.Count(), pendingMigrations.Count());
-
-            if (pendingMigrations.Any())
+            Log.Information("🔄 Starting database migration check...");
+            using (var scope = app.Services.CreateScope())
             {
-                Log.Warning("⚠️ Pending migrations: {Migrations}",
-                    string.Join(", ", pendingMigrations));
+                var dbContext = scope.ServiceProvider.GetRequiredService<DataDbContext>();
 
-                // In Staging/Production, apply migrations automatically
-                // In Development, just warn
-                if (!app.Environment.IsDevelopment())
+                try
                 {
-                    Log.Information("🔄 Auto-applying {Count} pending migrations in {Environment} environment...",
-                        pendingMigrations.Count(), app.Environment.EnvironmentName);
-                    await dbContext.Database.MigrateAsync();
-                    Log.Information("✅ Migrations applied successfully!");
+                    Log.Information("Checking database connectivity...");
+                    var canConnect = await dbContext.Database.CanConnectAsync();
+                    Log.Information("✅ Database connection successful: {CanConnect}", canConnect);
+
+                    // Get pending migrations
+                    var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+                    var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
+
+                    Log.Information("📊 Migration status - Applied: {Applied}, Pending: {Pending}",
+                        appliedMigrations.Count(), pendingMigrations.Count());
+
+                    if (pendingMigrations.Any())
+                    {
+                        Log.Warning("⚠️ Pending migrations: {Migrations}",
+                            string.Join(", ", pendingMigrations));
+
+                        // In Staging/Production, apply migrations automatically
+                        // In Development, just warn
+                        if (app.Environment.EnvironmentName != "Development")
+                        {
+                            Log.Information("🔄 Auto-applying {Count} pending migrations in {Environment} environment...",
+                                pendingMigrations.Count(), app.Environment.EnvironmentName);
+                            await dbContext.Database.MigrateAsync();
+                            Log.Information("✅ Migrations applied successfully!");
+                        }
+                        else
+                        {
+                            Log.Warning("⚠️ Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
+                        }
+                    }
+                    else
+                    {
+                        Log.Information("✅ Database schema is up to date (no pending migrations)");
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Log.Warning("⚠️ Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
+                    Log.Error(ex, "❌ Migration check failed: {Message}", ex.Message);
+                    // Don't throw - migrations will be retried on next restart
                 }
             }
-            else
-            {
-                Log.Information("✅ Database schema is up to date (no pending migrations)");
-            }
+            Log.Information("✅ Database migration check complete");
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "❌ Migration check failed: {Message}", ex.Message);
-            // Don't throw - let the app start and health checks will catch the issue
+            Log.Fatal(ex, "❌ Fatal error in migration background task");
         }
-    }
-    Log.Information("✅ Database migration check complete");
+    });
 
     // Add Correlation ID middleware (FIRST - so all logs have correlation ID)
     app.UseMiddleware<CorrelationIdMiddleware>();
