@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef } from "ag-grid-community";
 import { geometryApi } from "../../services/hydrostaticsApi";
+import { isAxiosError } from "axios";
 import { getErrorMessage } from "../../types/errors";
 
 // Import AG Grid styles
@@ -42,7 +43,12 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
       const data = await geometryApi.getOffsetsGrid(vesselId);
       setOffsetData(data);
     } catch (err) {
-      setError(getErrorMessage(err));
+      // Treat 404 (no geometry yet) as empty grid so user can start editing
+      if (isAxiosError(err) && err.response?.status === 404) {
+        setOffsetData({ stations: [], waterlines: [], offsets: [] });
+      } else {
+        setError(getErrorMessage(err));
+      }
     } finally {
       setLoading(false);
     }
