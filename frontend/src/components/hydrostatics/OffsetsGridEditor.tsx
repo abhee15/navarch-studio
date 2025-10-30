@@ -178,7 +178,10 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
           <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" id="modal-title">
+                <h3
+                  className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                  id="modal-title"
+                >
                   Offsets Grid Editor
                 </h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -220,7 +223,7 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
                 {offsetData.stations.length === 0 ? (
                   <div className="text-center py-12">
                     <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
+                      className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -232,17 +235,17 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
                         d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
                       />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                       No geometry data available
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                       Import stations and waterlines first using the CSV import wizard
                     </p>
                   </div>
                 ) : (
                   <>
                     {/* Debug Info */}
-                    <div className="mb-2 text-xs text-gray-500">
+                    <div className="mb-2 text-xs text-gray-500 dark:text-gray-400">
                       Rows: {rowData.length}, Columns: {columnDefs.length}
                     </div>
                     <div className="ag-theme-alpine" style={{ height: "500px", width: "100%" }}>
@@ -264,10 +267,10 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
 
                 {/* Info */}
                 {offsetData.stations.length > 0 && (
-                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <div className="mt-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md p-4">
                     <div className="flex">
                       <svg
-                        className="h-5 w-5 text-blue-400"
+                        className="h-5 w-5 text-blue-400 dark:text-blue-300"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -278,12 +281,12 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
                         />
                       </svg>
                       <div className="ml-3">
-                        <p className="text-sm text-blue-700">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
                           <strong>Grid Info:</strong> {offsetData.stations.length} stations ×{" "}
                           {offsetData.waterlines.length} waterlines ={" "}
                           {offsetData.stations.length * offsetData.waterlines.length} offsets
                         </p>
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           Double-click cells to edit. Values are half-breadth (m) from centerline.
                         </p>
                       </div>
@@ -296,7 +299,7 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
 
           {/* Actions */}
           {!loading && offsetData && offsetData.stations.length > 0 && (
-            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
               <button
                 onClick={handleSave}
                 disabled={saving}
@@ -307,7 +310,7 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
               <button
                 onClick={onClose}
                 disabled={saving}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50"
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50"
               >
                 Cancel
               </button>
