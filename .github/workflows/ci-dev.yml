@@ -518,12 +518,26 @@ jobs:
           echo "✅ Found S3 bucket: $BUCKET_NAME"
           echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
 
+      - name: Discover API Gateway URL from App Runner
+        id: discover-api
+        run: |
+          echo "🔍 Discovering API Gateway service URL from App Runner..."
+          API_GW=$(aws apprunner list-services --query "ServiceSummaryList[?contains(ServiceName, '-dev-api-gateway')].ServiceUrl | [0]" --output text)
+          if [ -z "$API_GW" ] || [ "$API_GW" == "None" ]; then
+            echo "❌ ERROR: Could not find App Runner API Gateway service URL"
+            exit 1
+          fi
+          # Compose full https URL
+          FULL_API_URL="https://$API_GW"
+          echo "API Gateway ServiceUrl: $API_GW"
+          echo "API_GATEWAY_URL=$FULL_API_URL" >> $GITHUB_ENV
+          echo "✅ API Gateway URL set to $FULL_API_URL"
+
       - name: Check required outputs
         run: |
           echo "🔍 Checking deployment configuration..."
           echo "S3 Bucket: '${{ steps.discover-s3.outputs.bucket_name }}'"
           echo "API Gateway URL: '$API_GATEWAY_URL'"
-          echo "CloudFront Domain: '$CLOUDFRONT_DOMAIN'"
 
           if [ -z "$API_GATEWAY_URL" ]; then
             echo "❌ ERROR: API Gateway URL is empty! Cannot deploy frontend."
