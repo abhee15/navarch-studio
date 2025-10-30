@@ -49,5 +49,9 @@ public class Vessel
     public ICollection<Offset> Offsets { get; set; } = new List<Offset>();
     public ICollection<Loadcase> Loadcases { get; set; } = new List<Loadcase>();
     public ICollection<HydroResult> HydroResults { get; set; } = new List<HydroResult>();
-}
 
+    // Design-phase metadata (one-to-one relationships)
+    public VesselMetadata? Metadata { get; set; }
+    public MaterialsConfig? Materials { get; set; }
+    public LoadingConditions? Loading { get; set; }
+}

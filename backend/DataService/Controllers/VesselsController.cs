@@ -224,4 +224,15 @@ public class VesselsController : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Gets predefined vessel templates
+    /// </summary>
+    [HttpGet("templates")]
+    [ProducesResponseType(typeof(List<VesselTemplateDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTemplates()
+    {
+        var templates = await _vesselService.GetTemplatesAsync();
+        return Ok(templates);
+    }
 }

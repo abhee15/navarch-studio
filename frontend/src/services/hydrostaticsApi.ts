@@ -3,6 +3,7 @@ import type {
   Vessel,
   VesselDetails,
   CreateVesselDto,
+  VesselTemplate,
   Station,
   Waterline,
   Offset,
@@ -45,6 +46,11 @@ export const vesselsApi = {
 
   async delete(id: string): Promise<void> {
     await api.delete(`/hydrostatics/vessels/${id}`);
+  },
+
+  async getTemplates(): Promise<VesselTemplate[]> {
+    const response = await api.get("/hydrostatics/vessels/templates");
+    return response.data;
   },
 };
 

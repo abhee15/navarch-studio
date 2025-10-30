@@ -37,5 +37,9 @@ public interface IVesselService
     /// Soft deletes a vessel
     /// </summary>
     Task<bool> DeleteVesselAsync(Guid id, CancellationToken cancellationToken = default);
-}
 
+    /// <summary>
+    /// Gets predefined vessel templates
+    /// </summary>
+    Task<List<VesselTemplateDto>> GetTemplatesAsync();
+}

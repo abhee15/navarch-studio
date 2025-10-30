@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
+import toast from "react-hot-toast";
 import { vesselsApi } from "../../services/hydrostaticsApi";
 import type { Vessel } from "../../types/hydrostatics";
-import CreateVesselDialog from "../../components/hydrostatics/CreateVesselDialog";
 import { useStore } from "../../stores";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { Footer } from "../../components/Footer";
@@ -14,7 +14,7 @@ export const VesselsList = observer(function VesselsList() {
   const [vessels, setVessels] = useState<Vessel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadVessels = async () => {
     try {
@@ -33,13 +33,32 @@ export const VesselsList = observer(function VesselsList() {
     loadVessels();
   }, []);
 
-  const handleVesselCreated = () => {
-    setIsCreateDialogOpen(false);
-    loadVessels();
+  const handleCreateVessel = () => {
+    navigate("/hydrostatics/vessels/create");
   };
 
   const handleVesselClick = (vesselId: string) => {
     navigate(`/hydrostatics/vessels/${vesselId}`);
+  };
+
+  const handleDeleteVessel = async (vesselId: string, vesselName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!confirm(`Are you sure you want to delete "${vesselName}"?`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(vesselId);
+      await vesselsApi.delete(vesselId);
+      toast.success("Vessel deleted successfully");
+      loadVessels();
+    } catch (error) {
+      console.error("Failed to delete vessel:", error);
+      toast.error("Failed to delete vessel");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleHome = () => {
@@ -137,7 +156,7 @@ export const VesselsList = observer(function VesselsList() {
               </p>
             </div>
             <button
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={handleCreateVessel}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
             >
               <svg
@@ -191,7 +210,7 @@ export const VesselsList = observer(function VesselsList() {
             </p>
             <div className="mt-6">
               <button
-                onClick={() => setIsCreateDialogOpen(true)}
+                onClick={handleCreateVessel}
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <svg
@@ -267,8 +286,48 @@ export const VesselsList = observer(function VesselsList() {
                       </span>
                     </div>
                   </div>
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    Updated {formatDate(vessel.updatedAt)}
+                  <div className="mt-3 flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      Updated {formatDate(vessel.updatedAt)}
+                    </span>
+                    <button
+                      onClick={(e) => handleDeleteVessel(vessel.id, vessel.name, e)}
+                      disabled={deletingId === vessel.id}
+                      className="text-destructive hover:text-destructive/80 disabled:opacity-50 p-1 rounded hover:bg-destructive/10"
+                      title="Delete vessel"
+                    >
+                      {deletingId === vessel.id ? (
+                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -279,15 +338,6 @@ export const VesselsList = observer(function VesselsList() {
 
       {/* Footer */}
       <Footer />
-
-      {/* Create Vessel Dialog */}
-      {isCreateDialogOpen && (
-        <CreateVesselDialog
-          isOpen={isCreateDialogOpen}
-          onClose={() => setIsCreateDialogOpen(false)}
-          onVesselCreated={handleVesselCreated}
-        />
-      )}
     </div>
   );
 });

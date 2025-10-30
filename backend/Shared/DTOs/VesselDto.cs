@@ -21,6 +21,11 @@ public class VesselDto : UnitAwareDto
 
     [Convertible("Length")]
     public decimal DesignDraft { get; set; }
+
+    // Optional metadata
+    public VesselMetadataDto? Metadata { get; set; }
+    public MaterialsConfigDto? Materials { get; set; }
+    public LoadingConditionsDto? Loading { get; set; }
 }
 
 /// <summary>
@@ -47,5 +52,9 @@ public class VesselDetailsDto : UnitAwareDto
     public int OffsetsCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-}
 
+    // Optional metadata
+    public VesselMetadataDto? Metadata { get; set; }
+    public MaterialsConfigDto? Materials { get; set; }
+    public LoadingConditionsDto? Loading { get; set; }
+}

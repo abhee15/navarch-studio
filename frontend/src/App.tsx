@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { VesselsList } from "./pages/hydrostatics/VesselsList";
+import { VesselBuilder } from "./pages/hydrostatics/VesselBuilder";
 import { VesselDetail } from "./pages/hydrostatics/VesselDetail";
 import { VesselWorkspace } from "./pages/hydrostatics/VesselWorkspace";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -99,6 +100,14 @@ export const App: React.FC = observer(() => (
             element={
               <ProtectedRoute>
                 <VesselsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hydrostatics/vessels/create"
+            element={
+              <ProtectedRoute>
+                <VesselBuilder />
               </ProtectedRoute>
             }
           />

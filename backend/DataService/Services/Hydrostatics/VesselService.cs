@@ -58,6 +58,51 @@ public class VesselService : IVesselService
         _context.Vessels.Add(vessel);
         await _context.SaveChangesAsync(cancellationToken);
 
+        // Create optional metadata if provided
+        if (dto.Metadata != null)
+        {
+            var metadata = new VesselMetadata
+            {
+                VesselId = vessel.Id,
+                VesselType = dto.Metadata.VesselType,
+                Size = dto.Metadata.Size,
+                BlockCoefficient = dto.Metadata.BlockCoefficient,
+                HullFamily = dto.Metadata.HullFamily,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.VesselMetadata.Add(metadata);
+        }
+
+        if (dto.Materials != null)
+        {
+            var materials = new MaterialsConfig
+            {
+                VesselId = vessel.Id,
+                HullMaterial = dto.Materials.HullMaterial,
+                SuperstructureMaterial = dto.Materials.SuperstructureMaterial,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.MaterialsConfigs.Add(materials);
+        }
+
+        if (dto.Loading != null)
+        {
+            var loading = new LoadingConditions
+            {
+                VesselId = vessel.Id,
+                LightshipTonnes = dto.Loading.LightshipTonnes,
+                DeadweightTonnes = dto.Loading.DeadweightTonnes,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.LoadingConditions.Add(loading);
+        }
+
+        // Save metadata if any was added
+        if (dto.Metadata != null || dto.Materials != null || dto.Loading != null)
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
         _logger.LogInformation("Created vessel {VesselId} '{VesselName}' for user {UserId} (stored in SI units)",
             vessel.Id, vessel.Name, userId);
 
@@ -119,6 +164,22 @@ public class VesselService : IVesselService
         var offsetsCount = await _context.Offsets
             .CountAsync(o => o.VesselId == id, cancellationToken);
 
+        // Get optional metadata
+        var metadata = await _context.VesselMetadata
+            .AsNoTracking()
+            .Where(m => m.VesselId == id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var materials = await _context.MaterialsConfigs
+            .AsNoTracking()
+            .Where(m => m.VesselId == id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var loading = await _context.LoadingConditions
+            .AsNoTracking()
+            .Where(l => l.VesselId == id)
+            .FirstOrDefaultAsync(cancellationToken);
+
         return new VesselDetailsDto
         {
             Id = vessel.Id,
@@ -132,7 +193,24 @@ public class VesselService : IVesselService
             WaterlinesCount = waterlinesCount,
             OffsetsCount = offsetsCount,
             CreatedAt = vessel.CreatedAt,
-            UpdatedAt = vessel.UpdatedAt
+            UpdatedAt = vessel.UpdatedAt,
+            Metadata = metadata != null ? new VesselMetadataDto
+            {
+                VesselType = metadata.VesselType,
+                Size = metadata.Size,
+                BlockCoefficient = metadata.BlockCoefficient,
+                HullFamily = metadata.HullFamily
+            } : null,
+            Materials = materials != null ? new MaterialsConfigDto
+            {
+                HullMaterial = materials.HullMaterial,
+                SuperstructureMaterial = materials.SuperstructureMaterial
+            } : null,
+            Loading = loading != null ? new LoadingConditionsDto
+            {
+                LightshipTonnes = loading.LightshipTonnes,
+                DeadweightTonnes = loading.DeadweightTonnes
+            } : null
         };
     }
 
@@ -208,5 +286,97 @@ public class VesselService : IVesselService
 
         return true;
     }
-}
 
+    public Task<List<VesselTemplateDto>> GetTemplatesAsync()
+    {
+        var templates = new List<VesselTemplateDto>
+        {
+            new VesselTemplateDto
+            {
+                Id = "patrol-boat-35m",
+                Name = "Patrol Boat (35m)",
+                Description = "Medium patrol vessel for coastal operations",
+                Preset = new VesselDto
+                {
+                    Name = "Patrol Boat (35m)",
+                    Description = "Medium patrol vessel for coastal operations",
+                    Lpp = 35,
+                    Beam = 6.2m,
+                    DesignDraft = 1.9m,
+                    Metadata = new VesselMetadataDto
+                    {
+                        VesselType = "Ship",
+                        Size = "Small",
+                        BlockCoefficient = 0.52m,
+                        HullFamily = "NPL"
+                    }
+                }
+            },
+            new VesselTemplateDto
+            {
+                Id = "trawler-24m",
+                Name = "Trawler (24m)",
+                Description = "Commercial fishing trawler",
+                Preset = new VesselDto
+                {
+                    Name = "Trawler (24m)",
+                    Description = "Commercial fishing trawler",
+                    Lpp = 24,
+                    Beam = 7.0m,
+                    DesignDraft = 3.1m,
+                    Metadata = new VesselMetadataDto
+                    {
+                        VesselType = "Ship",
+                        Size = "Small",
+                        BlockCoefficient = 0.62m,
+                        HullFamily = "Prismatic"
+                    }
+                }
+            },
+            new VesselTemplateDto
+            {
+                Id = "sailing-yacht-45ft",
+                Name = "Sailing Yacht (45ft)",
+                Description = "Performance cruising yacht",
+                Preset = new VesselDto
+                {
+                    Name = "Sailing Yacht (45ft)",
+                    Description = "Performance cruising yacht",
+                    Lpp = 13.7m,
+                    Beam = 4.2m,
+                    DesignDraft = 2.2m,
+                    Metadata = new VesselMetadataDto
+                    {
+                        VesselType = "Yacht",
+                        Size = "Small",
+                        BlockCoefficient = 0.44m,
+                        HullFamily = "Wigley"
+                    }
+                }
+            },
+            new VesselTemplateDto
+            {
+                Id = "container-feeder-180m",
+                Name = "Container Feeder (180m)",
+                Description = "Regional container ship",
+                Preset = new VesselDto
+                {
+                    Name = "Container Feeder (180m)",
+                    Description = "Regional container ship",
+                    Lpp = 180,
+                    Beam = 28,
+                    DesignDraft = 9.5m,
+                    Metadata = new VesselMetadataDto
+                    {
+                        VesselType = "Ship",
+                        Size = "Medium",
+                        BlockCoefficient = 0.70m,
+                        HullFamily = "Series 60"
+                    }
+                }
+            }
+        };
+
+        return Task.FromResult(templates);
+    }
+}

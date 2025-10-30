@@ -20,6 +20,11 @@ public class DataDbContext : DbContext
     public DbSet<Curve> Curves => Set<Curve>();
     public DbSet<CurvePoint> CurvePoints => Set<CurvePoint>();
 
+    // Vessel metadata entities
+    public DbSet<VesselMetadata> VesselMetadata => Set<VesselMetadata>();
+    public DbSet<MaterialsConfig> MaterialsConfigs => Set<MaterialsConfig>();
+    public DbSet<LoadingConditions> LoadingConditions => Set<LoadingConditions>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -59,6 +64,22 @@ public class DataDbContext : DbContext
             entity.HasMany(e => e.Loadcases)
                 .WithOne(l => l.Vessel)
                 .HasForeignKey(l => l.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One-to-one relationships for metadata
+            entity.HasOne(e => e.Metadata)
+                .WithOne(m => m.Vessel)
+                .HasForeignKey<VesselMetadata>(m => m.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Materials)
+                .WithOne(m => m.Vessel)
+                .HasForeignKey<MaterialsConfig>(m => m.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Loading)
+                .WithOne(l => l.Vessel)
+                .HasForeignKey<LoadingConditions>(l => l.VesselId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -158,6 +179,41 @@ public class DataDbContext : DbContext
 
             entity.HasIndex(e => new { e.CurveId, e.Sequence });
         });
+
+        // VesselMetadata configuration
+        modelBuilder.Entity<VesselMetadata>(entity =>
+        {
+            entity.ToTable("vessel_metadata");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.VesselType).HasMaxLength(50);
+            entity.Property(e => e.Size).HasMaxLength(50);
+            entity.Property(e => e.BlockCoefficient).HasColumnType("decimal(5,3)");
+            entity.Property(e => e.HullFamily).HasMaxLength(50);
+
+            entity.HasIndex(e => e.VesselId).IsUnique();
+        });
+
+        // MaterialsConfig configuration
+        modelBuilder.Entity<MaterialsConfig>(entity =>
+        {
+            entity.ToTable("materials_config");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.HullMaterial).HasMaxLength(50);
+            entity.Property(e => e.SuperstructureMaterial).HasMaxLength(50);
+
+            entity.HasIndex(e => e.VesselId).IsUnique();
+        });
+
+        // LoadingConditions configuration
+        modelBuilder.Entity<LoadingConditions>(entity =>
+        {
+            entity.ToTable("loading_conditions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.LightshipTonnes).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.DeadweightTonnes).HasColumnType("decimal(10,2)");
+
+            entity.HasIndex(e => e.VesselId).IsUnique();
+        });
     }
 
     public override int SaveChanges()
@@ -191,8 +247,3 @@ public class DataDbContext : DbContext
         }
     }
 }
-
-
-
-
-

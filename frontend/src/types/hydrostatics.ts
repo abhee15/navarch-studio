@@ -12,10 +12,30 @@ export interface Vessel {
   updatedAt: string;
 }
 
+export interface VesselMetadata {
+  vesselType?: "Boat" | "Yacht" | "Ship";
+  size?: "Small" | "Medium" | "Large";
+  blockCoefficient?: number;
+  hullFamily?: "Wigley" | "Series 60" | "NPL" | "Prismatic";
+}
+
+export interface MaterialsConfig {
+  hullMaterial?: "Steel" | "Aluminium" | "FRP" | "Wood";
+  superstructureMaterial?: "Aluminium" | "Composite" | "Steel";
+}
+
+export interface LoadingConditions {
+  lightshipTonnes?: number;
+  deadweightTonnes?: number;
+}
+
 export interface VesselDetails extends Vessel {
   stationsCount: number;
   waterlinesCount: number;
   offsetsCount: number;
+  metadata?: VesselMetadata;
+  materials?: MaterialsConfig;
+  loading?: LoadingConditions;
 }
 
 export interface CreateVesselDto {
@@ -24,6 +44,16 @@ export interface CreateVesselDto {
   lpp: number; // In user's preferred units
   beam: number;
   designDraft: number;
+  metadata?: VesselMetadata;
+  materials?: MaterialsConfig;
+  loading?: LoadingConditions;
+}
+
+export interface VesselTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  preset: CreateVesselDto;
 }
 
 export interface Station {
