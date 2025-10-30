@@ -617,6 +617,10 @@ jobs:
             echo ""
             echo "💡 Test your application:"
             echo "   Open: ${{ steps.get-urls.outputs.cloudfront_url }}"
+          elif [ "${{ needs.smoke-tests.result }}" == "skipped" ]; then
+            echo "⏭️ Deployment steps skipped (no backend or infrastructure changes)."
+            echo "✅ Treating as successful run for notify."
+            exit 0
           else
             echo "❌ Dev deployment failed!"
             echo "Check the logs above for details."
