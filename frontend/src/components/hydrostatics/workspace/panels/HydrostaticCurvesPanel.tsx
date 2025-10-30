@@ -51,9 +51,7 @@ export const HydrostaticCurvesPanel = observer(
               />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-foreground">No Data</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Compute hydrostatics to see curves
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Compute hydrostatics to see curves</p>
           </div>
         </div>
       );
@@ -93,14 +91,21 @@ export const HydrostaticCurvesPanel = observer(
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={chartData}
-                onMouseMove={(e: any) => {
-                  if (e && e.activePayload && onDraftHover) {
-                    onDraftHover(e.activePayload[0].payload.draft);
+                onMouseMove={(e) => {
+                  if (e && "activePayload" in e && e.activePayload && Array.isArray(e.activePayload) && e.activePayload.length > 0 && onDraftHover) {
+                    const firstPayload = e.activePayload[0] as { payload: { draft: number } } | undefined;
+                    if (firstPayload && "payload" in firstPayload && firstPayload.payload && "draft" in firstPayload.payload) {
+                      onDraftHover(firstPayload.payload.draft);
+                    }
                   }
                 }}
                 onMouseLeave={() => onDraftHover && onDraftHover(null)}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e5e7eb"
+                  className="dark:stroke-gray-700"
+                />
                 <XAxis
                   dataKey="draft"
                   label={{
