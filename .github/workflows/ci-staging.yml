@@ -213,6 +213,29 @@ jobs:
           terraform state list | grep "module.s3_cloudfront" || echo "⚠️ No S3/CloudFront resources in state!"
         working-directory: ./terraform/deploy
 
+      - name: Get CloudFront domain for CORS
+        id: get-cloudfront
+        run: |
+          echo "📊 Getting CloudFront domain..."
+          CLOUDFRONT_DOMAIN=$(terraform output -raw cloudfront_domain_name || echo "")
+          echo "CloudFront Domain: $CLOUDFRONT_DOMAIN"
+          echo "cloudfront_domain=$CLOUDFRONT_DOMAIN" >> $GITHUB_OUTPUT
+        working-directory: ./terraform/deploy
+
+      - name: Update API Gateway CORS (Second Apply)
+        if: steps.get-cloudfront.outputs.cloudfront_domain != ''
+        run: |
+          echo "🔄 Updating API Gateway with CORS configuration..."
+          echo "CloudFront Domain: ${{ steps.get-cloudfront.outputs.cloudfront_domain }}"
+          
+          # Second apply to update API Gateway with CloudFront domain for CORS
+          terraform apply -auto-approve \
+            -var-file="environments/staging.tfvars" \
+            -var="cloudfront_domain_override=${{ steps.get-cloudfront.outputs.cloudfront_domain }}"
+          
+          echo "✅ API Gateway CORS configured!"
+        working-directory: ./terraform/deploy
+
       - name: Get outputs
         id: tf-outputs
         run: |
