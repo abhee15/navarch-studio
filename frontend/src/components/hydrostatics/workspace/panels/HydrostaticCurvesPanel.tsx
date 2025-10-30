@@ -92,9 +92,23 @@ export const HydrostaticCurvesPanel = observer(
               <LineChart
                 data={chartData}
                 onMouseMove={(e) => {
-                  if (e && "activePayload" in e && e.activePayload && Array.isArray(e.activePayload) && e.activePayload.length > 0 && onDraftHover) {
-                    const firstPayload = e.activePayload[0] as { payload: { draft: number } } | undefined;
-                    if (firstPayload && "payload" in firstPayload && firstPayload.payload && "draft" in firstPayload.payload) {
+                  if (
+                    e &&
+                    "activePayload" in e &&
+                    e.activePayload &&
+                    Array.isArray(e.activePayload) &&
+                    e.activePayload.length > 0 &&
+                    onDraftHover
+                  ) {
+                    const firstPayload = e.activePayload[0] as
+                      | { payload: { draft: number } }
+                      | undefined;
+                    if (
+                      firstPayload &&
+                      "payload" in firstPayload &&
+                      firstPayload.payload &&
+                      "draft" in firstPayload.payload
+                    ) {
                       onDraftHover(firstPayload.payload.draft);
                     }
                   }
