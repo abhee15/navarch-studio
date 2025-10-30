@@ -9,15 +9,16 @@ import { ModeToggle } from "./ModeToggle";
 import { ViewModeLayout } from "./ViewModeLayout";
 import { EditModeLayout } from "./EditModeLayout";
 import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydrostaticsApi";
-import { OffsetsGridEditor } from "../OffsetsGridEditor";
+import { GeometryManagementDialog } from "../GeometryManagementDialog";
 import { getErrorMessage } from "../../../types/errors";
 
 interface WorkspaceLayoutProps {
   vessel: VesselDetails;
   onBack: () => void;
+  onVesselUpdated?: () => void;
 }
 
-export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
+export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLayoutProps) {
   const navigate = useNavigate();
   const vesselId = vessel.id;
 
@@ -420,12 +421,18 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
         )}
       </div>
 
-      {/* Geometry Editor Modal */}
+      {/* Geometry Management Dialog */}
       {showGeometryEditor && (
-        <OffsetsGridEditor
-          vesselId={vesselId}
+        <GeometryManagementDialog
+          vessel={vessel}
           isOpen={showGeometryEditor}
           onClose={() => setShowGeometryEditor(false)}
+          onGeometryUpdated={() => {
+            setShowGeometryEditor(false);
+            if (onVesselUpdated) {
+              onVesselUpdated();
+            }
+          }}
         />
       )}
     </div>

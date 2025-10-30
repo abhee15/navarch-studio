@@ -110,24 +110,54 @@ export const EditModeLayout = observer(
                   </div>
                 </div>
               )}
+              {vessel && (
+                <div className="text-[11px] mt-2">
+                  <span className="text-muted-foreground">Offsets:</span>
+                  <span className="ml-1 font-medium text-foreground">{vessel.offsetsCount}</span>
+                </div>
+              )}
               <button
                 onClick={onEditGeometry}
                 className="w-full mt-2 inline-flex items-center justify-center px-3 py-1.5 border border-border text-xs font-medium rounded text-foreground bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <svg
-                  className="w-3.5 h-3.5 mr-1.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                Edit Geometry
+                {vessel &&
+                (vessel.stationsCount ?? 0) > 0 &&
+                (vessel.waterlinesCount ?? 0) > 0 &&
+                (vessel.offsetsCount ?? 0) > 0 ? (
+                  <>
+                    <svg
+                      className="w-3.5 h-3.5 mr-1.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    Manage Geometry
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-3.5 h-3.5 mr-1.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add Geometry
+                  </>
+                )}
               </button>
             </div>
           </CollapsibleSection>

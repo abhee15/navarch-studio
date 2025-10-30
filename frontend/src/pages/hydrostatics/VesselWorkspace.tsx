@@ -130,7 +130,7 @@ export const VesselWorkspace = observer(function VesselWorkspace() {
       </header>
 
       {/* Workspace Content */}
-      <WorkspaceLayout vessel={vessel} onBack={handleBack} />
+      <WorkspaceLayout vessel={vessel} onBack={handleBack} onVesselUpdated={loadVessel} />
 
       {/* Settings Dialog */}
       <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
