@@ -38,6 +38,9 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
   const [loadcases, setLoadcases] = useState<Loadcase[]>([]);
   const [selectedLoadcaseId, setSelectedLoadcaseId] = useState<string>("");
   const [results, setResults] = useState<HydroResult[]>([]);
+  const [curves, setCurves] = useState<
+    Record<string, import("../../../types/hydrostatics").CurveData>
+  >({});
 
   // Computation parameters
   const [waterType, setWaterType] = useState<string>("Salt Water");
@@ -105,6 +108,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
     try {
       setComputing(true);
       setError(null);
+      setCurves({}); // Clear previous curves
 
       // Generate draft array
       const drafts: number[] = [];
@@ -112,35 +116,57 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
         drafts.push(Number(d.toFixed(2)));
       }
 
-      // Fetch both hydrostatic table and Bonjean curves in parallel
-      // Bonjean curves are geometry-dependent only, so they can be pre-loaded
-      // This ensures all curve types are available immediately after compute
+      // Fetch hydrostatic table and generate all curve types in parallel
       const bonjeanShouldFetch =
         (vessel.stationsCount ?? 0) > 0 &&
         (vessel.waterlinesCount ?? 0) > 0 &&
         (vessel.offsetsCount ?? 0) > 0;
+
+      // Prepare curve types - GMt requires loadcase
+      const curveTypes = ["displacement", "kb", "lcb", "awp"];
+      if (selectedLoadcaseId) {
+        curveTypes.push("gmt");
+      }
 
       const promises: Promise<unknown>[] = [
         hydrostaticsApi.computeTable(vesselId, {
           loadcaseId: selectedLoadcaseId || undefined,
           drafts,
         }),
+        // Generate all hydrostatic curve types
+        curvesApi
+          .generate(vesselId, {
+            loadcaseId: selectedLoadcaseId || undefined,
+            types: curveTypes,
+            minDraft,
+            maxDraft,
+            points: drafts.length,
+          })
+          .catch((err) => {
+            console.error("Error generating curves:", err);
+            return { curves: {} };
+          }),
       ];
 
+      // Bonjean curves are geometry-dependent only, so they can be fetched separately
       if (bonjeanShouldFetch) {
-        // Prefetch Bonjean only if geometry exists
         promises.push(curvesApi.getBonjean(vesselId).catch(() => ({ curves: [] })));
       }
 
-      const [tableResponse] = (await Promise.all(promises)) as [
-        {
-          results: HydroResult[];
-          computation_time_ms: number | null;
-        },
-      ];
+      const responses = await Promise.all(promises);
+      const tableResponse = responses[0] as {
+        results: HydroResult[];
+        computation_time_ms: number | null;
+      };
+      const curvesResponse = responses[1] as {
+        curves: Record<string, import("../../../types/hydrostatics").CurveData>;
+      };
 
       setResults(tableResponse.results);
       setComputationTime(tableResponse.computation_time_ms);
+
+      // Store generated curves
+      setCurves(curvesResponse.curves || {});
 
       // Auto-switch to view mode
       setMode("view");
@@ -369,6 +395,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
           <ViewModeLayout
             vessel={vessel}
             results={results}
+            curves={curves}
             loadcases={loadcases}
             selectedLoadcaseId={selectedLoadcaseId}
             waterType={waterType}

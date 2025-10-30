@@ -10,7 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { HydroResult } from "../../../../types/hydrostatics";
+import type { HydroResult, CurveData } from "../../../../types/hydrostatics";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
 import { BonjeanCurvesPanel } from "./BonjeanCurvesPanel";
@@ -18,24 +18,29 @@ import { BonjeanCurvesPanel } from "./BonjeanCurvesPanel";
 interface HydrostaticCurvesPanelProps {
   vesselId: string;
   results: HydroResult[];
+  curves: Record<string, CurveData>;
   onDraftHover?: (draft: number | null) => void;
 }
 
 export const HydrostaticCurvesPanel = observer(
-  ({ vesselId, results, onDraftHover }: HydrostaticCurvesPanelProps) => {
+  ({ vesselId, results, curves, onDraftHover }: HydrostaticCurvesPanelProps) => {
     const [selectedCurveType, setSelectedCurveType] = useState<
-      "hydrostatic" | "bonjean" | "cross-curves"
-    >("hydrostatic");
+      "displacement" | "kb" | "lcb" | "awp" | "gmt" | "bonjean" | "cross-curves"
+    >("displacement");
 
     const displayUnits = settingsStore.preferredUnits;
     const lengthUnit = getUnitSymbol(displayUnits, "Length");
     const areaUnit = getUnitSymbol(displayUnits, "Area");
+    const massUnit = getUnitSymbol(displayUnits, "Mass");
 
     const formatNumber = (value: number): string => {
       return value.toFixed(2);
     };
 
-    if (results.length === 0) {
+    // Get the selected curve data
+    const selectedCurve = curves[selectedCurveType];
+
+    if (results.length === 0 && Object.keys(curves).length === 0) {
       return (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
@@ -59,15 +64,25 @@ export const HydrostaticCurvesPanel = observer(
       );
     }
 
-    const chartData = results.map((r) => ({
-      draft: r.draft,
-      displacement: r.dispWeight / 1000, // Convert to tonnes for readability
-      kb: r.kBz,
-      lcb: r.lCBx,
-      bmt: r.bMt,
-      gmt: r.gMt,
-      wpa: r.awp,
-    }));
+    // Prepare chart data from curve points
+    const chartData =
+      selectedCurve?.points.map((point) => ({
+        x: point.x,
+        y: point.y,
+      })) || [];
+
+    // Get Y-axis label and unit based on curve type
+    const getYAxisLabel = (): string => {
+      if (!selectedCurve) return "";
+      const unitMap: Record<string, string> = {
+        displacement: massUnit,
+        kb: lengthUnit,
+        lcb: lengthUnit,
+        awp: areaUnit,
+        gmt: lengthUnit,
+      };
+      return `${selectedCurve.yLabel} (${unitMap[selectedCurveType] || ""})`;
+    };
 
     return (
       <div className="h-full flex flex-col">
@@ -77,11 +92,24 @@ export const HydrostaticCurvesPanel = observer(
           <select
             value={selectedCurveType}
             onChange={(e) =>
-              setSelectedCurveType(e.target.value as "hydrostatic" | "bonjean" | "cross-curves")
+              setSelectedCurveType(
+                e.target.value as
+                  | "displacement"
+                  | "kb"
+                  | "lcb"
+                  | "awp"
+                  | "gmt"
+                  | "bonjean"
+                  | "cross-curves"
+              )
             }
             className="border border-border bg-background text-foreground rounded text-xs py-1 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            <option value="hydrostatic">Hydrostatic Curves</option>
+            <option value="displacement">Displacement</option>
+            <option value="kb">KB (Center of Buoyancy Height)</option>
+            <option value="lcb">LCB (Longitudinal Center of Buoyancy)</option>
+            <option value="awp">Waterplane Area (AWP)</option>
+            <option value="gmt">GMt (Transverse Metacentric Height)</option>
             <option value="bonjean">Bonjean Curves</option>
             <option value="cross-curves">Cross-Curves (KN)</option>
           </select>
@@ -89,142 +117,9 @@ export const HydrostaticCurvesPanel = observer(
 
         {/* Chart */}
         <div className="flex-1 min-h-0">
-          {selectedCurveType === "hydrostatic" && (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={chartData}
-                onMouseMove={(e) => {
-                  if (
-                    e &&
-                    "activePayload" in e &&
-                    e.activePayload &&
-                    Array.isArray(e.activePayload) &&
-                    e.activePayload.length > 0 &&
-                    onDraftHover
-                  ) {
-                    const firstPayload = e.activePayload[0] as
-                      | { payload: { draft: number } }
-                      | undefined;
-                    if (
-                      firstPayload &&
-                      "payload" in firstPayload &&
-                      firstPayload.payload &&
-                      "draft" in firstPayload.payload
-                    ) {
-                      onDraftHover(firstPayload.payload.draft);
-                    }
-                  }
-                }}
-                onMouseLeave={() => onDraftHover && onDraftHover(null)}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#e5e7eb"
-                  className="dark:stroke-gray-700"
-                />
-                <XAxis
-                  dataKey="draft"
-                  label={{
-                    value: `Draft (${lengthUnit})`,
-                    position: "insideBottom",
-                    offset: -5,
-                    style: { fontSize: "11px" },
-                  }}
-                  tick={{ fontSize: 10 }}
-                  stroke="currentColor"
-                  className="text-muted-foreground"
-                />
-                <YAxis
-                  yAxisId="left"
-                  label={{
-                    value: `Displacement (tonnes), KB, LCB, BMt, GMt (${lengthUnit})`,
-                    angle: -90,
-                    position: "insideLeft",
-                    style: { fontSize: "10px" },
-                  }}
-                  tick={{ fontSize: 10 }}
-                  stroke="currentColor"
-                  className="text-muted-foreground"
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  label={{
-                    value: `WPA (${areaUnit})`,
-                    angle: 90,
-                    position: "insideRight",
-                    style: { fontSize: "10px" },
-                  }}
-                  tick={{ fontSize: 10 }}
-                  stroke="currentColor"
-                  className="text-muted-foreground"
-                />
-                <Tooltip
-                  contentStyle={{ fontSize: "11px", padding: "4px 8px" }}
-                  formatter={(value: number) => formatNumber(value)}
-                />
-                <Legend wrapperStyle={{ fontSize: "10px", paddingTop: "8px" }} iconSize={10} />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="displacement"
-                  stroke="#3B82F6"
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="Disp (t)"
-                />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="kb"
-                  stroke="#10B981"
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="KB"
-                />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="lcb"
-                  stroke="#F59E0B"
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="LCB"
-                />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="bmt"
-                  stroke="#8B5CF6"
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="BMt"
-                />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="gmt"
-                  stroke="#EF4444"
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="GMt"
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="wpa"
-                  stroke="#EC4899"
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="WPA"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-
-          {selectedCurveType === "bonjean" && <BonjeanCurvesPanel vesselId={vesselId} />}
-
-          {selectedCurveType === "cross-curves" && (
+          {selectedCurveType === "bonjean" ? (
+            <BonjeanCurvesPanel vesselId={vesselId} />
+          ) : selectedCurveType === "cross-curves" ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-muted-foreground">
                 <svg
@@ -242,6 +137,87 @@ export const HydrostaticCurvesPanel = observer(
                 </svg>
                 <p className="text-xs font-medium">Cross-Curves of Stability (KN)</p>
                 <p className="text-[10px] mt-1">Coming soon</p>
+              </div>
+            </div>
+          ) : selectedCurve ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                onMouseMove={(e) => {
+                  if (
+                    e &&
+                    "activePayload" in e &&
+                    e.activePayload &&
+                    Array.isArray(e.activePayload) &&
+                    e.activePayload.length > 0 &&
+                    onDraftHover
+                  ) {
+                    const firstPayload = e.activePayload[0] as
+                      | { payload: { x: number } }
+                      | undefined;
+                    if (
+                      firstPayload &&
+                      "payload" in firstPayload &&
+                      firstPayload.payload &&
+                      "x" in firstPayload.payload
+                    ) {
+                      onDraftHover(firstPayload.payload.x);
+                    }
+                  }
+                }}
+                onMouseLeave={() => onDraftHover && onDraftHover(null)}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e5e7eb"
+                  className="dark:stroke-gray-700"
+                />
+                <XAxis
+                  dataKey="x"
+                  label={{
+                    value: selectedCurve.xLabel || `Draft (${lengthUnit})`,
+                    position: "insideBottom",
+                    offset: -5,
+                    style: { fontSize: "11px" },
+                  }}
+                  tick={{ fontSize: 10 }}
+                  stroke="currentColor"
+                  className="text-muted-foreground"
+                />
+                <YAxis
+                  label={{
+                    value: getYAxisLabel(),
+                    angle: -90,
+                    position: "insideLeft",
+                    style: { fontSize: "10px" },
+                  }}
+                  tick={{ fontSize: 10 }}
+                  stroke="currentColor"
+                  className="text-muted-foreground"
+                />
+                <Tooltip
+                  contentStyle={{ fontSize: "11px", padding: "4px 8px" }}
+                  formatter={(value: number) => formatNumber(value)}
+                  labelFormatter={(label) =>
+                    `${selectedCurve.xLabel || "Draft"}: ${formatNumber(Number(label))} ${lengthUnit}`
+                  }
+                />
+                <Legend wrapperStyle={{ fontSize: "10px", paddingTop: "8px" }} iconSize={10} />
+                <Line
+                  type="monotone"
+                  dataKey="y"
+                  stroke="#3B82F6"
+                  strokeWidth={1.5}
+                  dot={false}
+                  name={selectedCurve.yLabel}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-muted-foreground">
+                <p className="text-xs">Curve data not available</p>
+                <p className="text-[10px] mt-1">Please compute to generate curves</p>
               </div>
             </div>
           )}

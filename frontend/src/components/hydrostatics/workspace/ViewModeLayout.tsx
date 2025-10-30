@@ -3,7 +3,7 @@ import { Responsive, WidthProvider, Layout as GridLayout } from "react-grid-layo
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import type { PanelId } from "../../../types/workspace";
-import type { HydroResult, VesselDetails, Loadcase } from "../../../types/hydrostatics";
+import type { HydroResult, VesselDetails, Loadcase, CurveData } from "../../../types/hydrostatics";
 import { PanelWrapper } from "./panels/PanelWrapper";
 import { KPISummaryPanel } from "./panels/KPISummaryPanel";
 import { HydrostaticCurvesPanel } from "./panels/HydrostaticCurvesPanel";
@@ -18,6 +18,7 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 interface ViewModeLayoutProps {
   vessel: VesselDetails | null;
   results: HydroResult[];
+  curves: Record<string, CurveData>;
   loadcases: Loadcase[];
   selectedLoadcaseId: string;
   waterType: string;
@@ -46,6 +47,7 @@ interface ViewModeLayoutProps {
 export function ViewModeLayout({
   vessel,
   results,
+  curves,
   loadcases,
   selectedLoadcaseId,
   waterType,
@@ -232,6 +234,7 @@ export function ViewModeLayout({
           <HydrostaticCurvesPanel
             vesselId={vessel?.id || ""}
             results={results}
+            curves={curves}
             onDraftHover={setHighlightedDraft}
           />
         );
