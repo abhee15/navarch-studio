@@ -74,3 +74,10 @@ variable "domain_name" {
   type        = string
   default     = ""
 }
+
+# CORS Configuration
+variable "cloudfront_domain_override" {
+  description = "CloudFront domain for CORS configuration (used in second apply to update API Gateway CORS)"
+  type        = string
+  default     = ""
+}
