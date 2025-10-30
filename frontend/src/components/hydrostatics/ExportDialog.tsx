@@ -64,12 +64,15 @@ export function ExportDialog({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = filename;
+      try {
+        Object.defineProperty(link, "download", { value: filename, configurable: true });
+      } catch {
+        // fallback set
+        (link as any).download = filename;
+      }
       link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
 
       toast.success(`Export successful! Downloaded ${filename}`, { id: toastId });
 
@@ -175,7 +178,10 @@ export function ExportDialog({
               className="mt-1"
               disabled={exporting || format === "csv" || format === "json"}
             />
-            <label htmlFor="include-curves" className="ml-3 text-sm text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="include-curves"
+              className="ml-3 text-sm text-gray-700 dark:text-gray-300"
+            >
               Include hydrostatic curves
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Adds displacement, KB, LCB, AWP, and GM curves to the export

@@ -22,9 +22,9 @@ jest.mock("./services/api", () => {
   };
 });
 
-// Mock URL.createObjectURL to return a stable value
+// Mock URL functions
 global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
-// Mock URL.revokeObjectURL to no-op
+// @ts-ignore
 global.URL.revokeObjectURL = jest.fn();
 
 // Avoid navigation on anchor clicks in tests
@@ -35,31 +35,47 @@ Object.defineProperty(HTMLAnchorElement.prototype, "click", {
 });
 
 // Mock exportApi to avoid actual network and return a small blob
-const exportApiMock = {
-  exportCsv: jest.fn(async () => new Blob(["csv"], { type: "text/plain" })),
-  exportJson: jest.fn(async () => new Blob(["json"], { type: "application/json" })),
-  exportPdf: jest.fn(async () => new Blob(["pdf"], { type: "application/pdf" })),
-  exportExcel: jest.fn(async () => new Blob(["excel"], { type: "application/vnd.ms-excel" })),
-};
-
-// Cover different relative import paths used across components
-jest.mock("./services/hydrostaticsApi", () => ({ exportApi: exportApiMock, vesselsApi: { list: jest.fn(async () => ({ vessels: [], total: 0 })) } }));
-jest.mock("../services/hydrostaticsApi", () => ({ exportApi: exportApiMock, vesselsApi: { list: jest.fn(async () => ({ vessels: [], total: 0 })) } }));
-jest.mock("../../services/hydrostaticsApi", () => ({ exportApi: exportApiMock, vesselsApi: { list: jest.fn(async () => ({ vessels: [], total: 0 })) } }));
+jest.mock("./services/hydrostaticsApi", () => {
+  const textBlob = (t: string) => new Blob([t], { type: "text/plain" });
+  return {
+    exportApi: {
+      exportCsv: jest.fn(async () => textBlob("csv")),
+      exportJson: jest.fn(async () => textBlob("json")),
+      exportPdf: jest.fn(async () => textBlob("pdf")),
+      exportExcel: jest.fn(async () => textBlob("excel")),
+    },
+    vesselsApi: {
+      // keep as minimal noop for other tests
+      list: jest.fn(async () => ({ vessels: [], total: 0 })),
+    },
+  };
+});
 
 // Mock LocalAuthService to avoid network in AuthStore tests
 jest.mock("./services/localAuthService", () => {
-  const user = { id: "1", email: "test@example.com", name: "Test User" };
+  let authed = false;
+  let user: any = null;
   return {
     LocalAuthService: {
-      login: jest.fn(async () => user),
-      getUser: jest.fn(() => user),
-      isAuthenticated: jest.fn(() => true),
-      getToken: jest.fn(() => "fake-jwt"),
-      logout: jest.fn(),
+      login: jest.fn(async () => {
+        authed = true;
+        user = { id: "1", email: "test@example.com", name: "Test User" };
+        return user;
+      }),
+      getUser: jest.fn(() => (authed ? user : null)),
+      isAuthenticated: jest.fn(() => authed),
+      getToken: jest.fn(() => (authed ? "fake-jwt" : null)),
+      logout: jest.fn(() => {
+        authed = false;
+        user = null;
+      }),
       setToken: jest.fn(),
-      setUser: jest.fn(),
-      getCurrentUser: jest.fn(async () => user),
+      setUser: jest.fn((u: any) => {
+        user = u;
+      }),
+      getCurrentUser: jest.fn(
+        async () => user || { id: "1", email: "test@example.com", name: "Test User" }
+      ),
     },
   };
 });
