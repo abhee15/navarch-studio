@@ -120,10 +120,10 @@ resource "aws_apprunner_service" "identity_service" {
           Cognito__AppClientId                 = var.cognito_user_pool_client_id
           Cognito__Domain                      = var.cognito_domain
           Cognito__Region                      = data.aws_region.current.name
-        },
-        (var.benchmark_raw_bucket != "" && var.benchmark_curated_bucket != "") ? {
-          Benchmark__RawBucket     = var.benchmark_raw_bucket
-          Benchmark__CuratedBucket = var.benchmark_curated_bucket
+          },
+          (var.benchmark_raw_bucket != "" && var.benchmark_curated_bucket != "") ? {
+            Benchmark__RawBucket     = var.benchmark_raw_bucket
+            Benchmark__CuratedBucket = var.benchmark_curated_bucket
         } : {})
       }
     }
