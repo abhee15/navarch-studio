@@ -13,14 +13,16 @@ import {
 import type { HydroResult } from "../../../../types/hydrostatics";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
+import { BonjeanCurvesPanel } from "./BonjeanCurvesPanel";
 
 interface HydrostaticCurvesPanelProps {
+  vesselId: string;
   results: HydroResult[];
   onDraftHover?: (draft: number | null) => void;
 }
 
 export const HydrostaticCurvesPanel = observer(
-  ({ results, onDraftHover }: HydrostaticCurvesPanelProps) => {
+  ({ vesselId, results, onDraftHover }: HydrostaticCurvesPanelProps) => {
     const [selectedCurveType, setSelectedCurveType] = useState<
       "hydrostatic" | "bonjean" | "cross-curves"
     >("hydrostatic");
@@ -220,27 +222,7 @@ export const HydrostaticCurvesPanel = observer(
             </ResponsiveContainer>
           )}
 
-          {selectedCurveType === "bonjean" && (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
-                <svg
-                  className="mx-auto h-8 w-8 mb-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-                <p className="text-xs font-medium">Bonjean Curves</p>
-                <p className="text-[10px] mt-1">Coming soon</p>
-              </div>
-            </div>
-          )}
+          {selectedCurveType === "bonjean" && <BonjeanCurvesPanel vesselId={vesselId} />}
 
           {selectedCurveType === "cross-curves" && (
             <div className="flex items-center justify-center h-full">

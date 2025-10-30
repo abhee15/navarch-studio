@@ -60,19 +60,19 @@ export function PanelWrapper({
   return (
     <div
       className={`
-        h-full flex flex-col bg-card border border-border rounded-lg shadow-sm
+        h-full flex flex-col bg-card border border-border/50 rounded-lg shadow-sm overflow-hidden
         ${isDragging ? "opacity-50" : "opacity-100"}
-        transition-opacity
+        hover:border-border transition-all
       `}
     >
       {/* Panel Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card/80 backdrop-blur-sm">
+      <div className="flex-shrink-0 border-b border-border/50 bg-card/80 backdrop-blur-sm hover:bg-card/90 transition-colors">
         <div className="px-3 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             {/* Drag Handle */}
             {showDragHandle && (
               <div
-                className="cursor-move text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                className="cursor-move text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded p-1 transition-all flex-shrink-0"
                 title="Drag to reposition"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,12 +135,12 @@ export function PanelWrapper({
       </div>
 
       {/* Panel Content */}
-      {!collapsed && <div className="flex-1 overflow-auto p-3">{children}</div>}
+      {!collapsed && <div className="flex-1 min-h-0 overflow-auto p-3">{children}</div>}
 
       {/* Collapsed State */}
       {collapsed && (
-        <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-xs text-muted-foreground">Click to expand</p>
+        <div className="flex-1 flex items-center justify-center p-2">
+          <p className="text-xs text-muted-foreground">Collapsed</p>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Responsive, WidthProvider, Layout as GridLayout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -69,11 +69,97 @@ export function ViewModeLayout({
   const [highlightedDraft, setHighlightedDraft] = useState<number | null>(null);
   const [currentBreakpoint, setCurrentBreakpoint] = useState<"lg" | "md" | "sm">("lg");
 
+  // Track original heights for collapsed panels
+  const [originalHeights, setOriginalHeights] = useState<
+    Record<string, Partial<Record<PanelId, number>>>
+  >({
+    lg: {},
+    md: {},
+    sm: {},
+  });
+
   // Get current result (middle draft as reference)
   const currentResult = results.length > 0 ? results[Math.floor(results.length / 2)] : null;
 
   // Find selected loadcase
   const selectedLoadcase = loadcases.find((lc) => lc.id === selectedLoadcaseId);
+
+  // Initialize original heights from grid layouts
+  useEffect(() => {
+    const newOriginalHeights: Record<string, Partial<Record<PanelId, number>>> = {
+      lg: {},
+      md: {},
+      sm: {},
+    };
+
+    (["lg", "md", "sm"] as const).forEach((breakpoint) => {
+      gridLayouts[breakpoint].forEach((item) => {
+        const panelId = item.i as PanelId;
+        if (!originalHeights[breakpoint][panelId]) {
+          newOriginalHeights[breakpoint][panelId] = item.h;
+        } else {
+          newOriginalHeights[breakpoint][panelId] = originalHeights[breakpoint][panelId];
+        }
+      });
+    });
+
+    setOriginalHeights(newOriginalHeights);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Adjust layouts based on collapsed state
+  const adjustedLayouts = useMemo(() => {
+    const adjusted: {
+      lg: GridLayout[];
+      md: GridLayout[];
+      sm: GridLayout[];
+    } = {
+      lg: [],
+      md: [],
+      sm: [],
+    };
+
+    (["lg", "md", "sm"] as const).forEach((breakpoint) => {
+      adjusted[breakpoint] = gridLayouts[breakpoint].map((item) => {
+        const panelId = item.i as PanelId;
+        const isCollapsed = panelStates[panelId]?.collapsed;
+
+        if (isCollapsed) {
+          // Store original height if not already stored
+          if (!originalHeights[breakpoint][panelId]) {
+            setOriginalHeights((prev) => ({
+              ...prev,
+              [breakpoint]: {
+                ...prev[breakpoint],
+                [panelId]: item.h,
+              },
+            }));
+          }
+
+          // Return collapsed height (just header)
+          return {
+            ...item,
+            h: 1,
+            minH: 1,
+          };
+        } else {
+          // Restore original height if it was collapsed before
+          const originalHeight = originalHeights[breakpoint][panelId];
+          if (originalHeight && item.h === 1) {
+            return {
+              ...item,
+              h: originalHeight,
+              minH: item.minH || 2,
+            };
+          }
+        }
+
+        return item;
+      });
+    });
+
+    return adjusted;
+  }, [gridLayouts, panelStates, originalHeights]);
 
   // Handle breakpoint change
   const handleBreakpointChange = useCallback((breakpoint: string) => {
@@ -142,7 +228,13 @@ export function ViewModeLayout({
         return <KPISummaryPanel result={currentResult} />;
 
       case "curves":
-        return <HydrostaticCurvesPanel results={results} onDraftHover={setHighlightedDraft} />;
+        return (
+          <HydrostaticCurvesPanel
+            vesselId={vessel?.id || ""}
+            results={results}
+            onDraftHover={setHighlightedDraft}
+          />
+        );
 
       case "hull":
         return (
@@ -220,17 +312,17 @@ export function ViewModeLayout({
     <div className="h-full bg-background overflow-auto p-4">
       <ResponsiveGridLayout
         className="layout"
-        layouts={gridLayouts}
+        layouts={adjustedLayouts}
         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
         cols={{ lg: 12, md: 10, sm: 6 }}
-        rowHeight={60}
+        rowHeight={80}
         onBreakpointChange={handleBreakpointChange}
         onLayoutChange={handleLayoutChange}
         isDraggable={!isMobile}
         isResizable={!isMobile}
         draggableHandle=".cursor-move"
-        compactType="vertical"
-        margin={[16, 16]}
+        compactType={null}
+        margin={[12, 12]}
       >
         {visiblePanels.map((panelId) => {
           const state = panelStates[panelId];

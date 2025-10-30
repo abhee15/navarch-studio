@@ -7,7 +7,7 @@ import { useWorkspaceLayout } from "../../../hooks/useWorkspaceLayout";
 import { ModeToggle } from "./ModeToggle";
 import { ViewModeLayout } from "./ViewModeLayout";
 import { EditModeLayout } from "./EditModeLayout";
-import { loadcasesApi, hydrostaticsApi } from "../../../services/hydrostaticsApi";
+import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydrostaticsApi";
 import { OffsetsGridEditor } from "../OffsetsGridEditor";
 
 interface WorkspaceLayoutProps {
@@ -112,13 +112,24 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
         drafts.push(Number(d.toFixed(2)));
       }
 
-      const response = await hydrostaticsApi.computeTable(vesselId, {
-        loadcaseId: selectedLoadcaseId || undefined,
-        drafts,
-      });
+      // Fetch both hydrostatic table and Bonjean curves in parallel
+      // Bonjean curves are geometry-dependent only, so they can be pre-loaded
+      // This ensures all curve types are available immediately after compute
+      const [tableResponse] = await Promise.all([
+        hydrostaticsApi.computeTable(vesselId, {
+          loadcaseId: selectedLoadcaseId || undefined,
+          drafts,
+        }),
+        // Bonjean curves are fetched by the panel itself, but we trigger a pre-fetch here
+        // to ensure data is cached and ready when user switches curve types
+        curvesApi.getBonjean(vesselId).catch(() => {
+          // Silently fail if geometry not available - panel will handle the error
+          return { curves: [] };
+        }),
+      ]);
 
-      setResults(response.results);
-      setComputationTime(response.computation_time_ms);
+      setResults(tableResponse.results);
+      setComputationTime(tableResponse.computation_time_ms);
 
       // Auto-switch to view mode
       setMode("view");
