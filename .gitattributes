@@ -15,3 +15,11 @@ frontend/vite.config.ts merge=union
 backend/*/Properties/launchSettings.json merge=union
 backend/*/appsettings.json merge=union
 backend/*/appsettings.Development.json merge=union
+
+# Enforce LF line endings for frontend source files to satisfy CI Prettier checks
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.css text eol=lf
+*.md text eol=lf
