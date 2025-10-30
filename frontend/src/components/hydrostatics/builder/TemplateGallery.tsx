@@ -5,9 +5,10 @@ import type { VesselTemplate } from "../../../types/hydrostatics";
 
 interface TemplateGalleryProps {
   onSelectTemplate: (template: VesselTemplate) => void;
+  showHeader?: boolean; // Optionally show the collapsible header
 }
 
-export function TemplateGallery({ onSelectTemplate }: TemplateGalleryProps) {
+export function TemplateGallery({ onSelectTemplate, showHeader = true }: TemplateGalleryProps) {
   const [templates, setTemplates] = useState<VesselTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(true);
@@ -36,34 +37,36 @@ export function TemplateGallery({ onSelectTemplate }: TemplateGalleryProps) {
 
   return (
     <div className="rounded-xl border border-border p-3">
-      <div className="flex items-center justify-between mb-2">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-2 text-sm font-semibold hover:text-primary"
-        >
-          <svg
-            className={`h-4 w-4 transition-transform ${expanded ? "rotate-90" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          Start from Template
-        </button>
-        {expanded && (
+      {showHeader && (
+        <div className="flex items-center justify-between mb-2">
           <button
-            onClick={handleSurpriseMe}
-            disabled={loading || templates.length === 0}
-            className="text-[11px] px-2 py-1 rounded-lg border border-border hover:bg-accent/10 disabled:opacity-50"
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-2 text-sm font-semibold hover:text-primary"
           >
-            Surprise me
+            <svg
+              className={`h-4 w-4 transition-transform ${expanded ? "rotate-90" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            Start from Template
           </button>
-        )}
-      </div>
+          {expanded && (
+            <button
+              onClick={handleSurpriseMe}
+              disabled={loading || templates.length === 0}
+              className="text-[11px] px-2 py-1 rounded-lg border border-border hover:bg-accent/10 disabled:opacity-50"
+            >
+              Surprise me
+            </button>
+          )}
+        </div>
+      )}
 
-      {expanded && (
-        <div className="mt-2">
+      {(showHeader ? expanded : true) && (
+        <div className={showHeader ? "mt-2" : ""}>
           {loading ? (
             <div className="text-xs text-muted-foreground py-4 text-center">
               Loading templates...

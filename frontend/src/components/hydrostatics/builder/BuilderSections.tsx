@@ -1,5 +1,4 @@
-import type { CreateVesselDto, VesselTemplate } from "../../../types/hydrostatics";
-import { TemplateGallery } from "./TemplateGallery";
+import type { CreateVesselDto } from "../../../types/hydrostatics";
 
 interface BuilderSectionsProps {
   formData: CreateVesselDto;
@@ -14,19 +13,6 @@ const HULL_MATERIALS = ["Steel", "Aluminium", "FRP", "Wood"] as const;
 const SUPERSTRUCTURE_MATERIALS = ["Aluminium", "Composite", "Steel"] as const;
 
 export function BuilderSections({ formData, onChange, quickMode }: BuilderSectionsProps) {
-  const handleTemplateSelect = (template: VesselTemplate) => {
-    onChange({
-      name: template.preset.name,
-      description: template.preset.description,
-      lpp: template.preset.lpp,
-      beam: template.preset.beam,
-      designDraft: template.preset.designDraft,
-      metadata: template.preset.metadata,
-      materials: template.preset.materials,
-      loading: template.preset.loading,
-    });
-  };
-
   return (
     <div className="bg-card rounded-2xl shadow border border-border p-4">
       <div className="space-y-4">
@@ -86,9 +72,6 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
             </select>
           </div>
         </div>
-
-        {/* Template Gallery */}
-        <TemplateGallery onSelectTemplate={handleTemplateSelect} />
 
         {/* Principal Dimensions */}
         <div className="rounded-xl border border-border p-3">
