@@ -204,8 +204,26 @@ export const VesselDetail = observer(function VesselDetail() {
             </span>
           </div>
 
+          {/* Workspace Beta Button */}
+          <div className="mt-3 flex items-center justify-end">
+            <button
+              onClick={() => navigate(`/hydrostatics/vessels/${vessel.id}/workspace`)}
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 border border-primary/30 rounded-md hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
+              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              ✨ Try New Workspace (Beta)
+            </button>
+          </div>
+
           {/* Tabs */}
-          <div className="mt-3 border-b border-border">
+          <div className="mt-2 border-b border-border">
             <nav className="-mb-px flex space-x-6" aria-label="Tabs">
               {tabs.map((tab) => (
                 <button

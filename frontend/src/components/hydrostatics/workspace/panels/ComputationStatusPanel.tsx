@@ -16,9 +16,7 @@ export function ComputationStatusPanel({
       <div className="space-y-3 flex-1">
         {/* Status */}
         <div>
-          <div className="text-[10px] font-medium text-muted-foreground uppercase mb-1">
-            Status
-          </div>
+          <div className="text-[10px] font-medium text-muted-foreground uppercase mb-1">Status</div>
           {error ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
               ✗ Error
@@ -112,4 +110,3 @@ export function ComputationStatusPanel({
     </div>
   );
 }
-

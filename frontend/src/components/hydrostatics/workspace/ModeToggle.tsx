@@ -8,7 +8,12 @@ interface ModeToggleProps {
   canSwitchToView?: boolean;
 }
 
-export function ModeToggle({ mode, onModeChange, disabled = false, canSwitchToView = true }: ModeToggleProps) {
+export function ModeToggle({
+  mode,
+  onModeChange,
+  disabled = false,
+  canSwitchToView = true,
+}: ModeToggleProps) {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -18,48 +23,44 @@ export function ModeToggle({ mode, onModeChange, disabled = false, canSwitchToVi
       }
 
       // 'E' key for Edit mode
-      if (e.key === 'e' || e.key === 'E') {
+      if (e.key === "e" || e.key === "E") {
         if (!disabled) {
-          onModeChange('edit');
+          onModeChange("edit");
         }
       }
 
       // 'Escape' key for View mode
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (!disabled && canSwitchToView) {
-          onModeChange('view');
+          onModeChange("view");
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
   }, [onModeChange, disabled, canSwitchToView]);
 
   return (
     <div className="inline-flex rounded-md shadow-sm" role="group">
       <button
         type="button"
-        onClick={() => onModeChange('view')}
+        onClick={() => onModeChange("view")}
         disabled={disabled || !canSwitchToView}
         className={`
           inline-flex items-center px-4 py-2 text-sm font-medium border
-          ${mode === 'view'
-            ? 'bg-primary text-primary-foreground border-primary z-10'
-            : 'bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground'
+          ${
+            mode === "view"
+              ? "bg-primary text-primary-foreground border-primary z-10"
+              : "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground"
           }
-          ${disabled || !canSwitchToView ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          ${disabled || !canSwitchToView ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
           rounded-l-md focus:z-10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
           transition-colors
         `}
         title={canSwitchToView ? "View Mode (Esc)" : "No results to view yet"}
       >
-        <svg
-          className="w-4 h-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
+        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -78,27 +79,23 @@ export function ModeToggle({ mode, onModeChange, disabled = false, canSwitchToVi
 
       <button
         type="button"
-        onClick={() => onModeChange('edit')}
+        onClick={() => onModeChange("edit")}
         disabled={disabled}
         className={`
           inline-flex items-center px-4 py-2 text-sm font-medium border
-          ${mode === 'edit'
-            ? 'bg-primary text-primary-foreground border-primary z-10'
-            : 'bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground'
+          ${
+            mode === "edit"
+              ? "bg-primary text-primary-foreground border-primary z-10"
+              : "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground"
           }
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
           rounded-r-md focus:z-10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
           transition-colors
           -ml-px
         `}
         title="Edit Mode (E)"
       >
-        <svg
-          className="w-4 h-4 mr-2"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
+        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

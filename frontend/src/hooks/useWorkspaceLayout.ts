@@ -7,11 +7,7 @@ import type {
   PanelState,
   LayoutPreset,
 } from "../types/workspace";
-import {
-  DEFAULT_GRID_LAYOUTS,
-  DEFAULT_PANEL_STATES,
-  LAYOUT_PRESETS,
-} from "../types/workspace";
+import { DEFAULT_GRID_LAYOUTS, DEFAULT_PANEL_STATES, LAYOUT_PRESETS } from "../types/workspace";
 
 const STORAGE_KEY_PREFIX = "navarch-workspace-layout";
 
@@ -29,7 +25,15 @@ export function useWorkspaceLayout(vesselId: string) {
       if (stored) {
         const parsed = JSON.parse(stored) as WorkspaceLayout;
         // Validate that all required panels exist
-        const panelIds: PanelId[] = ["kpis", "curves", "hull", "table", "geometry", "parameters", "status"];
+        const panelIds: PanelId[] = [
+          "kpis",
+          "curves",
+          "hull",
+          "table",
+          "geometry",
+          "parameters",
+          "status",
+        ];
         const hasAllPanels = panelIds.every((id) => id in parsed.panelStates);
         if (hasAllPanels) {
           return parsed;
@@ -171,16 +175,19 @@ export function useWorkspaceLayout(vesselId: string) {
   /**
    * Load a preset layout
    */
-  const loadPreset = useCallback((presetId: string) => {
-    const preset = LAYOUT_PRESETS.find((p) => p.id === presetId);
-    if (preset) {
-      setLayout({
-        ...preset.layout,
-        mode: layout.mode, // Keep current mode
-        lastModified: new Date().toISOString(),
-      });
-    }
-  }, [layout.mode]);
+  const loadPreset = useCallback(
+    (presetId: string) => {
+      const preset = LAYOUT_PRESETS.find((p) => p.id === presetId);
+      if (preset) {
+        setLayout({
+          ...preset.layout,
+          mode: layout.mode, // Keep current mode
+          lastModified: new Date().toISOString(),
+        });
+      }
+    },
+    [layout.mode]
+  );
 
   /**
    * Get available presets

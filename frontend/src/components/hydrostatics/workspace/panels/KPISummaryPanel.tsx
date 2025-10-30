@@ -74,14 +74,9 @@ export const KPISummaryPanel = observer(({ result }: KPISummaryPanelProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {kpis.map((kpi) => (
-        <div
-          key={kpi.label}
-          className={`${kpi.bgColor} rounded-lg p-3 border border-border/50`}
-        >
+        <div key={kpi.label} className={`${kpi.bgColor} rounded-lg p-3 border border-border/50`}>
           <div className="text-xs font-medium text-muted-foreground mb-1">{kpi.label}</div>
-          <div className={`text-xl font-bold ${kpi.color} truncate`}>
-            {kpi.value}
-          </div>
+          <div className={`text-xl font-bold ${kpi.color} truncate`}>{kpi.value}</div>
           <div className="text-[10px] text-muted-foreground mt-0.5">{kpi.unit}</div>
         </div>
       ))}

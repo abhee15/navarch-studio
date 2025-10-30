@@ -37,12 +37,7 @@ export function PanelWrapper({
               className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10 transition-colors"
               title="Exit Fullscreen (Esc)"
             >
-              <svg
-                className="w-4 h-4 mr-1.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -66,7 +61,7 @@ export function PanelWrapper({
     <div
       className={`
         h-full flex flex-col bg-card border border-border rounded-lg shadow-sm
-        ${isDragging ? 'opacity-50' : 'opacity-100'}
+        ${isDragging ? "opacity-50" : "opacity-100"}
         transition-opacity
       `}
     >
@@ -80,12 +75,7 @@ export function PanelWrapper({
                 className="cursor-move text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                 title="Drag to reposition"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -109,12 +99,7 @@ export function PanelWrapper({
                 className="p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
                 title="Expand to Fullscreen"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -132,7 +117,7 @@ export function PanelWrapper({
               title={collapsed ? "Expand" : "Collapse"}
             >
               <svg
-                className={`w-4 h-4 transform transition-transform ${collapsed ? 'rotate-180' : ''}`}
+                className={`w-4 h-4 transform transition-transform ${collapsed ? "rotate-180" : ""}`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -150,18 +135,12 @@ export function PanelWrapper({
       </div>
 
       {/* Panel Content */}
-      {!collapsed && (
-        <div className="flex-1 overflow-auto p-3">
-          {children}
-        </div>
-      )}
+      {!collapsed && <div className="flex-1 overflow-auto p-3">{children}</div>}
 
       {/* Collapsed State */}
       {collapsed && (
         <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-xs text-muted-foreground">
-            Click to expand
-          </p>
+          <p className="text-xs text-muted-foreground">Click to expand</p>
         </div>
       )}
     </div>

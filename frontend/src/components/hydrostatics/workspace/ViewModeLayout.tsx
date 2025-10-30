@@ -82,7 +82,7 @@ export function ViewModeLayout({
 
   // Handle layout change
   const handleLayoutChange = useCallback(
-    (layout: GridLayout[], layouts: { lg: GridLayout[]; md: GridLayout[]; sm: GridLayout[] }) => {
+    (_layout: GridLayout[], layouts: { lg: GridLayout[]; md: GridLayout[]; sm: GridLayout[] }) => {
       // Save the layout for the current breakpoint
       onLayoutChange(currentBreakpoint, layouts[currentBreakpoint]);
     },
@@ -120,12 +120,7 @@ export function ViewModeLayout({
             onClick={onSwitchToEditMode}
             className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -259,4 +254,3 @@ export function ViewModeLayout({
     </div>
   );
 }
-

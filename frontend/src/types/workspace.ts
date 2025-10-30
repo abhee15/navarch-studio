@@ -10,14 +10,7 @@ export type WorkspaceMode = "view" | "edit";
 /**
  * Panel identifier - unique key for each panel type
  */
-export type PanelId =
-  | "kpis"
-  | "curves"
-  | "hull"
-  | "table"
-  | "geometry"
-  | "parameters"
-  | "status";
+export type PanelId = "kpis" | "curves" | "hull" | "table" | "geometry" | "parameters" | "status";
 
 /**
  * Panel state - tracks individual panel visibility and behavior
@@ -76,7 +69,7 @@ export interface LayoutPreset {
 /**
  * Default grid layout positions for each panel
  */
-export const DEFAULT_GRID_LAYOUTS: Record<string, GridLayout[]> = {
+export const DEFAULT_GRID_LAYOUTS: { lg: GridLayout[]; md: GridLayout[]; sm: GridLayout[] } = {
   lg: [
     { i: "kpis", x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
     { i: "curves", x: 0, y: 2, w: 8, h: 6, minW: 4, minH: 4 },
