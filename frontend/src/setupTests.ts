@@ -73,8 +73,9 @@ jest.mock("./services/localAuthService", () => {
       setUser: jest.fn((u: TestUser) => {
         user = u;
       }),
-      getCurrentUser: jest.fn(async (): Promise<TestUser> =>
-        user || { id: "1", email: "test@example.com", name: "Test User" }
+      getCurrentUser: jest.fn(
+        async (): Promise<TestUser> =>
+          user || { id: "1", email: "test@example.com", name: "Test User" }
       ),
     },
   };
