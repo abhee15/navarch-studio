@@ -17,6 +17,9 @@ import { getUnitSymbol } from "../../../../utils/unitSymbols";
 
 interface BonjeanCurvesPanelProps {
   vesselId: string;
+  stationsCount?: number;
+  waterlinesCount?: number;
+  offsetsCount?: number;
 }
 
 const STATION_COLORS = [
@@ -32,7 +35,7 @@ const STATION_COLORS = [
   "#84CC16", // Lime
 ];
 
-export const BonjeanCurvesPanel = observer(({ vesselId }: BonjeanCurvesPanelProps) => {
+export const BonjeanCurvesPanel = observer(({ vesselId, stationsCount, waterlinesCount, offsetsCount }: BonjeanCurvesPanelProps) => {
   const [curves, setCurves] = useState<BonjeanCurve[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,9 +46,15 @@ export const BonjeanCurvesPanel = observer(({ vesselId }: BonjeanCurvesPanelProp
   const areaUnit = getUnitSymbol(displayUnits, "Area");
 
   useEffect(() => {
-    loadBonjeanCurves();
+    const hasGeometry = (stationsCount ?? 0) > 0 && (waterlinesCount ?? 0) > 0 && (offsetsCount ?? 0) > 0;
+    if (hasGeometry) {
+      loadBonjeanCurves();
+    } else {
+      setCurves([]);
+      setError(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vesselId]);
+  }, [vesselId, stationsCount, waterlinesCount, offsetsCount]);
 
   const loadBonjeanCurves = async () => {
     try {
@@ -155,6 +164,30 @@ export const BonjeanCurvesPanel = observer(({ vesselId }: BonjeanCurvesPanelProp
           >
             Retry
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if ((stationsCount ?? 0) === 0 || (waterlinesCount ?? 0) === 0 || (offsetsCount ?? 0) === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <svg
+            className="mx-auto h-8 w-8 text-muted-foreground mb-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m2 5H7a2 2 0 01-2-2V7a2 2 0 012-2h3l2-2h2l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2z"
+            />
+          </svg>
+          <h4 className="text-xs font-medium text-foreground mb-1">Geometry Required</h4>
+          <p className="text-[10px] text-muted-foreground">Import stations, waterlines, and offsets to view Bonjean curves.</p>
         </div>
       </div>
     );

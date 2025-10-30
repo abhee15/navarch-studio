@@ -115,18 +115,26 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
       // Fetch both hydrostatic table and Bonjean curves in parallel
       // Bonjean curves are geometry-dependent only, so they can be pre-loaded
       // This ensures all curve types are available immediately after compute
-      const [tableResponse] = await Promise.all([
+      const bonjeanShouldFetch = (vessel.stationsCount ?? 0) > 0 && (vessel.waterlinesCount ?? 0) > 0 && (vessel.offsetsCount ?? 0) > 0;
+
+      const promises: Promise<unknown>[] = [
         hydrostaticsApi.computeTable(vesselId, {
           loadcaseId: selectedLoadcaseId || undefined,
           drafts,
         }),
-        // Bonjean curves are fetched by the panel itself, but we trigger a pre-fetch here
-        // to ensure data is cached and ready when user switches curve types
-        curvesApi.getBonjean(vesselId).catch(() => {
-          // Silently fail if geometry not available - panel will handle the error
-          return { curves: [] };
-        }),
-      ]);
+      ];
+
+      if (bonjeanShouldFetch) {
+        // Prefetch Bonjean only if geometry exists
+        promises.push(
+          curvesApi.getBonjean(vesselId).catch(() => ({ curves: [] }))
+        );
+      }
+
+      const [tableResponse] = (await Promise.all(promises)) as [{
+        results: HydroResult[];
+        computation_time_ms: number | null;
+      }];
 
       setResults(tableResponse.results);
       setComputationTime(tableResponse.computation_time_ms);
@@ -138,7 +146,7 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
     } finally {
       setComputing(false);
     }
-  }, [vesselId, selectedLoadcaseId, minDraft, maxDraft, draftStep, setMode]);
+  }, [vesselId, selectedLoadcaseId, minDraft, maxDraft, draftStep, setMode, vessel.offsetsCount, vessel.stationsCount, vessel.waterlinesCount]);
 
   // Handle layout change
   const handleLayoutChange = useCallback(
