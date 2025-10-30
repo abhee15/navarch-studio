@@ -35,10 +35,12 @@ public class BenchmarkValidationService
                 .FirstOrDefaultAsync(cancellationToken);
             if (ctRef != null && ctRef.ValueNum.HasValue)
             {
-                var rel = ctRef.ValueNum.Value == 0 ? null : Math.Abs((input.Ct.Value - ctRef.ValueNum.Value) / ctRef.ValueNum.Value);
+                decimal? rel = ctRef.ValueNum.Value == 0
+                    ? (decimal?)null
+                    : Math.Abs((input.Ct.Value - ctRef.ValueNum.Value) / ctRef.ValueNum.Value);
                 var tol = ctRef.TolRel ?? 0.03m;
-                var pass = rel.HasValue && (decimal)rel.Value <= tol;
-                results.Add(new MetricResult("Ct", pass, input.Ct.Value, ctRef.ValueNum.Value, input.Ct.Value - ctRef.ValueNum.Value, rel.HasValue ? (decimal)rel.Value : null));
+                var pass = rel.HasValue && rel.Value <= tol;
+                results.Add(new MetricResult("Ct", pass, input.Ct.Value, ctRef.ValueNum.Value, input.Ct.Value - ctRef.ValueNum.Value, rel));
             }
         }
 
@@ -49,10 +51,12 @@ public class BenchmarkValidationService
                 .FirstOrDefaultAsync(cancellationToken);
             if (cwRef != null && cwRef.ValueNum.HasValue)
             {
-                var rel = cwRef.ValueNum.Value == 0 ? null : Math.Abs((input.Cw.Value - cwRef.ValueNum.Value) / cwRef.ValueNum.Value);
+                decimal? rel = cwRef.ValueNum.Value == 0
+                    ? (decimal?)null
+                    : Math.Abs((input.Cw.Value - cwRef.ValueNum.Value) / cwRef.ValueNum.Value);
                 var tol = cwRef.TolRel ?? 0.05m;
-                var pass = rel.HasValue && (decimal)rel.Value <= tol;
-                results.Add(new MetricResult("Cw", pass, input.Cw.Value, cwRef.ValueNum.Value, input.Cw.Value - cwRef.ValueNum.Value, rel.HasValue ? (decimal)rel.Value : null));
+                var pass = rel.HasValue && rel.Value <= tol;
+                results.Add(new MetricResult("Cw", pass, input.Cw.Value, cwRef.ValueNum.Value, input.Cw.Value - cwRef.ValueNum.Value, rel));
             }
         }
 

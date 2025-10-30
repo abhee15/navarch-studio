@@ -100,8 +100,7 @@ try
 
     // AWS S3 + HTTP client for ingestion
     builder.Services.AddHttpClient();
-    builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
-    builder.Services.AddAWSService<Amazon.S3.IAmazonS3>();
+    builder.Services.AddSingleton<Amazon.S3.IAmazonS3>(_ => new Amazon.S3.AmazonS3Client());
     builder.Services.AddScoped<DataService.Services.IBenchmarkIngestionService, DataService.Services.BenchmarkIngestionService>();
     builder.Services.AddScoped<DataService.Services.BenchmarkSeedService>();
     builder.Services.AddScoped<DataService.Services.BenchmarkValidationService>();

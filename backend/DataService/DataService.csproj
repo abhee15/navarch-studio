@@ -23,7 +23,8 @@
     </PackageReference>
     <PackageReference Include="EFCore.NamingConventions" Version="8.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.400.26" />
+    <PackageReference Include="AWSSDK.Core" Version="4.0.0.32" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.0.32" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
     <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />

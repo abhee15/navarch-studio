@@ -6,6 +6,7 @@ using DataService.Data;
 using DataService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Asp.Versioning;
 
 namespace DataService.Controllers;
 
