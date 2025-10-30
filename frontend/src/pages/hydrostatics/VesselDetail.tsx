@@ -63,19 +63,19 @@ export const VesselDetail = observer(function VesselDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error || !vessel) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="bg-card p-8 rounded-lg shadow-md max-w-md w-full border border-border">
           <div className="text-center">
             <svg
-              className="mx-auto h-12 w-12 text-red-500"
+              className="mx-auto h-12 w-12 text-destructive"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -87,11 +87,11 @@ export const VesselDetail = observer(function VesselDetail() {
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">Error loading vessel</h3>
-            <p className="mt-1 text-sm text-gray-500">{error || "Vessel not found"}</p>
+            <h3 className="mt-2 text-lg font-medium text-foreground">Error loading vessel</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{error || "Vessel not found"}</p>
             <button
               onClick={handleBack}
-              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90"
             >
               ← Back to vessels
             </button>
@@ -102,19 +102,19 @@ export const VesselDetail = observer(function VesselDetail() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Main Navigation Header */}
-      <header className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex-shrink-0">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white">NavArch Studio</h1>
+              <h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>
             </div>
             <div className="flex items-center space-x-2">
               <ThemeToggle />
               <button
                 onClick={handleHome}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
               >
                 <svg
                   className="h-4 w-4 mr-1.5"
@@ -133,7 +133,7 @@ export const VesselDetail = observer(function VesselDetail() {
               </button>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
               >
                 <svg
                   className="h-4 w-4 mr-1.5"
@@ -156,13 +156,13 @@ export const VesselDetail = observer(function VesselDetail() {
       </header>
 
       {/* Vessel Header - Compact Command Rail */}
-      <div className="bg-white dark:bg-gray-800 shadow flex-shrink-0">
+      <div className="bg-card shadow flex-shrink-0 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           {/* Single Row: Back | Title | Description | Principal Dims | Units Badge */}
           <div className="flex items-center gap-3">
             <button
               onClick={handleBack}
-              className="inline-flex items-center text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex-shrink-0"
+              className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground flex-shrink-0"
             >
               <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -175,39 +175,37 @@ export const VesselDetail = observer(function VesselDetail() {
               Back
             </button>
 
-            <div className="h-5 w-px bg-gray-300 dark:bg-gray-600"></div>
+            <div className="h-5 w-px bg-border"></div>
 
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white flex-shrink-0">
-              {vessel.name}
-            </h1>
+            <h1 className="text-lg font-bold text-card-foreground flex-shrink-0">{vessel.name}</h1>
 
             {vessel.description && (
               <>
-                <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex-shrink-0 max-w-xs">
+                <span className="text-xs text-muted-foreground">•</span>
+                <p className="text-xs text-muted-foreground truncate flex-shrink-0 max-w-xs">
                   {vessel.description}
                 </p>
               </>
             )}
 
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 ml-auto">
-              <span className="text-gray-400 dark:text-gray-500">Lpp:</span>
+            <div className="flex items-center gap-2 text-xs text-card-foreground ml-auto">
+              <span className="text-muted-foreground">Lpp:</span>
               <span className="font-medium">{vessel.lpp}m</span>
-              <span className="text-gray-300 dark:text-gray-600">|</span>
-              <span className="text-gray-400 dark:text-gray-500">B:</span>
+              <span className="text-border">|</span>
+              <span className="text-muted-foreground">B:</span>
               <span className="font-medium">{vessel.beam}m</span>
-              <span className="text-gray-300 dark:text-gray-600">|</span>
-              <span className="text-gray-400 dark:text-gray-500">T:</span>
+              <span className="text-border">|</span>
+              <span className="text-muted-foreground">T:</span>
               <span className="font-medium">{vessel.designDraft}m</span>
             </div>
 
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 flex-shrink-0">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary flex-shrink-0">
               {vessel.unitsSystem}
             </span>
           </div>
 
           {/* Tabs */}
-          <div className="mt-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="mt-3 border-b border-border">
             <nav className="-mb-px flex space-x-6" aria-label="Tabs">
               {tabs.map((tab) => (
                 <button
@@ -216,8 +214,8 @@ export const VesselDetail = observer(function VesselDetail() {
                   className={`
                     ${
                       activeTab === tab.id
-                        ? "border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
                     }
                     whitespace-nowrap py-2 px-1 border-b-2 font-medium text-xs transition-colors
                   `}
@@ -229,8 +227,8 @@ export const VesselDetail = observer(function VesselDetail() {
                         ml-1.5 py-0.5 px-1.5 rounded-full text-[10px] font-medium
                         ${
                           activeTab === tab.id
-                            ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-300"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
                         }
                       `}
                     >
