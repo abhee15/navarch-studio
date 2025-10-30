@@ -24,7 +24,6 @@ jest.mock("./services/api", () => {
 
 // Mock URL functions
 global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
-// @ts-expect-error: Provided by test environment only
 global.URL.revokeObjectURL = jest.fn();
 
 // Avoid navigation on anchor clicks in tests
