@@ -261,4 +261,3 @@ internal sealed class OffsetCsvRecordMap : ClassMap<OffsetCsvRecord>
         Map(m => m.HalfBreadthY).Name("half_breadth_y");
     }
 }
-

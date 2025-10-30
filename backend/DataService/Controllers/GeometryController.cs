@@ -288,4 +288,3 @@ public record ImportCombinedGeometryRequest
     public List<WaterlineDto> Waterlines { get; init; } = new();
     public List<OffsetDto> Offsets { get; init; } = new();
 }
-
