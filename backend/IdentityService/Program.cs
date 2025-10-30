@@ -240,10 +240,13 @@ try
     // Add Correlation ID middleware (FIRST - so all logs have correlation ID)
     app.UseMiddleware<CorrelationIdMiddleware>();
 
-    // Security Headers (SECOND - add security headers to all responses)
+    // Global Exception Handler (SECOND - catch exceptions and return consistent error responses)
+    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+    // Security Headers (THIRD - add security headers to all responses)
     app.UseMiddleware<SecurityHeadersMiddleware>();
 
-    // Rate Limiting (THIRD - block abusive requests early)
+    // Rate Limiting (FOURTH - block abusive requests early)
     app.UseRateLimiter();
 
     // Add Serilog request logging

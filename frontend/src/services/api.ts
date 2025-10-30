@@ -1,9 +1,10 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosError } from "axios";
 import { CognitoUserSession } from "amazon-cognito-identity-js";
 import { getUserPool } from "../config/cognito";
 import { LocalAuthService } from "./localAuthService";
 import { getConfig, isConfigLoaded } from "../config/runtime";
 import { diagnoseApiIssue, logDiagnostics, getUserFriendlyError } from "../utils/diagnostics";
+import { ApiError, ApiErrorResponse } from "../types/errors";
 
 type AuthMode = "cognito" | "local";
 
@@ -121,7 +122,7 @@ const createApiClient = (): AxiosInstance => {
     return config;
   });
 
-  // Response interceptor - Handle 401 errors and log responses with diagnostics
+  // Response interceptor - Handle errors and convert to ApiError
   client.interceptors.response.use(
     (response) => {
       console.log(`[API] Response received from ${response.config.url}:`, {
@@ -131,7 +132,7 @@ const createApiClient = (): AxiosInstance => {
       });
       return response;
     },
-    async (error) => {
+    async (error: AxiosError) => {
       console.error("[API] Request failed:", {
         url: error.config?.url,
         method: error.config?.method,
@@ -144,9 +145,6 @@ const createApiClient = (): AxiosInstance => {
       // Run diagnostics to help identify the issue
       const diagnostic = await diagnoseApiIssue(error);
       logDiagnostics(diagnostic);
-
-      // Add user-friendly error message to the error object
-      error.userMessage = getUserFriendlyError(error);
 
       // Log specific guidance for common issues
       if (diagnostic.corsIssue) {
@@ -169,6 +167,30 @@ const createApiClient = (): AxiosInstance => {
         console.error("   Check CloudWatch logs or AWS Console for service status.");
       }
 
+      // Convert error response to ApiError if it matches the expected format
+      let apiError: Error = error;
+      if (error.response?.data && typeof error.response.data === "object") {
+        const errorData = error.response.data as Partial<ApiErrorResponse>;
+
+        // Check if response matches our ApiErrorResponse structure
+        if (errorData.error && errorData.message && errorData.statusCode) {
+          const convertedError = new ApiError(errorData as ApiErrorResponse);
+          apiError = convertedError;
+          console.log("[API] Converted to ApiError:", {
+            statusCode: convertedError.statusCode,
+            error: convertedError.error,
+            correlationId: convertedError.correlationId,
+          });
+        } else {
+          // Fallback: add user-friendly error message to the error object
+          Object.assign(error, { userMessage: getUserFriendlyError(error) });
+        }
+      } else {
+        // Network or other errors - add user-friendly message
+        Object.assign(error, { userMessage: getUserFriendlyError(error) });
+      }
+
+      // Handle authentication errors
       if (error.response?.status === 401) {
         console.log("[API] Unauthorized - redirecting to login");
         // Clear session and redirect to login based on auth mode
@@ -186,7 +208,8 @@ const createApiClient = (): AxiosInstance => {
         }
         window.location.href = "/login";
       }
-      return Promise.reject(error);
+
+      return Promise.reject(apiError);
     }
   );
 
