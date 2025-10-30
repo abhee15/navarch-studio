@@ -53,11 +53,3 @@ resource "aws_s3_bucket_lifecycle_configuration" "curated" {
     }
   }
 }
-
-output "raw_bucket_name" {
-  value = aws_s3_bucket.raw.bucket
-}
-
-output "curated_bucket_name" {
-  value = aws_s3_bucket.curated.bucket
-}
