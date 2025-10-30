@@ -223,29 +223,34 @@ public class GeometryService : IGeometryService
         List<OffsetDto> offsets,
         CancellationToken cancellationToken = default)
     {
-        // Use a transaction for atomicity
-        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        // Use execution strategy to handle transactions with retrying logic
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // Import in order: stations, waterlines, offsets
-            var importedStations = await ImportStationsAsync(vesselId, stations, cancellationToken);
-            var importedWaterlines = await ImportWaterlinesAsync(vesselId, waterlines, cancellationToken);
-            var importedOffsets = await ImportOffsetsAsync(vesselId, offsets, cancellationToken);
+            // Use a transaction for atomicity
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken);
+            try
+            {
+                // Import in order: stations, waterlines, offsets
+                var importedStations = await ImportStationsAsync(vesselId, stations, cancellationToken);
+                var importedWaterlines = await ImportWaterlinesAsync(vesselId, waterlines, cancellationToken);
+                var importedOffsets = await ImportOffsetsAsync(vesselId, offsets, cancellationToken);
 
-            _logger.LogInformation(
-                "Successfully imported combined geometry for vessel {VesselId}: {StationsCount} stations, {WaterlinesCount} waterlines, {OffsetsCount} offsets",
-                vesselId, importedStations.Count, importedWaterlines.Count, importedOffsets.Count);
+                await transaction.CommitAsync(cancellationToken);
 
-            return (importedStations.Count, importedWaterlines.Count, importedOffsets.Count);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+                _logger.LogInformation(
+                    "Successfully imported combined geometry for vessel {VesselId}: {StationsCount} stations, {WaterlinesCount} waterlines, {OffsetsCount} offsets",
+                    vesselId, importedStations.Count, importedWaterlines.Count, importedOffsets.Count);
+
+                return (importedStations.Count, importedWaterlines.Count, importedOffsets.Count);
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 }
-
