@@ -59,20 +59,9 @@ const ConfigLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   if (!configLoaded) {
     return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100vh",
-          flexDirection: "column",
-          fontFamily: "system-ui, -apple-system, sans-serif",
-        }}
-      >
-        <div style={{ marginBottom: "1rem" }}>Loading configuration...</div>
-        {error && (
-          <div style={{ color: "orange", fontSize: "0.875rem" }}>Using fallback configuration</div>
-        )}
+      <div className="flex h-screen flex-col items-center justify-center font-sans">
+        <div className="mb-4">Loading configuration...</div>
+        {error && <div className="text-sm text-orange-500">Using fallback configuration</div>}
       </div>
     );
   }
@@ -89,50 +78,50 @@ export const App: React.FC = observer(() => (
           {/* Soft remount routes when units change so data/effects re-run safely */}
           <div key={settingsStore.preferredUnits}>
             <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/hydrostatics/vessels"
-            element={
-              <ProtectedRoute>
-                <VesselsList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/hydrostatics/vessels/create"
-            element={
-              <ProtectedRoute>
-                <VesselBuilder />
-              </ProtectedRoute>
-            }
-          />
-          {/* Default to new Workspace */}
-          <Route
-            path="/hydrostatics/vessels/:vesselId"
-            element={
-              <ProtectedRoute>
-                <VesselWorkspace />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/hydrostatics/vessels/:vesselId/workspace"
-            element={
-              <ProtectedRoute>
-                <VesselWorkspace />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hydrostatics/vessels"
+                element={
+                  <ProtectedRoute>
+                    <VesselsList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hydrostatics/vessels/create"
+                element={
+                  <ProtectedRoute>
+                    <VesselBuilder />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Default to new Workspace */}
+              <Route
+                path="/hydrostatics/vessels/:vesselId"
+                element={
+                  <ProtectedRoute>
+                    <VesselWorkspace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hydrostatics/vessels/:vesselId/workspace"
+                element={
+                  <ProtectedRoute>
+                    <VesselWorkspace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
           </div>
         </UnitsEffectProvider>

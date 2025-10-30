@@ -93,6 +93,10 @@ module "app_runner" {
   # Service sizing
   cpu    = var.app_runner_cpu
   memory = var.app_runner_memory
+
+  # Benchmark buckets to inject into Data Service env
+  benchmark_raw_bucket     = module.s3_benchmark.raw_bucket_name
+  benchmark_curated_bucket = module.s3_benchmark.curated_bucket_name
 }
 
 # S3 & CloudFront Module
@@ -109,4 +113,43 @@ module "s3_cloudfront" {
   auth_mode            = "cognito"
   cognito_user_pool_id = data.terraform_remote_state.setup.outputs.cognito_user_pool_id
   cognito_client_id    = data.terraform_remote_state.setup.outputs.cognito_user_pool_client_id
+}
+
+# Benchmark S3 buckets
+module "s3_benchmark" {
+  source = "./modules/s3-benchmark"
+
+  project_name = var.project_name
+  environment  = var.environment
+}
+
+# IAM policy to allow Data Service to access benchmark buckets
+resource "aws_iam_policy" "benchmark_s3_access" {
+  name = "${var.project_name}-${var.environment}-benchmark-s3-access"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::${module.s3_benchmark.raw_bucket_name}",
+          "arn:aws:s3:::${module.s3_benchmark.raw_bucket_name}/*",
+          "arn:aws:s3:::${module.s3_benchmark.curated_bucket_name}",
+          "arn:aws:s3:::${module.s3_benchmark.curated_bucket_name}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_benchmark_s3" {
+  role       = module.app_runner.instance_role_name
+  policy_arn = aws_iam_policy.benchmark_s3_access.arn
 }

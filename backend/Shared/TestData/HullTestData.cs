@@ -94,6 +94,7 @@ public static class HullTestData
         }
 
         // Generate waterlines
+        // Note: Wigley formula uses z from 0 to 1, not -1 to +1
         for (int j = 0; j < numWaterlines; j++)
         {
             decimal z = designDraft * j / (numWaterlines - 1);
@@ -112,9 +113,9 @@ public static class HullTestData
             for (int j = 0; j < numWaterlines; j++)
             {
                 decimal z = waterlines[j].Z;
-                // Normalize z to [-1, 1], assuming draft goes from 0 to designDraft
-                // For Wigley, we use z from 0 at keel to designDraft at waterline
-                decimal zNorm = (2m * z / designDraft) - 1m;
+                // Normalize z to [0, 1] for Wigley formula
+                // z goes from 0 (keel) to 1 (waterline)
+                decimal zNorm = z / designDraft;
 
                 // Wigley formula: y = (B/2) * (1 - z²) * (1 - x²)
                 decimal xTerm = 1m - xNorm * xNorm;
@@ -309,4 +310,3 @@ public record AnalyticalHydrostatics
     public decimal Cm { get; init; }
     public decimal Cwp { get; init; }
 }
-

@@ -33,8 +33,12 @@ output "data_service_arn" {
   value       = aws_apprunner_service.data_service.arn
 }
 
+output "instance_role_arn" {
+  description = "App Runner instance role ARN"
+  value       = aws_iam_role.app_runner_instance.arn
+}
 
-
-
-
-
+output "instance_role_name" {
+  description = "App Runner instance role name"
+  value       = aws_iam_role.app_runner_instance.name
+}

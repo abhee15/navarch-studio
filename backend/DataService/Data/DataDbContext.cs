@@ -25,6 +25,14 @@ public class DataDbContext : DbContext
     public DbSet<MaterialsConfig> MaterialsConfigs => Set<MaterialsConfig>();
     public DbSet<LoadingConditions> LoadingConditions => Set<LoadingConditions>();
 
+    // Benchmark entities
+    public DbSet<BenchmarkCase> BenchmarkCases => Set<BenchmarkCase>();
+    public DbSet<BenchmarkGeometry> BenchmarkGeometries => Set<BenchmarkGeometry>();
+    public DbSet<BenchmarkTestPoint> BenchmarkTestPoints => Set<BenchmarkTestPoint>();
+    public DbSet<BenchmarkMetricRef> BenchmarkMetricRefs => Set<BenchmarkMetricRef>();
+    public DbSet<BenchmarkAsset> BenchmarkAssets => Set<BenchmarkAsset>();
+    public DbSet<BenchmarkValidationRun> BenchmarkValidationRuns => Set<BenchmarkValidationRun>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -213,6 +221,98 @@ public class DataDbContext : DbContext
             entity.Property(e => e.DeadweightTonnes).HasColumnType("decimal(10,2)");
 
             entity.HasIndex(e => e.VesselId).IsUnique();
+        });
+
+        // BenchmarkCase configuration
+        modelBuilder.Entity<BenchmarkCase>(entity =>
+        {
+            entity.ToTable("benchmark_case");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Slug).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.CanonicalRefs).HasColumnType("text");
+            entity.HasIndex(e => e.Slug).IsUnique();
+        });
+
+        // BenchmarkGeometry configuration
+        modelBuilder.Entity<BenchmarkGeometry>(entity =>
+        {
+            entity.ToTable("benchmark_geometry");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.SourceUrl).HasMaxLength(500);
+            entity.Property(e => e.S3Key).HasMaxLength(500);
+            entity.Property(e => e.Checksum).HasMaxLength(128);
+            entity.Property(e => e.ScaleNote).HasMaxLength(200);
+            entity.HasIndex(e => e.CaseId);
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.Geometries)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // BenchmarkTestPoint configuration
+        modelBuilder.Entity<BenchmarkTestPoint>(entity =>
+        {
+            entity.ToTable("benchmark_testpoint");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Fr).HasColumnType("decimal(10,6)");
+            entity.Property(e => e.Vm).HasColumnType("decimal(10,6)");
+            entity.HasIndex(e => new { e.CaseId, e.Fr }).IsUnique();
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.TestPoints)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // BenchmarkMetricRef configuration
+        modelBuilder.Entity<BenchmarkMetricRef>(entity =>
+        {
+            entity.ToTable("benchmark_metric_ref");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Metric).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ValueNum).HasColumnType("decimal(18,8)");
+            entity.Property(e => e.Unit).HasMaxLength(20);
+            entity.Property(e => e.TolRel).HasColumnType("decimal(10,6)");
+            entity.Property(e => e.FigureRef).HasMaxLength(100);
+            entity.Property(e => e.SourceUrl).HasMaxLength(500);
+            entity.HasIndex(e => e.CaseId);
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.MetricRefs)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // BenchmarkAsset configuration
+        modelBuilder.Entity<BenchmarkAsset>(entity =>
+        {
+            entity.ToTable("benchmark_asset");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Kind).IsRequired().HasMaxLength(30);
+            entity.Property(e => e.S3Key).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Caption).HasMaxLength(300);
+            entity.Property(e => e.FigureRef).HasMaxLength(100);
+            entity.Property(e => e.SourceUrl).HasMaxLength(500);
+            entity.HasIndex(e => e.CaseId);
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.Assets)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // BenchmarkValidationRun configuration
+        modelBuilder.Entity<BenchmarkValidationRun>(entity =>
+        {
+            entity.ToTable("benchmark_validation_run");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Fr).HasColumnType("decimal(10,6)");
+            entity.Property(e => e.Metrics).HasColumnType("text");
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(30);
+            entity.HasIndex(e => e.CaseId);
+            entity.HasOne(e => e.Case)
+                .WithMany(c => c.ValidationRuns)
+                .HasForeignKey(e => e.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

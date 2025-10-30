@@ -112,7 +112,7 @@ resource "aws_apprunner_service" "identity_service" {
       image_configuration {
         port = "8080"
 
-        runtime_environment_variables = {
+        runtime_environment_variables = merge({
           # Use Staging for dev/staging so auto-migrations run, Production for prod
           ASPNETCORE_ENVIRONMENT               = var.environment == "prod" ? "Production" : "Staging"
           ConnectionStrings__DefaultConnection = "Host=${var.rds_endpoint};Port=${var.rds_port};Database=${var.rds_database};Username=${var.rds_username};Password=${var.rds_password}"
@@ -120,7 +120,11 @@ resource "aws_apprunner_service" "identity_service" {
           Cognito__AppClientId                 = var.cognito_user_pool_client_id
           Cognito__Domain                      = var.cognito_domain
           Cognito__Region                      = data.aws_region.current.name
-        }
+        },
+        (var.benchmark_raw_bucket != "" && var.benchmark_curated_bucket != "") ? {
+          Benchmark__RawBucket     = var.benchmark_raw_bucket
+          Benchmark__CuratedBucket = var.benchmark_curated_bucket
+        } : {})
       }
     }
 

@@ -23,6 +23,276 @@ namespace DataService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Shared.Models.BenchmarkAsset", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<string>("Caption")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("caption");
+
+                    b.Property<string>("FigureRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("figure_ref");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("S3Key")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("s3_key");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_asset");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_asset_case_id");
+
+                    b.ToTable("benchmark_asset", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkCase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CanonicalRefs")
+                        .HasColumnType("text")
+                        .HasColumnName("canonical_refs");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_case");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_benchmark_case_slug");
+
+                    b.ToTable("benchmark_case", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkGeometry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<string>("Checksum")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("checksum");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("S3Key")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("s3_key");
+
+                    b.Property<string>("ScaleNote")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("scale_note");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_geometry");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_geometry_case_id");
+
+                    b.ToTable("benchmark_geometry", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkMetricRef", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal?>("Fr")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("fr");
+
+                    b.Property<string>("FigureRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("figure_ref");
+
+                    b.Property<string>("Metric")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("metric");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.Property<decimal?>("TolRel")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("tol_rel");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unit");
+
+                    b.Property<decimal?>("ValueNum")
+                        .HasColumnType("decimal(18,8)")
+                        .HasColumnName("value_num");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_metric_ref");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_metric_ref_case_id");
+
+                    b.ToTable("benchmark_metric_ref", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkTestPoint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("Fr")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("fr");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal?>("Vm")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("vm");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_testpoint");
+
+                    b.HasIndex("CaseId", "Fr")
+                        .IsUnique()
+                        .HasDatabaseName("ix_benchmark_testpoint_case_id_fr");
+
+                    b.ToTable("benchmark_testpoint", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkValidationRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal?>("Fr")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("fr");
+
+                    b.Property<string>("Metrics")
+                        .HasColumnType("text")
+                        .HasColumnName("metrics");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_validation_run");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_validation_run_case_id");
+
+                    b.ToTable("benchmark_validation_run", "data");
+                });
+
             modelBuilder.Entity("Shared.Models.Curve", b =>
                 {
                     b.Property<Guid>("Id")
@@ -517,6 +787,66 @@ namespace DataService.Migrations
                     b.Navigation("Vessel");
                 });
 
+            modelBuilder.Entity("Shared.Models.BenchmarkAsset", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("Assets")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_asset_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkGeometry", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("Geometries")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_geometry_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkMetricRef", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("MetricRefs")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_metric_ref_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkTestPoint", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("TestPoints")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_testpoint_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkValidationRun", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("ValidationRuns")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_validation_run_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
             modelBuilder.Entity("Shared.Models.CurvePoint", b =>
                 {
                     b.HasOne("Shared.Models.Curve", "Curve")
@@ -659,6 +989,19 @@ namespace DataService.Migrations
                     b.Navigation("Stations");
 
                     b.Navigation("Waterlines");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkCase", b =>
+                {
+                    b.Navigation("Assets");
+
+                    b.Navigation("Geometries");
+
+                    b.Navigation("MetricRefs");
+
+                    b.Navigation("TestPoints");
+
+                    b.Navigation("ValidationRuns");
                 });
 #pragma warning restore 612, 618
         }

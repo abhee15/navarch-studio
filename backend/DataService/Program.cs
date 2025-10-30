@@ -98,6 +98,14 @@ try
         options.ApiVersionReader = new Asp.Versioning.UrlSegmentApiVersionReader();
     }).AddMvc();
 
+    // AWS S3 + HTTP client for ingestion
+    builder.Services.AddHttpClient();
+    builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+    builder.Services.AddAWSService<Amazon.S3.IAmazonS3>();
+    builder.Services.AddScoped<DataService.Services.IBenchmarkIngestionService, DataService.Services.BenchmarkIngestionService>();
+    builder.Services.AddScoped<DataService.Services.BenchmarkSeedService>();
+    builder.Services.AddScoped<DataService.Services.BenchmarkValidationService>();
+
     // Database - Use snake_case naming convention for PostgreSQL
     builder.Services.AddDbContext<DataDbContext>(options =>
     {

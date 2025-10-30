@@ -93,8 +93,14 @@ variable "cloudfront_distribution_domain" {
   default     = ""
 }
 
+variable "benchmark_raw_bucket" {
+  description = "Benchmark raw S3 bucket name"
+  type        = string
+  default     = ""
+}
 
-
-
-
-
+variable "benchmark_curated_bucket" {
+  description = "Benchmark curated S3 bucket name"
+  type        = string
+  default     = ""
+}
