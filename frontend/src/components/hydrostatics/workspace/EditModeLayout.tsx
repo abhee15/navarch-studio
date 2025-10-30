@@ -75,12 +75,12 @@ export const EditModeLayout = observer(
     return (
       <div className="h-full flex bg-background">
         {/* Left Panel - Input Controls */}
-        <div className="w-80 border-r border-border bg-card overflow-y-auto flex-shrink-0">
+        <div className="w-80 bg-card border-r border-border overflow-y-auto overflow-x-hidden flex-shrink-0 px-3 py-4">
           {/* Geometry Summary */}
           <CollapsibleSection title="Geometry" defaultExpanded={true}>
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               {vessel && (
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <div className="text-[11px]">
                     <span className="text-muted-foreground">Lpp:</span>
                     <span className="ml-1 font-medium text-foreground">
@@ -134,7 +134,7 @@ export const EditModeLayout = observer(
 
           {/* Loadcases */}
           <CollapsibleSection title="Loadcase" defaultExpanded={true}>
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <select
                 value={selectedLoadcaseId}
                 onChange={(e) => onLoadcaseChange(e.target.value)}
@@ -158,19 +158,19 @@ export const EditModeLayout = observer(
 
           {/* Computation Controls */}
           <CollapsibleSection title="Computation Controls" defaultExpanded={true}>
-            <div className="space-y-2">
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
+            <div className="space-y-2 min-w-0">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   Range ({lengthUnit}) - {draftCount} pts
                 </label>
-                <div className="flex gap-0.5 items-center text-xs">
+                <div className="flex gap-0.5 items-center text-xs min-w-0">
                   <input
                     type="number"
                     value={minDraft}
                     onChange={(e) => onMinDraftChange(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     placeholder="Min"
-                    className="flex-1 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   <span className="text-muted-foreground text-[10px]">to</span>
                   <input
@@ -179,7 +179,7 @@ export const EditModeLayout = observer(
                     onChange={(e) => onMaxDraftChange(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     placeholder="Max"
-                    className="flex-1 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   <span className="text-muted-foreground text-[10px]">by</span>
                   <input
@@ -188,13 +188,13 @@ export const EditModeLayout = observer(
                     onChange={(e) => onDraftStepChange(parseFloat(e.target.value) || 0.1)}
                     step="0.1"
                     placeholder="Step"
-                    className="flex-1 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   Integration
                 </label>
                 <select
@@ -210,8 +210,8 @@ export const EditModeLayout = observer(
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   Smoothing
                 </label>
                 <select
@@ -231,9 +231,9 @@ export const EditModeLayout = observer(
 
           {/* Mass Properties */}
           <CollapsibleSection title="Mass Properties" defaultExpanded={true}>
-            <div className="space-y-2">
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
+            <div className="space-y-2 min-w-0">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   KG ({lengthUnit})
                 </label>
                 <input
@@ -245,8 +245,8 @@ export const EditModeLayout = observer(
                 />
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   LCG ({lengthUnit})
                 </label>
                 <input
@@ -258,8 +258,8 @@ export const EditModeLayout = observer(
                 />
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   TCG ({lengthUnit})
                 </label>
                 <input
@@ -275,9 +275,9 @@ export const EditModeLayout = observer(
 
           {/* Environment */}
           <CollapsibleSection title="Environment" defaultExpanded={false}>
-            <div className="space-y-2">
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">
+            <div className="space-y-2 min-w-0">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   Water Type
                 </label>
                 <select
