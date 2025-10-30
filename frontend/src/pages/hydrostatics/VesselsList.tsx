@@ -6,6 +6,7 @@ import type { Vessel } from "../../types/hydrostatics";
 import CreateVesselDialog from "../../components/hydrostatics/CreateVesselDialog";
 import { useStore } from "../../stores";
 import { ThemeToggle } from "../../components/ThemeToggle";
+import { Footer } from "../../components/Footer";
 
 export const VesselsList = observer(function VesselsList() {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export const VesselsList = observer(function VesselsList() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Main Navigation Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="px-4 py-2">
@@ -158,7 +159,7 @@ export const VesselsList = observer(function VesselsList() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {error && (
           <div
             className="mb-4 bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded relative"
@@ -275,6 +276,9 @@ export const VesselsList = observer(function VesselsList() {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
 
       {/* Create Vessel Dialog */}
       {isCreateDialogOpen && (
