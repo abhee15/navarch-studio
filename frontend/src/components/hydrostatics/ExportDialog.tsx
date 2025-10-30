@@ -62,14 +62,10 @@ export function ExportDialog({
 
       // Trigger download
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link: HTMLAnchorElement = document.createElement("a");
       link.href = url;
-      try {
-        Object.defineProperty(link, "download", { value: filename, configurable: true });
-      } catch {
-        // fallback set
-        (link as any).download = filename;
-      }
+      // Set download attribute in a standards-compliant way
+      link.download = filename;
       link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();

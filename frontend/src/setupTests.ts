@@ -24,7 +24,7 @@ jest.mock("./services/api", () => {
 
 // Mock URL functions
 global.URL.createObjectURL = jest.fn(() => "blob:mock-url");
-// @ts-ignore
+// @ts-expect-error: Provided by test environment only
 global.URL.revokeObjectURL = jest.fn();
 
 // Avoid navigation on anchor clicks in tests
@@ -54,7 +54,8 @@ jest.mock("./services/hydrostaticsApi", () => {
 // Mock LocalAuthService to avoid network in AuthStore tests
 jest.mock("./services/localAuthService", () => {
   let authed = false;
-  let user: any = null;
+  type TestUser = { id: string; email: string; name: string };
+  let user: TestUser | null = null;
   return {
     LocalAuthService: {
       login: jest.fn(async () => {
@@ -62,19 +63,19 @@ jest.mock("./services/localAuthService", () => {
         user = { id: "1", email: "test@example.com", name: "Test User" };
         return user;
       }),
-      getUser: jest.fn(() => (authed ? user : null)),
+      getUser: jest.fn((): TestUser | null => (authed ? user : null)),
       isAuthenticated: jest.fn(() => authed),
-      getToken: jest.fn(() => (authed ? "fake-jwt" : null)),
+      getToken: jest.fn((): string | null => (authed ? "fake-jwt" : null)),
       logout: jest.fn(() => {
         authed = false;
         user = null;
       }),
       setToken: jest.fn(),
-      setUser: jest.fn((u: any) => {
+      setUser: jest.fn((u: TestUser) => {
         user = u;
       }),
-      getCurrentUser: jest.fn(
-        async () => user || { id: "1", email: "test@example.com", name: "Test User" }
+      getCurrentUser: jest.fn(async (): Promise<TestUser> =>
+        user || { id: "1", email: "test@example.com", name: "Test User" }
       ),
     },
   };
