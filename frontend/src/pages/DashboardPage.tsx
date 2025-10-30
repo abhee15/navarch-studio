@@ -42,10 +42,7 @@ export const DashboardPage: React.FC = observer(() => {
           </>
         }
         right={
-          <UserProfileMenu
-            onOpenSettings={() => setShowSettings(true)}
-            onLogout={handleLogout}
-          />
+          <UserProfileMenu onOpenSettings={() => setShowSettings(true)} onLogout={handleLogout} />
         }
       />
 
