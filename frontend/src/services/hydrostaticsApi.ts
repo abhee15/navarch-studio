@@ -88,11 +88,8 @@ export const geometryApi = {
     formData.append("file", file);
     formData.append("format", format);
 
-    const response = await api.post(`/hydrostatics/vessels/${vesselId}/offsets:upload`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    // Don't set Content-Type header manually - axios will set it with the proper boundary
+    const response = await api.post(`/hydrostatics/vessels/${vesselId}/offsets:upload`, formData);
     return response.data;
   },
 

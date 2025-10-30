@@ -227,12 +227,12 @@ jobs:
         run: |
           echo "🔄 Updating API Gateway with CORS configuration..."
           echo "CloudFront Domain: ${{ steps.get-cloudfront.outputs.cloudfront_domain }}"
-          
+
           # Second apply to update API Gateway with CloudFront domain for CORS
           terraform apply -auto-approve \
             -var-file="environments/staging.tfvars" \
             -var="cloudfront_domain_override=${{ steps.get-cloudfront.outputs.cloudfront_domain }}"
-          
+
           echo "✅ API Gateway CORS configured!"
         working-directory: ./terraform/deploy
 
