@@ -27,6 +27,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_full_deploy:
+        description: "Bootstrap backend (build + deploy) before deploying frontend"
+        required: false
+        default: false
+        type: boolean
 
 # Prevent deployments and destroys from running simultaneously
 concurrency:
@@ -524,14 +529,69 @@ jobs:
           echo "🔍 Discovering API Gateway service URL from App Runner..."
           API_GW=$(aws apprunner list-services --query "ServiceSummaryList[?contains(ServiceName, '-dev-api-gateway')].ServiceUrl | [0]" --output text)
           if [ -z "$API_GW" ] || [ "$API_GW" == "None" ]; then
-            echo "❌ ERROR: Could not find App Runner API Gateway service URL"
-            exit 1
+            echo "⚠️  API Gateway not found. Marking for backend bootstrap."
+            echo "BOOTSTRAP_BACKEND=true" >> $GITHUB_ENV
+          else
+            # Compose full https URL
+            FULL_API_URL="https://$API_GW"
+            echo "API Gateway ServiceUrl: $API_GW"
+            echo "API_GATEWAY_URL=$FULL_API_URL" >> $GITHUB_ENV
+            echo "✅ API Gateway URL set to $FULL_API_URL"
           fi
-          # Compose full https URL
+
+      - name: Health check API Gateway (retry)
+        if: env.BOOTSTRAP_BACKEND != 'true'
+        run: |
+          if [ -z "$API_GATEWAY_URL" ]; then
+            echo "⚠️  API URL is empty, skipping health check and bootstrapping backend."
+            echo "BOOTSTRAP_BACKEND=true" >> $GITHUB_ENV
+            exit 0
+          fi
+          echo "🔎 Checking API health at $API_GATEWAY_URL/health ..."
+          for i in {1..12}; do
+            if curl -sf "$API_GATEWAY_URL/health" > /dev/null; then
+              echo "✅ API healthy"; exit 0; fi
+            echo "⏳ API not healthy yet, retry $i/12..."; sleep 5;
+          done
+          echo "⚠️  API not healthy after retries. Marking for backend bootstrap."
+          echo "BOOTSTRAP_BACKEND=true" >> $GITHUB_ENV
+
+      - name: Bootstrap backend (build images and deploy services)
+        if: env.BOOTSTRAP_BACKEND == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_full_deploy == true)
+        run: |
+          echo "🚀 Bootstrapping backend (build & deploy) before frontend deploy..."
+          echo "Building and pushing images to ECR"
+          IMAGE_TAG="${GITHUB_SHA:0:7}"
+          docker build -f backend/IdentityService/Dockerfile -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:latest .
+          docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:latest
+
+          docker build -f backend/ApiGateway/Dockerfile -t ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_API_GATEWAY_URL }}:latest .
+          docker push ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_API_GATEWAY_URL }}:latest
+
+          docker build -f backend/DataService/Dockerfile -t ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_DATA_SERVICE_URL }}:latest .
+          docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:latest
+
+          echo "Triggering App Runner deployments"
+          IDENTITY_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-identity-service')].ServiceArn | [0]" --output text)
+          DATA_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-data-service')].ServiceArn | [0]" --output text)
+          API_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceArn | [0]" --output text)
+
+          if [ -n "$IDENTITY_ARN" ] && [ "$IDENTITY_ARN" != "None" ]; then aws apprunner start-deployment --service-arn "$IDENTITY_ARN"; fi
+          if [ -n "$DATA_ARN" ] && [ "$DATA_ARN" != "None" ]; then aws apprunner start-deployment --service-arn "$DATA_ARN"; fi
+          if [ -n "$API_ARN" ] && [ "$API_ARN" != "None" ]; then aws apprunner start-deployment --service-arn "$API_ARN"; fi
+
+          echo "Waiting for API health..."
+          # Re-discover API gateway URL after deployment in case it was missing
+          API_GW=$(aws apprunner list-services --query "ServiceSummaryList[?contains(ServiceName, '-dev-api-gateway')].ServiceUrl | [0]" --output text)
           FULL_API_URL="https://$API_GW"
-          echo "API Gateway ServiceUrl: $API_GW"
           echo "API_GATEWAY_URL=$FULL_API_URL" >> $GITHUB_ENV
-          echo "✅ API Gateway URL set to $FULL_API_URL"
+          for i in {1..60}; do
+            if curl -sf "$FULL_API_URL/health" > /dev/null; then echo "✅ API healthy"; break; fi
+            echo "⏳ Waiting for API ($i/60)..."; sleep 5;
+          done
 
       - name: Check required outputs
         run: |
