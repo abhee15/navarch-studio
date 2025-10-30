@@ -67,14 +67,18 @@ jobs:
               - 'Dockerfile.*'
               - '.github/workflows/ci-dev.yml'
 
-  # Detect whether the previous run on this branch had backend failures
+  # Detect whether the previous run on this branch had any failures
   check-previous-run:
     runs-on: ubuntu-latest
     outputs:
       prev_backend_failed: ${{ steps.out.outputs.prev_backend_failed }}
       prev_backend_deploy_failed: ${{ steps.out.outputs.prev_backend_deploy_failed }}
+      prev_frontend_failed: ${{ steps.out.outputs.prev_frontend_failed }}
+      prev_build_failed: ${{ steps.out.outputs.prev_build_failed }}
+      prev_infra_failed: ${{ steps.out.outputs.prev_infra_failed }}
+      prev_overall_failed: ${{ steps.out.outputs.prev_overall_failed }}
     steps:
-      - name: Inspect previous workflow run for backend failures
+      - name: Inspect previous workflow run for failures
         id: out
         uses: actions/github-script@v7
         with:
@@ -91,6 +95,10 @@ jobs:
             const prev = runs.workflow_runs.find(r => r.id < context.runId && r.name === context.workflow);
             let backendFailed = false;
             let backendDeployFailed = false;
+            let frontendFailed = false;
+            let buildFailed = false;
+            let infraFailed = false;
+
             if (prev) {
               const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
                 owner: context.repo.owner,
@@ -98,18 +106,40 @@ jobs:
                 run_id: prev.id
               });
               for (const j of jobs.jobs) {
-                if (j.name === 'backend-quality' && j.conclusion === 'failure') backendFailed = true;
-                if (j.name === 'deploy-services' && j.conclusion === 'failure') backendDeployFailed = true;
+                if (j.conclusion === 'failure') {
+                  console.log(`❌ Previous run had failed job: ${j.name}`);
+                  // Specific job failures
+                  if (j.name === 'backend-quality') backendFailed = true;
+                  if (j.name === 'deploy-services') backendDeployFailed = true;
+                  if (j.name === 'frontend-quality') frontendFailed = true;
+                  if (j.name === 'build-and-push') buildFailed = true;
+                  if (j.name === 'deploy-infrastructure') infraFailed = true;
+                }
               }
             }
+
+            // Overall failure if ANY job failed
+            const anyFailure = backendFailed || backendDeployFailed || frontendFailed || buildFailed || infraFailed;
+
             core.setOutput('prev_backend_failed', backendFailed ? 'true' : 'false');
             core.setOutput('prev_backend_deploy_failed', backendDeployFailed ? 'true' : 'false');
+            core.setOutput('prev_frontend_failed', frontendFailed ? 'true' : 'false');
+            core.setOutput('prev_build_failed', buildFailed ? 'true' : 'false');
+            core.setOutput('prev_infra_failed', infraFailed ? 'true' : 'false');
+            core.setOutput('prev_overall_failed', anyFailure ? 'true' : 'false');
+
+            if (anyFailure) {
+              console.log('🔄 Previous run had failures - will run all steps in this run');
+            } else {
+              console.log('✅ Previous run was successful');
+            }
 
   frontend-quality:
     runs-on: ubuntu-latest
     needs: [check-changed-paths, check-previous-run]
     # Only run if frontend, shared packages, or workflow changed
-    if: needs.check-changed-paths.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_frontend == true)
+    # OR if previous run had any failures (to ensure everything runs after a failed run)
+    if: needs.check-changed-paths.outputs.frontend == 'true' || needs.check-previous-run.outputs.prev_overall_failed == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_frontend == true)
     defaults:
       run:
         working-directory: ./frontend
@@ -156,7 +186,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check-changed-paths, check-previous-run]
     # Only run if backend, shared packages, or workflow changed
-    if: needs.check-changed-paths.outputs.backend == 'true' || needs.check-previous-run.outputs.prev_backend_failed == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_backend == true)
+    # OR if previous run had any failures (to ensure everything runs after a failed run)
+    if: needs.check-changed-paths.outputs.backend == 'true' || needs.check-previous-run.outputs.prev_overall_failed == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_backend == true)
     defaults:
       run:
         working-directory: ./backend
@@ -209,9 +240,9 @@ jobs:
 
   build-and-push:
     runs-on: ubuntu-latest
-    needs: [frontend-quality, backend-quality, check-infrastructure]
+    needs: [frontend-quality, backend-quality, check-infrastructure, check-previous-run]
     # Only run if AWS infrastructure is configured
-    if: ${{ needs.check-infrastructure.outputs.has-secrets == 'true' }}
+    if: needs.check-infrastructure.outputs.has-secrets == 'true'
     outputs:
       identity-image: ${{ steps.build-identity.outputs.image }}
       gateway-image: ${{ steps.build-gateway.outputs.image }}
@@ -429,6 +460,7 @@ jobs:
           needs.check-changed-paths.outputs.backend == 'true' ||
           needs.check-previous-run.outputs.prev_backend_failed == 'true' ||
           needs.check-previous-run.outputs.prev_backend_deploy_failed == 'true' ||
+          needs.check-previous-run.outputs.prev_overall_failed == 'true' ||
           (github.event_name == 'workflow_dispatch' && (inputs.force_backend == true || inputs.force_deploy == true))
         )
 
@@ -488,10 +520,12 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    needs: [check-infrastructure, check-changed-paths]
+    needs: [check-infrastructure, check-changed-paths, check-previous-run]
     # Run when infra is configured and frontend changed, or via manual overrides
+    # OR if previous run had any failures (to ensure everything runs after a failed run)
     if: needs.check-infrastructure.outputs.has-secrets == 'true' && (
           needs.check-changed-paths.outputs.frontend == 'true' ||
+          needs.check-previous-run.outputs.prev_overall_failed == 'true' ||
           (github.event_name == 'workflow_dispatch' && (inputs.force_frontend == true || inputs.force_deploy == true))
         )
     env:
