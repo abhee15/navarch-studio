@@ -29,11 +29,12 @@ const getBaseUrl = () => {
   return `${apiUrl}/api/v1`;
 };
 
-// Create a simple axios instance for auth endpoints (no interceptors to avoid circular deps)
-const authAxios = axios.create({
-  baseURL: getBaseUrl(),
-  timeout: 30000, // 30 seconds - consistent with main API client
-});
+// Return a fresh axios instance each time to respect latest runtime config/base URL
+const getAuthAxios = () =>
+  axios.create({
+    baseURL: getBaseUrl(),
+    timeout: 30000, // consistent with main API client
+  });
 
 export class LocalAuthService {
   private static TOKEN_KEY = "jwt_token";
@@ -43,7 +44,7 @@ export class LocalAuthService {
    * Login with email and password
    */
   static async login(email: string, password: string): Promise<LocalAuthUser> {
-    const response = await authAxios.post<LoginResponse>("/auth/login", { email, password });
+    const response = await getAuthAxios().post<LoginResponse>("/auth/login", { email, password });
 
     const token = response.data.token;
     this.setToken(token);
@@ -59,7 +60,7 @@ export class LocalAuthService {
    * Create a new user account
    */
   static async signup(email: string, password: string, name: string): Promise<void> {
-    await authAxios.post<CreateUserResponse>("/users", { email, password, name });
+    await getAuthAxios().post<CreateUserResponse>("/users", { email, password, name });
     // Note: User must still login after signup
   }
 
@@ -72,7 +73,7 @@ export class LocalAuthService {
       throw new Error("No authentication token found");
     }
 
-    const response = await authAxios.get<LocalAuthUser>("/users/me", {
+    const response = await getAuthAxios().get<LocalAuthUser>("/users/me", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

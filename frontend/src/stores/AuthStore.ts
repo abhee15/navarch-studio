@@ -8,6 +8,7 @@ import {
 import { getUserPool } from "../config/cognito";
 import { LocalAuthService } from "../services/localAuthService";
 import { getAuthMode } from "../utils/env";
+import { getConfig, isConfigLoaded } from "../config/runtime";
 
 export interface User {
   id: string;
@@ -24,17 +25,23 @@ export class AuthStore {
   loading = false;
   error: string | null = null;
   private currentSession: CognitoUserSession | null = null;
-  private authMode: AuthMode;
 
   constructor() {
     makeAutoObservable(this);
-    // Determine auth mode from environment
-    this.authMode = getAuthMode();
     this.initializeAuth();
   }
 
+  private readAuthMode(): AuthMode {
+    // Prefer runtime config when available to avoid build-time env mismatch
+    if (isConfigLoaded()) {
+      return getConfig().authMode as AuthMode;
+    }
+    return getAuthMode();
+  }
+
   private initializeAuth(): void {
-    if (this.authMode === "local") {
+    const mode = this.readAuthMode();
+    if (mode === "local") {
       // Local JWT auth - check for stored token
       const user = LocalAuthService.getUser();
       if (user && LocalAuthService.isAuthenticated()) {
@@ -90,7 +97,8 @@ export class AuthStore {
     this.error = null;
 
     try {
-      if (this.authMode === "local") {
+      const mode = this.readAuthMode();
+      if (mode === "local") {
         // Local JWT auth
         const user = await LocalAuthService.login(email, password);
 
@@ -182,7 +190,8 @@ export class AuthStore {
     this.error = null;
 
     try {
-      if (this.authMode === "local") {
+      const mode = this.readAuthMode();
+      if (mode === "local") {
         // Local JWT auth
         await LocalAuthService.signup(email, password, name);
 
@@ -238,7 +247,8 @@ export class AuthStore {
     this.error = null;
 
     try {
-      if (this.authMode === "local") {
+      const mode = this.readAuthMode();
+      if (mode === "local") {
         // Local JWT auth doesn't require email confirmation
         runInAction(() => {
           this.loading = false;
@@ -283,7 +293,8 @@ export class AuthStore {
   }
 
   logout(): void {
-    if (this.authMode === "local") {
+    const mode = this.readAuthMode();
+    if (mode === "local") {
       LocalAuthService.logout();
     } else {
       const pool = getUserPool();
@@ -303,7 +314,8 @@ export class AuthStore {
   }
 
   async getIdToken(): Promise<string | null> {
-    if (this.authMode === "local") {
+    const mode = this.readAuthMode();
+    if (mode === "local") {
       return LocalAuthService.getToken();
     }
 
