@@ -27,3 +27,4 @@ public class MaterialsConfig
     // Navigation property
     public Vessel Vessel { get; set; } = null!;
 }
+

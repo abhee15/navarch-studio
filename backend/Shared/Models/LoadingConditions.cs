@@ -27,3 +27,4 @@ public class LoadingConditions
     // Navigation property
     public Vessel Vessel { get; set; } = null!;
 }
+

@@ -37,3 +37,4 @@ public class VesselMetadata
     // Navigation property
     public Vessel Vessel { get; set; } = null!;
 }
+

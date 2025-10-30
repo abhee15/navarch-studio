@@ -115,7 +115,10 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
       // Fetch both hydrostatic table and Bonjean curves in parallel
       // Bonjean curves are geometry-dependent only, so they can be pre-loaded
       // This ensures all curve types are available immediately after compute
-      const bonjeanShouldFetch = (vessel.stationsCount ?? 0) > 0 && (vessel.waterlinesCount ?? 0) > 0 && (vessel.offsetsCount ?? 0) > 0;
+      const bonjeanShouldFetch =
+        (vessel.stationsCount ?? 0) > 0 &&
+        (vessel.waterlinesCount ?? 0) > 0 &&
+        (vessel.offsetsCount ?? 0) > 0;
 
       const promises: Promise<unknown>[] = [
         hydrostaticsApi.computeTable(vesselId, {
@@ -126,15 +129,15 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
 
       if (bonjeanShouldFetch) {
         // Prefetch Bonjean only if geometry exists
-        promises.push(
-          curvesApi.getBonjean(vesselId).catch(() => ({ curves: [] }))
-        );
+        promises.push(curvesApi.getBonjean(vesselId).catch(() => ({ curves: [] })));
       }
 
-      const [tableResponse] = (await Promise.all(promises)) as [{
-        results: HydroResult[];
-        computation_time_ms: number | null;
-      }];
+      const [tableResponse] = (await Promise.all(promises)) as [
+        {
+          results: HydroResult[];
+          computation_time_ms: number | null;
+        },
+      ];
 
       setResults(tableResponse.results);
       setComputationTime(tableResponse.computation_time_ms);
@@ -146,7 +149,17 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
     } finally {
       setComputing(false);
     }
-  }, [vesselId, selectedLoadcaseId, minDraft, maxDraft, draftStep, setMode, vessel.offsetsCount, vessel.stationsCount, vessel.waterlinesCount]);
+  }, [
+    vesselId,
+    selectedLoadcaseId,
+    minDraft,
+    maxDraft,
+    draftStep,
+    setMode,
+    vessel.offsetsCount,
+    vessel.stationsCount,
+    vessel.waterlinesCount,
+  ]);
 
   // Handle layout change
   const handleLayoutChange = useCallback(

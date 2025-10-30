@@ -10,3 +10,4 @@ public class VesselMetadataDto
     public decimal? BlockCoefficient { get; set; }
     public string? HullFamily { get; set; }
 }
+

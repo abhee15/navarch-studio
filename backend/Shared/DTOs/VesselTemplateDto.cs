@@ -10,3 +10,4 @@ public class VesselTemplateDto
     public string? Description { get; set; }
     public VesselDto Preset { get; set; } = new();
 }
+

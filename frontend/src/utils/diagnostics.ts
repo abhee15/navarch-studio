@@ -190,6 +190,18 @@ export function logDiagnostics(diagnostic: DiagnosticInfo): void {
  * Enhanced error message for display in UI
  */
 export function getUserFriendlyError(error: AxiosError): string {
+  // Prefer backend-provided message when available
+  const data = (error?.response?.data ?? null) as unknown;
+  if (data && typeof data === "object") {
+    const anyData = data as Record<string, unknown>;
+    if (typeof anyData.message === "string" && anyData.message.trim().length > 0) {
+      return anyData.message as string;
+    }
+    if (typeof anyData.error === "string" && (anyData.error as string).trim().length > 0) {
+      return anyData.error as string;
+    }
+  }
+
   // CORS errors
   if (error?.message?.includes("CORS") || error?.message?.includes("Access-Control-Allow-Origin")) {
     return "🚫 Connection Blocked: The API service is not accepting requests from this domain. This usually means the service is being deployed or has a configuration issue. Please try again in a few minutes.";

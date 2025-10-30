@@ -180,12 +180,16 @@ const createApiClient = (): AxiosInstance => {
             correlationId: convertedError.correlationId,
           });
         } else {
-          // Fallback: add user-friendly error message to the error object
-          Object.assign(error, { userMessage: getUserFriendlyError(error) });
+          // Fallback: add user-friendly error message to the error object and surface it
+          const friendly = getUserFriendlyError(error);
+          Object.assign(error, { userMessage: friendly });
+          error.message = friendly;
         }
       } else {
-        // Network or other errors - add user-friendly message
-        Object.assign(error, { userMessage: getUserFriendlyError(error) });
+        // Network or other errors - add user-friendly message and surface it
+        const friendly = getUserFriendlyError(error);
+        Object.assign(error, { userMessage: friendly });
+        error.message = friendly;
       }
 
       // Handle authentication errors
