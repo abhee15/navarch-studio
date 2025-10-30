@@ -2,6 +2,7 @@ import { useState } from "react";
 import { exportApi } from "../../services/hydrostaticsApi";
 import type { HydroResult } from "../../types/hydrostatics";
 import { toast } from "../common/Toast";
+import { getErrorMessage } from "../../types/errors";
 
 interface ExportDialogProps {
   isOpen: boolean;
@@ -76,8 +77,7 @@ export function ExportDialog({
       onClose();
     } catch (err) {
       console.error("Export failed:", err);
-      const errorMessage = err instanceof Error ? err.message : "Export failed";
-      toast.error(`Export failed: ${errorMessage}`, { id: toastId });
+      toast.error(`Export failed: ${getErrorMessage(err)}`, { id: toastId });
     } finally {
       setExporting(false);
     }

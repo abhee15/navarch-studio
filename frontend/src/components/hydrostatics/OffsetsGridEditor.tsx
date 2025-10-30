@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef } from "ag-grid-community";
 import { geometryApi } from "../../services/hydrostaticsApi";
+import { getErrorMessage } from "../../types/errors";
 
 // Import AG Grid styles
 import "ag-grid-community/styles/ag-grid.css";
@@ -41,7 +42,7 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
       const data = await geometryApi.getOffsetsGrid(vesselId);
       setOffsetData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load offsets");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -147,7 +148,7 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
       alert("Offsets saved successfully!");
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save offsets");
+      setError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { vesselsApi } from "../../../services/hydrostaticsApi";
+import { getErrorMessage } from "../../../types/errors";
 import type { VesselTemplate } from "../../../types/hydrostatics";
 
 interface TemplateGalleryProps {
@@ -17,7 +18,7 @@ export function TemplateGallery({ onSelectTemplate }: TemplateGalleryProps) {
         const data = await vesselsApi.getTemplates();
         setTemplates(data);
       } catch (error) {
-        console.error("Failed to load templates:", error);
+        console.error("Failed to load templates:", getErrorMessage(error));
       } finally {
         setLoading(false);
       }

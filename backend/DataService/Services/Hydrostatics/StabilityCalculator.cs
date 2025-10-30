@@ -349,8 +349,6 @@ public class StabilityCalculator : IStabilityCalculator
 
         // Integrate on both sides (port and starboard)
         decimal totalArea = 0m;
-        decimal momentY = 0m;
-        decimal momentZ = 0m;
 
         // Port side (negative y)
         var portArea = IntegrateHeeledSide(offsets, draft, heelAngleRad, -1);
@@ -446,4 +444,3 @@ public class StabilityCalculator : IStabilityCalculator
         };
     }
 }
-

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { loadcasesApi } from "../../services/hydrostaticsApi";
+import { getErrorMessage } from "../../types/errors";
 import type { CreateLoadcaseDto } from "../../types/hydrostatics";
 
 interface CreateLoadcaseDialogProps {
@@ -40,7 +41,7 @@ export function CreateLoadcaseDialog({
         notes: "",
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create loadcase");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

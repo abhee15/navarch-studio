@@ -191,14 +191,17 @@ public class CurvesGenerator : ICurvesGenerator
         var bonjeanCurves = new List<BonjeanCurveDto>();
 
         // For each station, compute sectional area at each waterline
-        foreach (var station in stations)
+            foreach (var station in stations)
         {
             var points = new List<CurvePointDto>();
 
             foreach (var waterline in waterlines)
             {
                 // Get all offsets for this station up to current waterline
-                var activeWaterlines = waterlines.Where(w => w.Z <= waterline.Z).ToList();
+                    var activeWaterlines = waterlines
+                        .Where(w => w.Z <= waterline.Z)
+                        .OrderBy(w => w.Z)
+                        .ToList();
 
                 if (activeWaterlines.Count < 2)
                 {
@@ -210,14 +213,25 @@ public class CurvesGenerator : ICurvesGenerator
                 var halfBreadths = new List<decimal>();
                 var zCoords = new List<decimal>();
 
-                foreach (var wl in activeWaterlines)
+                    decimal? lastZ = null;
+                    foreach (var wl in activeWaterlines)
                 {
                     var offset = offsets.FirstOrDefault(o =>
                         o.StationIndex == station.StationIndex &&
                         o.WaterlineIndex == wl.WaterlineIndex);
 
-                    zCoords.Add(wl.Z);
-                    halfBreadths.Add(offset?.HalfBreadthY ?? 0m);
+                        // Deduplicate consecutive equal Z to avoid zero or negative dx in integration
+                        if (lastZ.HasValue && Math.Abs(wl.Z - lastZ.Value) < 0.000001m)
+                        {
+                            // Replace the last value with the latest half-breadth for the same Z
+                            zCoords[^1] = wl.Z;
+                            halfBreadths[^1] = offset?.HalfBreadthY ?? 0m;
+                            continue;
+                        }
+
+                        zCoords.Add(wl.Z);
+                        halfBreadths.Add(offset?.HalfBreadthY ?? 0m);
+                        lastZ = wl.Z;
                 }
 
                 // Integrate to get half-section area, then mirror
@@ -303,4 +317,3 @@ public class CurvesGenerator : ICurvesGenerator
         return drafts;
     }
 }
-

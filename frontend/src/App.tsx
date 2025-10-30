@@ -12,6 +12,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/common/Toast";
 import { loadConfig } from "./config/runtime";
 import { checkSystemHealth } from "./utils/diagnostics";
+import { UnitsEffectProvider } from "./providers/UnitsEffectProvider";
+import { settingsStore } from "./stores/SettingsStore";
 
 // Extend Window interface to include our global debug function
 declare global {
@@ -83,7 +85,10 @@ export const App: React.FC = observer(() => (
     <ThemeProvider>
       <BrowserRouter>
         <ToastProvider />
-        <Routes>
+        <UnitsEffectProvider>
+          {/* Soft remount routes when units change so data/effects re-run safely */}
+          <div key={settingsStore.preferredUnits}>
+            <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route
@@ -128,7 +133,9 @@ export const App: React.FC = observer(() => (
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" />} />
-        </Routes>
+            </Routes>
+          </div>
+        </UnitsEffectProvider>
       </BrowserRouter>
     </ThemeProvider>
   </ConfigLoader>

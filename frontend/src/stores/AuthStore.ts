@@ -9,6 +9,7 @@ import { getUserPool } from "../config/cognito";
 import { LocalAuthService } from "../services/localAuthService";
 import { getAuthMode } from "../utils/env";
 import { getConfig, isConfigLoaded } from "../config/runtime";
+import { getErrorMessage } from "../types/errors";
 
 export interface User {
   id: string;
@@ -160,7 +161,7 @@ export class AuthStore {
 
             onFailure: (err: Error) => {
               runInAction(() => {
-                this.error = err.message || "Login failed";
+                this.error = getErrorMessage(err);
                 this.loading = false;
               });
               reject(err);
@@ -178,7 +179,7 @@ export class AuthStore {
       }
     } catch (err) {
       runInAction(() => {
-        this.error = err instanceof Error ? err.message : "Login failed";
+        this.error = getErrorMessage(err as unknown);
         this.loading = false;
       });
       throw err;
@@ -219,7 +220,7 @@ export class AuthStore {
           pool.signUp(email, password, attributeList, [], (err, _result) => {
             if (err) {
               runInAction(() => {
-                this.error = err.message || "Signup failed";
+                this.error = getErrorMessage(err);
                 this.loading = false;
               });
               reject(err);
@@ -235,7 +236,7 @@ export class AuthStore {
       }
     } catch (err) {
       runInAction(() => {
-        this.error = err instanceof Error ? err.message : "Signup failed";
+        this.error = getErrorMessage(err as unknown);
         this.loading = false;
       });
       throw err;
@@ -270,7 +271,7 @@ export class AuthStore {
         cognitoUser.confirmRegistration(code, true, (err, _result) => {
           if (err) {
             runInAction(() => {
-              this.error = err.message || "Verification failed";
+              this.error = getErrorMessage(err);
               this.loading = false;
             });
             reject(err);
@@ -285,7 +286,7 @@ export class AuthStore {
       });
     } catch (err) {
       runInAction(() => {
-        this.error = err instanceof Error ? err.message : "Verification failed";
+        this.error = getErrorMessage(err as unknown);
         this.loading = false;
       });
       throw err;

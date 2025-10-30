@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { settingsStore, type UnitSystem } from "../stores/SettingsStore";
+import { getErrorMessage } from "../types/errors";
 
 interface UserSettingsDialogProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
       await settingsStore.updatePreferredUnits(preferredUnits);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save settings");
+      setError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }

@@ -88,14 +88,11 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
 
   // Smart mode switching based on results
   useEffect(() => {
-    if (results.length > 0 && layout.mode === "edit") {
-      // Auto-switch to view mode after successful computation
-      setMode("view");
-    } else if (results.length === 0 && layout.mode === "view") {
+    if (results.length === 0 && layout.mode === "view") {
       // If no results, switch to edit mode
       setMode("edit");
     }
-  }, [results.length, layout.mode, setMode]); // Dependencies for smart mode switching
+  }, [results.length, layout.mode, setMode]); // Allow manual Edit even when results exist
 
   // Handle computation
   const handleCompute = useCallback(async () => {

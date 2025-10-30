@@ -10,6 +10,8 @@ import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { Footer } from "../../components/Footer";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
+import { settingsStore } from "../../stores/SettingsStore";
+import { getUnitSymbol } from "../../utils/unitSymbols";
 
 export const VesselsList = observer(function VesselsList() {
   const navigate = useNavigate();
@@ -35,6 +37,13 @@ export const VesselsList = observer(function VesselsList() {
 
   useEffect(() => {
     loadVessels();
+  }, []);
+
+  // Refresh list when units change so values arrive converted from backend
+  useEffect(() => {
+    const handler = () => loadVessels();
+    window.addEventListener("units:changed", handler as EventListener);
+    return () => window.removeEventListener("units:changed", handler as EventListener);
   }, []);
 
   const handleCreateVessel = () => {
@@ -248,16 +257,23 @@ export const VesselsList = observer(function VesselsList() {
                   <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
                     <div>
                       <span className="text-muted-foreground">Lpp:</span>
-                      <span className="ml-1 font-medium text-card-foreground">{vessel.lpp}m</span>
+                      <span className="ml-1 font-medium text-card-foreground">
+                        {vessel.lpp}
+                        {getUnitSymbol(settingsStore.preferredUnits, "Length")}
+                      </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">B:</span>
-                      <span className="ml-1 font-medium text-card-foreground">{vessel.beam}m</span>
+                      <span className="ml-1 font-medium text-card-foreground">
+                        {vessel.beam}
+                        {getUnitSymbol(settingsStore.preferredUnits, "Length")}
+                      </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">T:</span>
                       <span className="ml-1 font-medium text-card-foreground">
-                        {vessel.designDraft}m
+                        {vessel.designDraft}
+                        {getUnitSymbol(settingsStore.preferredUnits, "Length")}
                       </span>
                     </div>
                   </div>

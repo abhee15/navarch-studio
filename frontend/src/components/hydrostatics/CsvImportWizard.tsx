@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import Papa from "papaparse";
 import { geometryApi } from "../../services/hydrostaticsApi";
+import { getErrorMessage } from "../../types/errors";
 
 interface CsvImportWizardProps {
   vesselId: string;
@@ -87,7 +88,7 @@ export function CsvImportWizard({
       setImportResult(result);
       setStep(3);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to import CSV");
+      setError(getErrorMessage(err));
     } finally {
       setImporting(false);
     }

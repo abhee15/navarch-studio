@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { vesselsApi } from "../../services/hydrostaticsApi";
+import { getErrorMessage } from "../../types/errors";
 import type { CreateVesselDto } from "../../types/hydrostatics";
 
 interface CreateVesselDialogProps {
@@ -28,7 +29,7 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
       await vesselsApi.create(formData);
       onVesselCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create vessel");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

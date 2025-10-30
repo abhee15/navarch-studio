@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { vesselsApi } from "../../services/hydrostaticsApi";
+import { getErrorMessage } from "../../types/errors";
 import type { VesselDetails } from "../../types/hydrostatics";
 import { WorkspaceLayout } from "../../components/hydrostatics/workspace/WorkspaceLayout";
 import { useStore } from "../../stores";
@@ -26,7 +27,7 @@ export const VesselWorkspace = observer(function VesselWorkspace() {
       const data = await vesselsApi.get(vesselId);
       setVessel(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load vessel");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
