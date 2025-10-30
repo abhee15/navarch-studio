@@ -247,6 +247,11 @@ public class GeometryController : ControllerBase
             _logger.LogWarning(ex, "Error uploading CSV for vessel {VesselId}", vesselId);
             return BadRequest(new { error = ex.Message });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error uploading CSV for vessel {VesselId}: {Message}", vesselId, ex.Message);
+            return StatusCode(500, new { error = "Failed to upload CSV", details = ex.Message, type = ex.GetType().Name });
+        }
     }
 }
 

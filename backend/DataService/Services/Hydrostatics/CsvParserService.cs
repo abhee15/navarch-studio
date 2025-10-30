@@ -26,7 +26,9 @@ public class CsvParserService : ICsvParserService
             {
                 HasHeaderRecord = true,
                 TrimOptions = TrimOptions.Trim,
-                BadDataFound = null // Ignore bad data
+                BadDataFound = null, // Ignore bad data
+                MissingFieldFound = null, // Ignore missing fields
+                IgnoreBlankLines = true // Skip empty lines
             });
 
             csv.Context.RegisterClassMap<CombinedOffsetRecordMap>();
@@ -160,7 +162,10 @@ public class CsvParserService : ICsvParserService
             using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 HasHeaderRecord = true,
-                TrimOptions = TrimOptions.Trim
+                TrimOptions = TrimOptions.Trim,
+                BadDataFound = null,
+                MissingFieldFound = null,
+                IgnoreBlankLines = true
             });
 
             csv.Context.RegisterClassMap<OffsetCsvRecordMap>();
