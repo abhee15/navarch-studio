@@ -1,5 +1,6 @@
 import { CognitoUserPool } from "amazon-cognito-identity-js";
 import { getConfig, isConfigLoaded } from "./runtime";
+import { getAuthMode, getEnv } from "../utils/env";
 
 let _userPool: CognitoUserPool | null = null;
 
@@ -12,9 +13,7 @@ export const getUserPool = (): CognitoUserPool | null => {
     return _userPool;
   }
 
-  const authMode = isConfigLoaded()
-    ? getConfig().authMode
-    : import.meta.env.VITE_AUTH_MODE || "local";
+  const authMode = isConfigLoaded() ? getConfig().authMode : getAuthMode();
 
   if (authMode !== "cognito") {
     return null; // Local mode
@@ -26,8 +25,8 @@ export const getUserPool = (): CognitoUserPool | null => {
         ClientId: getConfig().cognitoClientId,
       }
     : {
-        UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || "dummy-pool-id",
-        ClientId: import.meta.env.VITE_COGNITO_CLIENT_ID || "dummy-client-id",
+        UserPoolId: getEnv("VITE_COGNITO_USER_POOL_ID", "dummy-pool-id") as string,
+        ClientId: getEnv("VITE_COGNITO_CLIENT_ID", "dummy-client-id") as string,
       };
 
   _userPool = new CognitoUserPool(poolData);
@@ -49,8 +48,8 @@ export const getCognitoConfig = () => {
   }
 
   return {
-    userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-    clientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-    region: import.meta.env.VITE_AWS_REGION || "us-east-1",
+    userPoolId: getEnv("VITE_COGNITO_USER_POOL_ID") as string,
+    clientId: getEnv("VITE_COGNITO_CLIENT_ID") as string,
+    region: (getEnv("VITE_AWS_REGION", "us-east-1") as string) || "us-east-1",
   };
 };

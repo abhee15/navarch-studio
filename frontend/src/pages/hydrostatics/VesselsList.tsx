@@ -5,8 +5,9 @@ import toast from "react-hot-toast";
 import { vesselsApi } from "../../services/hydrostaticsApi";
 import type { Vessel } from "../../types/hydrostatics";
 import { useStore } from "../../stores";
-import { ThemeToggle } from "../../components/ThemeToggle";
+import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { Footer } from "../../components/Footer";
+import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 
 export const VesselsList = observer(function VesselsList() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export const VesselsList = observer(function VesselsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const loadVessels = async () => {
     try {
@@ -101,7 +103,6 @@ export const VesselsList = observer(function VesselsList() {
               <h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>
             </div>
             <div className="flex items-center space-x-2">
-              <ThemeToggle />
               <button
                 onClick={handleHome}
                 className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
@@ -121,25 +122,10 @@ export const VesselsList = observer(function VesselsList() {
                 </svg>
                 Home
               </button>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
-              >
-                <svg
-                  className="h-4 w-4 mr-1.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-                Sign out
-              </button>
+              <UserProfileMenu
+                onOpenSettings={() => setShowSettings(true)}
+                onLogout={handleLogout}
+              />
             </div>
           </div>
         </div>
@@ -338,6 +324,9 @@ export const VesselsList = observer(function VesselsList() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Settings Dialog */}
+      <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 });

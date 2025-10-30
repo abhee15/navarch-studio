@@ -5,20 +5,21 @@ import { LocalAuthService } from "./localAuthService";
 import { getConfig, isConfigLoaded } from "../config/runtime";
 import { diagnoseApiIssue, logDiagnostics, getUserFriendlyError } from "../utils/diagnostics";
 import { ApiError, ApiErrorResponse } from "../types/errors";
+import { getApiUrl, getAuthMode } from "../utils/env";
 
 type AuthMode = "cognito" | "local";
 
 // Get auth mode from runtime config (with fallback to environment for local dev)
-const getAuthMode = (): AuthMode => {
+const readAuthMode = (): AuthMode => {
   if (isConfigLoaded()) {
     return getConfig().authMode;
   }
-  return (import.meta.env.VITE_AUTH_MODE || "local") as AuthMode;
+  return getAuthMode();
 };
 
 // Function to get current JWT token based on auth mode
 const getAuthToken = async (): Promise<string | null> => {
-  const authMode = getAuthMode();
+  const authMode = readAuthMode();
 
   if (authMode === "local") {
     return LocalAuthService.getToken();
@@ -58,10 +59,7 @@ const createApiClient = (): AxiosInstance => {
   const API_VERSION = "v1";
 
   // Use runtime config if loaded, otherwise fall back to environment variable
-  // This allows the frontend to adapt to infrastructure changes without rebuild
-  const apiUrl = isConfigLoaded()
-    ? getConfig().apiUrl
-    : import.meta.env.VITE_API_URL || "http://localhost:5002";
+  const apiUrl = isConfigLoaded() ? getConfig().apiUrl : getApiUrl();
 
   const baseURL = `${apiUrl}/api/${API_VERSION}`;
 
@@ -194,7 +192,7 @@ const createApiClient = (): AxiosInstance => {
       if (error.response?.status === 401) {
         console.log("[API] Unauthorized - redirecting to login");
         // Clear session and redirect to login based on auth mode
-        const authMode = getAuthMode();
+        const authMode = readAuthMode();
         if (authMode === "local") {
           LocalAuthService.logout();
         } else {

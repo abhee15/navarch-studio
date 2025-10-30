@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import { LogOut, ShoppingBag, Settings } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useStore } from "../stores";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { UserSettingsDialog } from "../components/UserSettingsDialog";
 import { settingsStore } from "../stores/SettingsStore";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { UserProfileMenu } from "../components/UserProfileMenu";
 import { Footer } from "../components/Footer";
 
 export const DashboardPage: React.FC = observer(() => {
@@ -42,20 +42,10 @@ export const DashboardPage: React.FC = observer(() => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                disabled={authStore.loading}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </Button>
+              <UserProfileMenu
+                onOpenSettings={() => setShowSettings(true)}
+                onLogout={handleLogout}
+              />
             </div>
           </div>
         </div>

@@ -70,7 +70,10 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               value={formData.metadata?.size || "Small"}
               onChange={(e) =>
                 onChange({
-                  metadata: { ...formData.metadata, size: e.target.value as "Small" | "Medium" | "Large" },
+                  metadata: {
+                    ...formData.metadata,
+                    size: e.target.value as "Small" | "Medium" | "Large",
+                  },
                 })
               }
               className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2"
@@ -166,7 +169,11 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                       onChange({
                         metadata: {
                           ...formData.metadata,
-                          hullFamily: e.target.value as "Wigley" | "Series 60" | "NPL" | "Prismatic",
+                          hullFamily: e.target.value as
+                            | "Wigley"
+                            | "Series 60"
+                            | "NPL"
+                            | "Prismatic",
                         },
                       })
                     }
@@ -244,8 +251,12 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                       onChange({
                         materials: {
                           ...formData.materials,
-                          hullMaterial: (e.target.value ||
-                            undefined) as "Steel" | "Aluminium" | "FRP" | "Wood" | undefined,
+                          hullMaterial: (e.target.value || undefined) as
+                            | "Steel"
+                            | "Aluminium"
+                            | "FRP"
+                            | "Wood"
+                            | undefined,
                         },
                       })
                     }
@@ -267,8 +278,11 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                       onChange({
                         materials: {
                           ...formData.materials,
-                          superstructureMaterial: (e.target.value ||
-                            undefined) as "Aluminium" | "Composite" | "Steel" | undefined,
+                          superstructureMaterial: (e.target.value || undefined) as
+                            | "Aluminium"
+                            | "Composite"
+                            | "Steel"
+                            | undefined,
                         },
                       })
                     }

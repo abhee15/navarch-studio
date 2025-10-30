@@ -7,6 +7,7 @@ import {
 } from "amazon-cognito-identity-js";
 import { getUserPool } from "../config/cognito";
 import { LocalAuthService } from "../services/localAuthService";
+import { getAuthMode } from "../utils/env";
 
 export interface User {
   id: string;
@@ -28,7 +29,7 @@ export class AuthStore {
   constructor() {
     makeAutoObservable(this);
     // Determine auth mode from environment
-    this.authMode = (import.meta.env.VITE_AUTH_MODE || "local") as AuthMode;
+    this.authMode = getAuthMode();
     this.initializeAuth();
   }
 

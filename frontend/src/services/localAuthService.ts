@@ -5,6 +5,7 @@
 
 import axios from "axios";
 import { getConfig, isConfigLoaded } from "../config/runtime";
+import { getApiUrl } from "../utils/env";
 
 export interface LocalAuthUser {
   id: string;
@@ -24,9 +25,7 @@ export interface CreateUserResponse {
 }
 
 const getBaseUrl = () => {
-  const apiUrl = isConfigLoaded()
-    ? getConfig().apiUrl
-    : import.meta.env.VITE_API_URL || "http://localhost:5002";
+  const apiUrl = isConfigLoaded() ? getConfig().apiUrl : getApiUrl();
   return `${apiUrl}/api/v1`;
 };
 

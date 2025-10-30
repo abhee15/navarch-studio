@@ -65,6 +65,7 @@ export function ExportDialog({
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -103,6 +104,7 @@ export function ExportDialog({
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               disabled={exporting}
+              aria-label="Close"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -163,28 +165,23 @@ export function ExportDialog({
             </div>
           </div>
 
-          {/* Include curves option (only for PDF/Excel) */}
-          {(format === "pdf" || format === "excel") && (
-            <div className="flex items-start">
-              <input
-                id="include-curves"
-                type="checkbox"
-                checked={includeCurves}
-                onChange={(e) => setIncludeCurves(e.target.checked)}
-                className="mt-1"
-                disabled={exporting}
-              />
-              <label
-                htmlFor="include-curves"
-                className="ml-3 text-sm text-gray-700 dark:text-gray-300"
-              >
-                Include hydrostatic curves in report
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Adds displacement, KB, LCB, AWP, and GM curves to the export
-                </p>
-              </label>
-            </div>
-          )}
+          {/* Include curves option (always rendered; disabled for CSV/JSON) */}
+          <div className="flex items-start">
+            <input
+              id="include-curves"
+              type="checkbox"
+              checked={includeCurves}
+              onChange={(e) => setIncludeCurves(e.target.checked)}
+              className="mt-1"
+              disabled={exporting || format === "csv" || format === "json"}
+            />
+            <label htmlFor="include-curves" className="ml-3 text-sm text-gray-700 dark:text-gray-300">
+              Include hydrostatic curves
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Adds displacement, KB, LCB, AWP, and GM curves to the export
+              </p>
+            </label>
+          </div>
         </div>
 
         {/* Footer */}
