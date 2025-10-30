@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { settingsStore } from "../../../stores/SettingsStore";
 import { useNavigate } from "react-router-dom";
 import type { VesselDetails, Loadcase, HydroResult } from "../../../types/hydrostatics";
 import type { PanelId, WorkspaceMode } from "../../../types/workspace";
@@ -9,6 +10,7 @@ import { ViewModeLayout } from "./ViewModeLayout";
 import { EditModeLayout } from "./EditModeLayout";
 import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydrostaticsApi";
 import { OffsetsGridEditor } from "../OffsetsGridEditor";
+import { getErrorMessage } from "../../../types/errors";
 
 interface WorkspaceLayoutProps {
   vessel: VesselDetails;
@@ -76,7 +78,7 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
           setSelectedLoadcaseId(data.loadcases[0].id);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load loadcases");
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -145,7 +147,7 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
       // Auto-switch to view mode
       setMode("view");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to compute hydrostatics");
+      setError(getErrorMessage(err));
     } finally {
       setComputing(false);
     }
@@ -160,6 +162,43 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
     vessel.stationsCount,
     vessel.waterlinesCount,
   ]);
+
+  // Recompute results when preferred unit system changes to keep values in sync with labels
+  useEffect(() => {
+    if (results.length === 0) return;
+
+    // Generate draft array identical to the last compute
+    const drafts: number[] = [];
+    for (let d = minDraft; d <= maxDraft; d += draftStep) {
+      drafts.push(Number(d.toFixed(2)));
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setComputing(true);
+        const tableResponse = await hydrostaticsApi.computeTable(vesselId, {
+          loadcaseId: selectedLoadcaseId || undefined,
+          drafts,
+        });
+        if (!cancelled) {
+          setResults(tableResponse.results);
+          setComputationTime(tableResponse.computation_time_ms);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getErrorMessage(err));
+        }
+      } finally {
+        if (!cancelled) setComputing(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsStore.preferredUnits]);
 
   // Handle layout change
   const handleLayoutChange = useCallback(
@@ -201,7 +240,7 @@ export function WorkspaceLayout({ vessel, onBack }: WorkspaceLayoutProps) {
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Top Toolbar */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
-        <div className="px-4 py-3 flex items-center justify-between gap-4">
+        <div className="h-14 px-4 flex items-center justify-between gap-4">
           {/* Left: Back button + Vessel name */}
           <div className="flex items-center gap-3 min-w-0">
             <button

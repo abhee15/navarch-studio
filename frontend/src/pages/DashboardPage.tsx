@@ -9,6 +9,7 @@ import { UserSettingsDialog } from "../components/UserSettingsDialog";
 import { settingsStore } from "../stores/SettingsStore";
 import { UserProfileMenu } from "../components/UserProfileMenu";
 import { Footer } from "../components/Footer";
+import { AppHeader } from "../components/AppHeader";
 
 export const DashboardPage: React.FC = observer(() => {
   const { authStore } = useStore();
@@ -26,30 +27,27 @@ export const DashboardPage: React.FC = observer(() => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
-      {/* Header/Navigation */}
-      <header className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="rounded-lg bg-primary p-2">
-                <ShoppingBag className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-                <p className="text-sm text-muted-foreground dark:text-gray-400">
-                  Welcome back, {authStore.user?.name}
-                </p>
-              </div>
+      <AppHeader
+        left={
+          <>
+            <div className="rounded-lg bg-primary p-2">
+              <ShoppingBag className="h-5 w-5 text-primary-foreground" />
             </div>
-            <div className="flex items-center space-x-2">
-              <UserProfileMenu
-                onOpenSettings={() => setShowSettings(true)}
-                onLogout={handleLogout}
-              />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
+                Welcome back, {authStore.user?.name}
+              </p>
             </div>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+        right={
+          <UserProfileMenu
+            onOpenSettings={() => setShowSettings(true)}
+            onLogout={handleLogout}
+          />
+        }
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 flex-1">
