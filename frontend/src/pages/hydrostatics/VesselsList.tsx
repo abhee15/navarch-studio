@@ -40,7 +40,7 @@ export const VesselsList = observer(function VesselsList() {
   };
 
   const handleVesselClick = (vesselId: string) => {
-    navigate(`/hydrostatics/vessels/${vesselId}`);
+    navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
   };
 
   const handleDeleteVessel = async (vesselId: string, vesselName: string, e: React.MouseEvent) => {

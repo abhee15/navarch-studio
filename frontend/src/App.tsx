@@ -111,8 +111,18 @@ export const App: React.FC = observer(() => (
               </ProtectedRoute>
             }
           />
+          {/* Default to new Workspace */}
           <Route
             path="/hydrostatics/vessels/:vesselId"
+            element={
+              <ProtectedRoute>
+                <VesselWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          {/* Classic view available at explicit /classic path */}
+          <Route
+            path="/hydrostatics/vessels/:vesselId/classic"
             element={
               <ProtectedRoute>
                 <VesselDetail />
