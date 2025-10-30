@@ -15,13 +15,16 @@ namespace DataService.Controllers;
 public class VesselsController : ControllerBase
 {
     private readonly IVesselService _vesselService;
+    private readonly SampleVesselSeedService _seedService;
     private readonly ILogger<VesselsController> _logger;
 
     public VesselsController(
         IVesselService vesselService,
+        SampleVesselSeedService seedService,
         ILogger<VesselsController> logger)
     {
         _vesselService = vesselService;
+        _seedService = seedService;
         _logger = logger;
     }
 
@@ -234,5 +237,34 @@ public class VesselsController : ControllerBase
     {
         var templates = await _vesselService.GetTemplatesAsync();
         return Ok(templates);
+    }
+
+    /// <summary>
+    /// Seeds sample vessels (KCS, Wigley) for the current user
+    /// </summary>
+    [HttpPost("seed-samples")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> SeedSampleVessels(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Seed sample vessels requested");
+
+            // TODO: Get actual user ID from auth context
+            var userId = Guid.Parse("00000000-0000-0000-0000-000000000001"); // Placeholder
+
+            // Seed both sample vessels
+            await _seedService.SeedAllSampleVesselsAsync(userId, cancellationToken);
+
+            return Ok(new { message = "Sample vessels seeded successfully (KCS and Wigley)" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding sample vessels");
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { error = "An unexpected error occurred while seeding sample vessels", details = ex.Message });
+        }
     }
 }

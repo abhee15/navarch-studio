@@ -54,4 +54,14 @@ public class Vessel
     public VesselMetadata? Metadata { get; set; }
     public MaterialsConfig? Materials { get; set; }
     public LoadingConditions? Loading { get; set; }
+
+    // Additional datasets
+    public ICollection<SpeedGrid> SpeedGrids { get; set; } = new List<SpeedGrid>();
+    public ICollection<EngineCurve> EngineCurves { get; set; } = new List<EngineCurve>();
+    public ICollection<SeaState> SeaStates { get; set; } = new List<SeaState>();
+
+    /// <summary>
+    /// Version notes/history for this vessel
+    /// </summary>
+    public string? VersionNotes { get; set; }
 }

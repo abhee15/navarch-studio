@@ -169,6 +169,7 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IExportService, DataService.Services.Hydrostatics.ExportService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCalculator, DataService.Services.Hydrostatics.StabilityCalculator>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCriteriaChecker, DataService.Services.Hydrostatics.StabilityCriteriaChecker>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.SampleVesselSeedService>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
@@ -322,6 +323,46 @@ try
             {
                 Console.WriteLine("[MIGRATION] Database schema is up to date (no pending migrations)");
                 Log.Information("[MIGRATION] Database schema is up to date (no pending migrations)");
+            }
+
+            // Auto-seed sample vessels in development
+            if (app.Environment.IsDevelopment())
+            {
+                Console.WriteLine("[SEED] Checking for sample vessels in development...");
+                Log.Information("[SEED] Checking for sample vessels in development...");
+
+                try
+                {
+                    var seedService = scope.ServiceProvider.GetRequiredService<DataService.Services.Hydrostatics.SampleVesselSeedService>();
+
+                    // Check if sample vessels already exist for default user
+                    var defaultUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+                    var hasSamples = await dbContext.Vessels
+                        .AnyAsync(v => v.UserId == defaultUserId &&
+                                      (v.Name.Contains("KCS") || v.Name.Contains("Wigley")));
+
+                    if (!hasSamples)
+                    {
+                        Console.WriteLine("[SEED] No sample vessels found. Seeding KCS and Wigley...");
+                        Log.Information("[SEED] No sample vessels found. Seeding KCS and Wigley...");
+
+                        await seedService.SeedAllSampleVesselsAsync(defaultUserId);
+
+                        Console.WriteLine("[SEED] Sample vessels seeded successfully!");
+                        Log.Information("[SEED] Sample vessels seeded successfully!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[SEED] Sample vessels already exist. Skipping seed.");
+                        Log.Information("[SEED] Sample vessels already exist. Skipping seed.");
+                    }
+                }
+                catch (Exception seedEx)
+                {
+                    Console.WriteLine($"[SEED] WARNING: Failed to seed sample vessels: {seedEx.Message}");
+                    Log.Warning(seedEx, "[SEED] Failed to seed sample vessels: {Message}", seedEx.Message);
+                    // Don't throw - seeding is optional
+                }
             }
         }
         catch (Exception ex)

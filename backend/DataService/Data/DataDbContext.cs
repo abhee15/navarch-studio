@@ -33,6 +33,17 @@ public class DataDbContext : DbContext
     public DbSet<BenchmarkAsset> BenchmarkAssets => Set<BenchmarkAsset>();
     public DbSet<BenchmarkValidationRun> BenchmarkValidationRuns => Set<BenchmarkValidationRun>();
 
+    // Project board entities
+    public DbSet<ProjectBoard> ProjectBoards => Set<ProjectBoard>();
+    public DbSet<BoardCard> BoardCards => Set<BoardCard>();
+
+    // Additional dataset entities
+    public DbSet<SpeedGrid> SpeedGrids => Set<SpeedGrid>();
+    public DbSet<SpeedPoint> SpeedPoints => Set<SpeedPoint>();
+    public DbSet<EngineCurve> EngineCurves => Set<EngineCurve>();
+    public DbSet<EnginePoint> EnginePoints => Set<EnginePoint>();
+    public DbSet<SeaState> SeaStates => Set<SeaState>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -89,6 +100,25 @@ public class DataDbContext : DbContext
                 .WithOne(l => l.Vessel)
                 .HasForeignKey<LoadingConditions>(l => l.VesselId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // New dataset relationships
+            entity.HasMany(e => e.SpeedGrids)
+                .WithOne(sg => sg.Vessel)
+                .HasForeignKey(sg => sg.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.EngineCurves)
+                .WithOne(ec => ec.Vessel)
+                .HasForeignKey(ec => ec.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.SeaStates)
+                .WithOne(ss => ss.Vessel)
+                .HasForeignKey(ss => ss.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Version notes
+            entity.Property(e => e.VersionNotes).HasColumnType("text");
         });
 
         // Loadcase configuration
@@ -313,6 +343,100 @@ public class DataDbContext : DbContext
                 .WithMany(c => c.ValidationRuns)
                 .HasForeignKey(e => e.CaseId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ProjectBoard configuration
+        modelBuilder.Entity<ProjectBoard>(entity =>
+        {
+            entity.ToTable("project_boards");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.HasIndex(e => e.UserId);
+            entity.HasQueryFilter(e => e.DeletedAt == null);
+
+            entity.HasMany(e => e.Cards)
+                .WithOne(c => c.Board)
+                .HasForeignKey(c => c.BoardId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // BoardCard configuration
+        modelBuilder.Entity<BoardCard>(entity =>
+        {
+            entity.ToTable("board_cards");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
+            entity.HasIndex(e => e.BoardId);
+
+            entity.HasOne(e => e.Vessel)
+                .WithMany()
+                .HasForeignKey(e => e.VesselId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // SpeedGrid configuration
+        modelBuilder.Entity<SpeedGrid>(entity =>
+        {
+            entity.ToTable("speed_grids");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.HasIndex(e => e.VesselId);
+
+            entity.HasMany(e => e.SpeedPoints)
+                .WithOne(p => p.SpeedGrid)
+                .HasForeignKey(p => p.SpeedGridId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // SpeedPoint configuration
+        modelBuilder.Entity<SpeedPoint>(entity =>
+        {
+            entity.ToTable("speed_points");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Speed).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.SpeedKnots).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.FroudeNumber).HasColumnType("decimal(8,4)");
+        });
+
+        // EngineCurve configuration
+        modelBuilder.Entity<EngineCurve>(entity =>
+        {
+            entity.ToTable("engine_curves");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.HasIndex(e => e.VesselId);
+
+            entity.HasMany(e => e.EnginePoints)
+                .WithOne(p => p.EngineCurve)
+                .HasForeignKey(p => p.EngineCurveId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // EnginePoint configuration
+        modelBuilder.Entity<EnginePoint>(entity =>
+        {
+            entity.ToTable("engine_points");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Rpm).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.PowerKw).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.Torque).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.FuelConsumption).HasColumnType("decimal(10,2)");
+        });
+
+        // SeaState configuration
+        modelBuilder.Entity<SeaState>(entity =>
+        {
+            entity.ToTable("sea_states");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.WaveHeight).HasColumnType("decimal(8,3)");
+            entity.Property(e => e.WavePeriod).HasColumnType("decimal(8,3)");
+            entity.Property(e => e.WaveDirection).HasColumnType("decimal(6,2)");
+            entity.Property(e => e.WindSpeed).HasColumnType("decimal(8,3)");
+            entity.Property(e => e.WindDirection).HasColumnType("decimal(6,2)");
+            entity.Property(e => e.WaterDepth).HasColumnType("decimal(10,3)");
+            entity.HasIndex(e => e.VesselId);
         });
     }
 
