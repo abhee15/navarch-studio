@@ -62,9 +62,47 @@ jobs:
               - 'Dockerfile.*'
               - '.github/workflows/ci-dev.yml'
 
+  # Detect whether the previous run on this branch had backend failures
+  check-previous-run:
+    runs-on: ubuntu-latest
+    outputs:
+      prev_backend_failed: ${{ steps.out.outputs.prev_backend_failed }}
+      prev_backend_deploy_failed: ${{ steps.out.outputs.prev_backend_deploy_failed }}
+    steps:
+      - name: Inspect previous workflow run for backend failures
+        id: out
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch,
+              per_page: 10,
+              status: 'completed'
+            });
+            // Find last completed run before this one
+            const prev = runs.workflow_runs.find(r => r.id < context.runId && r.name === context.workflow);
+            let backendFailed = false;
+            let backendDeployFailed = false;
+            if (prev) {
+              const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: prev.id
+              });
+              for (const j of jobs.jobs) {
+                if (j.name === 'backend-quality' && j.conclusion === 'failure') backendFailed = true;
+                if (j.name === 'deploy-services' && j.conclusion === 'failure') backendDeployFailed = true;
+              }
+            }
+            core.setOutput('prev_backend_failed', backendFailed ? 'true' : 'false');
+            core.setOutput('prev_backend_deploy_failed', backendDeployFailed ? 'true' : 'false');
+
   frontend-quality:
     runs-on: ubuntu-latest
-    needs: check-changed-paths
+    needs: [check-changed-paths, check-previous-run]
     # Only run if frontend, shared packages, or workflow changed
     if: needs.check-changed-paths.outputs.frontend == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_frontend == true)
     defaults:
@@ -93,6 +131,16 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Fail if forbidden localhost URLs are present
+        run: |
+          echo "Scanning for forbidden localhost/127.0.0.1 URLs..."
+          if rg -n "http://localhost|https://localhost|127.0.0.1" src/; then
+            echo "❌ Forbidden localhost URL(s) found in source. Use runtime config/api client instead.";
+            exit 1;
+          else
+            echo "✅ No forbidden URLs found";
+          fi
+
       - name: Run TypeScript check
         run: npm run type-check
 
@@ -101,9 +149,9 @@ jobs:
 
   backend-quality:
     runs-on: ubuntu-latest
-    needs: check-changed-paths
+    needs: [check-changed-paths, check-previous-run]
     # Only run if backend, shared packages, or workflow changed
-    if: needs.check-changed-paths.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_backend == true)
+    if: needs.check-changed-paths.outputs.backend == 'true' || needs.check-previous-run.outputs.prev_backend_failed == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_backend == true)
     defaults:
       run:
         working-directory: ./backend
@@ -130,7 +178,7 @@ jobs:
 
   check-infrastructure:
     runs-on: ubuntu-latest
-    needs: [check-changed-paths, frontend-quality, backend-quality]
+    needs: [check-changed-paths, check-previous-run, frontend-quality, backend-quality]
     # Run even if quality checks were skipped (but not if they failed)
     if: |
       always() &&
@@ -371,8 +419,13 @@ jobs:
 
   deploy-services:
     runs-on: ubuntu-latest
-    needs: [deploy-infrastructure, build-and-push, check-changed-paths]
-    if: needs.build-and-push.result == 'success' && (needs.check-changed-paths.outputs.backend == 'true' || (github.event_name == 'workflow_dispatch' && (inputs.force_backend == true || inputs.force_deploy == true)))
+    needs: [deploy-infrastructure, build-and-push, check-changed-paths, check-previous-run]
+    if: needs.build-and-push.result == 'success' && (
+          needs.check-changed-paths.outputs.backend == 'true' ||
+          needs.check-previous-run.outputs.prev_backend_failed == 'true' ||
+          needs.check-previous-run.outputs.prev_backend_deploy_failed == 'true' ||
+          (github.event_name == 'workflow_dispatch' && (inputs.force_backend == true || inputs.force_deploy == true))
+        )
 
     steps:
       - name: Configure AWS credentials
@@ -430,9 +483,12 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    needs: [build-and-push, deploy-infrastructure]
-    # Always run - we'll check outputs in the first step and fail fast if missing
-    if: always() && needs.deploy-infrastructure.result == 'success'
+    needs: [check-infrastructure, check-changed-paths]
+    # Run when infra is configured and frontend changed, or via manual overrides
+    if: needs.check-infrastructure.outputs.has-secrets == 'true' && (
+          needs.check-changed-paths.outputs.frontend == 'true' ||
+          (github.event_name == 'workflow_dispatch' && (inputs.force_frontend == true || inputs.force_deploy == true))
+        )
     env:
       # Pass outputs as environment variables (bypasses GitHub's *** redaction)
       S3_BUCKET_NAME: ${{ needs.deploy-infrastructure.outputs.s3_bucket }}
