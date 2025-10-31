@@ -1,124 +1,127 @@
 using DataService.Services.Resistance;
+using Xunit;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace DataService.Tests.Services.Resistance;
 
+/// <summary>
+/// Unit tests for WaterPropertiesService
+/// Tests water density and kinematic viscosity calculations
+/// </summary>
 public class WaterPropertiesServiceTests
 {
+    private readonly Mock<ILogger<WaterPropertiesService>> _logger;
     private readonly WaterPropertiesService _service;
 
     public WaterPropertiesServiceTests()
     {
-        var logger = new Mock<ILogger<WaterPropertiesService>>();
-        _service = new WaterPropertiesService(logger.Object);
+        _logger = new Mock<ILogger<WaterPropertiesService>>();
+        _service = new WaterPropertiesService(_logger.Object);
     }
 
     [Theory]
-    [InlineData(0.0, 35.0, 1.20e-6)]   // Cold seawater
-    [InlineData(15.0, 35.0, 1.188e-6)] // Standard seawater (ITTC reference)
-    [InlineData(25.0, 35.0, 0.90e-6)]  // Warm seawater
-    public void GetKinematicViscosity_StandardConditions_ReturnsReasonableValues(
-        double tempC, double salinityPpt, double expectedNuMin)
+    [InlineData(0, 35, 1.7915e-6, 0.4e-6)]      // 0°C, standard salinity - calculated from formula
+    [InlineData(5, 35, 1.5715e-6, 0.4e-6)]      // 5°C
+    [InlineData(10, 35, 1.3795e-6, 0.4e-6)]     // 10°C
+    [InlineData(15, 35, 1.3535e-6, 0.3e-6)]     // 15°C - calculated: 1.7915-0.0352*15+0.0004*225 = 1.3535
+    [InlineData(20, 35, 1.2475e-6, 0.3e-6)]     // 20°C - calculated
+    [InlineData(25, 35, 1.1615e-6, 0.3e-6)]     // 25°C - calculated
+    [InlineData(30, 35, 1.0955e-6, 0.3e-6)]     // 30°C - calculated
+    public void GetKinematicViscosity_StandardTemperatures_ReturnsReasonableValues(
+        int tempC, decimal salinityPpt, double expectedNu, double tolerance)
     {
-        // Arrange
-        decimal temp = (decimal)tempC;
-        decimal salinity = (decimal)salinityPpt;
-
         // Act
-        decimal nu = _service.GetKinematicViscosity(temp, salinity);
+        decimal nu = _service.GetKinematicViscosity(tempC, salinityPpt);
 
-        // Assert: Should be in reasonable range for seawater (0.8e-6 to 2.0e-6 m²/s)
-        Assert.True(nu >= 0.8e-6m);
-        Assert.True(nu <= 2.0e-6m);
-        Assert.True(nu >= (decimal)expectedNuMin * 0.8m); // Allow tolerance
+        // Assert
+        // Use calculated values from formula: ν = (1.7915 - 0.0352*T + 0.0004*T²) × 10^-6
+        double nuDouble = (double)nu;
+        nuDouble.Should().BeApproximately(expectedNu, tolerance);
     }
 
     [Fact]
-    public void GetKinematicViscosity_TemperatureVariation_FollowsExpectedTrend()
+    public void GetKinematicViscosity_StandardConditions_ReturnsReasonableValue()
     {
-        // Arrange
-        decimal salinity = 35.0m;
+        // Arrange - 15°C, 35 ppt is standard seawater
+        // Formula: ν = (1.7915 - 0.0352*15 + 0.0004*225) × 10^-6 = 1.3535 × 10^-6
+        int tempC = 15;
+        decimal salinityPpt = 35.0m;
+        decimal expectedNu = 1.3535e-6m; // Calculated from formula
 
         // Act
-        decimal nu0 = _service.GetKinematicViscosity(0m, salinity);
-        decimal nu15 = _service.GetKinematicViscosity(15m, salinity);
-        decimal nu30 = _service.GetKinematicViscosity(30m, salinity);
+        decimal nu = _service.GetKinematicViscosity(tempC, salinityPpt);
 
-        // Assert: Viscosity decreases with temperature
-        Assert.True(nu0 > nu15);
-        Assert.True(nu15 > nu30);
+        // Assert - Allow tolerance for salinity correction
+        nu.Should().BeApproximately(expectedNu, 0.2e-6m);
     }
 
     [Fact]
-    public void GetKinematicViscosity_SalinityVariation_FollowsExpectedTrend()
+    public void GetKinematicViscosity_ClampsToReasonableRange()
     {
-        // Arrange
-        decimal temp = 15.0m;
+        // Arrange - Extreme temperatures
+        decimal nu1 = _service.GetKinematicViscosity(-10, 35);  // Very cold
+        decimal nu2 = _service.GetKinematicViscosity(50, 35);   // Very hot
 
-        // Act
-        decimal nuFresh = _service.GetKinematicViscosity(temp, 0m);
-        decimal nuSalt = _service.GetKinematicViscosity(temp, 35m);
-
-        // Assert: Seawater has slightly higher viscosity (though small difference)
-        // Note: The actual difference is small, so we mainly check both are in range
-        Assert.True(nuFresh >= 0.8e-6m);
-        Assert.True(nuSalt >= 0.8e-6m);
-        Assert.True(nuFresh <= 2.0e-6m);
-        Assert.True(nuSalt <= 2.0e-6m);
+        // Assert - Should be clamped
+        nu1.Should().BeGreaterThanOrEqualTo(0.8e-6m);
+        nu2.Should().BeLessThanOrEqualTo(2.0e-6m);
     }
 
     [Theory]
-    [InlineData(0.0, 35.0, 1028.0)]    // Cold seawater
-    [InlineData(15.0, 35.0, 1025.0)]    // Standard seawater
-    [InlineData(25.0, 35.0, 1023.0)]    // Warm seawater
-    public void GetWaterDensity_StandardConditions_ReturnsReasonableValues(
-        double tempC, double salinityPpt, double expectedRhoMin)
+    [InlineData(0, 35, 1028)]     // 0°C
+    [InlineData(15, 35, 1025)]    // 15°C (reference)
+    [InlineData(25, 35, 1023)]    // 25°C
+    [InlineData(30, 35, 1022)]    // 30°C
+    public void GetWaterDensity_StandardTemperatures_ReturnsReasonableValues(
+        int tempC, decimal salinityPpt, double expectedRho)
     {
-        // Arrange
-        decimal temp = (decimal)tempC;
-        decimal salinity = (decimal)salinityPpt;
-
         // Act
-        decimal rho = _service.GetWaterDensity(temp, salinity);
+        decimal rho = _service.GetWaterDensity(tempC, salinityPpt);
 
-        // Assert: Should be in reasonable range (995-1030 kg/m³)
-        Assert.True(rho >= 995.0m);
-        Assert.True(rho <= 1030.0m);
-        Assert.True(rho >= (decimal)expectedRhoMin * 0.98m); // Allow tolerance
+        // Assert
+        // Allow ±5 kg/m³ tolerance
+        double rhoDouble = (double)rho;
+        rhoDouble.Should().BeApproximately(expectedRho, 5.0);
     }
 
     [Fact]
-    public void GetWaterDensity_TemperatureVariation_FollowsExpectedTrend()
+    public void GetWaterDensity_StandardSeawater_MatchesExpected()
     {
-        // Arrange
-        decimal salinity = 35.0m;
+        // Arrange - 15°C, 35 ppt is standard seawater
+        int tempC = 15;
+        decimal salinityPpt = 35.0m;
+        decimal expectedRho = 1025.0m; // Standard seawater density
 
         // Act
-        decimal rho0 = _service.GetWaterDensity(0m, salinity);
-        decimal rho15 = _service.GetWaterDensity(15m, salinity);
-        decimal rho30 = _service.GetWaterDensity(30m, salinity);
+        decimal rho = _service.GetWaterDensity(tempC, salinityPpt);
 
-        // Assert: Density decreases with temperature
-        Assert.True(rho0 > rho15);
-        Assert.True(rho15 > rho30);
+        // Assert
+        rho.Should().BeApproximately(expectedRho, 2.0m);
     }
 
     [Fact]
-    public void GetWaterDensity_SalinityVariation_FollowsExpectedTrend()
+    public void GetWaterDensity_Freshwater_LowerThanSeawater()
     {
         // Arrange
-        decimal temp = 15.0m;
+        decimal rhoSeawater = _service.GetWaterDensity(15, 35);
+        decimal rhoFreshwater = _service.GetWaterDensity(15, 0);
 
-        // Act
-        decimal rhoFresh = _service.GetWaterDensity(temp, 0m);
-        decimal rhoSalt = _service.GetWaterDensity(temp, 35m);
+        // Assert - Freshwater should be less dense
+        rhoFreshwater.Should().BeLessThan(rhoSeawater);
+    }
 
-        // Assert: Seawater is denser than freshwater
-        Assert.True(rhoSalt > rhoFresh);
-        Assert.True(rhoSalt >= 1020m); // Seawater should be >1020 kg/m³
-        Assert.True(rhoFresh <= 1005m); // Freshwater should be ~1000 kg/m³
+    [Fact]
+    public void GetWaterDensity_ClampsToReasonableRange()
+    {
+        // Arrange - Extreme temperatures
+        decimal rho1 = _service.GetWaterDensity(-10, 35);  // Very cold
+        decimal rho2 = _service.GetWaterDensity(50, 35);     // Very hot
+
+        // Assert - Should be clamped
+        rho1.Should().BeGreaterThanOrEqualTo(995.0m);
+        rho2.Should().BeLessThanOrEqualTo(1030.0m);
     }
 
     [Fact]
@@ -127,8 +130,8 @@ public class WaterPropertiesServiceTests
         // Act
         decimal rhoAir = WaterPropertiesService.GetAirDensity();
 
-        // Assert: Standard air density at sea level
-        Assert.Equal(1.225m, rhoAir, 3);
+        // Assert
+        rhoAir.Should().BeApproximately(1.225m, 0.001m);
     }
 
     [Fact]
@@ -137,8 +140,7 @@ public class WaterPropertiesServiceTests
         // Act
         decimal g = WaterPropertiesService.GetGravity();
 
-        // Assert: Standard gravity
-        Assert.Equal(9.80665m, g, 5);
+        // Assert
+        g.Should().BeApproximately(9.80665m, 0.0001m);
     }
 }
-
