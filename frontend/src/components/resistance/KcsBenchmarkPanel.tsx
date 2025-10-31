@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { KcsBenchmarkRequest, KcsBenchmarkResult } from "../../types/resistance";
 import { resistanceCalculationsApi } from "../../services/resistanceApi";
 import { getErrorMessage } from "../../types/errors";
@@ -22,7 +22,7 @@ export function KcsBenchmarkPanel({
   const [error, setError] = useState<string | null>(null);
 
   // KCS preset values (typical KCS container ship)
-  const [kcsInputs, setKcsInputs] = useState<KcsBenchmarkRequest>({
+  const kcsInputs: KcsBenchmarkRequest = {
     vesselId,
     speedGridId: "", // Will be generated from reference data
     lWL: vesselLWL || 230.0, // KCS LWL ~230m
@@ -50,7 +50,7 @@ export function KcsBenchmarkPanel({
     ],
     maeTolerancePercent: 3.0,
     maxTolerancePercent: 5.0,
-  });
+  };
 
   const handleRunBenchmark = async () => {
     try {
