@@ -178,7 +178,11 @@ export const curvesApi = {
     vesselId: string,
     request: GenerateCurvesRequest
   ): Promise<{ curves: Record<string, CurveData> }> {
-    const response = await api.post(`/hydrostatics/vessels/${vesselId}/curves`, request);
+    // Curves generation can take longer due to multiple computations
+    // Use a 120 second timeout (2 minutes) for this operation
+    const response = await api.post(`/hydrostatics/vessels/${vesselId}/curves`, request, {
+      timeout: 120000, // 2 minutes
+    });
     return response.data;
   },
 

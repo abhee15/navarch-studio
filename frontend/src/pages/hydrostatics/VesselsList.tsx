@@ -12,6 +12,7 @@ import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
 import { settingsStore } from "../../stores/SettingsStore";
 import { getUnitSymbol } from "../../utils/unitSymbols";
+import { isHydrostaticsVessel } from "../../constants/templateVessels";
 
 export const VesselsList = observer(function VesselsList() {
   const navigate = useNavigate();
@@ -253,145 +254,170 @@ export const VesselsList = observer(function VesselsList() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {vessels.map((vessel) => (
-              <div
-                key={vessel.id}
-                onClick={() => handleVesselClick(vessel.id)}
-                className={`bg-card overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer border ${
-                  vessel.isTemplate
-                    ? "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20"
-                    : "border-border"
-                }`}
-              >
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-10 w-10 text-primary"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-muted-foreground truncate">
-                          Vessel
-                        </dt>
-                        <dd className="flex items-center gap-2">
-                          <span className="text-lg font-semibold text-card-foreground">
-                            {vessel.name}
-                          </span>
-                          {vessel.isTemplate && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                              <svg
-                                className="h-3 w-3 mr-1"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                />
-                              </svg>
-                              Template
+            {vessels.map((vessel) => {
+              const isHydrostatic = isHydrostaticsVessel(vessel.id);
+              return (
+                <div
+                  key={vessel.id}
+                  onClick={() => handleVesselClick(vessel.id)}
+                  className={`bg-card overflow-hidden shadow rounded-lg hover:shadow-md transition-all duration-200 cursor-pointer border ${
+                    isHydrostatic
+                      ? "border-2 border-primary/60 dark:border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 shadow-lg ring-2 ring-primary/20 dark:ring-primary/30"
+                      : vessel.isTemplate
+                        ? "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20"
+                        : "border-border"
+                  }`}
+                >
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-10 w-10 text-primary"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-muted-foreground truncate">
+                            Vessel
+                          </dt>
+                          <dd className="flex items-center gap-2">
+                            <span
+                              className={`text-lg font-semibold ${isHydrostatic ? "text-primary dark:text-primary" : "text-card-foreground"}`}
+                            >
+                              {vessel.name}
                             </span>
-                          )}
-                        </dd>
-                      </dl>
+                            {isHydrostatic && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border border-primary/40 dark:border-primary/50 shadow-sm">
+                                <svg
+                                  className="h-3 w-3 mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                  />
+                                </svg>
+                                Hydrostatic
+                              </span>
+                            )}
+                            {!isHydrostatic && vessel.isTemplate && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                <svg
+                                  className="h-3 w-3 mr-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                  />
+                                </svg>
+                                Template
+                              </span>
+                            )}
+                          </dd>
+                        </dl>
+                      </div>
                     </div>
-                  </div>
-                  {vessel.description && (
-                    <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-                      {vessel.description}
-                    </p>
-                  )}
-                  <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <span className="text-muted-foreground">Lpp:</span>
-                      <span className="ml-1 font-medium text-card-foreground">
-                        {vessel.lpp}
-                        {getUnitSymbol(settingsStore.preferredUnits, "Length")}
+                    {vessel.description && (
+                      <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
+                        {vessel.description}
+                      </p>
+                    )}
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Lpp:</span>
+                        <span className="ml-1 font-medium text-card-foreground">
+                          {vessel.lpp}
+                          {getUnitSymbol(settingsStore.preferredUnits, "Length")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">B:</span>
+                        <span className="ml-1 font-medium text-card-foreground">
+                          {vessel.beam}
+                          {getUnitSymbol(settingsStore.preferredUnits, "Length")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">T:</span>
+                        <span className="ml-1 font-medium text-card-foreground">
+                          {vessel.designDraft}
+                          {getUnitSymbol(settingsStore.preferredUnits, "Length")}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        Updated {formatDate(vessel.updatedAt)}
                       </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">B:</span>
-                      <span className="ml-1 font-medium text-card-foreground">
-                        {vessel.beam}
-                        {getUnitSymbol(settingsStore.preferredUnits, "Length")}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">T:</span>
-                      <span className="ml-1 font-medium text-card-foreground">
-                        {vessel.designDraft}
-                        {getUnitSymbol(settingsStore.preferredUnits, "Length")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      Updated {formatDate(vessel.updatedAt)}
-                    </span>
-                    {!vessel.isTemplate && (
-                      <button
-                        onClick={(e) => handleDeleteVessel(vessel.id, vessel.name, e)}
-                        disabled={deletingId === vessel.id}
-                        className="text-destructive hover:text-destructive/80 disabled:opacity-50 p-1 rounded hover:bg-destructive/10"
-                        title="Delete vessel"
-                      >
-                        {deletingId === vessel.id ? (
-                          <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
+                      {!vessel.isTemplate && !isHydrostatic && (
+                        <button
+                          onClick={(e) => handleDeleteVessel(vessel.id, vessel.name, e)}
+                          disabled={deletingId === vessel.id}
+                          className="text-destructive hover:text-destructive/80 disabled:opacity-50 p-1 rounded hover:bg-destructive/10"
+                          title="Delete vessel"
+                        >
+                          {deletingId === vessel.id ? (
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
                               stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        )}
-                      </button>
-                    )}
-                    {vessel.isTemplate && (
-                      <span className="text-muted-foreground italic text-[10px]">
-                        Read-only template
-                      </span>
-                    )}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      )}
+                      {(vessel.isTemplate || isHydrostatic) && (
+                        <span className="text-muted-foreground italic text-[10px]">
+                          Read-only template
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
