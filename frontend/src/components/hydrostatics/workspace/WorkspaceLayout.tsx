@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { settingsStore } from "../../../stores/SettingsStore";
-import { useNavigate } from "react-router-dom";
 import type { VesselDetails, Loadcase, HydroResult } from "../../../types/hydrostatics";
 import type { PanelId, WorkspaceMode } from "../../../types/workspace";
 import type { Layout as GridLayout } from "react-grid-layout";
@@ -10,6 +9,7 @@ import { ViewModeLayout } from "./ViewModeLayout";
 import { EditModeLayout } from "./EditModeLayout";
 import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydrostaticsApi";
 import { GeometryManagementDialog } from "../GeometryManagementDialog";
+import { ManageLoadcasesDialog } from "../ManageLoadcasesDialog";
 import { getErrorMessage } from "../../../types/errors";
 
 interface WorkspaceLayoutProps {
@@ -19,7 +19,6 @@ interface WorkspaceLayoutProps {
 }
 
 export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLayoutProps) {
-  const navigate = useNavigate();
   const vesselId = vessel.id;
 
   // Layout management
@@ -59,6 +58,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
   const [error, setError] = useState<string | null>(null);
   const [computationTime, setComputationTime] = useState<number | null>(null);
   const [showGeometryEditor, setShowGeometryEditor] = useState(false);
+  const [showLoadcasesDialog, setShowLoadcasesDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile
@@ -441,9 +441,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
             onLcgChange={setLcg}
             onTcgChange={setTcg}
             onEditGeometry={() => setShowGeometryEditor(true)}
-            onManageLoadcases={() =>
-              navigate(`/hydrostatics/vessels/${vesselId}`, { state: { tab: "loadcases" } })
-            }
+            onManageLoadcases={() => setShowLoadcasesDialog(true)}
           />
         )}
       </div>
@@ -459,6 +457,34 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
             if (onVesselUpdated) {
               onVesselUpdated();
             }
+          }}
+        />
+      )}
+
+      {/* Loadcases Management Dialog */}
+      {showLoadcasesDialog && (
+        <ManageLoadcasesDialog
+          vesselId={vesselId}
+          isOpen={showLoadcasesDialog}
+          onClose={() => setShowLoadcasesDialog(false)}
+          onLoadcasesUpdated={() => {
+            // Reload loadcases list
+            const reloadLoadcases = async () => {
+              try {
+                const data = await loadcasesApi.list(vesselId);
+                setLoadcases(data.loadcases);
+                // If selected loadcase was deleted, clear selection
+                if (
+                  selectedLoadcaseId &&
+                  !data.loadcases.find((lc) => lc.id === selectedLoadcaseId)
+                ) {
+                  setSelectedLoadcaseId("");
+                }
+              } catch (err) {
+                console.error("Error reloading loadcases:", err);
+              }
+            };
+            reloadLoadcases();
           }}
         />
       )}
