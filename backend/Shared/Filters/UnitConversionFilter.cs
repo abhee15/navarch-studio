@@ -67,12 +67,55 @@ public class UnitConversionFilter : IAsyncActionFilter
                         ConvertDto(itemDto, targetUnits);
                     }
                 }
+                return;
             }
+        }
+
+        // Handle anonymous objects or objects with nested UnitAwareDto properties
+        // Check all properties recursively for UnitAwareDto instances
+        try
+        {
+            var properties = objType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var prop in properties)
+            {
+                if (!prop.CanRead) continue;
+
+                var value = prop.GetValue(obj);
+                if (value == null) continue;
+
+                // If property is a UnitAwareDto, convert it
+                if (value is UnitAwareDto propDto)
+                {
+                    ConvertDto(propDto, targetUnits);
+                }
+                // If property is a collection of UnitAwareDto, convert each item
+                else if (value is IEnumerable propEnumerable)
+                {
+                    foreach (var item in propEnumerable)
+                    {
+                        if (item is UnitAwareDto itemDto)
+                        {
+                            ConvertDto(itemDto, targetUnits);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log but don't throw - conversion is best-effort
+            _logger.LogWarning(ex, "Error converting nested properties in response object of type {Type}", objType.Name);
         }
     }
 
     private void ConvertDto(UnitAwareDto dto, string targetUnits)
     {
+        // Default to SI if Units is null or empty
+        if (string.IsNullOrWhiteSpace(dto.Units))
+        {
+            dto.Units = "SI";
+        }
+
         if (dto.Units == targetUnits) return;
 
         var sourceUnits = dto.Units;
