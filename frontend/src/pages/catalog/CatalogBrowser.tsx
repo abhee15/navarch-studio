@@ -61,6 +61,10 @@ export const CatalogBrowser: React.FC = observer(() => {
     loadData();
   }, [activeTab]);
 
+  const handleHome = () => {
+    navigate("/dashboard");
+  };
+
   const handleLogout = async () => {
     await authStore.logout();
     navigate("/login");
@@ -317,7 +321,25 @@ export const CatalogBrowser: React.FC = observer(() => {
             </div>
           </>
         }
-        right={<UserProfileMenu onOpenSettings={() => {}} onLogout={handleLogout} />}
+        right={
+          <>
+            <button
+              onClick={handleHome}
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
+            >
+              <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+              Home
+            </button>
+            <UserProfileMenu onOpenSettings={() => {}} onLogout={handleLogout} />
+          </>
+        }
       />
 
       {/* Main Content */}
