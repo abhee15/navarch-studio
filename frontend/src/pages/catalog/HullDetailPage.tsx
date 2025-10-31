@@ -162,10 +162,12 @@ export const HullDetailPage: React.FC = observer(() => {
           <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start">
             <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-3 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-medium text-yellow-800 dark:text-yellow-300">Geometry Not Available</h3>
+              <h3 className="font-medium text-yellow-800 dark:text-yellow-300">
+                Geometry Not Available
+              </h3>
               <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                This hull's geometry data is not yet available in the catalog. You can still view the principal
-                particulars below.
+                This hull's geometry data is not yet available in the catalog. You can still view
+                the principal particulars below.
               </p>
             </div>
           </div>
@@ -219,7 +221,9 @@ export const HullDetailPage: React.FC = observer(() => {
                   )}
                   {hull.cb && (
                     <div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Block Coeff. (Cb)</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Block Coeff. (Cb)
+                      </div>
                       <div className="text-lg font-semibold text-gray-900 dark:text-white">
                         {hull.cb.toFixed(3)}
                       </div>
@@ -227,7 +231,9 @@ export const HullDetailPage: React.FC = observer(() => {
                   )}
                   {hull.cp && (
                     <div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">Prismatic Coeff. (Cp)</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Prismatic Coeff. (Cp)
+                      </div>
                       <div className="text-lg font-semibold text-gray-900 dark:text-white">
                         {hull.cp.toFixed(3)}
                       </div>
@@ -311,7 +317,9 @@ export const HullDetailPage: React.FC = observer(() => {
                   {hull.hullType && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Type:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{hull.hullType}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {hull.hullType}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between">
@@ -349,7 +357,9 @@ export const HullDetailPage: React.FC = observer(() => {
                   {(hull.offsetsCount || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Offsets:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{hull.offsetsCount}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {hull.offsetsCount}
+                      </span>
                     </div>
                   )}
                 </div>

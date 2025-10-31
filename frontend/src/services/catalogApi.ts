@@ -100,9 +100,7 @@ export const getPropellerSeries = async (
 /**
  * Get a specific propeller series with all open-water points
  */
-export const getPropellerSeriesDetails = async (
-  id: string
-): Promise<CatalogPropellerSeries> => {
+export const getPropellerSeriesDetails = async (id: string): Promise<CatalogPropellerSeries> => {
   const response = await api.get(`/catalog/propellers/${id}`);
   return response.data;
 };

@@ -4,7 +4,13 @@ import { observer } from "mobx-react-lite";
 import { BookOpen, Ship, Anchor, Droplets, Loader2, AlertCircle } from "lucide-react";
 import { useStore } from "../../stores";
 import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { Footer } from "../../components/Footer";
 import { AppHeader } from "../../components/AppHeader";
@@ -180,9 +186,7 @@ export const CatalogBrowser: React.FC = observer(() => {
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Anchor className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="mb-2">No propeller series available</p>
-          <p className="text-sm">
-            Wageningen B-series data is being prepared. Check back soon!
-          </p>
+          <p className="text-sm">Wageningen B-series data is being prepared. Check back soon!</p>
         </div>
       );
     }
@@ -201,9 +205,7 @@ export const CatalogBrowser: React.FC = observer(() => {
                 )}
               </div>
               <CardTitle>{series.name}</CardTitle>
-              <CardDescription>
-                {series.bladeCount}-blade propeller series
-              </CardDescription>
+              <CardDescription>{series.bladeCount}-blade propeller series</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -251,13 +253,16 @@ export const CatalogBrowser: React.FC = observer(() => {
       );
     }
 
-    const groupedByMedium = waterProperties.reduce((acc, prop) => {
-      if (!acc[prop.medium]) {
-        acc[prop.medium] = [];
-      }
-      acc[prop.medium].push(prop);
-      return acc;
-    }, {} as Record<string, CatalogWaterProperty[]>);
+    const groupedByMedium = waterProperties.reduce(
+      (acc, prop) => {
+        if (!acc[prop.medium]) {
+          acc[prop.medium] = [];
+        }
+        acc[prop.medium].push(prop);
+        return acc;
+      },
+      {} as Record<string, CatalogWaterProperty[]>
+    );
 
     return (
       <div className="space-y-8">
@@ -280,9 +285,7 @@ export const CatalogBrowser: React.FC = observer(() => {
                         <span className="font-medium">{prop.density.toFixed(1)} kg/m³</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">
-                          Viscosity:
-                        </span>
+                        <span className="text-gray-600 dark:text-gray-400">Viscosity:</span>
                         <span className="font-medium">
                           {(prop.kinematicViscosity_m2s * 1e6).toFixed(2)} ×10⁻⁶ m²/s
                         </span>
