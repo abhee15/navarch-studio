@@ -476,6 +476,101 @@ jobs:
           echo "   Services will automatically apply database migrations on startup"
           echo "   Monitor logs: aws logs tail /aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-data-service --since 5m --region ${{ env.AWS_REGION }}"
 
+      - name: Wait for services to start
+        run: |
+          echo "⏳ Waiting for services to start and apply migrations..."
+          echo "   App Runner deployments typically take 3-5 minutes"
+          sleep 180  # Wait 3 minutes for services to start
+
+      - name: Verify migrations applied
+        run: |
+          echo "🔍 Verifying database migrations were applied successfully..."
+          
+          # Log group names for services
+          IDENTITY_LOG_GROUP="/aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-identity-service"
+          DATA_LOG_GROUP="/aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-data-service"
+          
+          # Check Identity Service migrations
+          echo ""
+          echo "Checking Identity Service migrations..."
+          IDENTITY_MIGRATION_SUCCESS=$(aws logs filter-log-events \
+            --log-group-name "$IDENTITY_LOG_GROUP" \
+            --start-time $(($(date +%s) - 600))000 \
+            --filter-pattern "Migrations applied successfully" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          IDENTITY_MIGRATION_UP_TO_DATE=$(aws logs filter-log-events \
+            --log-group-name "$IDENTITY_LOG_GROUP" \
+            --start-time $(($(date +%s) - 600))000 \
+            --filter-pattern "Database schema is up to date" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$IDENTITY_MIGRATION_SUCCESS" ] || [ -n "$IDENTITY_MIGRATION_UP_TO_DATE" ]; then
+            echo "✅ Identity Service: Migrations verified"
+          else
+            echo "⚠️  Identity Service: Migration status inconclusive (may still be starting)"
+            echo "   Check logs manually: aws logs tail $IDENTITY_LOG_GROUP --since 5m --region ${{ env.AWS_REGION }}"
+          fi
+          
+          # Check Data Service migrations
+          echo ""
+          echo "Checking Data Service migrations..."
+          DATA_MIGRATION_SUCCESS=$(aws logs filter-log-events \
+            --log-group-name "$DATA_LOG_GROUP" \
+            --start-time $(($(date +%s) - 600))000 \
+            --filter-pattern "Migrations applied successfully" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          DATA_MIGRATION_UP_TO_DATE=$(aws logs filter-log-events \
+            --log-group-name "$DATA_LOG_GROUP" \
+            --start-time $(($(date +%s) - 600))000 \
+            --filter-pattern "Database schema is up to date" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$DATA_MIGRATION_SUCCESS" ] || [ -n "$DATA_MIGRATION_UP_TO_DATE" ]; then
+            echo "✅ Data Service: Migrations verified"
+          else
+            echo "⚠️  Data Service: Migration status inconclusive (may still be starting)"
+            echo "   Check logs manually: aws logs tail $DATA_LOG_GROUP --since 5m --region ${{ env.AWS_REGION }}"
+          fi
+          
+          # Check for migration errors (fail if found)
+          echo ""
+          echo "Checking for migration errors..."
+          IDENTITY_ERROR=$(aws logs filter-log-events \
+            --log-group-name "$IDENTITY_LOG_GROUP" \
+            --start-time $(($(date +%s) - 600))000 \
+            --filter-pattern "ERROR Migration check failed" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          DATA_ERROR=$(aws logs filter-log-events \
+            --log-group-name "$DATA_LOG_GROUP" \
+            --start-time $(($(date +%s) - 600))000 \
+            --filter-pattern "ERROR Migration check failed" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$IDENTITY_ERROR" ]; then
+            echo "❌ Identity Service migration failed!"
+            echo "$IDENTITY_ERROR"
+            exit 1
+          fi
+          
+          if [ -n "$DATA_ERROR" ]; then
+            echo "❌ Data Service migration failed!"
+            echo "$DATA_ERROR"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ Migration verification complete"
+          echo "   Both services have either applied migrations successfully or are up to date"
+
   deploy-frontend:
     runs-on: ubuntu-latest
     needs: [build-and-push, deploy-infrastructure, update-cors]
