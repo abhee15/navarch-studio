@@ -1,5 +1,6 @@
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Shared.Constants;
 using Shared.Models;
@@ -52,9 +53,9 @@ public class TemplateVesselSeeder : ITemplateVesselSeeder
             _logger.LogInformation("Seeding hydrostatics template vessel {VesselId}...", TemplateVessels.HydrostaticsVesselId);
 
             // Use transaction to ensure atomicity (if supported by provider)
-            // InMemory database doesn't support transactions, so we check and skip if needed
-            Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
-            
+            // InMemory database doesn't support transactions, so we try-catch and skip if needed
+            IDbContextTransaction? transaction = null;
+
             try
             {
                 transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -62,7 +63,7 @@ public class TemplateVesselSeeder : ITemplateVesselSeeder
             catch (InvalidOperationException)
             {
                 // Transaction not supported (e.g., InMemory database)
-                // Continue without transaction
+                // Continue without transaction - SaveChangesAsync will still work atomically
                 _logger.LogDebug("Transactions not supported by database provider, proceeding without transaction");
             }
 
