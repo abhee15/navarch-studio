@@ -11,6 +11,8 @@ import { VesselWorkspace } from "./pages/hydrostatics/VesselWorkspace";
 import { VesselResistanceWorkspace } from "./pages/resistance/VesselResistanceWorkspace";
 import { BenchmarksList } from "./pages/benchmarks/BenchmarksList";
 import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
+import { CatalogBrowser } from "./pages/catalog/CatalogBrowser";
+import { HullDetailPage } from "./pages/catalog/HullDetailPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/common/Toast";
 import { loadConfig } from "./config/runtime";
@@ -153,6 +155,22 @@ export const App: React.FC = observer(() => (
                 element={
                   <ProtectedRoute>
                     <BenchmarkDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/catalog"
+                element={
+                  <ProtectedRoute>
+                    <CatalogBrowser />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/catalog/hulls/:id"
+                element={
+                  <ProtectedRoute>
+                    <HullDetailPage />
                   </ProtectedRoute>
                 }
               />

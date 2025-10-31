@@ -1,0 +1,2 @@
+vessel_code,name,source,retrieved_date,L_pp_m,L_wl_m,B_m,T_m,D_m,Cb,Cm,Cwp,Cp,S_wet_m2,Disp_m3,Disp_tonnes,note
+KCS,KRISO Container Ship,SIMMAN 2008 (see Geometry page),2025-10-31,230.0,,32.2,10.8,,0.651,,,,,,,Populate remaining fields from source after download

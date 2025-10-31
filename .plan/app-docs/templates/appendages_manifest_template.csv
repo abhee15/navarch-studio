@@ -1,0 +1,3 @@
+vessel_code,component,format,file_path,coordinate_system,notes
+KVLCC2,rudder,IGES,./geometry/kvlcc2/rudder.igs,"ship-fixed, origin midship WP",From SIMMAN page
+DTMB5415,sonar_dome,IGES,./geometry/5415/sonar_dome.igs,ship-fixed,

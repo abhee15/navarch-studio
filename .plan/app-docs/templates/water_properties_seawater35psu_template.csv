@@ -1,0 +1,2 @@
+type,salinity_PSU,temp_C,rho_kg_m3,nu_m2_s,mu_Pa_s,source
+seawater,35,,,,,ITTC 7.5-02-01-03 Table 2

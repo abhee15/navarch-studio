@@ -43,6 +43,11 @@ public class Vessel
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DeletedAt { get; set; }
 
+    /// <summary>
+    /// Source catalog hull ID if this vessel was cloned from catalog
+    /// </summary>
+    public Guid? SourceCatalogHullId { get; set; }
+
     // Navigation properties
     public ICollection<Station> Stations { get; set; } = new List<Station>();
     public ICollection<Waterline> Waterlines { get; set; } = new List<Waterline>();

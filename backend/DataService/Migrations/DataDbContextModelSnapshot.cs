@@ -23,6 +23,553 @@ namespace DataService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Shared.Models.BenchmarkAsset", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Caption")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("caption");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<string>("FigureRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("figure_ref");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("S3Key")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("s3key");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_asset");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_asset_case_id");
+
+                    b.ToTable("benchmark_asset", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkCase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal?>("B_m")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("b_m");
+
+                    b.Property<string>("CanonicalRefs")
+                        .HasColumnType("text")
+                        .HasColumnName("canonical_refs");
+
+                    b.Property<Guid?>("CatalogHullId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("catalog_hull_id");
+
+                    b.Property<decimal?>("Cb")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("cb");
+
+                    b.Property<decimal?>("Cp")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("cp");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("GeometryMissing")
+                        .HasColumnType("boolean")
+                        .HasColumnName("geometry_missing");
+
+                    b.Property<string>("HullType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("hull_type");
+
+                    b.Property<decimal?>("LCB_pctLpp")
+                        .HasColumnType("decimal(6,3)")
+                        .HasColumnName("lcb_pct_lpp");
+
+                    b.Property<decimal?>("LCF_pctLpp")
+                        .HasColumnType("decimal(6,3)")
+                        .HasColumnName("lcf_pct_lpp");
+
+                    b.Property<decimal?>("Lpp_m")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("lpp_m");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("slug");
+
+                    b.Property<decimal?>("T_m")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("t_m");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_case");
+
+                    b.HasIndex("CatalogHullId")
+                        .HasDatabaseName("ix_benchmark_case_catalog_hull_id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_benchmark_case_slug");
+
+                    b.ToTable("benchmark_case", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkGeometry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<string>("Checksum")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("checksum");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("OffsetsJson")
+                        .HasColumnType("text")
+                        .HasColumnName("offsets_json");
+
+                    b.Property<string>("S3Key")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("s3key");
+
+                    b.Property<string>("ScaleNote")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("scale_note");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.Property<string>("StationsJson")
+                        .HasColumnType("text")
+                        .HasColumnName("stations_json");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<string>("WaterlinesJson")
+                        .HasColumnType("text")
+                        .HasColumnName("waterlines_json");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_geometry");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_geometry_case_id");
+
+                    b.ToTable("benchmark_geometry", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkMetricRef", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FigureRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("figure_ref");
+
+                    b.Property<decimal?>("Fr")
+                        .HasColumnType("numeric")
+                        .HasColumnName("fr");
+
+                    b.Property<string>("Metric")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("metric");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.Property<decimal?>("TolRel")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("tol_rel");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unit");
+
+                    b.Property<decimal?>("ValueNum")
+                        .HasColumnType("decimal(18,8)")
+                        .HasColumnName("value_num");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_metric_ref");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_metric_ref_case_id");
+
+                    b.ToTable("benchmark_metric_ref", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkTestPoint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal?>("Density_kgm3")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("density_kgm3");
+
+                    b.Property<decimal>("Fr")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("fr");
+
+                    b.Property<decimal?>("KinematicViscosity_m2s")
+                        .HasColumnType("decimal(12,6)")
+                        .HasColumnName("kinematic_viscosity_m2s");
+
+                    b.Property<string>("Medium")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("medium");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal?>("Salinity_PSU")
+                        .HasColumnType("decimal(8,4)")
+                        .HasColumnName("salinity_psu");
+
+                    b.Property<decimal?>("Temperature_C")
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("temperature_c");
+
+                    b.Property<decimal?>("Vm")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("vm");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_testpoint");
+
+                    b.HasIndex("CaseId", "Fr")
+                        .IsUnique()
+                        .HasDatabaseName("ix_benchmark_testpoint_case_id_fr");
+
+                    b.ToTable("benchmark_testpoint", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkValidationRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal?>("Fr")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("fr");
+
+                    b.Property<string>("Metrics")
+                        .HasColumnType("text")
+                        .HasColumnName("metrics");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_validation_run");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_benchmark_validation_run_case_id");
+
+                    b.ToTable("benchmark_validation_run", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BoardCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BoardId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("board_id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("category");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<string>("Tags")
+                        .HasColumnType("text")
+                        .HasColumnName("tags");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("VesselId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vessel_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_board_cards");
+
+                    b.HasIndex("BoardId")
+                        .HasDatabaseName("ix_board_cards_board_id");
+
+                    b.HasIndex("VesselId")
+                        .HasDatabaseName("ix_board_cards_vessel_id");
+
+                    b.ToTable("board_cards", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.CatalogPropellerPoint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Eta0")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("eta0");
+
+                    b.Property<decimal>("J")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("j");
+
+                    b.Property<decimal>("Kq")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("kq");
+
+                    b.Property<decimal>("Kt")
+                        .HasColumnType("decimal(10,6)")
+                        .HasColumnName("kt");
+
+                    b.Property<decimal?>("ReynoldsNumber")
+                        .HasColumnType("decimal(18,6)")
+                        .HasColumnName("reynolds_number");
+
+                    b.Property<Guid>("SeriesId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("series_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_catalog_propeller_points");
+
+                    b.HasIndex("SeriesId")
+                        .HasDatabaseName("ix_catalog_propeller_points_series_id");
+
+                    b.ToTable("catalog_propeller_points", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.CatalogPropellerSeries", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("BladeCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("blade_count");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("ExpandedAreaRatio")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("expanded_area_ratio");
+
+                    b.Property<bool>("IsDemo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_demo");
+
+                    b.Property<string>("License")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("license");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<decimal?>("PitchDiameterRatio")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("pitch_diameter_ratio");
+
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_catalog_propeller_series");
+
+                    b.ToTable("catalog_propeller_series", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.CatalogWaterProperty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("Density_kgm3")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("density_kgm3");
+
+                    b.Property<decimal>("KinematicViscosity_m2s")
+                        .HasColumnType("decimal(12,8)")
+                        .HasColumnName("kinematic_viscosity_m2s");
+
+                    b.Property<string>("Medium")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("medium");
+
+                    b.Property<DateTime>("RetrievedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("retrieved_at");
+
+                    b.Property<decimal>("Salinity_PSU")
+                        .HasColumnType("decimal(8,4)")
+                        .HasColumnName("salinity_psu");
+
+                    b.Property<string>("SourceRef")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("source_ref");
+
+                    b.Property<decimal>("Temperature_C")
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("temperature_c");
+
+                    b.HasKey("Id")
+                        .HasName("pk_catalog_water_properties");
+
+                    b.HasIndex("Medium", "Temperature_C")
+                        .HasDatabaseName("ix_catalog_water_properties_medium_temperature_c");
+
+                    b.ToTable("catalog_water_properties", "data");
+                });
+
             modelBuilder.Entity("Shared.Models.Curve", b =>
                 {
                     b.Property<Guid>("Id")
@@ -97,6 +644,88 @@ namespace DataService.Migrations
                         .HasDatabaseName("ix_curve_points_curve_id_sequence");
 
                     b.ToTable("curve_points", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.EngineCurve", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("VesselId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vessel_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_engine_curves");
+
+                    b.HasIndex("VesselId")
+                        .HasDatabaseName("ix_engine_curves_vessel_id");
+
+                    b.ToTable("engine_curves", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.EnginePoint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<Guid>("EngineCurveId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("engine_curve_id");
+
+                    b.Property<decimal?>("FuelConsumption")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("fuel_consumption");
+
+                    b.Property<decimal>("PowerKw")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("power_kw");
+
+                    b.Property<decimal>("Rpm")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("rpm");
+
+                    b.Property<decimal?>("Torque")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("torque");
+
+                    b.HasKey("Id")
+                        .HasName("pk_engine_points");
+
+                    b.HasIndex("EngineCurveId")
+                        .HasDatabaseName("ix_engine_points_engine_curve_id");
+
+                    b.ToTable("engine_points", "data");
                 });
 
             modelBuilder.Entity("Shared.Models.HydroResult", b =>
@@ -349,6 +978,188 @@ namespace DataService.Migrations
                     b.ToTable("offsets", "data");
                 });
 
+            modelBuilder.Entity("Shared.Models.ProjectBoard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_project_boards");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_project_boards_user_id");
+
+                    b.ToTable("project_boards", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.SeaState", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("VesselId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vessel_id");
+
+                    b.Property<decimal?>("WaterDepth")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("water_depth");
+
+                    b.Property<decimal>("WaveDirection")
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("wave_direction");
+
+                    b.Property<decimal>("WaveHeight")
+                        .HasColumnType("decimal(8,3)")
+                        .HasColumnName("wave_height");
+
+                    b.Property<decimal>("WavePeriod")
+                        .HasColumnType("decimal(8,3)")
+                        .HasColumnName("wave_period");
+
+                    b.Property<decimal?>("WindDirection")
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("wind_direction");
+
+                    b.Property<decimal?>("WindSpeed")
+                        .HasColumnType("decimal(8,3)")
+                        .HasColumnName("wind_speed");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sea_states");
+
+                    b.HasIndex("VesselId")
+                        .HasDatabaseName("ix_sea_states_vessel_id");
+
+                    b.ToTable("sea_states", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.SpeedGrid", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("VesselId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vessel_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_speed_grids");
+
+                    b.HasIndex("VesselId")
+                        .HasDatabaseName("ix_speed_grids_vessel_id");
+
+                    b.ToTable("speed_grids", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.SpeedPoint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<decimal?>("FroudeNumber")
+                        .HasColumnType("decimal(8,4)")
+                        .HasColumnName("froude_number");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal>("Speed")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("speed");
+
+                    b.Property<Guid>("SpeedGridId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("speed_grid_id");
+
+                    b.Property<decimal?>("SpeedKnots")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("speed_knots");
+
+                    b.HasKey("Id")
+                        .HasName("pk_speed_points");
+
+                    b.HasIndex("SpeedGridId")
+                        .HasDatabaseName("ix_speed_points_speed_grid_id");
+
+                    b.ToTable("speed_points", "data");
+                });
+
             modelBuilder.Entity("Shared.Models.Station", b =>
                 {
                     b.Property<Guid>("Id")
@@ -415,6 +1226,10 @@ namespace DataService.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("name");
 
+                    b.Property<Guid?>("SourceCatalogHullId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_catalog_hull_id");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -423,8 +1238,15 @@ namespace DataService.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
+                    b.Property<string>("VersionNotes")
+                        .HasColumnType("text")
+                        .HasColumnName("version_notes");
+
                     b.HasKey("Id")
                         .HasName("pk_vessels");
+
+                    b.HasIndex("SourceCatalogHullId")
+                        .HasDatabaseName("ix_vessels_source_catalog_hull_id");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_vessels_user_id");
@@ -505,6 +1327,109 @@ namespace DataService.Migrations
                     b.ToTable("waterlines", "data");
                 });
 
+            modelBuilder.Entity("Shared.Models.BenchmarkAsset", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("Assets")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_asset_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkCase", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "CatalogHull")
+                        .WithMany("ChildBenchmarks")
+                        .HasForeignKey("CatalogHullId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_benchmark_case_benchmark_case_catalog_hull_id");
+
+                    b.Navigation("CatalogHull");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkGeometry", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("Geometries")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_geometry_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkMetricRef", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("MetricRefs")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_metric_ref_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkTestPoint", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("TestPoints")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_testpoint_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkValidationRun", b =>
+                {
+                    b.HasOne("Shared.Models.BenchmarkCase", "Case")
+                        .WithMany("ValidationRuns")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_benchmark_validation_run_benchmark_case_case_id");
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Shared.Models.BoardCard", b =>
+                {
+                    b.HasOne("Shared.Models.ProjectBoard", "Board")
+                        .WithMany("Cards")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_board_cards_project_boards_board_id");
+
+                    b.HasOne("Shared.Models.Vessel", "Vessel")
+                        .WithMany()
+                        .HasForeignKey("VesselId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_board_cards_vessels_vessel_id");
+
+                    b.Navigation("Board");
+
+                    b.Navigation("Vessel");
+                });
+
+            modelBuilder.Entity("Shared.Models.CatalogPropellerPoint", b =>
+                {
+                    b.HasOne("Shared.Models.CatalogPropellerSeries", "Series")
+                        .WithMany("OpenWaterPoints")
+                        .HasForeignKey("SeriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_catalog_propeller_points_catalog_propeller_series_series_id");
+
+                    b.Navigation("Series");
+                });
+
             modelBuilder.Entity("Shared.Models.Curve", b =>
                 {
                     b.HasOne("Shared.Models.Vessel", "Vessel")
@@ -527,6 +1452,30 @@ namespace DataService.Migrations
                         .HasConstraintName("fk_curve_points_curves_curve_id");
 
                     b.Navigation("Curve");
+                });
+
+            modelBuilder.Entity("Shared.Models.EngineCurve", b =>
+                {
+                    b.HasOne("Shared.Models.Vessel", "Vessel")
+                        .WithMany("EngineCurves")
+                        .HasForeignKey("VesselId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_engine_curves_vessels_vessel_id");
+
+                    b.Navigation("Vessel");
+                });
+
+            modelBuilder.Entity("Shared.Models.EnginePoint", b =>
+                {
+                    b.HasOne("Shared.Models.EngineCurve", "EngineCurve")
+                        .WithMany("EnginePoints")
+                        .HasForeignKey("EngineCurveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_engine_points_engine_curves_engine_curve_id");
+
+                    b.Navigation("EngineCurve");
                 });
 
             modelBuilder.Entity("Shared.Models.HydroResult", b =>
@@ -596,6 +1545,42 @@ namespace DataService.Migrations
                     b.Navigation("Vessel");
                 });
 
+            modelBuilder.Entity("Shared.Models.SeaState", b =>
+                {
+                    b.HasOne("Shared.Models.Vessel", "Vessel")
+                        .WithMany("SeaStates")
+                        .HasForeignKey("VesselId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sea_states_vessels_vessel_id");
+
+                    b.Navigation("Vessel");
+                });
+
+            modelBuilder.Entity("Shared.Models.SpeedGrid", b =>
+                {
+                    b.HasOne("Shared.Models.Vessel", "Vessel")
+                        .WithMany("SpeedGrids")
+                        .HasForeignKey("VesselId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_speed_grids_vessels_vessel_id");
+
+                    b.Navigation("Vessel");
+                });
+
+            modelBuilder.Entity("Shared.Models.SpeedPoint", b =>
+                {
+                    b.HasOne("Shared.Models.SpeedGrid", "SpeedGrid")
+                        .WithMany("SpeedPoints")
+                        .HasForeignKey("SpeedGridId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_speed_points_speed_grids_speed_grid_id");
+
+                    b.Navigation("SpeedGrid");
+                });
+
             modelBuilder.Entity("Shared.Models.Station", b =>
                 {
                     b.HasOne("Shared.Models.Vessel", "Vessel")
@@ -632,9 +1617,34 @@ namespace DataService.Migrations
                     b.Navigation("Vessel");
                 });
 
+            modelBuilder.Entity("Shared.Models.BenchmarkCase", b =>
+                {
+                    b.Navigation("Assets");
+
+                    b.Navigation("ChildBenchmarks");
+
+                    b.Navigation("Geometries");
+
+                    b.Navigation("MetricRefs");
+
+                    b.Navigation("TestPoints");
+
+                    b.Navigation("ValidationRuns");
+                });
+
+            modelBuilder.Entity("Shared.Models.CatalogPropellerSeries", b =>
+                {
+                    b.Navigation("OpenWaterPoints");
+                });
+
             modelBuilder.Entity("Shared.Models.Curve", b =>
                 {
                     b.Navigation("Points");
+                });
+
+            modelBuilder.Entity("Shared.Models.EngineCurve", b =>
+                {
+                    b.Navigation("EnginePoints");
                 });
 
             modelBuilder.Entity("Shared.Models.Loadcase", b =>
@@ -642,8 +1652,20 @@ namespace DataService.Migrations
                     b.Navigation("HydroResults");
                 });
 
+            modelBuilder.Entity("Shared.Models.ProjectBoard", b =>
+                {
+                    b.Navigation("Cards");
+                });
+
+            modelBuilder.Entity("Shared.Models.SpeedGrid", b =>
+                {
+                    b.Navigation("SpeedPoints");
+                });
+
             modelBuilder.Entity("Shared.Models.Vessel", b =>
                 {
+                    b.Navigation("EngineCurves");
+
                     b.Navigation("HydroResults");
 
                     b.Navigation("Loadcases");
@@ -655,6 +1677,10 @@ namespace DataService.Migrations
                     b.Navigation("Metadata");
 
                     b.Navigation("Offsets");
+
+                    b.Navigation("SeaStates");
+
+                    b.Navigation("SpeedGrids");
 
                     b.Navigation("Stations");
 

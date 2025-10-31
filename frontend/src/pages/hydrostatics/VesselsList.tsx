@@ -13,6 +13,7 @@ import { AppHeader } from "../../components/AppHeader";
 import { settingsStore } from "../../stores/SettingsStore";
 import { getUnitSymbol } from "../../utils/unitSymbols";
 import { isHydrostaticsVessel } from "../../constants/templateVessels";
+import { BookOpen } from "lucide-react";
 
 export const VesselsList = observer(function VesselsList() {
   const navigate = useNavigate();
@@ -154,24 +155,33 @@ export const VesselsList = observer(function VesselsList() {
               </p>
             </div>
             {!isResistanceContext && (
-              <button
-                onClick={handleCreateVessel}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
-              >
-                <svg
-                  className="-ml-1 mr-2 h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate("/catalog")}
+                  className="inline-flex items-center px-4 py-2 border border-border rounded-md shadow-sm text-sm font-medium text-foreground bg-card hover:bg-accent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                New Vessel
-              </button>
+                  <BookOpen className="-ml-1 mr-2 h-5 w-5" />
+                  Import from Catalog
+                </button>
+                <button
+                  onClick={handleCreateVessel}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
+                >
+                  <svg
+                    className="-ml-1 mr-2 h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  New Vessel
+                </button>
+              </div>
             )}
           </div>
         </div>

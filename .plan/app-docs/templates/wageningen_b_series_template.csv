@@ -1,0 +1,2 @@
+series,Z,AE_A0,P_D,Re,J,K_T,K_Q,eta0,source,notes
+B-series,4,0.7,1.0,2e7,,,,,Zenodo 3894728,"Fill J, KT, KQ, eta0 from dataset"

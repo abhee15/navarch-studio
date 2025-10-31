@@ -52,4 +52,3 @@ variable "publicly_accessible" {
   type        = bool
   default     = false
 }
-

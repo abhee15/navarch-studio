@@ -1,0 +1,3 @@
+vessel_code,definition,units,station_index,x_over_Lpp,waterline_index,z_over_T,y_halfbreadth_m
+KCS,"non-dimensionalized by Lpp,T",meters,0,0.0,0,0.0,0.0
+KCS,"non-dimensionalized by Lpp,T",meters,10,0.5,5,0.5,15.0

@@ -33,6 +33,11 @@ public class DataDbContext : DbContext
     public DbSet<BenchmarkAsset> BenchmarkAssets => Set<BenchmarkAsset>();
     public DbSet<BenchmarkValidationRun> BenchmarkValidationRuns => Set<BenchmarkValidationRun>();
 
+    // Catalog entities
+    public DbSet<CatalogPropellerSeries> CatalogPropellerSeries => Set<CatalogPropellerSeries>();
+    public DbSet<CatalogPropellerPoint> CatalogPropellerPoints => Set<CatalogPropellerPoint>();
+    public DbSet<CatalogWaterProperty> CatalogWaterProperties => Set<CatalogWaterProperty>();
+
     // Project board entities
     public DbSet<ProjectBoard> ProjectBoards => Set<ProjectBoard>();
     public DbSet<BoardCard> BoardCards => Set<BoardCard>();
@@ -62,6 +67,7 @@ public class DataDbContext : DbContext
             entity.Property(e => e.DesignDraft).HasColumnType("decimal(10,3)");
 
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.SourceCatalogHullId);
             entity.HasQueryFilter(e => e.DeletedAt == null);
 
             // Configure relationships
@@ -262,6 +268,22 @@ public class DataDbContext : DbContext
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.CanonicalRefs).HasColumnType("text");
             entity.HasIndex(e => e.Slug).IsUnique();
+
+            // Catalog/Hull-specific fields
+            entity.Property(e => e.HullType).HasMaxLength(50);
+            entity.Property(e => e.Lpp_m).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.B_m).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.T_m).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.Cb).HasColumnType("decimal(6,4)");
+            entity.Property(e => e.Cp).HasColumnType("decimal(6,4)");
+            entity.Property(e => e.LCB_pctLpp).HasColumnType("decimal(6,3)");
+            entity.Property(e => e.LCF_pctLpp).HasColumnType("decimal(6,3)");
+
+            // Self-referencing relationship for catalog hulls
+            entity.HasOne(e => e.CatalogHull)
+                .WithMany(c => c.ChildBenchmarks)
+                .HasForeignKey(e => e.CatalogHullId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // BenchmarkGeometry configuration
@@ -274,6 +296,12 @@ public class DataDbContext : DbContext
             entity.Property(e => e.S3Key).HasMaxLength(500);
             entity.Property(e => e.Checksum).HasMaxLength(128);
             entity.Property(e => e.ScaleNote).HasMaxLength(200);
+
+            // Normalized JSON storage
+            entity.Property(e => e.StationsJson).HasColumnType("text");
+            entity.Property(e => e.WaterlinesJson).HasColumnType("text");
+            entity.Property(e => e.OffsetsJson).HasColumnType("text");
+
             entity.HasIndex(e => e.CaseId);
             entity.HasOne(e => e.Case)
                 .WithMany(c => c.Geometries)
@@ -288,6 +316,14 @@ public class DataDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Fr).HasColumnType("decimal(10,6)");
             entity.Property(e => e.Vm).HasColumnType("decimal(10,6)");
+
+            // Water properties for test conditions
+            entity.Property(e => e.Medium).HasMaxLength(20);
+            entity.Property(e => e.Temperature_C).HasColumnType("decimal(6,2)");
+            entity.Property(e => e.Salinity_PSU).HasColumnType("decimal(8,4)");
+            entity.Property(e => e.Density_kgm3).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.KinematicViscosity_m2s).HasColumnType("decimal(12,6)");
+
             entity.HasIndex(e => new { e.CaseId, e.Fr }).IsUnique();
             entity.HasOne(e => e.Case)
                 .WithMany(c => c.TestPoints)
@@ -437,6 +473,53 @@ public class DataDbContext : DbContext
             entity.Property(e => e.WindDirection).HasColumnType("decimal(6,2)");
             entity.Property(e => e.WaterDepth).HasColumnType("decimal(10,3)");
             entity.HasIndex(e => e.VesselId);
+        });
+
+        // CatalogPropellerSeries configuration
+        modelBuilder.Entity<CatalogPropellerSeries>(entity =>
+        {
+            entity.ToTable("catalog_propeller_series");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.BladeCount).IsRequired();
+            entity.Property(e => e.ExpandedAreaRatio).HasColumnType("decimal(6,4)");
+            entity.Property(e => e.PitchDiameterRatio).HasColumnType("decimal(6,4)");
+            entity.Property(e => e.SourceUrl).HasMaxLength(500);
+            entity.Property(e => e.License).HasMaxLength(200);
+
+            entity.HasMany(e => e.OpenWaterPoints)
+                .WithOne(p => p.Series)
+                .HasForeignKey(p => p.SeriesId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // CatalogPropellerPoint configuration
+        modelBuilder.Entity<CatalogPropellerPoint>(entity =>
+        {
+            entity.ToTable("catalog_propeller_points");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.J).HasColumnType("decimal(10,6)");
+            entity.Property(e => e.Kt).HasColumnType("decimal(10,6)");
+            entity.Property(e => e.Kq).HasColumnType("decimal(10,6)");
+            entity.Property(e => e.Eta0).HasColumnType("decimal(10,6)");
+            entity.Property(e => e.ReynoldsNumber).HasColumnType("decimal(18,6)");
+
+            entity.HasIndex(e => e.SeriesId);
+        });
+
+        // CatalogWaterProperty configuration
+        modelBuilder.Entity<CatalogWaterProperty>(entity =>
+        {
+            entity.ToTable("catalog_water_properties");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Medium).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.Temperature_C).HasColumnType("decimal(6,2)");
+            entity.Property(e => e.Salinity_PSU).HasColumnType("decimal(8,4)");
+            entity.Property(e => e.Density_kgm3).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.KinematicViscosity_m2s).HasColumnType("decimal(12,8)");
+            entity.Property(e => e.SourceRef).IsRequired().HasMaxLength(200);
+
+            entity.HasIndex(e => new { e.Medium, e.Temperature_C });
         });
     }
 

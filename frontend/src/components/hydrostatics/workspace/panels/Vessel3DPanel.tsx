@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { observer } from "mobx-react-lite";
-import { Vessel3DViewer } from "../../Vessel3DViewer";
+import { Vessel3DViewer, type Vessel3DViewerRef } from "../../Vessel3DViewer";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
 import type { VesselDetails, HydroResult } from "../../../../types/hydrostatics";
@@ -38,6 +38,7 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
 }: Vessel3DPanelProps) {
   const displayUnits = settingsStore.preferredUnits;
   const lengthUnit = getUnitSymbol(displayUnits, "Length");
+  const viewerRef = useRef<Vessel3DViewerRef>(null);
 
   // Convert vessel dimensions from SI (stored) to display units for sliders
   const [localLpp, setLocalLpp] = useState<number>(
@@ -67,6 +68,15 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
     [localDesignDraft, displayUnits]
   );
 
+  // Auto-fit view when dimensions change significantly
+  useEffect(() => {
+    // Use a small delay to allow geometry to update first
+    const timer = setTimeout(() => {
+      viewerRef.current?.fitToView();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [lppSI, beamSI, designDraftSI]);
+
   // Slider ranges based on unit system
   const lppRange =
     displayUnits === "SI" ? { min: 10, max: 500, step: 1 } : { min: 33, max: 1640, step: 1 };
@@ -90,6 +100,7 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
       {/* 3D Viewer */}
       <div className="flex-1 min-h-0">
         <Vessel3DViewer
+          ref={viewerRef}
           lpp={lppSI}
           beam={beamSI}
           designDraft={designDraftSI}
@@ -115,9 +126,12 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
               max={lppRange.max}
               step={lppRange.step}
               value={localLpp}
-              onChange={(e) => setLocalLpp(parseFloat(e.target.value))}
+              onChange={(e) => {
+                const newValue = parseFloat(e.target.value);
+                setLocalLpp(newValue);
+              }}
               disabled={isReadOnly}
-              className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-primary"
             />
             <div className="w-24 text-right text-sm font-medium text-foreground">
               {localLpp.toFixed(1)} {lengthUnit}
@@ -134,9 +148,12 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
               max={beamRange.max}
               step={beamRange.step}
               value={localBeam}
-              onChange={(e) => setLocalBeam(parseFloat(e.target.value))}
+              onChange={(e) => {
+                const newValue = parseFloat(e.target.value);
+                setLocalBeam(newValue);
+              }}
               disabled={isReadOnly}
-              className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-primary"
             />
             <div className="w-24 text-right text-sm font-medium text-foreground">
               {localBeam.toFixed(1)} {lengthUnit}
@@ -153,9 +170,12 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
               max={draftRange.max}
               step={draftRange.step}
               value={localDesignDraft}
-              onChange={(e) => setLocalDesignDraft(parseFloat(e.target.value))}
+              onChange={(e) => {
+                const newValue = parseFloat(e.target.value);
+                setLocalDesignDraft(newValue);
+              }}
               disabled={isReadOnly}
-              className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-primary"
             />
             <div className="w-24 text-right text-sm font-medium text-foreground">
               {localDesignDraft.toFixed(1)} {lengthUnit}

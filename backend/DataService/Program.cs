@@ -182,6 +182,10 @@ try
     builder.Services.AddScoped<DataService.Services.Resistance.PowerCalculationService>();
     builder.Services.AddScoped<DataService.Services.Resistance.KcsBenchmarkService>();
 
+    // Catalog services
+    builder.Services.AddScoped<DataService.Data.Seeds.CatalogSeeder>();
+    builder.Services.AddScoped<DataService.Services.Catalog.CatalogWaterService>();
+
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
     // builder.Services.AddValidatorsFromAssembly(typeof(Shared.Models.Vessel).Assembly);
@@ -350,6 +354,23 @@ try
             {
                 Console.WriteLine($"[SEED] WARNING: Failed to seed template vessel: {seedEx.Message}");
                 Log.Warning(seedEx, "[SEED] Failed to seed template vessel: {Message}", seedEx.Message);
+                // Don't throw - seeding is optional, but log warning for monitoring
+            }
+
+            // Seed catalog data (runs in all environments)
+            Console.WriteLine("[SEED] Checking for catalog data...");
+            Log.Information("[SEED] Checking for catalog data...");
+            try
+            {
+                var catalogSeeder = scope.ServiceProvider.GetRequiredService<DataService.Data.Seeds.CatalogSeeder>();
+                await catalogSeeder.SeedAllAsync();
+                Console.WriteLine("[SEED] Catalog seeding completed.");
+                Log.Information("[SEED] Catalog seeding completed.");
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"[SEED] WARNING: Failed to seed catalog: {seedEx.Message}");
+                Log.Warning(seedEx, "[SEED] Failed to seed catalog: {Message}", seedEx.Message);
                 // Don't throw - seeding is optional, but log warning for monitoring
             }
 
