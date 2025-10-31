@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE_URL } from "../config/api";
+import { api as sharedApi } from "./api";
 
 export interface StabilityPoint {
   heelAngle: number;
@@ -65,8 +64,19 @@ export const stabilityApi = {
    * Generate GZ curve for a vessel
    */
   async generateGZCurve(vesselId: string, request: StabilityRequest): Promise<StabilityCurve> {
-    const response = await axios.post<StabilityCurve>(
-      `${API_BASE_URL}/api/v1/stability/vessels/${vesselId}/gz-curve`,
+    const response = await sharedApi.post<StabilityCurve>(
+      `/stability/vessels/${vesselId}/gz-curve`,
+      request
+    );
+    return response.data;
+  },
+
+  /**
+   * Generate KN curve for a vessel (same as GZ curve, but focused on KN values)
+   */
+  async generateKNCurve(vesselId: string, request: StabilityRequest): Promise<StabilityCurve> {
+    const response = await sharedApi.post<StabilityCurve>(
+      `/stability/vessels/${vesselId}/kn-curve`,
       request
     );
     return response.data;
@@ -79,8 +89,8 @@ export const stabilityApi = {
     vesselId: string,
     request: StabilityRequest
   ): Promise<StabilityCriteriaCheckResponse> {
-    const response = await axios.post<StabilityCriteriaCheckResponse>(
-      `${API_BASE_URL}/api/v1/stability/vessels/${vesselId}/check-criteria`,
+    const response = await sharedApi.post<StabilityCriteriaCheckResponse>(
+      `/stability/vessels/${vesselId}/check-criteria`,
       request
     );
     return response.data;
@@ -90,9 +100,7 @@ export const stabilityApi = {
    * Get available stability calculation methods
    */
   async getAvailableMethods(): Promise<StabilityMethod[]> {
-    const response = await axios.get<StabilityMethod[]>(
-      `${API_BASE_URL}/api/v1/stability/vessels/methods`
-    );
+    const response = await sharedApi.get<StabilityMethod[]>(`/stability/vessels/methods`);
     return response.data;
   },
 };

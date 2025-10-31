@@ -234,6 +234,7 @@ export function ViewModeLayout({
         return (
           <HydrostaticCurvesPanel
             vesselId={vessel?.id || ""}
+            vessel={vessel}
             results={results}
             curves={curves}
             onDraftHover={setHighlightedDraft}

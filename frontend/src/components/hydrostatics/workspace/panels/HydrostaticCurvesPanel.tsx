@@ -10,20 +10,22 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { HydroResult, CurveData } from "../../../../types/hydrostatics";
+import type { HydroResult, CurveData, VesselDetails } from "../../../../types/hydrostatics";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
 import { BonjeanCurvesPanel } from "./BonjeanCurvesPanel";
+import { CrossCurvesPanel } from "./CrossCurvesPanel";
 
 interface HydrostaticCurvesPanelProps {
   vesselId: string;
+  vessel?: VesselDetails | null;
   results: HydroResult[];
   curves: Record<string, CurveData>;
   onDraftHover?: (draft: number | null) => void;
 }
 
 export const HydrostaticCurvesPanel = observer(
-  ({ vesselId, results, curves, onDraftHover }: HydrostaticCurvesPanelProps) => {
+  ({ vesselId, vessel, results, curves, onDraftHover }: HydrostaticCurvesPanelProps) => {
     const [selectedCurveType, setSelectedCurveType] = useState<
       "displacement" | "kb" | "lcb" | "awp" | "gmt" | "bonjean" | "cross-curves"
     >("displacement");
@@ -118,27 +120,14 @@ export const HydrostaticCurvesPanel = observer(
         {/* Chart */}
         <div className="flex-1 min-h-0">
           {selectedCurveType === "bonjean" ? (
-            <BonjeanCurvesPanel vesselId={vesselId} />
+            <BonjeanCurvesPanel
+              vesselId={vesselId}
+              stationsCount={vessel?.stationsCount}
+              waterlinesCount={vessel?.waterlinesCount}
+              offsetsCount={vessel?.offsetsCount}
+            />
           ) : selectedCurveType === "cross-curves" ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
-                <svg
-                  className="mx-auto h-8 w-8 mb-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-                <p className="text-xs font-medium">Cross-Curves of Stability (KN)</p>
-                <p className="text-[10px] mt-1">Coming soon</p>
-              </div>
-            </div>
+            <CrossCurvesPanel vesselId={vesselId} vessel={vessel} />
           ) : selectedCurve ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
