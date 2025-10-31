@@ -31,12 +31,20 @@ public class UnitConversionFilter : IAsyncActionFilter
         // Only convert on successful responses
         if (resultContext.Result is ObjectResult objectResult && objectResult.StatusCode is >= 200 and < 300)
         {
-            var preferredUnits = context.HttpContext.Items["PreferredUnits"]?.ToString() ?? "SI";
-
-            // Convert the response if it's a UnitAwareDto
-            if (objectResult.Value != null)
+            try
             {
-                ConvertResponseToPreferredUnits(objectResult.Value, preferredUnits);
+                var preferredUnits = context.HttpContext.Items["PreferredUnits"]?.ToString() ?? "SI";
+
+                // Convert the response if it's a UnitAwareDto
+                if (objectResult.Value != null)
+                {
+                    ConvertResponseToPreferredUnits(objectResult.Value, preferredUnits);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail the request - unit conversion is best-effort
+                _logger.LogError(ex, "Failed to convert units in response. Returning original response.");
             }
         }
     }
@@ -88,8 +96,8 @@ public class UnitConversionFilter : IAsyncActionFilter
                 {
                     ConvertDto(propDto, targetUnits);
                 }
-                // If property is a collection of UnitAwareDto, convert each item
-                else if (value is IEnumerable propEnumerable)
+                // If property is a collection (but not a string), convert each item
+                else if (value is IEnumerable propEnumerable && value is not string)
                 {
                     foreach (var item in propEnumerable)
                     {
