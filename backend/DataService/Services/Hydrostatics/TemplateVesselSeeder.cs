@@ -52,12 +52,18 @@ public class TemplateVesselSeeder : ITemplateVesselSeeder
             _logger.LogInformation("Seeding hydrostatics template vessel {VesselId}...", TemplateVessels.HydrostaticsVesselId);
 
             // Use transaction to ensure atomicity (if supported by provider)
-            var supportsTransactions = _context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory";
+            // InMemory database doesn't support transactions, so we check and skip if needed
             Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
             
-            if (supportsTransactions)
+            try
             {
                 transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            }
+            catch (InvalidOperationException)
+            {
+                // Transaction not supported (e.g., InMemory database)
+                // Continue without transaction
+                _logger.LogDebug("Transactions not supported by database provider, proceeding without transaction");
             }
 
             try
@@ -154,7 +160,7 @@ public class TemplateVesselSeeder : ITemplateVesselSeeder
                 _context.VesselMetadata.Add(metadata);
 
                 await _context.SaveChangesAsync(cancellationToken);
-                
+
                 if (transaction != null)
                 {
                     await transaction.CommitAsync(cancellationToken);
