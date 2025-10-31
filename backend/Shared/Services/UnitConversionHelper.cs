@@ -15,6 +15,13 @@ public static class UnitConversionHelper
     /// </summary>
     public static void ConvertToSI(UnitAwareDto dto, IUnitConverter converter)
     {
+        // Default to SI if Units is null or empty
+        if (string.IsNullOrWhiteSpace(dto.Units))
+        {
+            dto.Units = "SI";
+            return; // Already in SI
+        }
+
         if (dto.Units == "SI") return; // Already in SI
 
         ConvertDto(dto, dto.Units, "SI", converter);
@@ -68,4 +75,3 @@ public static class UnitConversionHelper
         dto.Units = toUnits;
     }
 }
-

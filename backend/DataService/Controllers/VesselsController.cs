@@ -47,6 +47,15 @@ public class VesselsController : ControllerBase
         {
             _logger.LogInformation("Creating vessel: {VesselName}", vesselDto.Name);
 
+            // Set Units property from HttpContext if not provided by client
+            // This ensures unit conversion works correctly
+            if (string.IsNullOrWhiteSpace(vesselDto.Units))
+            {
+                var preferredUnits = HttpContext.Items["PreferredUnits"]?.ToString() ?? "SI";
+                vesselDto.Units = preferredUnits;
+                _logger.LogDebug("Set vessel DTO Units to {Units} from request context", preferredUnits);
+            }
+
             // TODO: Get actual user ID from auth context
             var userId = Guid.Parse("00000000-0000-0000-0000-000000000001"); // Placeholder
 
@@ -224,6 +233,15 @@ public class VesselsController : ControllerBase
     {
         try
         {
+            // Set Units property from HttpContext if not provided by client
+            // This ensures unit conversion works correctly
+            if (string.IsNullOrWhiteSpace(vesselDto.Units))
+            {
+                var preferredUnits = HttpContext.Items["PreferredUnits"]?.ToString() ?? "SI";
+                vesselDto.Units = preferredUnits;
+                _logger.LogDebug("Set vessel DTO Units to {Units} from request context", preferredUnits);
+            }
+
             var vessel = await _vesselService.UpdateVesselAsync(id, vesselDto, cancellationToken);
 
             if (vessel == null)
