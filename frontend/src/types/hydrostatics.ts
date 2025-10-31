@@ -7,11 +7,13 @@ export interface Vessel {
   lpp: number; // Always in user's preferred units
   beam: number;
   designDraft: number;
-  unitsSystem: string;
+  units: string; // Unit system (e.g., "SI", "Imperial") - matches backend DTO
   createdAt: string;
   updatedAt: string;
   userId?: string; // User who owns the vessel (empty GUID for template vessels)
   isTemplate?: boolean; // Whether this is a template vessel (read-only)
+  // Legacy field name for backward compatibility
+  unitsSystem?: string;
 }
 
 export interface VesselMetadata {

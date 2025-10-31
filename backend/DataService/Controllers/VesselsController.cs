@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using DataService.Data;
 using DataService.Services.Hydrostatics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +17,18 @@ public class VesselsController : ControllerBase
 {
     private readonly IVesselService _vesselService;
     private readonly SampleVesselSeedService _seedService;
+    private readonly DataDbContext _context;
     private readonly ILogger<VesselsController> _logger;
 
     public VesselsController(
         IVesselService vesselService,
         SampleVesselSeedService seedService,
+        DataDbContext context,
         ILogger<VesselsController> logger)
     {
         _vesselService = vesselService;
         _seedService = seedService;
+        _context = context;
         _logger = logger;
     }
 
@@ -129,22 +133,48 @@ public class VesselsController : ControllerBase
             _logger.LogInformation("[VESSELS] Retrieved {VesselCount} vessels in {Elapsed}ms", vessels.Count, elapsed);
             Console.WriteLine($"[VESSELS] Retrieved {vessels.Count} vessels in {elapsed}ms");
 
-            var vesselDetails = new List<object>();
+            // Convert to DTOs with proper structure for unit conversion filter
+            // Get counts efficiently using batch queries
+            var vesselIds = vessels.Select(v => v.Id).ToList();
+
+            var stationsCounts = await _context.Stations
+                .Where(s => vesselIds.Contains(s.VesselId))
+                .GroupBy(s => s.VesselId)
+                .Select(g => new { VesselId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.VesselId, x => x.Count, cancellationToken);
+
+            var waterlinesCounts = await _context.Waterlines
+                .Where(w => vesselIds.Contains(w.VesselId))
+                .GroupBy(w => w.VesselId)
+                .Select(g => new { VesselId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.VesselId, x => x.Count, cancellationToken);
+
+            var offsetsCounts = await _context.Offsets
+                .Where(o => vesselIds.Contains(o.VesselId))
+                .GroupBy(o => o.VesselId)
+                .Select(g => new { VesselId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.VesselId, x => x.Count, cancellationToken);
+
+            var vesselDetails = new List<VesselDetailsDto>();
             foreach (var vessel in vessels)
             {
                 var isTemplate = vessel.UserId == Shared.Constants.TemplateVessels.SystemUserId;
-                vesselDetails.Add(new
+
+                vesselDetails.Add(new VesselDetailsDto
                 {
-                    vessel.Id,
-                    vessel.Name,
-                    vessel.Description,
-                    vessel.Lpp,
-                    vessel.Beam,
-                    vessel.DesignDraft,
-                    vessel.UserId,
+                    Id = vessel.Id,
+                    Name = vessel.Name,
+                    Description = vessel.Description,
+                    Lpp = vessel.Lpp,  // In SI units, will be converted by filter
+                    Beam = vessel.Beam,
+                    DesignDraft = vessel.DesignDraft,
+                    StationsCount = stationsCounts.GetValueOrDefault(vessel.Id, 0),
+                    WaterlinesCount = waterlinesCounts.GetValueOrDefault(vessel.Id, 0),
+                    OffsetsCount = offsetsCounts.GetValueOrDefault(vessel.Id, 0),
                     IsTemplate = isTemplate,
-                    vessel.CreatedAt,
-                    vessel.UpdatedAt
+                    Units = "SI",  // Data is stored in SI, filter will convert
+                    CreatedAt = vessel.CreatedAt,
+                    UpdatedAt = vessel.UpdatedAt
                 });
             }
 
@@ -268,6 +298,100 @@ public class VesselsController : ControllerBase
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
                 new { error = "An unexpected error occurred while seeding sample vessels", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Manually triggers template vessel seeding (useful for diagnostics)
+    /// </summary>
+    [HttpPost("seed-template")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> SeedTemplateVessel(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Manual template vessel seeding requested");
+
+            var templateSeeder = HttpContext.RequestServices.GetRequiredService<DataService.Services.Hydrostatics.ITemplateVesselSeeder>();
+            await templateSeeder.SeedHydrostaticsTemplateAsync(cancellationToken);
+
+            return Ok(new { message = "Template vessel seeding completed successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding template vessel");
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { error = "An unexpected error occurred while seeding template vessel", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Diagnoses template vessel status
+    /// </summary>
+    [HttpGet("diagnose-template")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DiagnoseTemplateVessel(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = HttpContext.RequestServices.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DataService.Data.DataDbContext>();
+            var templateId = Shared.Constants.TemplateVessels.HydrostaticsVesselId;
+            var systemUserId = Shared.Constants.TemplateVessels.SystemUserId;
+
+            // Check if template vessel exists (ignore soft-delete filter)
+            var vessel = await dbContext.Vessels
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(v => v.Id == templateId, cancellationToken);
+
+            var exists = vessel != null;
+            var isSoftDeleted = vessel?.DeletedAt != null;
+            var hasCorrectUserId = vessel?.UserId == systemUserId;
+            var name = vessel?.Name ?? "N/A";
+            var createdAt = vessel?.CreatedAt;
+
+            // Count related entities
+            var stationsCount = exists ? await dbContext.Stations.CountAsync(s => s.VesselId == templateId, cancellationToken) : 0;
+            var waterlinesCount = exists ? await dbContext.Waterlines.CountAsync(w => w.VesselId == templateId, cancellationToken) : 0;
+            var offsetsCount = exists ? await dbContext.Offsets.CountAsync(o => o.VesselId == templateId, cancellationToken) : 0;
+            var loadcasesCount = exists ? await dbContext.Loadcases.CountAsync(l => l.VesselId == templateId, cancellationToken) : 0;
+
+            return Ok(new
+            {
+                exists,
+                isSoftDeleted,
+                hasCorrectUserId,
+                vesselId = templateId.ToString(),
+                expectedUserId = systemUserId.ToString(),
+                actualUserId = vessel?.UserId.ToString() ?? "N/A",
+                name,
+                createdAt,
+                geometry = new
+                {
+                    stations = stationsCount,
+                    waterlines = waterlinesCount,
+                    offsets = offsetsCount,
+                    loadcases = loadcasesCount
+                },
+                status = exists && !isSoftDeleted && hasCorrectUserId && stationsCount > 0 && waterlinesCount > 0 && offsetsCount > 0
+                    ? "healthy"
+                    : exists && isSoftDeleted
+                        ? "soft-deleted"
+                        : exists && !hasCorrectUserId
+                            ? "incorrect-user-id"
+                            : exists && (stationsCount == 0 || waterlinesCount == 0 || offsetsCount == 0)
+                                ? "incomplete-geometry"
+                                : "missing"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error diagnosing template vessel");
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { error = "An unexpected error occurred while diagnosing template vessel", details = ex.Message });
         }
     }
 }
