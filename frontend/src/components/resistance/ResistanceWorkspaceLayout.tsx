@@ -9,6 +9,7 @@ import type {
   Ittc57CalculationResult,
   HoltropMennenCalculationResult,
   PowerCurveResult,
+  KcsBenchmarkResult,
 } from "../../types/resistance";
 import { ResistanceCharts } from "./ResistanceCharts";
 import { ResistanceExportDialog } from "./ResistanceExportDialog";
