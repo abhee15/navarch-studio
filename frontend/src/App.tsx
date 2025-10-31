@@ -8,6 +8,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { VesselsList } from "./pages/hydrostatics/VesselsList";
 import { VesselBuilder } from "./pages/hydrostatics/VesselBuilder";
 import { VesselWorkspace } from "./pages/hydrostatics/VesselWorkspace";
+import { VesselResistanceWorkspace } from "./pages/resistance/VesselResistanceWorkspace";
 import { BenchmarksList } from "./pages/benchmarks/BenchmarksList";
 import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -120,6 +121,22 @@ export const App: React.FC = observer(() => (
                 element={
                   <ProtectedRoute>
                     <VesselWorkspace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/resistance/vessels"
+                element={
+                  <ProtectedRoute>
+                    <VesselsList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/resistance/vessels/:vesselId"
+                element={
+                  <ProtectedRoute>
+                    <VesselResistanceWorkspace />
                   </ProtectedRoute>
                 }
               />

@@ -85,6 +85,39 @@ export const DashboardPage: React.FC = observer(() => {
                 </Button>
               </CardContent>
             </Card>
+            <Card
+              className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+              onClick={() => navigate("/resistance/vessels")}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="rounded-lg bg-green-500/10 p-3 mb-2">
+                    <svg
+                      className="h-6 w-6 text-green-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <CardTitle>Resistance & Powering</CardTitle>
+                <CardDescription>
+                  ITTC-57 friction and Holtrop-Mennen resistance calculations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" variant="outline">
+                  Open Resistance →
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
