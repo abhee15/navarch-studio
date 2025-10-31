@@ -29,6 +29,17 @@ interface ResistanceChartsProps {
   kcsBenchmarkResult: KcsBenchmarkResult | null;
 }
 
+interface ChartClickEvent {
+  activeLabel?: string;
+  activePayload?: Array<{ value?: number }>;
+}
+
+interface ComponentBreakdownData {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export function ResistanceCharts({
   ittc57Result,
   hmResult,
@@ -251,7 +262,7 @@ export function ResistanceCharts({
               <AreaChart
                 data={hmData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                onClick={(data: any) => {
+                onClick={(data: ChartClickEvent) => {
                   if (data?.activeLabel) {
                     const speedValue = parseFloat(data.activeLabel);
                     if (!isNaN(speedValue)) {
@@ -435,7 +446,9 @@ export function ResistanceCharts({
                     ].map((comp) => (
                       <Bar
                         key={comp.name}
-                        dataKey={(d: any) => (d.name === comp.name ? d.value : 0)}
+                        dataKey={(d: ComponentBreakdownData) =>
+                          d.name === comp.name ? d.value : 0
+                        }
                         stackId="1"
                         fill={comp.color}
                       />

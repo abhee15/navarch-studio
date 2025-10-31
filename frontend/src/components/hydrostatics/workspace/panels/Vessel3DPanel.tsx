@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { Vessel3DViewer } from "../../Vessel3DViewer";
 import { settingsStore } from "../../../../stores/SettingsStore";
@@ -51,13 +51,13 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
   );
 
   // Update local state when vessel changes
-  useMemo(() => {
+  useEffect(() => {
     if (vessel) {
       setLocalLpp(convertFromSI(vessel.lpp, displayUnits));
       setLocalBeam(convertFromSI(vessel.beam, displayUnits));
       setLocalDesignDraft(convertFromSI(vessel.designDraft, displayUnits));
     }
-  }, [vessel?.id, vessel?.lpp, vessel?.beam, vessel?.designDraft, displayUnits]);
+  }, [vessel, displayUnits]);
 
   // Convert local values back to SI for 3D viewer (always uses SI internally)
   const lppSI = useMemo(() => convertToSI(localLpp, displayUnits), [localLpp, displayUnits]);
