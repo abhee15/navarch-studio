@@ -1,10 +1,10 @@
+using System.ComponentModel.DataAnnotations;
 using Asp.Versioning;
 using DataService.Data;
 using DataService.Services.Resistance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
-using System.ComponentModel.DataAnnotations;
 
 namespace DataService.Controllers;
 
