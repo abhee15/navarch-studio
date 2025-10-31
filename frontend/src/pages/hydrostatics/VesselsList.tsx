@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "../../types/errors";
@@ -15,12 +15,16 @@ import { getUnitSymbol } from "../../utils/unitSymbols";
 
 export const VesselsList = observer(function VesselsList() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { authStore } = useStore();
   const [vessels, setVessels] = useState<Vessel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Detect if we're in resistance context
+  const isResistanceContext = location.pathname.startsWith("/resistance");
 
   const loadVessels = async () => {
     try {
@@ -47,11 +51,16 @@ export const VesselsList = observer(function VesselsList() {
   }, []);
 
   const handleCreateVessel = () => {
+    // Vessels are always created in hydrostatics context
     navigate("/hydrostatics/vessels/create");
   };
 
   const handleVesselClick = (vesselId: string) => {
-    navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
+    if (isResistanceContext) {
+      navigate(`/resistance/vessels/${vesselId}`);
+    } else {
+      navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
+    }
   };
 
   const handleDeleteVessel = async (vesselId: string, vesselName: string, e: React.MouseEvent) => {
@@ -134,29 +143,35 @@ export const VesselsList = observer(function VesselsList() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-card-foreground">Hydrostatics</h1>
+              <h1 className="text-3xl font-bold text-card-foreground">
+                {isResistanceContext ? "Resistance & Powering" : "Hydrostatics"}
+              </h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Manage vessels and compute hydrostatic properties
+                {isResistanceContext
+                  ? "Select a vessel to perform resistance and powering calculations"
+                  : "Manage vessels and compute hydrostatic properties"}
               </p>
             </div>
-            <button
-              onClick={handleCreateVessel}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
-            >
-              <svg
-                className="-ml-1 mr-2 h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+            {!isResistanceContext && (
+              <button
+                onClick={handleCreateVessel}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              New Vessel
-            </button>
+                <svg
+                  className="-ml-1 mr-2 h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                New Vessel
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -190,27 +205,50 @@ export const VesselsList = observer(function VesselsList() {
             </svg>
             <h3 className="mt-2 text-sm font-medium text-foreground">No vessels</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Get started by creating a new vessel.
+              {isResistanceContext
+                ? "Create a vessel in Hydrostatics first, then select it here for resistance calculations."
+                : "Get started by creating a new vessel."}
             </p>
             <div className="mt-6">
-              <button
-                onClick={handleCreateVessel}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
-              >
-                <svg
-                  className="-ml-1 mr-2 h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+              {isResistanceContext ? (
+                <button
+                  onClick={() => navigate("/hydrostatics/vessels/create")}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                New Vessel
-              </button>
+                  <svg
+                    className="-ml-1 mr-2 h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Create Vessel in Hydrostatics
+                </button>
+              ) : (
+                <button
+                  onClick={handleCreateVessel}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
+                >
+                  <svg
+                    className="-ml-1 mr-2 h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  New Vessel
+                </button>
+              )}
             </div>
           </div>
         ) : (
