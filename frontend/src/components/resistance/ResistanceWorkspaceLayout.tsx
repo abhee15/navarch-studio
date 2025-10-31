@@ -38,6 +38,9 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
   const [ittc57Result, setIttc57Result] = useState<Ittc57CalculationResult | null>(null);
   const [hmResult, setHmResult] = useState<HoltropMennenCalculationResult | null>(null);
   const [powerResult, setPowerResult] = useState<PowerCurveResult | null>(null);
+  const [kcsBenchmarkResult, setKcsBenchmarkResult] = useState<
+    import("../../types/resistance").KcsBenchmarkResult | null
+  >(null);
 
   // Parameters
   const [formFactor, setFormFactor] = useState<number | undefined>(undefined);
@@ -411,6 +414,7 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
                   vesselLWL={vessel.lpp}
                   vesselBeam={vessel.beam}
                   vesselDraft={vessel.designDraft}
+                  onBenchmarkComplete={(result) => setKcsBenchmarkResult(result)}
                 />
               )}
 
@@ -676,12 +680,13 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
           </div>
 
           {/* Charts Section */}
-          {(ittc57Result || hmResult) && (
+          {(ittc57Result || hmResult || kcsBenchmarkResult) && (
             <div className="mt-6">
               <ResistanceCharts
                 ittc57Result={ittc57Result}
                 hmResult={hmResult}
                 powerResult={powerResult}
+                kcsBenchmarkResult={kcsBenchmarkResult}
               />
             </div>
           )}

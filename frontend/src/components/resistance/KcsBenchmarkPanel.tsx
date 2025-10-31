@@ -9,6 +9,7 @@ interface KcsBenchmarkPanelProps {
   vesselLWL: number;
   vesselBeam: number;
   vesselDraft: number;
+  onBenchmarkComplete?: (result: import("../../types/resistance").KcsBenchmarkResult) => void;
 }
 
 export function KcsBenchmarkPanel({
@@ -16,6 +17,7 @@ export function KcsBenchmarkPanel({
   vesselLWL,
   vesselBeam,
   vesselDraft,
+  onBenchmarkComplete,
 }: KcsBenchmarkPanelProps) {
   const [loading, setLoading] = useState(false);
   const [benchmarkResult, setBenchmarkResult] = useState<KcsBenchmarkResult | null>(null);
@@ -58,6 +60,11 @@ export function KcsBenchmarkPanel({
       setError(null);
       const result = await resistanceCalculationsApi.validateKcsBenchmark(kcsInputs);
       setBenchmarkResult(result);
+
+      // Notify parent component for chart overlay
+      if (onBenchmarkComplete) {
+        onBenchmarkComplete(result);
+      }
 
       if (result.pass) {
         toast.success(
@@ -186,4 +193,3 @@ export function KcsBenchmarkPanel({
     </div>
   );
 }
-

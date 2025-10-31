@@ -12,6 +12,7 @@ import { HydrostaticsTablePanel } from "./panels/HydrostaticsTablePanel";
 import { GeometryEditorPanel } from "./panels/GeometryEditorPanel";
 import { ParametersSummaryPanel } from "./panels/ParametersSummaryPanel";
 import { ComputationStatusPanel } from "./panels/ComputationStatusPanel";
+import { Vessel3DPanel } from "./panels/Vessel3DPanel";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -292,6 +293,16 @@ export function ViewModeLayout({
           />
         );
 
+      case "vessel3d":
+        return (
+          <Vessel3DPanel
+            vessel={vessel}
+            currentResult={currentResult}
+            kg={kg}
+            lcg={lcg}
+          />
+        );
+
       default:
         return <div className="text-sm text-muted-foreground">Unknown panel: {panelId}</div>;
     }
@@ -307,6 +318,7 @@ export function ViewModeLayout({
       geometry: "Geometry Editor",
       parameters: "Parameters Summary",
       status: "Computation Status",
+      vessel3d: "3D Vessel Visualization",
     };
     return titles[panelId];
   };

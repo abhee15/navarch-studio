@@ -18,7 +18,7 @@ public class PowerCalculationService
     /// Calculates delivered power (DHP) and installed power (P_inst) from effective power (EHP)
     /// DHP = EHP / etaD
     /// P_inst = DHP * (1 + serviceMargin/100)
-    /// 
+    ///
     /// If decomposed efficiencies are provided: etaD = etaH * etaR * etaO
     /// </summary>
     public PowerCurveResult CalculatePowerCurves(PowerCurveRequest request)
@@ -89,14 +89,14 @@ public class PowerCalculationService
         for (int i = 0; i < request.EffectivePower.Count; i++)
         {
             decimal ehp = request.EffectivePower[i];
-            
+
             // DHP = EHP / etaD
             decimal dhp = ehp / etaD;
-            
+
             // P_inst = DHP * (1 + serviceMargin/100)
             decimal serviceFactor = 1m + request.ServiceMargin / 100m;
             decimal pInst = dhp * serviceFactor;
-            
+
             result.DeliveredPower.Add(dhp);
             result.InstalledPower.Add(pInst);
         }
@@ -111,4 +111,3 @@ public class PowerCalculationService
         return result;
     }
 }
-

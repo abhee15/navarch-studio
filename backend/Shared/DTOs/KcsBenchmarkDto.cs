@@ -7,7 +7,7 @@ public class KcsBenchmarkRequest
 {
     public Guid VesselId { get; set; }
     public Guid SpeedGridId { get; set; }
-    
+
     // KCS vessel particulars (read-only from preset)
     public decimal LWL { get; set; } // Length at waterline (m)
     public decimal B { get; set; }    // Beam (m)
@@ -17,14 +17,14 @@ public class KcsBenchmarkRequest
     public decimal? CM { get; set; }    // Midship coefficient
     public decimal? LCB_pct { get; set; } // LCB as % of LWL
     public decimal? S { get; set; }    // Wetted surface area (m²)
-    
+
     // Water properties
     public int TempC { get; set; } = 15;
     public decimal SalinityPpt { get; set; } = 35.0m;
-    
+
     // Reference data points (speed, RT_ref)
     public List<KcsReferencePoint> ReferenceData { get; set; } = new();
-    
+
     // Tolerances
     public decimal MaeTolerancePercent { get; set; } = 3.0m; // Default 3%
     public decimal MaxTolerancePercent { get; set; } = 5.0m; // Default 5%
@@ -54,8 +54,7 @@ public class KcsBenchmarkResult
     public bool Pass { get; set; } // True if MAE≤tolerance and Max≤tolerance
     public decimal MaeTolerance { get; set; }
     public decimal MaxTolerance { get; set; }
-    
+
     // Calculation details
     public HoltropMennenCalculationResult? CalculationDetails { get; set; }
 }
-
