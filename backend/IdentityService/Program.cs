@@ -6,7 +6,9 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Shared.Middleware;
+using Shared.Models;
 using Shared.Services;
+using Shared.Utilities;
 
 // Bootstrap logger for startup errors
 Log.Logger = new LoggerConfiguration()
@@ -228,6 +230,27 @@ try
             {
                 Log.Information("✅ Database schema is up to date (no pending migrations)");
             }
+
+            // Seed essential data in non-Development environments
+            // Development uses manual seeding via database/seeds/dev-seed.sql
+            if (app.Environment.EnvironmentName != "Development")
+            {
+                Console.WriteLine("[SEED] Checking for essential users...");
+                Log.Information("[SEED] Checking for essential users...");
+
+                try
+                {
+                    await SeedEssentialUsersAsync(dbContext);
+                    Console.WriteLine("[SEED] Essential user seeding completed.");
+                    Log.Information("[SEED] Essential user seeding completed.");
+                }
+                catch (Exception seedEx)
+                {
+                    Console.WriteLine($"[SEED] WARNING: Failed to seed essential users: {seedEx.Message}");
+                    Log.Warning(seedEx, "[SEED] Failed to seed essential users: {Message}", seedEx.Message);
+                    // Don't throw - seeding is optional, but log warning for monitoring
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -297,4 +320,47 @@ finally
 }
 
 // Make Program accessible for integration tests
-public partial class Program { }
+public partial class Program
+{
+    /// <summary>
+    /// Seeds essential users in cloud environments (idempotent).
+    /// Creates admin user if it doesn't exist.
+    /// </summary>
+    private static async Task SeedEssentialUsersAsync(IdentityDbContext dbContext)
+    {
+        // Default admin user email - can be overridden via configuration in the future
+        const string adminEmail = "admin@navarch-studio.com";
+        const string adminName = "System Administrator";
+        const string defaultPassword = "ChangeMe123!"; // Should be changed on first login
+
+        // Check if admin user already exists
+        var adminExists = await dbContext.Users
+            .AnyAsync(u => u.Email == adminEmail);
+
+        if (!adminExists)
+        {
+            Log.Information("[SEED] Creating admin user: {Email}", adminEmail);
+
+            var adminUser = new User
+            {
+                Id = Guid.NewGuid().ToString(),
+                Email = adminEmail,
+                Name = adminName,
+                PasswordHash = PasswordHasher.Hash(defaultPassword),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            dbContext.Users.Add(adminUser);
+            await dbContext.SaveChangesAsync();
+
+            Log.Information("[SEED] Admin user created successfully: {Email}", adminEmail);
+            Console.WriteLine($"[SEED] Admin user created: {adminEmail} (password: {defaultPassword})");
+        }
+        else
+        {
+            Log.Information("[SEED] Admin user already exists. Skipping seed.");
+            Console.WriteLine("[SEED] Admin user already exists. Skipping seed.");
+        }
+    }
+}

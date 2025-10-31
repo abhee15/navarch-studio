@@ -3,6 +3,13 @@ resource "random_password" "db_password" {
   length           = 32
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?" # Exclude /, @, ", space (not allowed by RDS)
+
+  # Prevent regeneration unless these values change
+  # This prevents RDS from being recreated due to password regeneration
+  keepers = {
+    environment = var.environment
+    project     = var.project_name
+  }
 }
 
 # Store password in Secrets Manager
@@ -73,6 +80,16 @@ resource "aws_db_instance" "main" {
 
   # Auto minor version upgrades
   auto_minor_version_upgrade = true
+
+  # Lifecycle management to prevent unnecessary recreation
+  lifecycle {
+    # Prevent accidental destruction in production
+    prevent_destroy = var.environment == "prod"
+
+    # Ignore password changes - password is managed via Secrets Manager rotation
+    # Without this, Terraform would try to recreate RDS if password changes
+    ignore_changes = [password]
+  }
 
   tags = {
     Name = "${var.project_name}-${var.environment}-postgres"

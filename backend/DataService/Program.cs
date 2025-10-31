@@ -123,6 +123,9 @@ try
 
             // Use connection pooling (default, but explicit for clarity)
             npgsqlOptions.MaxBatchSize(100);
+
+            // Explicit migration history table in data schema (matches IdentityService using identity schema)
+            npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "data");
         })
         .UseSnakeCaseNamingConvention()
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
