@@ -59,6 +59,7 @@ module "rds" {
   multi_az              = var.enable_multi_az
   backup_retention_days = var.backup_retention_days
   publicly_accessible   = false # Not publicly accessible despite being in public subnet
+  prevent_destroy       = var.environment == "prod" # Prevent destruction in production
 }
 
 # App Runner Module

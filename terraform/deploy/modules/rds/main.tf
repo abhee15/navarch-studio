@@ -83,8 +83,8 @@ resource "aws_db_instance" "main" {
 
   # Lifecycle management to prevent unnecessary recreation
   lifecycle {
-    # Prevent accidental destruction in production
-    prevent_destroy = var.environment == "prod"
+    # Prevent accidental destruction (set via variable, typically true for production)
+    prevent_destroy = var.prevent_destroy
 
     # Ignore password changes - password is managed via Secrets Manager rotation
     # Without this, Terraform would try to recreate RDS if password changes
