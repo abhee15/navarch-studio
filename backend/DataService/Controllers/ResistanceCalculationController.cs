@@ -20,6 +20,7 @@ public class ResistanceCalculationController : ControllerBase
     private readonly IResistanceCalculationService _resistanceCalc;
     private readonly HoltropMennenService _hmService;
     private readonly PowerCalculationService _powerService;
+    private readonly KcsBenchmarkService _kcsBenchmarkService;
     private readonly ILogger<ResistanceCalculationController> _logger;
 
     public ResistanceCalculationController(
@@ -27,12 +28,14 @@ public class ResistanceCalculationController : ControllerBase
         IResistanceCalculationService resistanceCalc,
         HoltropMennenService hmService,
         PowerCalculationService powerService,
+        KcsBenchmarkService kcsBenchmarkService,
         ILogger<ResistanceCalculationController> logger)
     {
         _context = context;
         _resistanceCalc = resistanceCalc;
         _hmService = hmService;
         _powerService = powerService;
+        _kcsBenchmarkService = kcsBenchmarkService;
         _logger = logger;
     }
 
@@ -220,6 +223,61 @@ public class ResistanceCalculationController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculating power curves");
+            return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Validates resistance calculations against KCS benchmark reference data
+    /// </summary>
+    [HttpPost("kcs-benchmark")]
+    [ProducesResponseType(typeof(KcsBenchmarkResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ValidateKcsBenchmark(
+        [FromBody] KcsBenchmarkRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Validate vessel exists
+        var vessel = await _context.Vessels.FindAsync(new object[] { request.VesselId }, cancellationToken);
+        if (vessel == null)
+        {
+            return NotFound(new { error = $"Vessel with ID {request.VesselId} not found" });
+        }
+
+        // Validate speed grid exists (optional - might use reference data speeds)
+        if (request.SpeedGridId != Guid.Empty)
+        {
+            var speedGrid = await _context.SpeedGrids
+                .FirstOrDefaultAsync(sg => sg.Id == request.SpeedGridId && sg.VesselId == request.VesselId, cancellationToken);
+
+            if (speedGrid == null)
+            {
+                return NotFound(new { error = $"Speed grid with ID {request.SpeedGridId} not found" });
+            }
+        }
+
+        try
+        {
+            var result = _kcsBenchmarkService.ValidateBenchmark(request, cancellationToken);
+
+            _logger.LogInformation(
+                "KCS benchmark validation complete for vessel {VesselId}: Pass={Pass}, MAE={MAE}%, Max={Max}%",
+                request.VesselId,
+                result.Pass,
+                result.MeanAbsoluteError,
+                result.MaxError);
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid KCS benchmark request");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating KCS benchmark");
             return StatusCode(500, new { error = "Internal server error", details = ex.Message });
         }
     }

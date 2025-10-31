@@ -9,6 +9,8 @@ import type {
   HoltropMennenCalculationResult,
   PowerCurveRequest,
   PowerCurveResult,
+  KcsBenchmarkRequest,
+  KcsBenchmarkResult,
 } from "../types/resistance";
 
 // Use shared API client which includes auth headers and interceptors
@@ -70,6 +72,11 @@ export const resistanceCalculationsApi = {
 
   async calculatePowerCurves(request: PowerCurveRequest): Promise<PowerCurveResult> {
     const response = await api.post("/resistance/power-curves", request);
+    return response.data;
+  },
+
+  async validateKcsBenchmark(request: KcsBenchmarkRequest): Promise<KcsBenchmarkResult> {
+    const response = await api.post("/resistance/kcs-benchmark", request);
     return response.data;
   },
 };

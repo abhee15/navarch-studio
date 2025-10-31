@@ -12,6 +12,7 @@ import type {
 } from "../../types/resistance";
 import { ResistanceCharts } from "./ResistanceCharts";
 import { ResistanceExportDialog } from "./ResistanceExportDialog";
+import { KcsBenchmarkPanel } from "./KcsBenchmarkPanel";
 
 interface ResistanceWorkspaceLayoutProps {
   vessel: VesselDetails;
@@ -19,10 +20,7 @@ interface ResistanceWorkspaceLayoutProps {
   onVesselUpdated?: () => void;
 }
 
-export function ResistanceWorkspaceLayout({
-  vessel,
-  onBack,
-}: ResistanceWorkspaceLayoutProps) {
+export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspaceLayoutProps) {
   const vesselId = vessel.id;
 
   // Data state
@@ -405,6 +403,16 @@ export function ResistanceWorkspaceLayout({
                   </div>
                 </div>
               </div>
+
+              {/* KCS Benchmark Panel */}
+              {calculationType === "holtrop-mennen" && (
+                <KcsBenchmarkPanel
+                  vesselId={vesselId}
+                  vesselLWL={vessel.lpp}
+                  vesselBeam={vessel.beam}
+                  vesselDraft={vessel.designDraft}
+                />
+              )}
 
               {/* Power Calculation Parameters (only show for Holtrop-Mennen) */}
               {calculationType === "holtrop-mennen" && (

@@ -177,6 +177,7 @@ try
     builder.Services.AddScoped<DataService.Services.Resistance.IResistanceCalculationService, DataService.Services.Resistance.ResistanceCalculationService>();
     builder.Services.AddScoped<DataService.Services.Resistance.HoltropMennenService>();
     builder.Services.AddScoped<DataService.Services.Resistance.PowerCalculationService>();
+    builder.Services.AddScoped<DataService.Services.Resistance.KcsBenchmarkService>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed

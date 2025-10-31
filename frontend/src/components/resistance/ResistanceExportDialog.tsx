@@ -16,6 +16,14 @@ interface ResistanceExportDialogProps {
 
 type ExportFormat = "csv" | "json";
 
+interface ExportData {
+  vessel: string;
+  exportedAt: string;
+  ittc57?: Ittc57CalculationResult;
+  holtropMennen?: HoltropMennenCalculationResult;
+  powerCurves?: PowerCurveResult;
+}
+
 export function ResistanceExportDialog({
   vesselName,
   ittc57Result,
@@ -98,20 +106,13 @@ export function ResistanceExportDialog({
   };
 
   const exportToJSON = () => {
-    const data: any = {
+    const data: ExportData = {
       vessel: vesselName,
       exportedAt: new Date().toISOString(),
+      ...(ittc57Result && { ittc57: ittc57Result }),
+      ...(hmResult && { holtropMennen: hmResult }),
+      ...(powerResult && { powerCurves: powerResult }),
     };
-
-    if (ittc57Result) {
-      data.ittc57 = ittc57Result;
-    }
-    if (hmResult) {
-      data.holtropMennen = hmResult;
-    }
-    if (powerResult) {
-      data.powerCurves = powerResult;
-    }
 
     return JSON.stringify(data, null, 2);
   };
@@ -291,4 +292,3 @@ export function ResistanceExportDialog({
     </div>
   );
 }
-

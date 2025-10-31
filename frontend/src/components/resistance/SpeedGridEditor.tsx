@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, GridApi, GridReadyEvent, ICellRendererParams } from "ag-grid-community";
 import { speedGridsApi } from "../../services/resistanceApi";
 import { getErrorMessage } from "../../types/errors";
 import type { SpeedGrid, SpeedPoint, CreateSpeedGridRequest } from "../../types/resistance";
@@ -39,7 +39,7 @@ export function SpeedGridEditor({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [gridApi, setGridApi] = useState<any>(null);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -103,7 +103,7 @@ export function SpeedGridEditor({
         width: 60,
         editable: false,
         pinned: "left",
-        cellRenderer: (params: any) => params.node.rowIndex + 1,
+        cellRenderer: (params: ICellRendererParams) => (params.node.rowIndex ?? 0) + 1,
       },
       {
         field: "speedKnots",
@@ -407,7 +407,7 @@ export function SpeedGridEditor({
               <AgGridReact
                 rowData={rowData}
                 columnDefs={columnDefs}
-                onGridReady={(params) => setGridApi(params.api)}
+                onGridReady={(params: GridReadyEvent) => setGridApi(params.api)}
                 rowSelection="multiple"
                 animateRows={true}
                 defaultColDef={{

@@ -24,11 +24,7 @@ interface ResistanceChartsProps {
   powerResult: PowerCurveResult | null;
 }
 
-export function ResistanceCharts({
-  ittc57Result,
-  hmResult,
-  powerResult,
-}: ResistanceChartsProps) {
+export function ResistanceCharts({ ittc57Result, hmResult, powerResult }: ResistanceChartsProps) {
   // Prepare ITTC-57 data
   const ittc57Data = useMemo(() => {
     if (!ittc57Result) return [];
@@ -142,7 +138,11 @@ export function ResistanceCharts({
                   dataKey="re"
                   type="number"
                   scale="log"
-                  label={{ value: "Reynolds Number (log scale)", position: "insideBottom", offset: -5 }}
+                  label={{
+                    value: "Reynolds Number (log scale)",
+                    position: "insideBottom",
+                    offset: -5,
+                  }}
                   stroke="#6B7280"
                   tickFormatter={(value) => value.toExponential(1)}
                 />
@@ -185,7 +185,9 @@ export function ResistanceCharts({
       {/* Holtrop-Mennen Charts */}
       {hmResult && (
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-foreground">Holtrop-Mennen Resistance Analysis</h3>
+          <h3 className="text-lg font-semibold text-foreground">
+            Holtrop-Mennen Resistance Analysis
+          </h3>
 
           {/* Total Resistance vs Speed */}
           <div className="bg-card border border-border rounded-lg p-4">

@@ -116,3 +116,46 @@ export interface PowerCurveResult {
   serviceMargin: number; // Percentage used
   etaD?: number; // Overall efficiency used
 }
+
+// KCS Benchmark Types
+export interface KcsReferencePoint {
+  speed: number; // m/s
+  rtReference: number; // N (reference total resistance)
+  source?: string; // Optional source annotation
+}
+
+export interface KcsBenchmarkRequest {
+  vesselId: string;
+  speedGridId: string;
+  // KCS vessel particulars
+  lWL: number;
+  b: number;
+  t: number;
+  cB?: number;
+  cP?: number;
+  cM?: number;
+  lCB_pct?: number;
+  s?: number;
+  // Water properties
+  tempC?: number;
+  salinityPpt?: number;
+  // Reference data
+  referenceData: KcsReferencePoint[];
+  // Tolerances
+  maeTolerancePercent?: number; // Default 3%
+  maxTolerancePercent?: number; // Default 5%
+}
+
+export interface KcsBenchmarkResult {
+  speedGrid: number[]; // m/s
+  calculatedResistance: number[]; // RT_calc (N)
+  referenceResistance: number[]; // RT_ref (N)
+  errorPercent: number[]; // Δ% at each speed
+  meanAbsoluteError: number; // MAE (%)
+  maxError: number; // Max error (%)
+  pass: boolean; // True if MAE≤tolerance and Max≤tolerance
+  maeTolerance: number;
+  maxTolerance: number;
+  // Calculation details
+  calculationDetails?: HoltropMennenCalculationResult;
+}
