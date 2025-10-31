@@ -1,0 +1,21 @@
+Order,Visualization,Type,Primary Domain / Axes,Notes
+1,Total Resistance (R_T) vs Speed,2D,Speed (V),Line plot
+2,Effective Horsepower (EHP) vs Speed,2D,Speed (V),Line plot
+3,Delivered & Installed Power vs Speed (with margin band),2D,Speed (V),Two lines + filled margin
+4,Resistance Component Breakdown at selected speed,2D,Selected speed (V),"Stacked bars: R_F, R_R, R_CA, R_AA, R_A"
+5,ITTC-57 C_F vs log10(Re),2D,log10(Re),Optional overlay: (1+k)C_F
+6,R_T and EHP vs Froude number (Fn),2D,Froude number (Fn),Axis-mode alternative to speed
+7,KCS Benchmark overlay + % error + PASS/FAIL,2D,Speed (V),Overlay reference curve + error table
+8,Compare Runs ghost overlay (RT/EHP/Power),2D,Speed (V),Ghost/baseline overlay
+9,Sensitivity tornado at design speed (ΔInstalled Power),2D,Parameters (±%),Tornado chart at design speed
+10,Uncertainty/assumption bands on RT/EHP/Power,2D,Speed (V),Shaded confidence band
+11,Sparklines in RT/EHP/Power tables,2D,—,Mini trend lines inside table cells
+12,Appendage-factor reference panel (cheat overlay),2D,—,Small explanatory panel
+13,Side-by-side scenario dashboard (linked cursors),2D,Speed (V) or Fn,Two conditions compared
+14,Heatmap: component share of R_T vs speed,2D,Speed (V),% contribution of components
+15,"3D Hull Context (LWL plane, LCB, transom, appendage boxes)",3D,Spatial (x,y,z),Static schematic context
+16,3D Propulsor disk & inflow cone (design speed),3D,Spatial (x,y,z),Schematic inflow visualization
+17,"3D Surface: R_T(V, k)",3D,"Speed (V), k",Surface plot of RT vs V & form factor
+18,"3D Surface: P_inst(V, SM)",3D,"Speed (V), Service margin",Surface plot of installed power
+19,"3D Surface: EHP(V, T)",3D,"Speed (V), Temperature",Surface plot of EHP vs V & water temp (ν)
+20,"3D Coefficient Diagram (C_B, C_P, C_M, LCB along LWL)",3D,Longitudinal (LWL),Extruded bars with LCB position

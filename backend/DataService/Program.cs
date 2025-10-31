@@ -172,6 +172,10 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.SampleVesselSeedService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ITemplateVesselSeeder, DataService.Services.Hydrostatics.TemplateVesselSeeder>();
 
+    // Resistance calculation services
+    builder.Services.AddScoped<DataService.Services.Resistance.WaterPropertiesService>();
+    builder.Services.AddScoped<DataService.Services.Resistance.IResistanceCalculationService, DataService.Services.Resistance.ResistanceCalculationService>();
+
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
     // builder.Services.AddValidatorsFromAssembly(typeof(Shared.Models.Vessel).Assembly);

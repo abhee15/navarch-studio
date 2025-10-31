@@ -1,0 +1,22 @@
+# HM Method Configuration (fill the values you intend us to implement/verify)
+method_version: "Holtrop-Mennen-1982"   # e.g., Holtrop-Mennen-1982, 1984-update, etc.
+friction:
+  form_factor_strategy: "constant_k"   # constant_k | prohaska | none
+  k_value: 0.20                        # used if form_factor_strategy=constant_k
+residuary:
+  variant: "standard"                  # standard | user_note
+  user_note: ""                        # leave blank unless you want to specify a paper/fit
+correlation_allowance:
+  model: "ITTC-1978"                   # name the CA model you want applied
+transom_correction:
+  enabled: true
+  area_m2: 0.0
+air_resistance:
+  CD_default: 0.8                      # default drag coefficient for windage
+  windage_area_m2: 0.0
+appendages:
+  mode: "generic_factor"               # generic_factor | detailed_list
+  generic_factor: 1.05                 # multiplier when mode=generic_factor
+  list_file: "Appendages_details.csv"  # when mode=detailed_list, point to details CSV below
+references:
+  - "Provide DOI/report links or titles here"
