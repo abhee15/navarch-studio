@@ -1,7 +1,7 @@
+using System.Diagnostics;
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
-using System.Diagnostics;
 
 namespace DataService.Services.Hydrostatics;
 

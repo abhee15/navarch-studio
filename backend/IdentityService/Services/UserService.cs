@@ -1,9 +1,9 @@
+using IdentityService.Data;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
 using Shared.Models;
-using Shared.Utilities;
 using Shared.Services;
-using IdentityService.Data;
+using Shared.Utilities;
 
 namespace IdentityService.Services;
 

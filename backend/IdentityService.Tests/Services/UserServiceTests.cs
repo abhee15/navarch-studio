@@ -1,12 +1,12 @@
+using FluentAssertions;
+using IdentityService.Data;
+using IdentityService.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using IdentityService.Data;
-using IdentityService.Services;
 using Shared.DTOs;
 using Shared.TestData;
 using Xunit;
-using FluentAssertions;
 
 namespace IdentityService.Tests.Services;
 

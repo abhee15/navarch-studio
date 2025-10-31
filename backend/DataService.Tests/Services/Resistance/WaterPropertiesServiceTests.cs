@@ -1,8 +1,8 @@
 using DataService.Services.Resistance;
-using Xunit;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace DataService.Tests.Services.Resistance;
 

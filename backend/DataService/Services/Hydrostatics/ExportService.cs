@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using Shared.DTOs;
-using Shared.Models;
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
+using Shared.DTOs;
+using Shared.Models;
 
 namespace DataService.Services.Hydrostatics;
 

@@ -1,7 +1,7 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using NavArch.UnitConversion.Services;
-using System.Security.Claims;
 
 namespace Shared.Middleware;
 

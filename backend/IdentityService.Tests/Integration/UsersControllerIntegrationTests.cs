@@ -1,11 +1,11 @@
+using System.Net.Http.Json;
+using FluentAssertions;
+using IdentityService.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net.Http.Json;
-using IdentityService.Data;
 using Shared.DTOs;
 using Xunit;
-using FluentAssertions;
 
 namespace IdentityService.Tests.Integration;
 

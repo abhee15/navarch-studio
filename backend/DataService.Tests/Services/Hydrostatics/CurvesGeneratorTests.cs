@@ -1,11 +1,11 @@
 using DataService.Data;
 using DataService.Services.Hydrostatics;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Shared.Models;
 using Xunit;
-using FluentAssertions;
 
 namespace DataService.Tests.Services.Hydrostatics;
 

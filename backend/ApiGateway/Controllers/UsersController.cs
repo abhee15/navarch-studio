@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using ApiGateway.Services;
-using Shared.DTOs;
-using Shared.Validators;
 using System.Text;
 using System.Text.Json;
+using ApiGateway.Services;
+using Microsoft.AspNetCore.Mvc;
+using Shared.DTOs;
+using Shared.Validators;
 
 namespace ApiGateway.Controllers;
 

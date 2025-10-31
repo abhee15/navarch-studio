@@ -1,12 +1,12 @@
-using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 using IdentityService.Data;
 using IdentityService.Services;
-using Shared.Services;
-using Shared.Middleware;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
-using FluentValidation;
+using Shared.Middleware;
+using Shared.Services;
 
 // Bootstrap logger for startup errors
 Log.Logger = new LoggerConfiguration()

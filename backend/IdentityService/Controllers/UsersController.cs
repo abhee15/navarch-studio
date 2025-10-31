@@ -1,6 +1,6 @@
+using IdentityService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
-using IdentityService.Services;
 using Shared.Services;
 
 namespace IdentityService.Controllers;

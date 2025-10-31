@@ -1,7 +1,7 @@
+using System.Diagnostics;
 using Asp.Versioning;
 using DataService.Services.Hydrostatics;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
 namespace DataService.Controllers;
 

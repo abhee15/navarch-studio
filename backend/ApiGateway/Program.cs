@@ -1,11 +1,11 @@
 using ApiGateway.Services;
-using Shared.Services;
-using Shared.Middleware;
+using FluentValidation;
+using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
-using Microsoft.AspNetCore.RateLimiting;
-using FluentValidation;
+using Shared.Middleware;
+using Shared.Services;
 
 // Bootstrap logger for startup errors
 Log.Logger = new LoggerConfiguration()
