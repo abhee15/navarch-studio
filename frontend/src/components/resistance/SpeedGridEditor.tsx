@@ -1,11 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef, GridApi, GridReadyEvent, ICellRendererParams } from "ag-grid-community";
+import type {
+  ColDef,
+  GridApi,
+  GridReadyEvent,
+  ICellRendererParams,
+  CellValueChangedEvent,
+} from "ag-grid-community";
 import { speedGridsApi } from "../../services/resistanceApi";
 import { getErrorMessage } from "../../types/errors";
 import type { SpeedGrid, SpeedPoint, CreateSpeedGridRequest } from "../../types/resistance";
 
-// Import AG Grid styles
+// Import AG Grid styles (using legacy theme API)
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
@@ -81,7 +87,7 @@ export function SpeedGridEditor({
   };
 
   const rowData = useMemo(() => {
-    if (!grid) return [];
+    if (!grid || !grid.speedPoints) return [];
 
     return grid.speedPoints
       .sort((a, b) => a.displayOrder - b.displayOrder)
@@ -239,30 +245,45 @@ export function SpeedGridEditor({
     }
   };
 
-  // Update speed (m/s) when knots changes
-  useEffect(() => {
-    if (!grid || !gridApi) return;
+  // Handle cell value changes in AG Grid
+  const handleCellValueChanged = (params: CellValueChangedEvent) => {
+    if (!grid) return;
 
-    const updateSpeedFromKnots = () => {
+    const columnId = params.column?.getColId();
+    const rowId = params.data.id;
+
+    if (columnId === "speedKnots") {
+      const newValue = parseFloat(params.newValue) || 0;
+      const speedMs = newValue * 0.514444; // Convert knots to m/s
+
       const updatedPoints = grid.speedPoints.map((point) => {
-        const row = rowData.find((r) => r.id === point.id);
-        if (row) {
+        if (point.id === rowId) {
           return {
             ...point,
-            speed: row.speedKnots * 0.514444, // Convert knots to m/s
-            speedKnots: row.speedKnots,
+            speed: speedMs,
+            speedKnots: newValue,
           };
         }
         return point;
       });
-      setGrid({ ...grid, speedPoints: updatedPoints });
-    };
 
-    // Debounce updates
-    const timeoutId = setTimeout(updateSpeedFromKnots, 300);
-    return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowData]);
+      setGrid({ ...grid, speedPoints: updatedPoints });
+    } else if (columnId === "notes") {
+      const newValue = params.newValue || "";
+
+      const updatedPoints = grid.speedPoints.map((point) => {
+        if (point.id === rowId) {
+          return {
+            ...point,
+            notes: newValue,
+          };
+        }
+        return point;
+      });
+
+      setGrid({ ...grid, speedPoints: updatedPoints });
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -407,9 +428,12 @@ export function SpeedGridEditor({
               <AgGridReact
                 rowData={rowData}
                 columnDefs={columnDefs}
+                getRowId={(params) => params.data.id}
                 onGridReady={(params: GridReadyEvent) => setGridApi(params.api)}
-                rowSelection="multiple"
+                onCellValueChanged={handleCellValueChanged}
+                rowSelection={{ mode: "multiRow" }}
                 animateRows={true}
+                theme="legacy"
                 defaultColDef={{
                   sortable: true,
                   filter: true,
