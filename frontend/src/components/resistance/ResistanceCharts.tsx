@@ -35,6 +35,8 @@ export function ResistanceCharts({
   powerResult,
   kcsBenchmarkResult,
 }: ResistanceChartsProps) {
+  const [selectedSpeedIndex, setSelectedSpeedIndex] = useState<number | null>(null);
+
   // Prepare ITTC-57 data
   const ittc57Data = useMemo(() => {
     if (!ittc57Result) return [];
