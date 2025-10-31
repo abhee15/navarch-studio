@@ -251,12 +251,13 @@ export function ResistanceCharts({
               <AreaChart
                 data={hmData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                onClick={(data) => {
-                  if (data && data.activeLabel) {
-                    const idx = hmData.findIndex(
-                      (d) => d.speedKnots === parseFloat(data.activeLabel)
-                    );
-                    if (idx >= 0) setSelectedSpeedIndex(idx);
+                onClick={(data: any) => {
+                  if (data?.activeLabel) {
+                    const speedValue = parseFloat(data.activeLabel);
+                    if (!isNaN(speedValue)) {
+                      const idx = hmData.findIndex((d) => Math.abs(d.speedKnots - speedValue) < 0.01);
+                      if (idx >= 0) setSelectedSpeedIndex(idx);
+                    }
                   }
                 }}
               >
@@ -429,7 +430,7 @@ export function ResistanceCharts({
                       { name: "Appendage (RA)", color: "#F59E0B" },
                       { name: "Correlation (RCA)", color: "#8B5CF6" },
                       { name: "Air (RAA)", color: "#EF4444" },
-                    ].map((comp, idx) => (
+                    ].map((comp) => (
                       <Bar
                         key={comp.name}
                         dataKey={(d: any) => (d.name === comp.name ? d.value : 0)}
@@ -567,30 +568,39 @@ export function ResistanceCharts({
       )}
 
       {/* KCS Benchmark Overlay Chart */}
-      {kcsBenchmarkResult && (
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-foreground">KCS Benchmark Validation</h3>
+      {kcsBenchmarkResult && (() => {
+        const kcsData = kcsBenchmarkResult.speedGrid.map((speed, idx) => ({
+          speed: speed,
+          speedKnots: speed / 0.514444,
+          rtCalc: kcsBenchmarkResult.calculatedResistance[idx] / 1000, // Convert to kN
+          rtRef: kcsBenchmarkResult.referenceResistance[idx] / 1000,
+          errorPercent: kcsBenchmarkResult.errorPercent[idx],
+        }));
 
-          {/* Reference vs Calculated Resistance Overlay */}
-          <div className="bg-card border border-border rounded-lg p-4">
-            <h4 className="text-sm font-medium mb-3">
-              Resistance Comparison (Reference vs Calculated)
-              <span
-                className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                  kcsBenchmarkResult.pass
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                }`}
-              >
-                {kcsBenchmarkResult.pass ? "✓ PASS" : "✗ FAIL"}
-              </span>
-              <span className="ml-2 text-xs text-muted-foreground">
-                MAE: {kcsBenchmarkResult.meanAbsoluteError.toFixed(2)}%, Max:{" "}
-                {kcsBenchmarkResult.maxError.toFixed(2)}%
-              </span>
-            </h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={kcsData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        return (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-foreground">KCS Benchmark Validation</h3>
+
+            {/* Reference vs Calculated Resistance Overlay */}
+            <div className="bg-card border border-border rounded-lg p-4">
+              <h4 className="text-sm font-medium mb-3">
+                Resistance Comparison (Reference vs Calculated)
+                <span
+                  className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    kcsBenchmarkResult.pass
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                  }`}
+                >
+                  {kcsBenchmarkResult.pass ? "✓ PASS" : "✗ FAIL"}
+                </span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  MAE: {kcsBenchmarkResult.meanAbsoluteError.toFixed(2)}%, Max:{" "}
+                  {kcsBenchmarkResult.maxError.toFixed(2)}%
+                </span>
+              </h4>
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={kcsData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                 <XAxis
                   dataKey="speedKnots"
