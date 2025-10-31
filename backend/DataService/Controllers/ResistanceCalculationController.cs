@@ -187,4 +187,3 @@ public class ResistanceCalculationController : ControllerBase
         return Ok(result);
     }
 }
-

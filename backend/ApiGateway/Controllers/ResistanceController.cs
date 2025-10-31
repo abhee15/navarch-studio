@@ -52,15 +52,18 @@ public class ResistanceController : ControllerBase
         try
         {
             _logger.LogInformation("Proxying POST /resistance/{Path} to DataService", path);
-            var requestBody = await new StreamReader(Request.Body).ReadToEndAsync();
+            using var reader = new StreamReader(Request.Body);
+            var requestBody = await reader.ReadToEndAsync();
+            var content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
+
             var response = await _httpClientService.PostAsync(
                 "data",
                 $"api/v1/resistance/{path}",
-                requestBody,
+                content,
                 cancellationToken);
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return StatusCode((int)response.StatusCode, content);
+            return StatusCode((int)response.StatusCode, responseContent);
         }
         catch (Exception ex)
         {
@@ -78,15 +81,18 @@ public class ResistanceController : ControllerBase
         try
         {
             _logger.LogInformation("Proxying PUT /resistance/{Path} to DataService", path);
-            var requestBody = await new StreamReader(Request.Body).ReadToEndAsync();
+            using var reader = new StreamReader(Request.Body);
+            var requestBody = await reader.ReadToEndAsync();
+            var content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
+
             var response = await _httpClientService.PutAsync(
                 "data",
                 $"api/v1/resistance/{path}",
-                requestBody,
+                content,
                 cancellationToken);
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return StatusCode((int)response.StatusCode, content);
+            return StatusCode((int)response.StatusCode, responseContent);
         }
         catch (Exception ex)
         {

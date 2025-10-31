@@ -1,7 +1,6 @@
 import { api as sharedApi } from "./api";
 import type {
   SpeedGrid,
-  SpeedPoint,
   CreateSpeedGridRequest,
   UpdateSpeedPointsRequest,
   Ittc57CalculationRequest,

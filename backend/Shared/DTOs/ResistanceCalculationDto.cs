@@ -80,4 +80,3 @@ public class HoltropMennenCalculationResult
     public List<decimal> TotalResistance { get; set; } = new(); // RT (N)
     public List<decimal> EffectivePower { get; set; } = new(); // EHP (kW)
 }
-
