@@ -9,6 +9,7 @@ import type {
   Ittc57CalculationResult,
   HoltropMennenCalculationResult,
 } from "../../types/resistance";
+import { ResistanceCharts } from "./ResistanceCharts";
 
 interface ResistanceWorkspaceLayoutProps {
   vessel: VesselDetails;
@@ -420,6 +421,13 @@ export function ResistanceWorkspaceLayout({
               )}
             </div>
           </div>
+
+          {/* Charts Section */}
+          {(ittc57Result || hmResult) && (
+            <div className="mt-6">
+              <ResistanceCharts ittc57Result={ittc57Result} hmResult={hmResult} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -441,4 +449,3 @@ export function ResistanceWorkspaceLayout({
     </div>
   );
 }
-
