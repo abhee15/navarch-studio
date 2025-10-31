@@ -32,7 +32,7 @@ export function KcsBenchmarkPanel({
     t: vesselDraft || 10.8, // KCS draft ~10.8m
     cB: 0.651,
     cP: 0.708,
-    cM: 0.980,
+    cM: 0.98,
     lCB_pct: 0.0,
     s: undefined, // Will be estimated
     tempC: 15,
@@ -109,7 +109,13 @@ export function KcsBenchmarkPanel({
           <div className="mt-2 text-xs space-y-1">
             <p>
               <span className="text-muted-foreground">MAE:</span>{" "}
-              <span className={benchmarkResult.meanAbsoluteError > benchmarkResult.maeTolerance ? "text-red-600" : ""}>
+              <span
+                className={
+                  benchmarkResult.meanAbsoluteError > benchmarkResult.maeTolerance
+                    ? "text-red-600"
+                    : ""
+                }
+              >
                 {benchmarkResult.meanAbsoluteError.toFixed(2)}%
               </span>
               {" / "}
@@ -117,7 +123,11 @@ export function KcsBenchmarkPanel({
             </p>
             <p>
               <span className="text-muted-foreground">Max Error:</span>{" "}
-              <span className={benchmarkResult.maxError > benchmarkResult.maxTolerance ? "text-red-600" : ""}>
+              <span
+                className={
+                  benchmarkResult.maxError > benchmarkResult.maxTolerance ? "text-red-600" : ""
+                }
+              >
                 {benchmarkResult.maxError.toFixed(2)}%
               </span>
               {" / "}
@@ -164,7 +174,9 @@ export function KcsBenchmarkPanel({
                       <td className="px-2 py-1 text-right">
                         {benchmarkResult.calculatedResistance[idx]?.toFixed(0)}
                       </td>
-                      <td className={`px-2 py-1 text-right ${isError ? "text-red-600 font-medium" : ""}`}>
+                      <td
+                        className={`px-2 py-1 text-right ${isError ? "text-red-600 font-medium" : ""}`}
+                      >
                         {error.toFixed(2)}%
                       </td>
                       <td className="px-2 py-1 text-center">
@@ -186,8 +198,8 @@ export function KcsBenchmarkPanel({
       {/* Info */}
       <div className="mt-3 pt-3 border-t border-border text-[10px] text-muted-foreground">
         <p>
-          Validates Holtrop-Mennen calculations against KCS reference data. Default tolerances:
-          MAE ≤ 3%, Max ≤ 5%.
+          Validates Holtrop-Mennen calculations against KCS reference data. Default tolerances: MAE
+          ≤ 3%, Max ≤ 5%.
         </p>
       </div>
     </div>

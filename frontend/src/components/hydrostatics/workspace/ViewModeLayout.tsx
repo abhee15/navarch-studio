@@ -294,14 +294,7 @@ export function ViewModeLayout({
         );
 
       case "vessel3d":
-        return (
-          <Vessel3DPanel
-            vessel={vessel}
-            currentResult={currentResult}
-            kg={kg}
-            lcg={lcg}
-          />
-        );
+        return <Vessel3DPanel vessel={vessel} currentResult={currentResult} kg={kg} lcg={lcg} />;
 
       default:
         return <div className="text-sm text-muted-foreground">Unknown panel: {panelId}</div>;

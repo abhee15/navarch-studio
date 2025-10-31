@@ -22,7 +22,11 @@ interface Vessel3DViewerProps {
  * Generate parametric hull surface using modified Wigley hull equation
  * y(x,z) = (B/2) * (1 - z²/D²) * (1 - (2x/Lpp - 1)²)
  */
-function generateHullGeometry(lpp: number, beam: number, designDraft: number): THREE.BufferGeometry {
+function generateHullGeometry(
+  lpp: number,
+  beam: number,
+  designDraft: number
+): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -124,15 +128,7 @@ function generateHullGeometry(lpp: number, beam: number, designDraft: number): T
   return geometry;
 }
 
-function HullMesh({
-  lpp,
-  beam,
-  designDraft,
-}: {
-  lpp: number;
-  beam: number;
-  designDraft: number;
-}) {
+function HullMesh({ lpp, beam, designDraft }: { lpp: number; beam: number; designDraft: number }) {
   const geometry = useMemo(
     () => generateHullGeometry(lpp, beam, designDraft),
     [lpp, beam, designDraft]
@@ -150,26 +146,13 @@ function HullMesh({
   );
 }
 
-function Waterplane({
-  lpp,
-  beam,
-  draft,
-}: {
-  lpp: number;
-  beam: number;
-  draft: number;
-}) {
+function Waterplane({ lpp, beam, draft }: { lpp: number; beam: number; draft: number }) {
   if (!draft || draft <= 0) return null;
 
   return (
     <mesh position={[lpp / 2, 0, draft]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[lpp * 1.2, beam * 1.2]} />
-      <meshStandardMaterial
-        color="#3b82f6"
-        transparent
-        opacity={0.3}
-        side={THREE.DoubleSide}
-      />
+      <meshStandardMaterial color="#3b82f6" transparent opacity={0.3} side={THREE.DoubleSide} />
     </mesh>
   );
 }
@@ -177,65 +160,32 @@ function Waterplane({
 function BuoyancyMarker({ lcb, kb }: { lcb: number; kb: number }) {
   if (lcb === undefined || kb === undefined || lcb <= 0 || kb <= 0) return null;
 
+  const markerSize = Math.max(lcb, kb) * 0.02;
   return (
     <group position={[lcb, 0, kb]}>
       <mesh>
-        <sphereGeometry args={[Math.max(lcb, kb) * 0.02, 16, 16]} />
+        <sphereGeometry args={[markerSize, 16, 16]} />
         <meshStandardMaterial color="#10b981" />
       </mesh>
-      {/* Label line - simplified, just use a simple line from Three.js */}
-      <line>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[new Float32Array([0, 0, 0, 0, Math.max(lcb, kb) * 0.15, 0]), 3]}
-          />
-        </bufferGeometry>
-        <lineBasicMaterial color="#10b981" />
-      </line>
     </group>
   );
 }
 
-function GravityMarker({
-  lcg,
-  kg,
-}: {
-  lcg: number;
-  kg: number;
-}) {
+function GravityMarker({ lcg, kg }: { lcg: number; kg: number }) {
   if (kg === undefined || lcg === undefined || kg <= 0 || lcg <= 0) return null;
 
+  const markerSize = Math.max(lcg, kg) * 0.02;
   return (
     <group position={[lcg, 0, kg]}>
       <mesh>
-        <sphereGeometry args={[Math.max(lcg, kg) * 0.02, 16, 16]} />
+        <sphereGeometry args={[markerSize, 16, 16]} />
         <meshStandardMaterial color="#ef4444" />
       </mesh>
-      {/* Label line - simplified, just use a simple line from Three.js */}
-      <line>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[new Float32Array([0, 0, 0, 0, Math.max(lcg, kg) * 0.15, 0]), 3]}
-          />
-        </bufferGeometry>
-        <lineBasicMaterial color="#ef4444" />
-      </line>
     </group>
   );
 }
 
-function SceneContent({
-  lpp,
-  beam,
-  designDraft,
-  draft,
-  kb,
-  lcb,
-  kg,
-  lcg,
-}: Vessel3DViewerProps) {
+function SceneContent({ lpp, beam, designDraft, draft, kb, lcb, kg, lcg }: Vessel3DViewerProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
 
   // Auto-fit camera when parameters change
@@ -266,7 +216,12 @@ function SceneContent({
       <directionalLight position={[10, 10, 5]} intensity={0.8} castShadow />
 
       {/* Grid helper */}
-      <Grid args={[bounds * 2, 20]} cellColor="#6b7280" sectionColor="#4b5563" fadeDistance={bounds} />
+      <Grid
+        args={[bounds * 2, 20]}
+        cellColor="#6b7280"
+        sectionColor="#4b5563"
+        fadeDistance={bounds}
+      />
 
       {/* Axes helper */}
       <axesHelper args={[bounds * 0.3]} />
@@ -278,9 +233,7 @@ function SceneContent({
       <Waterplane lpp={lpp} beam={beam} draft={draft || designDraft} />
 
       {/* Center of Buoyancy */}
-      {kb !== undefined && lcb !== undefined && (
-        <BuoyancyMarker lcb={lcb} kb={kb} />
-      )}
+      {kb !== undefined && lcb !== undefined && <BuoyancyMarker lcb={lcb} kb={kb} />}
 
       {/* Center of Gravity */}
       <GravityMarker lcg={lcg || 0} kg={kg || 0} />
@@ -321,4 +274,3 @@ export const Vessel3DViewer = observer(function Vessel3DViewer({
     </div>
   );
 });
-

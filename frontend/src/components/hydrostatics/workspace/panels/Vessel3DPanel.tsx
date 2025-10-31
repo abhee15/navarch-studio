@@ -68,9 +68,12 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
   );
 
   // Slider ranges based on unit system
-  const lppRange = displayUnits === "SI" ? { min: 10, max: 500, step: 1 } : { min: 33, max: 1640, step: 1 };
-  const beamRange = displayUnits === "SI" ? { min: 5, max: 100, step: 0.1 } : { min: 16, max: 328, step: 0.1 };
-  const draftRange = displayUnits === "SI" ? { min: 1, max: 50, step: 0.1 } : { min: 3, max: 164, step: 0.1 };
+  const lppRange =
+    displayUnits === "SI" ? { min: 10, max: 500, step: 1 } : { min: 33, max: 1640, step: 1 };
+  const beamRange =
+    displayUnits === "SI" ? { min: 5, max: 100, step: 0.1 } : { min: 16, max: 328, step: 0.1 };
+  const draftRange =
+    displayUnits === "SI" ? { min: 1, max: 50, step: 0.1 } : { min: 3, max: 164, step: 0.1 };
 
   const isReadOnly = vessel?.isTemplate ?? false;
 
@@ -169,4 +172,3 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
     </div>
   );
 });
-

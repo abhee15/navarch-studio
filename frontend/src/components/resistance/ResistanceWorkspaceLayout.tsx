@@ -38,7 +38,7 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
   const [ittc57Result, setIttc57Result] = useState<Ittc57CalculationResult | null>(null);
   const [hmResult, setHmResult] = useState<HoltropMennenCalculationResult | null>(null);
   const [powerResult, setPowerResult] = useState<PowerCurveResult | null>(null);
-  const [kcsBenchmarkResult, setKcsBenchmarkResult] = useState<
+  const [, setKcsBenchmarkResult] = useState<
     import("../../types/resistance").KcsBenchmarkResult | null
   >(null);
 

@@ -1,9 +1,12 @@
 import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -30,7 +33,7 @@ export function ResistanceCharts({
   ittc57Result,
   hmResult,
   powerResult,
-  kcsBenchmarkResult: _kcsBenchmarkResult,
+  kcsBenchmarkResult,
 }: ResistanceChartsProps) {
   // Prepare ITTC-57 data
   const ittc57Data = useMemo(() => {
@@ -63,6 +66,11 @@ export function ResistanceCharts({
       re: hmResult.reynoldsNumbers[idx],
       fn: hmResult.froudeNumbers[idx],
     }));
+  }, [hmResult]);
+
+  // Reset selected speed when HM result changes
+  useEffect(() => {
+    setSelectedSpeedIndex(null);
   }, [hmResult]);
 
   // Prepare power curve data (merge with HM data if available)
@@ -234,11 +242,22 @@ export function ResistanceCharts({
             </ResponsiveContainer>
           </div>
 
-          {/* Resistance Components Breakdown */}
+          {/* Resistance Components Breakdown (Stacked Area) */}
           <div className="bg-card border border-border rounded-lg p-4">
             <h4 className="text-sm font-medium mb-3">Resistance Components vs Speed</h4>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={hmData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <AreaChart
+                data={hmData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                onClick={(data) => {
+                  if (data && data.activeLabel) {
+                    const idx = hmData.findIndex(
+                      (d) => d.speedKnots === parseFloat(data.activeLabel)
+                    );
+                    if (idx >= 0) setSelectedSpeedIndex(idx);
+                  }
+                }}
+              >
                 <defs>
                   <linearGradient id="colorRF" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
@@ -251,6 +270,14 @@ export function ResistanceCharts({
                   <linearGradient id="colorRA" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.8} />
                     <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="colorRCA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient id="colorRAA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -297,9 +324,122 @@ export function ResistanceCharts({
                   fill="url(#colorRA)"
                   name="Appendage (RA)"
                 />
+                {hmData.length > 0 && hmData[0].rca !== undefined && (
+                  <Area
+                    type="monotone"
+                    dataKey="rca"
+                    stackId="1"
+                    stroke="#8B5CF6"
+                    fill="url(#colorRCA)"
+                    name="Correlation (RCA)"
+                  />
+                )}
+                {hmData.length > 0 && hmData[0].raa !== undefined && (
+                  <Area
+                    type="monotone"
+                    dataKey="raa"
+                    stackId="1"
+                    stroke="#EF4444"
+                    fill="url(#colorRAA)"
+                    name="Air (RAA)"
+                  />
+                )}
               </AreaChart>
             </ResponsiveContainer>
+            <p className="text-xs text-muted-foreground mt-2">
+              Click on the chart to view component breakdown at that speed
+            </p>
           </div>
+
+          {/* Component Breakdown at Selected Speed (Stacked Bar) */}
+          {selectedSpeedIndex !== null && hmData[selectedSpeedIndex] && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <h4 className="text-sm font-medium mb-3">
+                Component Breakdown at {hmData[selectedSpeedIndex].speedKnots.toFixed(2)} knots
+                <button
+                  onClick={() => setSelectedSpeedIndex(null)}
+                  className="ml-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  (Clear)
+                </button>
+              </h4>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  layout="vertical"
+                  data={[
+                    {
+                      name: "Friction (RF)",
+                      value: hmData[selectedSpeedIndex].rf,
+                      color: "#3B82F6",
+                    },
+                    {
+                      name: "Residuary (RR)",
+                      value: hmData[selectedSpeedIndex].rr,
+                      color: "#10B981",
+                    },
+                    {
+                      name: "Appendage (RA)",
+                      value: hmData[selectedSpeedIndex].ra,
+                      color: "#F59E0B",
+                    },
+                    ...(hmData[selectedSpeedIndex].rca !== undefined &&
+                    hmData[selectedSpeedIndex].rca > 0
+                      ? [
+                          {
+                            name: "Correlation (RCA)",
+                            value: hmData[selectedSpeedIndex].rca,
+                            color: "#8B5CF6",
+                          },
+                        ]
+                      : []),
+                    ...(hmData[selectedSpeedIndex].raa !== undefined &&
+                    hmData[selectedSpeedIndex].raa > 0
+                      ? [
+                          {
+                            name: "Air (RAA)",
+                            value: hmData[selectedSpeedIndex].raa,
+                            color: "#EF4444",
+                          },
+                        ]
+                      : []),
+                  ]}
+                  margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis
+                    type="number"
+                    label={{ value: "Resistance (kN)", position: "insideBottom" }}
+                  />
+                  <YAxis type="category" dataKey="name" width={75} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#FFF",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "0.375rem",
+                      padding: "8px",
+                    }}
+                    formatter={(value: number) => `${value.toFixed(2)} kN`}
+                  />
+                  <Bar dataKey="value" fill="#3B82F6">
+                    {[
+                      { name: "Friction (RF)", color: "#3B82F6" },
+                      { name: "Residuary (RR)", color: "#10B981" },
+                      { name: "Appendage (RA)", color: "#F59E0B" },
+                      { name: "Correlation (RCA)", color: "#8B5CF6" },
+                      { name: "Air (RAA)", color: "#EF4444" },
+                    ].map((comp, idx) => (
+                      <Bar
+                        key={comp.name}
+                        dataKey={(d: any) => (d.name === comp.name ? d.value : 0)}
+                        stackId="1"
+                        fill={comp.color}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
 
           {/* Power Curves vs Speed */}
           <div className="bg-card border border-border rounded-lg p-4">
@@ -448,10 +588,7 @@ export function ResistanceCharts({
               </span>
             </h4>
             <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart
-                data={kcsData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
+              <ComposedChart data={kcsData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                 <XAxis
                   dataKey="speedKnots"

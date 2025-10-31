@@ -10,7 +10,15 @@ export type WorkspaceMode = "view" | "edit";
 /**
  * Panel identifier - unique key for each panel type
  */
-export type PanelId = "kpis" | "curves" | "hull" | "table" | "geometry" | "parameters" | "status" | "vessel3d";
+export type PanelId =
+  | "kpis"
+  | "curves"
+  | "hull"
+  | "table"
+  | "geometry"
+  | "parameters"
+  | "status"
+  | "vessel3d";
 
 /**
  * Panel state - tracks individual panel visibility and behavior
