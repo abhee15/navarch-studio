@@ -137,4 +137,3 @@ export const VesselResistanceWorkspace = observer(function VesselResistanceWorks
     </div>
   );
 });
-

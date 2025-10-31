@@ -139,9 +139,7 @@ export function SpeedGridEditor({
         width: 100,
         editable: false,
         valueFormatter: (params) => {
-          return params.value !== null && params.value !== undefined
-            ? params.value.toFixed(4)
-            : "";
+          return params.value !== null && params.value !== undefined ? params.value.toFixed(4) : "";
         },
         cellStyle: { textAlign: "right" },
       },

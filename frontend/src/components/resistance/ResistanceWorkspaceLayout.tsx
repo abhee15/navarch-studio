@@ -8,6 +8,7 @@ import type {
   SpeedGrid,
   Ittc57CalculationResult,
   HoltropMennenCalculationResult,
+  PowerCurveResult,
 } from "../../types/resistance";
 import { ResistanceCharts } from "./ResistanceCharts";
 
@@ -36,12 +37,21 @@ export function ResistanceWorkspaceLayout({
   // Results
   const [ittc57Result, setIttc57Result] = useState<Ittc57CalculationResult | null>(null);
   const [hmResult, setHmResult] = useState<HoltropMennenCalculationResult | null>(null);
+  const [powerResult, setPowerResult] = useState<PowerCurveResult | null>(null);
 
   // Parameters
   const [formFactor, setFormFactor] = useState<number | undefined>(undefined);
   const [applyFormFactor, setApplyFormFactor] = useState(true);
   const [tempC, setTempC] = useState(15);
   const [salinityPpt, setSalinityPpt] = useState(35.0);
+
+  // Power calculation parameters
+  const [serviceMargin, setServiceMargin] = useState(15); // Percentage
+  const [etaD, setEtaD] = useState<number | undefined>(0.65);
+  const [etaH, setEtaH] = useState<number | undefined>(undefined);
+  const [etaR, setEtaR] = useState<number | undefined>(undefined);
+  const [etaO, setEtaO] = useState<number | undefined>(undefined);
+  const [useDecomposedEfficiency, setUseDecomposedEfficiency] = useState(false);
 
   // Load speed grids
   useEffect(() => {
@@ -82,6 +92,7 @@ export function ResistanceWorkspaceLayout({
         });
         setIttc57Result(result);
         setHmResult(null);
+        setPowerResult(null);
       } else {
         const result = await resistanceCalculationsApi.calculateHoltropMennen({
           vesselId,
@@ -93,6 +104,20 @@ export function ResistanceWorkspaceLayout({
         });
         setHmResult(result);
         setIttc57Result(null);
+
+        // Auto-calculate power curves if EHP is available
+        if (result.effectivePower.length > 0) {
+          const powerCurves = await resistanceCalculationsApi.calculatePowerCurves({
+            effectivePower: result.effectivePower,
+            speedGrid: result.speedGrid,
+            etaD: useDecomposedEfficiency ? undefined : etaD,
+            etaH: useDecomposedEfficiency ? etaH : undefined,
+            etaR: useDecomposedEfficiency ? etaR : undefined,
+            etaO: useDecomposedEfficiency ? etaO : undefined,
+            serviceMargin,
+          });
+          setPowerResult(powerCurves);
+        }
       }
 
       toast.success("Calculation completed successfully");
@@ -111,7 +136,37 @@ export function ResistanceWorkspaceLayout({
     applyFormFactor,
     tempC,
     salinityPpt,
+    serviceMargin,
+    etaD,
+    etaH,
+    etaR,
+    etaO,
+    useDecomposedEfficiency,
   ]);
+
+  // Recalculate power curves when service margin or efficiency changes (if HM result exists)
+  useEffect(() => {
+    if (hmResult && hmResult.effectivePower.length > 0) {
+      const recalculatePower = async () => {
+        try {
+          const powerCurves = await resistanceCalculationsApi.calculatePowerCurves({
+            effectivePower: hmResult.effectivePower,
+            speedGrid: hmResult.speedGrid,
+            etaD: useDecomposedEfficiency ? undefined : etaD,
+            etaH: useDecomposedEfficiency ? etaH : undefined,
+            etaR: useDecomposedEfficiency ? etaR : undefined,
+            etaO: useDecomposedEfficiency ? etaO : undefined,
+            serviceMargin,
+          });
+          setPowerResult(powerCurves);
+        } catch (err) {
+          console.error("Error recalculating power curves:", err);
+        }
+      };
+      recalculatePower();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceMargin, etaD, etaH, etaR, etaO, useDecomposedEfficiency]);
 
   const selectedGrid = speedGrids.find((g) => g.id === selectedSpeedGridId);
 
@@ -332,6 +387,143 @@ export function ResistanceWorkspaceLayout({
                   </div>
                 </div>
               </div>
+
+              {/* Power Calculation Parameters (only show for Holtrop-Mennen) */}
+              {calculationType === "holtrop-mennen" && (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <h2 className="text-sm font-semibold mb-3">Power Calculation</h2>
+                  <div className="space-y-3">
+                    {/* Service Margin Slider */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs text-muted-foreground">
+                          Service Margin
+                        </label>
+                        <span className="text-xs font-medium">{serviceMargin}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="30"
+                        step="0.5"
+                        value={serviceMargin}
+                        onChange={(e) => setServiceMargin(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                        <span>0%</span>
+                        <span>15%</span>
+                        <span>30%</span>
+                      </div>
+                    </div>
+
+                    {/* Efficiency Mode Toggle */}
+                    <div>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={useDecomposedEfficiency}
+                          onChange={(e) => setUseDecomposedEfficiency(e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className="text-xs">Use Decomposed Efficiencies</span>
+                      </label>
+                    </div>
+
+                    {/* Efficiency Inputs */}
+                    {useDecomposedEfficiency ? (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">
+                            ηH (Hull Efficiency)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.9"
+                            max="1.05"
+                            value={etaH ?? ""}
+                            onChange={(e) =>
+                              setEtaH(e.target.value ? parseFloat(e.target.value) : undefined)
+                            }
+                            placeholder="0.98"
+                            className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">
+                            ηR (Relative Rotative)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.95"
+                            max="1.05"
+                            value={etaR ?? ""}
+                            onChange={(e) =>
+                              setEtaR(e.target.value ? parseFloat(e.target.value) : undefined)
+                            }
+                            placeholder="1.02"
+                            className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">
+                            ηO (Open Water)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.5"
+                            max="0.8"
+                            value={etaO ?? ""}
+                            onChange={(e) =>
+                              setEtaO(e.target.value ? parseFloat(e.target.value) : undefined)
+                            }
+                            placeholder="0.65"
+                            className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs text-muted-foreground mb-1">
+                          ηD (Overall Propulsive Efficiency)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.5"
+                          max="0.8"
+                          value={etaD ?? ""}
+                          onChange={(e) =>
+                            setEtaD(e.target.value ? parseFloat(e.target.value) : undefined)
+                          }
+                          className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
+                        />
+                      </div>
+                    )}
+
+                    {/* Power Results Summary */}
+                    {powerResult && (
+                      <div className="mt-3 pt-3 border-t border-border text-xs">
+                        <p className="text-muted-foreground mb-1">Current Settings:</p>
+                        <p>
+                          ηD = {(powerResult.etaD ?? 0.65).toFixed(3)}, SM ={" "}
+                          {powerResult.serviceMargin.toFixed(1)}%
+                        </p>
+                        {powerResult.deliveredPower.length > 0 && (
+                          <p className="mt-1">
+                            Max DHP: {Math.max(...powerResult.deliveredPower).toFixed(0)} kW
+                            <br />
+                            Max P_inst: {Math.max(...powerResult.installedPower).toFixed(0)} kW
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Panel: Results */}
@@ -414,6 +606,41 @@ export function ResistanceWorkspaceLayout({
                 </div>
               )}
 
+              {/* Power Results Table */}
+              {powerResult && (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <h2 className="text-sm font-semibold mb-3">Power Curves</h2>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-xs">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="px-2 py-1 text-left">Speed (m/s)</th>
+                          <th className="px-2 py-1 text-right">EHP (kW)</th>
+                          <th className="px-2 py-1 text-right">DHP (kW)</th>
+                          <th className="px-2 py-1 text-right">P_inst (kW)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {powerResult.speedGrid.map((speed, idx) => (
+                          <tr key={idx} className="border-t border-border">
+                            <td className="px-2 py-1">{speed.toFixed(3)}</td>
+                            <td className="px-2 py-1 text-right">
+                              {powerResult.effectivePower[idx]?.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-right">
+                              {powerResult.deliveredPower[idx]?.toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-right">
+                              {powerResult.installedPower[idx]?.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {!ittc57Result && !hmResult && (
                 <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground">
                   <p>Select parameters and click Calculate to see results</p>
@@ -425,7 +652,11 @@ export function ResistanceWorkspaceLayout({
           {/* Charts Section */}
           {(ittc57Result || hmResult) && (
             <div className="mt-6">
-              <ResistanceCharts ittc57Result={ittc57Result} hmResult={hmResult} />
+              <ResistanceCharts
+                ittc57Result={ittc57Result}
+                hmResult={hmResult}
+                powerResult={powerResult}
+              />
             </div>
           )}
         </div>

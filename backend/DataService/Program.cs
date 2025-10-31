@@ -176,6 +176,7 @@ try
     builder.Services.AddScoped<DataService.Services.Resistance.WaterPropertiesService>();
     builder.Services.AddScoped<DataService.Services.Resistance.IResistanceCalculationService, DataService.Services.Resistance.ResistanceCalculationService>();
     builder.Services.AddScoped<DataService.Services.Resistance.HoltropMennenService>();
+    builder.Services.AddScoped<DataService.Services.Resistance.PowerCalculationService>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed

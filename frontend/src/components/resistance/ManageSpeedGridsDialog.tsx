@@ -105,10 +105,7 @@ export function ManageSpeedGridsDialog({
             onClick={onClose}
           ></div>
 
-          <span
-            className="hidden sm:inline-block sm:align-middle sm:h-screen"
-            aria-hidden="true"
-          >
+          <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
             &#8203;
           </span>
 
@@ -171,7 +168,12 @@ export function ManageSpeedGridsDialog({
                   onClick={handleCreateClick}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className="h-4 w-4 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -246,8 +248,8 @@ export function ManageSpeedGridsDialog({
                               {minSpeed.toFixed(2)} - {maxSpeed.toFixed(2)} m/s
                               <br />
                               <span className="text-xs">
-                                ({(minSpeed / 0.514444).toFixed(1)} - {(maxSpeed / 0.514444).toFixed(1)}{" "}
-                                knots)
+                                ({(minSpeed / 0.514444).toFixed(1)} -{" "}
+                                {(maxSpeed / 0.514444).toFixed(1)} knots)
                               </span>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

@@ -97,3 +97,22 @@ export interface HoltropMennenCalculationResult {
   effectivePower: number[]; // EHP (kW)
 }
 
+// Power Calculation Types
+export interface PowerCurveRequest {
+  effectivePower: number[]; // EHP (kW)
+  speedGrid: number[]; // m/s
+  etaD?: number; // Overall propulsive efficiency (0.6-0.7 typical)
+  etaH?: number; // Hull efficiency (~0.98-1.02)
+  etaR?: number; // Relative rotative efficiency (~1.0-1.05)
+  etaO?: number; // Open water efficiency (~0.5-0.7)
+  serviceMargin: number; // Percentage (0-30%)
+}
+
+export interface PowerCurveResult {
+  speedGrid: number[]; // m/s
+  effectivePower: number[]; // EHP (kW)
+  deliveredPower: number[]; // DHP (kW)
+  installedPower: number[]; // P_inst (kW)
+  serviceMargin: number; // Percentage used
+  etaD?: number; // Overall efficiency used
+}

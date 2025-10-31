@@ -4,6 +4,7 @@ using DataService.Services.Resistance;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
+using System.ComponentModel.DataAnnotations;
 
 namespace DataService.Controllers;
 
@@ -18,17 +19,20 @@ public class ResistanceCalculationController : ControllerBase
     private readonly DataDbContext _context;
     private readonly IResistanceCalculationService _resistanceCalc;
     private readonly HoltropMennenService _hmService;
+    private readonly PowerCalculationService _powerService;
     private readonly ILogger<ResistanceCalculationController> _logger;
 
     public ResistanceCalculationController(
         DataDbContext context,
         IResistanceCalculationService resistanceCalc,
         HoltropMennenService hmService,
+        PowerCalculationService powerService,
         ILogger<ResistanceCalculationController> logger)
     {
         _context = context;
         _resistanceCalc = resistanceCalc;
         _hmService = hmService;
+        _powerService = powerService;
         _logger = logger;
     }
 
@@ -185,5 +189,38 @@ public class ResistanceCalculationController : ControllerBase
             result.TotalResistance.Min(), result.TotalResistance.Max());
 
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Calculates delivered and installed power from effective power
+    /// </summary>
+    [HttpPost("power-curves")]
+    [ProducesResponseType(typeof(PowerCurveResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CalculatePowerCurves(
+        [FromBody] PowerCurveRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = _powerService.CalculatePowerCurves(request);
+
+            _logger.LogInformation(
+                "Power curve calculation complete: {Count} speeds, SM={ServiceMargin}%",
+                result.SpeedGrid.Count,
+                result.ServiceMargin);
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid power curve request");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating power curves");
+            return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        }
     }
 }

@@ -12,14 +12,23 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
-import type { Ittc57CalculationResult, HoltropMennenCalculationResult } from "../../types/resistance";
+import type {
+  Ittc57CalculationResult,
+  HoltropMennenCalculationResult,
+  PowerCurveResult,
+} from "../../types/resistance";
 
 interface ResistanceChartsProps {
   ittc57Result: Ittc57CalculationResult | null;
   hmResult: HoltropMennenCalculationResult | null;
+  powerResult: PowerCurveResult | null;
 }
 
-export function ResistanceCharts({ ittc57Result, hmResult }: ResistanceChartsProps) {
+export function ResistanceCharts({
+  ittc57Result,
+  hmResult,
+  powerResult,
+}: ResistanceChartsProps) {
   // Prepare ITTC-57 data
   const ittc57Data = useMemo(() => {
     if (!ittc57Result) return [];
@@ -52,6 +61,19 @@ export function ResistanceCharts({ ittc57Result, hmResult }: ResistanceChartsPro
       fn: hmResult.froudeNumbers[idx],
     }));
   }, [hmResult]);
+
+  // Prepare power curve data (merge with HM data if available)
+  const powerData = useMemo(() => {
+    if (!powerResult) return [];
+
+    return powerResult.speedGrid.map((speed, idx) => ({
+      speed: speed,
+      speedKnots: speed / 0.514444,
+      ehp: powerResult.effectivePower[idx],
+      dhp: powerResult.deliveredPower[idx],
+      pInst: powerResult.installedPower[idx],
+    }));
+  }, [powerResult]);
 
   return (
     <div className="space-y-6">
@@ -270,11 +292,21 @@ export function ResistanceCharts({ ittc57Result, hmResult }: ResistanceChartsPro
             </ResponsiveContainer>
           </div>
 
-          {/* Effective Power vs Speed */}
+          {/* Power Curves vs Speed */}
           <div className="bg-card border border-border rounded-lg p-4">
-            <h4 className="text-sm font-medium mb-3">Effective Power vs Speed</h4>
+            <h4 className="text-sm font-medium mb-3">
+              Power Curves vs Speed
+              {powerResult && (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  (SM: {powerResult.serviceMargin.toFixed(1)}%)
+                </span>
+              )}
+            </h4>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={hmData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <ComposedChart
+                data={powerResult ? powerData : hmData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                 <XAxis
                   dataKey="speedKnots"
@@ -282,7 +314,7 @@ export function ResistanceCharts({ ittc57Result, hmResult }: ResistanceChartsPro
                   stroke="#6B7280"
                 />
                 <YAxis
-                  label={{ value: "Effective Power (kW)", angle: -90, position: "insideLeft" }}
+                  label={{ value: "Power (kW)", angle: -90, position: "insideLeft" }}
                   stroke="#6B7280"
                 />
                 <Tooltip
@@ -297,14 +329,34 @@ export function ResistanceCharts({ ittc57Result, hmResult }: ResistanceChartsPro
                 <Legend />
                 <Line
                   type="monotone"
-                  dataKey="ehp"
+                  dataKey={powerResult ? "ehp" : "ehp"}
                   stroke="#8B5CF6"
-                  strokeWidth={3}
+                  strokeWidth={2}
                   name="Effective Power (EHP)"
                   dot={false}
-                  activeDot={{ r: 6 }}
                 />
-              </LineChart>
+                {powerResult && (
+                  <>
+                    <Line
+                      type="monotone"
+                      dataKey="dhp"
+                      stroke="#3B82F6"
+                      strokeWidth={2}
+                      name="Delivered Power (DHP)"
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="pInst"
+                      stroke="#EF4444"
+                      strokeWidth={3}
+                      name="Installed Power (P_inst)"
+                      dot={false}
+                      activeDot={{ r: 6 }}
+                    />
+                  </>
+                )}
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
 
@@ -371,4 +423,3 @@ export function ResistanceCharts({ ittc57Result, hmResult }: ResistanceChartsPro
     </div>
   );
 }
-

@@ -7,6 +7,8 @@ import type {
   Ittc57CalculationResult,
   HoltropMennenCalculationRequest,
   HoltropMennenCalculationResult,
+  PowerCurveRequest,
+  PowerCurveResult,
 } from "../types/resistance";
 
 // Use shared API client which includes auth headers and interceptors
@@ -54,9 +56,7 @@ export const speedGridsApi = {
 
 // Resistance Calculation API
 export const resistanceCalculationsApi = {
-  async calculateIttc57(
-    request: Ittc57CalculationRequest
-  ): Promise<Ittc57CalculationResult> {
+  async calculateIttc57(request: Ittc57CalculationRequest): Promise<Ittc57CalculationResult> {
     const response = await api.post("/resistance/ittc57", request);
     return response.data;
   },
@@ -65,6 +65,11 @@ export const resistanceCalculationsApi = {
     request: HoltropMennenCalculationRequest
   ): Promise<HoltropMennenCalculationResult> {
     const response = await api.post("/resistance/holtrop-mennen", request);
+    return response.data;
+  },
+
+  async calculatePowerCurves(request: PowerCurveRequest): Promise<PowerCurveResult> {
+    const response = await api.post("/resistance/power-curves", request);
     return response.data;
   },
 };
@@ -76,4 +81,3 @@ export const resistanceApiClient = {
 };
 
 export default resistanceApiClient;
-
