@@ -28,3 +28,4 @@ public class MaterialsConfig
     public Vessel Vessel { get; set; } = null!;
 }
 
+

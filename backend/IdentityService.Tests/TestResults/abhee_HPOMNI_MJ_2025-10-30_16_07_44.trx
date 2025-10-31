@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="6063a731-64c9-4af2-8ace-cb8bbd9d41fa" name="abhee@HPOMNI_MJ 2025-10-30 16:07:44" runUser="HPOMNI_MJ\abhee" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-10-30T16:07:44.6830624-05:00" queuing="2025-10-30T16:07:44.6830630-05:00" start="2025-10-30T16:07:43.4304490-05:00" finish="2025-10-30T16:07:44.6886506-05:00" />
+  <TestSettings name="default" id="c7e44927-c1b2-4f3a-926b-170a31e9f74c">
+    <Deployment runDeploymentRoot="abhee_HPOMNI_MJ_2025-10-30_16_07_44" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="f157056c-0afe-49a1-a760-c958e541ae55" testId="8f2d52ec-70cc-357f-8b51-123ef0fb3b25" testName="IdentityService.Tests.UnitTest1.Test1" computerName="HPOMNI_MJ" duration="00:00:00.0024399" startTime="2025-10-30T16:07:43.8569988-05:00" endTime="2025-10-30T16:07:43.8569995-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f157056c-0afe-49a1-a760-c958e541ae55" />
+    <UnitTestResult executionId="64512b1e-91e8-4c8f-955f-fea1fdaeebbe" testId="3c0071e3-bda7-b14a-85cd-e726e0f0e9e8" testName="IdentityService.Tests.Integration.UsersControllerIntegrationTests.CreateUser_ReturnsCreatedUser" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:43.8445764-05:00" endTime="2025-10-30T16:07:43.8445881-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="64512b1e-91e8-4c8f-955f-fea1fdaeebbe">
+      <Output>
+        <ErrorInfo>
+          <Message>Integration test requires proper database provider configuration</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9031417c-f112-4a0d-bf89-7266c3163fc3" testId="35766e4f-07e2-0783-a111-6e9e3b956df4" testName="IdentityService.Tests.Services.UserServiceTests.CreateUserAsync_CreatesUser_WithHashedPassword" computerName="HPOMNI_MJ" duration="00:00:00.2429570" startTime="2025-10-30T16:07:44.4098004-05:00" endTime="2025-10-30T16:07:44.4098006-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9031417c-f112-4a0d-bf89-7266c3163fc3" />
+    <UnitTestResult executionId="0525e041-65a8-4bd2-8419-1f6a58b25f3f" testId="2429c01c-2b56-6657-a0c0-f7da45258006" testName="IdentityService.Tests.Integration.UsersControllerIntegrationTests.GetUser_ReturnsUser" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:43.8474444-05:00" endTime="2025-10-30T16:07:43.8474446-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0525e041-65a8-4bd2-8419-1f6a58b25f3f">
+      <Output>
+        <ErrorInfo>
+          <Message>Integration test requires proper database provider configuration</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="63605cd1-f799-42e0-b7a5-2365bff7dacf" testId="0c69c75d-168c-19b2-d521-e4b85a489bc1" testName="IdentityService.Tests.Services.UserServiceTests.GetUserByIdAsync_ReturnsNull_WhenNotExists" computerName="HPOMNI_MJ" duration="00:00:00.3181935" startTime="2025-10-30T16:07:44.1666396-05:00" endTime="2025-10-30T16:07:44.1666400-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="63605cd1-f799-42e0-b7a5-2365bff7dacf" />
+    <UnitTestResult executionId="337f7d45-ed69-4df4-8169-bed43b36b16f" testId="5eeea301-b7aa-4559-9967-690010d643c4" testName="IdentityService.Tests.Services.UserServiceTests.GetUserByIdAsync_ReturnsUser_WhenExists" computerName="HPOMNI_MJ" duration="00:00:00.1944643" startTime="2025-10-30T16:07:44.6043514-05:00" endTime="2025-10-30T16:07:44.6043520-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="337f7d45-ed69-4df4-8169-bed43b36b16f" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="IdentityService.Tests.Services.UserServiceTests.GetUserByIdAsync_ReturnsUser_WhenExists" storage="c:\abhi\projects\sri\navarch-studio\backend\identityservice.tests\bin\debug\net8.0\identityservice.tests.dll" id="5eeea301-b7aa-4559-9967-690010d643c4">
+      <Execution id="337f7d45-ed69-4df4-8169-bed43b36b16f" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\IdentityService.Tests\bin\Debug\net8.0\IdentityService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="IdentityService.Tests.Services.UserServiceTests" name="GetUserByIdAsync_ReturnsUser_WhenExists" />
+    </UnitTest>
+    <UnitTest name="IdentityService.Tests.Integration.UsersControllerIntegrationTests.CreateUser_ReturnsCreatedUser" storage="c:\abhi\projects\sri\navarch-studio\backend\identityservice.tests\bin\debug\net8.0\identityservice.tests.dll" id="3c0071e3-bda7-b14a-85cd-e726e0f0e9e8">
+      <Execution id="64512b1e-91e8-4c8f-955f-fea1fdaeebbe" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\IdentityService.Tests\bin\Debug\net8.0\IdentityService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="IdentityService.Tests.Integration.UsersControllerIntegrationTests" name="CreateUser_ReturnsCreatedUser" />
+    </UnitTest>
+    <UnitTest name="IdentityService.Tests.Integration.UsersControllerIntegrationTests.GetUser_ReturnsUser" storage="c:\abhi\projects\sri\navarch-studio\backend\identityservice.tests\bin\debug\net8.0\identityservice.tests.dll" id="2429c01c-2b56-6657-a0c0-f7da45258006">
+      <Execution id="0525e041-65a8-4bd2-8419-1f6a58b25f3f" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\IdentityService.Tests\bin\Debug\net8.0\IdentityService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="IdentityService.Tests.Integration.UsersControllerIntegrationTests" name="GetUser_ReturnsUser" />
+    </UnitTest>
+    <UnitTest name="IdentityService.Tests.Services.UserServiceTests.GetUserByIdAsync_ReturnsNull_WhenNotExists" storage="c:\abhi\projects\sri\navarch-studio\backend\identityservice.tests\bin\debug\net8.0\identityservice.tests.dll" id="0c69c75d-168c-19b2-d521-e4b85a489bc1">
+      <Execution id="63605cd1-f799-42e0-b7a5-2365bff7dacf" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\IdentityService.Tests\bin\Debug\net8.0\IdentityService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="IdentityService.Tests.Services.UserServiceTests" name="GetUserByIdAsync_ReturnsNull_WhenNotExists" />
+    </UnitTest>
+    <UnitTest name="IdentityService.Tests.UnitTest1.Test1" storage="c:\abhi\projects\sri\navarch-studio\backend\identityservice.tests\bin\debug\net8.0\identityservice.tests.dll" id="8f2d52ec-70cc-357f-8b51-123ef0fb3b25">
+      <Execution id="f157056c-0afe-49a1-a760-c958e541ae55" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\IdentityService.Tests\bin\Debug\net8.0\IdentityService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="IdentityService.Tests.UnitTest1" name="Test1" />
+    </UnitTest>
+    <UnitTest name="IdentityService.Tests.Services.UserServiceTests.CreateUserAsync_CreatesUser_WithHashedPassword" storage="c:\abhi\projects\sri\navarch-studio\backend\identityservice.tests\bin\debug\net8.0\identityservice.tests.dll" id="35766e4f-07e2-0783-a111-6e9e3b956df4">
+      <Execution id="9031417c-f112-4a0d-bf89-7266c3163fc3" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\IdentityService.Tests\bin\Debug\net8.0\IdentityService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="IdentityService.Tests.Services.UserServiceTests" name="CreateUserAsync_CreatesUser_WithHashedPassword" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="8f2d52ec-70cc-357f-8b51-123ef0fb3b25" executionId="f157056c-0afe-49a1-a760-c958e541ae55" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3c0071e3-bda7-b14a-85cd-e726e0f0e9e8" executionId="64512b1e-91e8-4c8f-955f-fea1fdaeebbe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="35766e4f-07e2-0783-a111-6e9e3b956df4" executionId="9031417c-f112-4a0d-bf89-7266c3163fc3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2429c01c-2b56-6657-a0c0-f7da45258006" executionId="0525e041-65a8-4bd2-8419-1f6a58b25f3f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0c69c75d-168c-19b2-d521-e4b85a489bc1" executionId="63605cd1-f799-42e0-b7a5-2365bff7dacf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5eeea301-b7aa-4559-9967-690010d643c4" executionId="337f7d45-ed69-4df4-8169-bed43b36b16f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="6" executed="4" passed="4" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 8.0.21)&#xD;
+[xUnit.net 00:00:00.05]   Discovering: IdentityService.Tests&#xD;
+[xUnit.net 00:00:00.07]   Discovered:  IdentityService.Tests&#xD;
+[xUnit.net 00:00:00.07]   Starting:    IdentityService.Tests&#xD;
+[xUnit.net 00:00:00.10]       Integration test requires proper database provider configuration&#xD;
+[xUnit.net 00:00:00.10]       Integration test requires proper database provider configuration&#xD;
+     Warning:&#xD;
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and&#xD;
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for&#xD;
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.&#xD;
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.&#xD;
+     A paid commercial license supports the development and continued increasing support of&#xD;
+     Fluent Assertions users under both commercial and community licenses. Help us&#xD;
+     keep Fluent Assertions at the forefront of unit testing.&#xD;
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/&#xD;
+[xUnit.net 00:00:00.86]   Finished:    IdentityService.Tests&#xD;
+Test 'IdentityService.Tests.Integration.UsersControllerIntegrationTests.CreateUser_ReturnsCreatedUser' was skipped in the test run.&#xD;
+Test 'IdentityService.Tests.Integration.UsersControllerIntegrationTests.GetUser_ReturnsUser' was skipped in the test run.&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:43.8443372-05:00">
+        <Text>[xUnit.net 00:00:00.10]     IdentityService.Tests.Integration.UsersControllerIntegrationTests.CreateUser_ReturnsCreatedUser [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:43.8476907-05:00">
+        <Text>[xUnit.net 00:00:00.10]     IdentityService.Tests.Integration.UsersControllerIntegrationTests.GetUser_ReturnsUser [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

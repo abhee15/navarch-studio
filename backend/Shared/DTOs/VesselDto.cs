@@ -53,6 +53,11 @@ public class VesselDetailsDto : UnitAwareDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    /// <summary>
+    /// Whether this is a template vessel (read-only system template)
+    /// </summary>
+    public bool IsTemplate { get; set; }
+
     // Optional metadata
     public VesselMetadataDto? Metadata { get; set; }
     public MaterialsConfigDto? Materials { get; set; }

@@ -10,6 +10,8 @@ export interface Vessel {
   unitsSystem: string;
   createdAt: string;
   updatedAt: string;
+  userId?: string; // User who owns the vessel (empty GUID for template vessels)
+  isTemplate?: boolean; // Whether this is a template vessel (read-only)
 }
 
 export interface VesselMetadata {
@@ -36,6 +38,7 @@ export interface VesselDetails extends Vessel {
   metadata?: VesselMetadata;
   materials?: MaterialsConfig;
   loading?: LoadingConditions;
+  isTemplate?: boolean; // Whether this is a template vessel (read-only)
 }
 
 export interface CreateVesselDto {

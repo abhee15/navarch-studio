@@ -138,6 +138,7 @@ public class VesselService : IVesselService
             .Select(v => new
             {
                 v.Id,
+                v.UserId,
                 v.Name,
                 v.Description,
                 v.Lpp,
@@ -180,6 +181,8 @@ public class VesselService : IVesselService
             .Where(l => l.VesselId == id)
             .FirstOrDefaultAsync(cancellationToken);
 
+        var isTemplate = vessel.UserId == Shared.Constants.TemplateVessels.SystemUserId;
+
         return new VesselDetailsDto
         {
             Id = vessel.Id,
@@ -194,6 +197,7 @@ public class VesselService : IVesselService
             OffsetsCount = offsetsCount,
             CreatedAt = vessel.CreatedAt,
             UpdatedAt = vessel.UpdatedAt,
+            IsTemplate = isTemplate,
             Metadata = metadata != null ? new VesselMetadataDto
             {
                 VesselType = metadata.VesselType,
@@ -216,9 +220,10 @@ public class VesselService : IVesselService
 
     public async Task<List<Vessel>> ListVesselsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        // Include both user's vessels and template vessels (system-owned)
         return await _context.Vessels
             .AsNoTracking()  // Don't track for read-only query
-            .Where(v => v.UserId == userId)
+            .Where(v => v.UserId == userId || v.UserId == Shared.Constants.TemplateVessels.SystemUserId)
             .OrderByDescending(v => v.UpdatedAt)
             .Select(v => new Vessel
             {
@@ -239,6 +244,12 @@ public class VesselService : IVesselService
 
     public async Task<Vessel?> UpdateVesselAsync(Guid id, VesselDto dto, CancellationToken cancellationToken = default)
     {
+        // Check if this is a template vessel - template vessels cannot be modified
+        if (Shared.Constants.TemplateVessels.IsTemplateVesselId(id))
+        {
+            throw new InvalidOperationException("Template vessels cannot be modified. Please create your own vessel to customize.");
+        }
+
         // Convert from user's units to SI for storage
         UnitConversionHelper.ConvertToSI(dto, _converter);
 
@@ -272,6 +283,12 @@ public class VesselService : IVesselService
 
     public async Task<bool> DeleteVesselAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        // Check if this is a template vessel - template vessels cannot be deleted
+        if (Shared.Constants.TemplateVessels.IsTemplateVesselId(id))
+        {
+            throw new InvalidOperationException("Template vessels cannot be deleted. They are system templates available to all users.");
+        }
+
         var vessel = await _context.Vessels.FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
         if (vessel == null)
         {
@@ -285,6 +302,14 @@ public class VesselService : IVesselService
         _logger.LogInformation("Deleted vessel {VesselId} '{VesselName}'", vessel.Id, vessel.Name);
 
         return true;
+    }
+
+    /// <summary>
+    /// Checks if a vessel is a template vessel (read-only system template)
+    /// </summary>
+    public bool IsTemplateVessel(Guid vesselId)
+    {
+        return Shared.Constants.TemplateVessels.IsTemplateVesselId(vesselId);
     }
 
     public Task<List<VesselTemplateDto>> GetTemplatesAsync()

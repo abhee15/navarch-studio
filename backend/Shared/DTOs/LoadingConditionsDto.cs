@@ -9,3 +9,4 @@ public class LoadingConditionsDto
     public decimal? DeadweightTonnes { get; set; }
 }
 
+

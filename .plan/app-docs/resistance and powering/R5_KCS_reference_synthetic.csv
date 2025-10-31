@@ -1,0 +1,12 @@
+speed_mps,RT_ref_N,source
+0.5,42.5,synthetic_for_harness
+0.75,101.25,synthetic_for_harness
+1.0,190.0,synthetic_for_harness
+1.25,312.5,synthetic_for_harness
+1.5,472.5,synthetic_for_harness
+1.75,673.75,synthetic_for_harness
+2.0,920.0,synthetic_for_harness
+2.25,1215.0,synthetic_for_harness
+2.5,1562.5,synthetic_for_harness
+2.75,1966.25,synthetic_for_harness
+3.0,2430.0,synthetic_for_harness

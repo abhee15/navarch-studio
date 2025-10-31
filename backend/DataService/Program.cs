@@ -170,6 +170,7 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCalculator, DataService.Services.Hydrostatics.StabilityCalculator>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCriteriaChecker, DataService.Services.Hydrostatics.StabilityCriteriaChecker>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.SampleVesselSeedService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.ITemplateVesselSeeder, DataService.Services.Hydrostatics.TemplateVesselSeeder>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
@@ -323,6 +324,23 @@ try
             {
                 Console.WriteLine("[MIGRATION] Database schema is up to date (no pending migrations)");
                 Log.Information("[MIGRATION] Database schema is up to date (no pending migrations)");
+            }
+
+            // Seed template vessels (runs in all environments)
+            Console.WriteLine("[SEED] Checking for template vessels...");
+            Log.Information("[SEED] Checking for template vessels...");
+            try
+            {
+                var templateSeeder = scope.ServiceProvider.GetRequiredService<DataService.Services.Hydrostatics.ITemplateVesselSeeder>();
+                await templateSeeder.SeedHydrostaticsTemplateAsync();
+                Console.WriteLine("[SEED] Template vessel seeding completed.");
+                Log.Information("[SEED] Template vessel seeding completed.");
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"[SEED] WARNING: Failed to seed template vessel: {seedEx.Message}");
+                Log.Warning(seedEx, "[SEED] Failed to seed template vessel: {Message}", seedEx.Message);
+                // Don't throw - seeding is optional, but log warning for monitoring
             }
 
             // Auto-seed sample vessels in development

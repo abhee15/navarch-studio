@@ -39,7 +39,7 @@ export const VesselWorkspace = observer(function VesselWorkspace() {
   }, [vesselId]);
 
   const handleBack = () => {
-    navigate(`/hydrostatics/vessels/${vesselId}`);
+    navigate("/hydrostatics/vessels");
   };
 
   const handleHome = () => {

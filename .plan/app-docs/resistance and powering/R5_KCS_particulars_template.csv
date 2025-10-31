@@ -1,0 +1,2 @@
+vessel,LWL_m,B_m,T_m,CB,CP,CM,LCB_pct,S_wetted_m2,A_transom_m2,rho_kg_per_m3,nu_m2_per_s,tempC,salinity_ppt,notes
+KCS_template_model_scale,,,,,,,,,,1025.0,,15.0,35.0,Template columns for KCS benchmark. Replace blanks with published values before CI gating.

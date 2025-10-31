@@ -1,0 +1,502 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="966b25ab-fb72-4530-8033-f6359be3b778" name="abhee@HPOMNI_MJ 2025-10-30 16:07:44" runUser="HPOMNI_MJ\abhee" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-10-30T16:07:44.7274359-05:00" queuing="2025-10-30T16:07:44.7274365-05:00" start="2025-10-30T16:07:43.9538364-05:00" finish="2025-10-30T16:07:46.6793539-05:00" />
+  <TestSettings name="default" id="caa4b056-0eac-4575-b023-70cf50d770c6">
+    <Deployment runDeploymentRoot="abhee_HPOMNI_MJ_2025-10-30_16_07_44" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="73fedc92-2689-4123-97d2-19c7e7b94cde" testId="d551aefe-9fab-f3ac-5634-0c7d055f9b8f" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToCsvAsync_ShouldReturnValidCsv" computerName="HPOMNI_MJ" duration="00:00:00.0021134" startTime="2025-10-30T16:07:46.2578538-05:00" endTime="2025-10-30T16:07:46.2578539-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="73fedc92-2689-4123-97d2-19c7e7b94cde" />
+    <UnitTestResult executionId="ddfb684f-1716-4249-8f62-89e73432a7b5" testId="fad00a4c-e9bf-9442-9315-4541e2d668bf" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_SectionalAreaMatchesExpected" computerName="HPOMNI_MJ" duration="00:00:00.0021668" startTime="2025-10-30T16:07:45.2954846-05:00" endTime="2025-10-30T16:07:45.2954847-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ddfb684f-1716-4249-8f62-89e73432a7b5" />
+    <UnitTestResult executionId="bcc7aa59-b510-4274-87bd-bc3e29d972c8" testId="2b8bb774-0fa4-b2af-bef1-ef1e81a2a246" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateDisplacementCurve_RectangularBarge_ReturnsCorrectData" computerName="HPOMNI_MJ" duration="00:00:00.0029583" startTime="2025-10-30T16:07:45.2984778-05:00" endTime="2025-10-30T16:07:45.2984779-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bcc7aa59-b510-4274-87bd-bc3e29d972c8" />
+    <UnitTestResult executionId="8543cc11-e82e-47dd-8d2b-da4cf82cfa85" testId="acbbd162-e997-2331-d91a-78e5c1f5cc42" testName="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_BMt_MatchesAnalytical" computerName="HPOMNI_MJ" duration="00:00:00.0014490" startTime="2025-10-30T16:07:45.2109776-05:00" endTime="2025-10-30T16:07:45.2109776-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8543cc11-e82e-47dd-8d2b-da4cf82cfa85" />
+    <UnitTestResult executionId="7598cc0d-60a4-4a6e-9ffe-2e9dc6c7680d" testId="bc92204e-6826-ebce-26a5-b0dee2225858" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.SimpsonsRule_EvenNumberOfPoints_ThrowsException" computerName="HPOMNI_MJ" duration="00:00:00.0005476" startTime="2025-10-30T16:07:44.7058958-05:00" endTime="2025-10-30T16:07:44.7058958-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7598cc0d-60a4-4a6e-9ffe-2e9dc6c7680d" />
+    <UnitTestResult executionId="130ca923-ca7e-49f1-938d-3462d12e663c" testId="498c9abb-7ecb-db60-92cf-81d15ab87217" testName="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.TestExtremeAngles_FullMethod_ProducesSmoothCurve" computerName="HPOMNI_MJ" duration="00:00:00.5765735" startTime="2025-10-30T16:07:45.2191944-05:00" endTime="2025-10-30T16:07:45.2191945-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="130ca923-ca7e-49f1-938d-3462d12e663c" />
+    <UnitTestResult executionId="35532bd1-c71d-4122-a11e-7e6f4c8c94c5" testId="f6c8de30-d300-6927-b37a-f42703d4733c" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateAwpCurve_RectangularBarge_ReturnsCorrectData" computerName="HPOMNI_MJ" duration="00:00:00.0033646" startTime="2025-10-30T16:07:45.2815520-05:00" endTime="2025-10-30T16:07:45.2815522-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="35532bd1-c71d-4122-a11e-7e6f4c8c94c5" />
+    <UnitTestResult executionId="d7590ded-e719-4ebb-af88-2a7904f3fc31" testId="c75a8ca8-7696-72b7-7925-885f99de0c43" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportCurvesToCsvAsync_ShouldReturnValidCsv" computerName="HPOMNI_MJ" duration="00:00:00.0036102" startTime="2025-10-30T16:07:46.2552531-05:00" endTime="2025-10-30T16:07:46.2552532-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d7590ded-e719-4ebb-af88-2a7904f3fc31" />
+    <UnitTestResult executionId="b25401e1-8a39-472f-99d4-85fd79941686" testId="8e535950-b7e8-9f9f-4c65-d4de7d21e5d4" testName="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.Test9_CompleteStabilityWorkflow_EndToEnd" computerName="HPOMNI_MJ" duration="00:00:00.0284060" startTime="2025-10-30T16:07:45.2478052-05:00" endTime="2025-10-30T16:07:45.2478056-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b25401e1-8a39-472f-99d4-85fd79941686" />
+    <UnitTestResult executionId="f679dcab-f64d-4986-87ea-9d181cc85ca2" testId="f0c50951-4f95-b503-fde1-f3be3bde32b6" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_DisplacementVolume_WithinTwoPercent" computerName="HPOMNI_MJ" duration="00:00:00.6222037" startTime="2025-10-30T16:07:45.1813844-05:00" endTime="2025-10-30T16:07:45.1813845-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f679dcab-f64d-4986-87ea-9d181cc85ca2" />
+    <UnitTestResult executionId="3c29f064-c81c-42fd-94f0-96f4ed551ec4" testId="eb8d49cd-87b9-7c5b-3d18-18c7a2b6792b" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZCurve_HasCorrectShape" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1852863-05:00" endTime="2025-10-30T16:07:45.1852864-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3c29f064-c81c-42fd-94f0-96f4ed551ec4">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: GZ curve shape validation failing - needs stability calculator review</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7204a128-e1fd-4690-8612-03dec7a4bea2" testId="1ea32669-5794-a7ea-db98-784f2350614a" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_CurvesHaveCorrectStationPositions" computerName="HPOMNI_MJ" duration="00:00:00.0023775" startTime="2025-10-30T16:07:45.2888025-05:00" endTime="2025-10-30T16:07:45.2888027-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7204a128-e1fd-4690-8612-03dec7a4bea2" />
+    <UnitTestResult executionId="c4893eaf-8d6e-4375-bce5-4c5a35d522c7" testId="abcf848d-e156-4c52-ffd0-1434ee0737bb" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_WaterplaneArea_WithinTwoPercent" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1851449-05:00" endTime="2025-10-30T16:07:45.1851449-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c4893eaf-8d6e-4375-bce5-4c5a35d522c7">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Investigate waterplane calculation - returns 0.00 instead of expected values</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3faac023-84e3-40f8-be9a-30fa45f3b4b4" testId="2c316fd9-9fe0-f8a5-58db-4b120133b3e8" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_TriangularSection_HasZeroAreaAtKeel" computerName="HPOMNI_MJ" duration="00:00:00.0028566" startTime="2025-10-30T16:07:45.2916920-05:00" endTime="2025-10-30T16:07:45.2916921-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3faac023-84e3-40f8-be9a-30fa45f3b4b4" />
+    <UnitTestResult executionId="88d73ff0-13b1-4448-95bf-a10434bd028a" testId="d28d5d94-de5d-e82e-e90a-5f5b4e3bf527" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.SecondMoment_SimpleCase_CalculatesCorrectly" computerName="HPOMNI_MJ" duration="00:00:00.0016314" startTime="2025-10-30T16:07:44.7056738-05:00" endTime="2025-10-30T16:07:44.7056739-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="88d73ff0-13b1-4448-95bf-a10434bd028a" />
+    <UnitTestResult executionId="7d37d2d6-82a9-4608-8ad8-f6542eadad31" testId="174582d4-d844-1b53-10bc-f5d7e22ab959" testName="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test3_BargeGZ_MaxGZAngle_Near45Degrees" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1856850-05:00" endTime="2025-10-30T16:07:45.1856850-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d37d2d6-82a9-4608-8ad8-f6542eadad31">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Max GZ angle detection needs fix - currently returns 90° instead of ~45°</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2cdc2131-5346-4b7d-9d89-15f749b45f7f" testId="8a68b469-2195-897b-b947-cb153823320f" testName="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_Cb_IsUnity" computerName="HPOMNI_MJ" duration="00:00:00.6220231" startTime="2025-10-30T16:07:45.1814242-05:00" endTime="2025-10-30T16:07:45.1814242-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2cdc2131-5346-4b7d-9d89-15f749b45f7f" />
+    <UnitTestResult executionId="c01c69ff-fb94-4ac8-8c14-3af160df8330" testId="e0af5d8f-56f3-227b-27a4-5ab6126b82ae" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToExcelAsync_VesselNotFound_ShouldThrowArgumentException" computerName="HPOMNI_MJ" duration="00:00:00.0010527" startTime="2025-10-30T16:07:46.2631068-05:00" endTime="2025-10-30T16:07:46.2631068-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c01c69ff-fb94-4ac8-8c14-3af160df8330" />
+    <UnitTestResult executionId="e20383c1-c0a4-4812-8c6c-a90e99f9352b" testId="1d569063-cf9b-8cfb-c593-a5f0a6b93c41" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateGMtCurve_WithoutLoadcase_ThrowsArgumentException" computerName="HPOMNI_MJ" duration="00:00:00.0278679" startTime="2025-10-30T16:07:45.2751378-05:00" endTime="2025-10-30T16:07:45.2751384-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e20383c1-c0a4-4812-8c6c-a90e99f9352b" />
+    <UnitTestResult executionId="e640f6df-acee-4ee9-9a57-09a0122cd080" testId="1bef85f3-9350-579f-f216-48fc4e7622ae" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportCurvesToJsonAsync_ShouldReturnValidJson" computerName="HPOMNI_MJ" duration="00:00:00.0533679" startTime="2025-10-30T16:07:46.3175860-05:00" endTime="2025-10-30T16:07:46.3175862-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e640f6df-acee-4ee9-9a57-09a0122cd080" />
+    <UnitTestResult executionId="7b889562-2254-46f2-8331-aefbb2ce2dda" testId="737c5885-39ff-634f-f206-b189a4f5352d" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_BlockCoefficient_WithinTwoPercent" computerName="HPOMNI_MJ" duration="00:00:00.0537262" startTime="2025-10-30T16:07:45.2391495-05:00" endTime="2025-10-30T16:07:45.2391498-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7b889562-2254-46f2-8331-aefbb2ce2dda" />
+    <UnitTestResult executionId="123e129c-2a5a-46f1-a71e-f40f456db770" testId="9da0ef03-4f4e-52d0-1591-2d775898802e" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.TrapezoidalRule_SimpleRectangle_ReturnsCorrectArea" computerName="HPOMNI_MJ" duration="00:00:00.0011998" startTime="2025-10-30T16:07:44.6855228-05:00" endTime="2025-10-30T16:07:44.6855230-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="123e129c-2a5a-46f1-a71e-f40f456db770" />
+    <UnitTestResult executionId="fc1c1705-0747-43d6-ae58-957f94039990" testId="8003bf6b-720b-758d-dc59-90b1136c0f29" testName="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_WithLoadcase_CalculatesGM" computerName="HPOMNI_MJ" duration="00:00:00.0052712" startTime="2025-10-30T16:07:45.2178645-05:00" endTime="2025-10-30T16:07:45.2178647-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fc1c1705-0747-43d6-ae58-957f94039990" />
+    <UnitTestResult executionId="8b0297ea-d2b2-4cd6-8c5a-87df66b6f2bf" testId="5ad0c0ef-ff57-04a6-8d13-968743f18c44" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToPdfAsync_ShouldGeneratePdfForValidVessel" computerName="HPOMNI_MJ" duration="00:00:00.2711424" startTime="2025-10-30T16:07:46.5996655-05:00" endTime="2025-10-30T16:07:46.5996661-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8b0297ea-d2b2-4cd6-8c5a-87df66b6f2bf" />
+    <UnitTestResult executionId="544896c9-f1f4-4e95-9bbc-9d25313d8b69" testId="4b024fb7-423b-a0d3-2223-012add8d91ef" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_EachCurveHasPointsForAllWaterlines" computerName="HPOMNI_MJ" duration="00:00:00.0035069" startTime="2025-10-30T16:07:45.2468414-05:00" endTime="2025-10-30T16:07:45.2468416-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="544896c9-f1f4-4e95-9bbc-9d25313d8b69" />
+    <UnitTestResult executionId="22170cd5-6e68-4e59-b2cc-8d7295babb6b" testId="7e049b42-7be5-2a4f-ba5c-8d0d7d161acc" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.FirstMoment_SimpleCase_CalculatesCorrectly" computerName="HPOMNI_MJ" duration="00:00:00.0002803" startTime="2025-10-30T16:07:44.7058149-05:00" endTime="2025-10-30T16:07:44.7058150-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="22170cd5-6e68-4e59-b2cc-8d7295babb6b" />
+    <UnitTestResult executionId="9b8faa4d-0f6a-46e0-818a-9467341a277c" testId="c2455867-3d1b-f9dd-6978-a8378418c36d" testName="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test2_BargeGZ_AreaUnderCurve_MatchesAnalytical" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.2452220-05:00" endTime="2025-10-30T16:07:45.2452221-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9b8faa4d-0f6a-46e0-818a-9467341a277c">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Area calculation needs calibration - currently 14% error, needs investigation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="1e1a8a7f-6ac9-4333-9ca5-37fbd80c1968" testId="1e2d7cdf-7a26-8be6-d0a2-f0620daad12f" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MetacentricRadius_WithinFivePercent" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1849529-05:00" endTime="2025-10-30T16:07:45.1849532-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1e1a8a7f-6ac9-4333-9ca5-37fbd80c1968">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Investigate waterplane calculation - returns 0.00 instead of expected values</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="fe81fc7f-5592-4a7c-a81d-2efbe7ba6ad4" testId="ab6c453d-a758-ff89-88b1-f1c43e8e0c3a" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.TrapezoidalRule_Triangle_ReturnsCorrectArea" computerName="HPOMNI_MJ" duration="00:00:00.0001493" startTime="2025-10-30T16:07:44.7058787-05:00" endTime="2025-10-30T16:07:44.7058788-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fe81fc7f-5592-4a7c-a81d-2efbe7ba6ad4" />
+    <UnitTestResult executionId="d89000d8-e79e-46d2-a9a2-fa2f9c4731ee" testId="b32ffdba-2152-0ac9-d373-13e59ff4f34b" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToJsonAsync_ShouldReturnValidJson" computerName="HPOMNI_MJ" duration="00:00:00.0087731" startTime="2025-10-30T16:07:46.3276162-05:00" endTime="2025-10-30T16:07:46.3276164-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d89000d8-e79e-46d2-a9a2-fa2f9c4731ee" />
+    <UnitTestResult executionId="d2fc2b21-5c1c-4302-a08e-cbac1cc66878" testId="46553b94-f74b-945c-0470-746f47320dae" testName="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test4_BargeGMT_MatchesDirectCalculation" computerName="HPOMNI_MJ" duration="00:00:00.6248569" startTime="2025-10-30T16:07:45.1853949-05:00" endTime="2025-10-30T16:07:45.1853949-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d2fc2b21-5c1c-4302-a08e-cbac1cc66878" />
+    <UnitTestResult executionId="d5855ade-b946-4c74-a8d6-0bf1d55ea736" testId="5a2a2ab0-a437-4e3d-7add-377e4d105346" testName="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test6_UnstableBarge_FailsGMCriterion" computerName="HPOMNI_MJ" duration="00:00:00.0606163" startTime="2025-10-30T16:07:45.2447613-05:00" endTime="2025-10-30T16:07:45.2447615-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d5855ade-b946-4c74-a8d6-0bf1d55ea736" />
+    <UnitTestResult executionId="a1a60fa6-1f4e-4acb-af23-79cc7ad72965" testId="2c3347d7-2a68-1b01-8650-32995e470d00" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_CenterOfBuoyancy_WithinTwoPercent" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1852438-05:00" endTime="2025-10-30T16:07:45.1852438-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1a60fa6-1f4e-4acb-af23-79cc7ad72965">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Investigate waterplane calculation - returns 0.00 instead of expected values</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="daea1d29-1566-460a-ae44-7d6b6b2ae4fd" testId="143525d7-7108-1ed7-749c-ddcfb2454c72" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.CompositeSimpson_EvenNumberOfPoints_HandlesCorrectly" computerName="HPOMNI_MJ" duration="00:00:00.0016714" startTime="2025-10-30T16:07:44.7058372-05:00" endTime="2025-10-30T16:07:44.7058373-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="daea1d29-1566-460a-ae44-7d6b6b2ae4fd" />
+    <UnitTestResult executionId="32e3011f-03ad-4b60-bcd3-f61c339d9b82" testId="28e94633-823d-aa2b-11ba-bc0b5b432d7c" testName="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_Displacement_MatchesAnalytical" computerName="HPOMNI_MJ" duration="00:00:00.0053879" startTime="2025-10-30T16:07:45.2234700-05:00" endTime="2025-10-30T16:07:45.2234702-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="32e3011f-03ad-4b60-bcd3-f61c339d9b82" />
+    <UnitTestResult executionId="2b271d2a-93eb-41a7-9bb0-8c606ee657b7" testId="ffd71666-93e0-ed60-0de1-41081157f850" testName="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.TestZeroGM_UnstableVessel" computerName="HPOMNI_MJ" duration="00:00:00.0101376" startTime="2025-10-30T16:07:45.2580059-05:00" endTime="2025-10-30T16:07:45.2580061-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b271d2a-93eb-41a7-9bb0-8c606ee657b7" />
+    <UnitTestResult executionId="c499c34c-f571-49e9-85ea-6a9da2a61c88" testId="11712265-3b97-39ca-f7e4-7d297f6988bf" testName="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_KB_MatchesAnalytical" computerName="HPOMNI_MJ" duration="00:00:00.0014804" startTime="2025-10-30T16:07:45.2125181-05:00" endTime="2025-10-30T16:07:45.2125182-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c499c34c-f571-49e9-85ea-6a9da2a61c88" />
+    <UnitTestResult executionId="9d7e8214-d714-4454-81a1-b705ce404570" testId="b66485ed-fe54-ab98-94a9-7e411debca40" testName="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.Test10_WallSidedVsFullMethod_AgreementAtSmallAngles" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.2584145-05:00" endTime="2025-10-30T16:07:45.2584146-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9d7e8214-d714-4454-81a1-b705ce404570">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Wall-sided vs Full method showing 42,000% difference - full method needs debugging</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6b8d3c2e-6938-4144-bbe0-f249d3c2bcb7" testId="7ccca8ac-976e-e2ca-7eb0-5c39fc586a47" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_FormCoefficients_WithinTwoPercent" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1852012-05:00" endTime="2025-10-30T16:07:45.1852013-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6b8d3c2e-6938-4144-bbe0-f249d3c2bcb7">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Investigate waterplane calculation - returns 0.00 instead of expected values</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f70245df-d6a2-4feb-9bc8-166d37a210ad" testId="0f5d6992-b467-55aa-00ea-8e19931806ce" testName="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_LCB_IsAtMidship" computerName="HPOMNI_MJ" duration="00:00:00.0280175" startTime="2025-10-30T16:07:45.2094867-05:00" endTime="2025-10-30T16:07:45.2094869-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f70245df-d6a2-4feb-9bc8-166d37a210ad" />
+    <UnitTestResult executionId="9742d36d-3204-412f-8e7c-4db8b0fcd4d1" testId="276d6a2a-6cc5-732e-5c5b-ec752f3ee4e1" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateMultipleCurves_RequestsMultipleTypes_ReturnsAllCurves" computerName="HPOMNI_MJ" duration="00:00:00.0280832" startTime="2025-10-30T16:07:45.2349455-05:00" endTime="2025-10-30T16:07:45.2349461-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9742d36d-3204-412f-8e7c-4db8b0fcd4d1" />
+    <UnitTestResult executionId="6473cfc7-c80f-4c17-b307-17eab0caf2a7" testId="6cae673e-34e9-ae0b-ffc5-5cce5c8d862d" testName="DataService.Tests.UnitTest1.Test1" computerName="HPOMNI_MJ" duration="00:00:00.0768984" startTime="2025-10-30T16:07:44.6406420-05:00" endTime="2025-10-30T16:07:44.6406512-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6473cfc7-c80f-4c17-b307-17eab0caf2a7" />
+    <UnitTestResult executionId="b1898b0d-4173-4a55-988f-bf06974c4a3a" testId="aa6c212c-9e96-bb3d-e075-7801d853502a" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToExcelAsync_ShouldGenerateExcelForValidVessel" computerName="HPOMNI_MJ" duration="00:00:01.6883599" startTime="2025-10-30T16:07:46.2496837-05:00" endTime="2025-10-30T16:07:46.2496840-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b1898b0d-4173-4a55-988f-bf06974c4a3a" />
+    <UnitTestResult executionId="04d67767-94c9-4d0b-bed0-b47925b44cff" testId="6cbe6083-ff06-29d0-3c06-cb65638aa126" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToPdfAsync_WithCurves_ShouldAttemptToGenerateCurves" computerName="HPOMNI_MJ" duration="00:00:00.0216644" startTime="2025-10-30T16:07:46.6218624-05:00" endTime="2025-10-30T16:07:46.6218628-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="04d67767-94c9-4d0b-bed0-b47925b44cff" />
+    <UnitTestResult executionId="eff24fd9-cd64-4744-a0fe-b0d266d289eb" testId="266db24b-ee8d-8985-eb71-db966ba58e46" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_NonexistentVessel_ThrowsArgumentException" computerName="HPOMNI_MJ" duration="00:00:00.0018021" startTime="2025-10-30T16:07:45.2862764-05:00" endTime="2025-10-30T16:07:45.2862767-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eff24fd9-cd64-4744-a0fe-b0d266d289eb" />
+    <UnitTestResult executionId="08b7ec26-466d-4362-a1c3-b85827591a27" testId="a4c09dc1-2325-2a8d-c4ac-121801e4f856" testName="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToPdfAsync_VesselNotFound_ShouldThrowArgumentException" computerName="HPOMNI_MJ" duration="00:00:00.0040650" startTime="2025-10-30T16:07:46.2619949-05:00" endTime="2025-10-30T16:07:46.2619950-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="08b7ec26-466d-4362-a1c3-b85827591a27" />
+    <UnitTestResult executionId="4a628241-65a1-4bcc-b0a3-1d036706b381" testId="cf9ef204-f4d6-5ba6-5717-05c0e7faa9e0" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MaxGZ_InExpectedRange" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1853691-05:00" endTime="2025-10-30T16:07:45.1853691-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4a628241-65a1-4bcc-b0a3-1d036706b381">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Max GZ angle returns 0° instead of 30-50° - needs investigation</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="96b2af18-7ba7-42b0-a35b-4c2bbef4664c" testId="e9ec8da7-928c-b705-29dc-c53708ab08bb" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateKBCurve_RectangularBarge_ReturnsCorrectData" computerName="HPOMNI_MJ" duration="00:00:00.0081945" startTime="2025-10-30T16:07:45.2433055-05:00" endTime="2025-10-30T16:07:45.2433059-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="96b2af18-7ba7-42b0-a35b-4c2bbef4664c" />
+    <UnitTestResult executionId="e292997b-319a-4533-bc84-93c2aba6aa1c" testId="9603c9ed-209a-46d0-4a42-d18f2fcc7f4f" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.Integrate_AutoSelectsMethod_ProducesReasonableResult" computerName="HPOMNI_MJ" duration="00:00:00.1250651" startTime="2025-10-30T16:07:44.6841729-05:00" endTime="2025-10-30T16:07:44.6841734-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e292997b-319a-4533-bc84-93c2aba6aa1c" />
+    <UnitTestResult executionId="28154a19-a4b7-4b7c-b8b3-b37dbe3e6989" testId="79fd7924-82ff-fb79-ddf2-fcefd14aa0b4" testName="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test1_BargeGZ_WallSidedMethod_MatchesAnalytical" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.2645357-05:00" endTime="2025-10-30T16:07:45.2645357-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="28154a19-a4b7-4b7c-b8b3-b37dbe3e6989">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: Wall-sided method needs calibration - currently 0.76% error, target is 0.5%</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="94ded1d2-29b7-4a82-9133-5d6c7460b5af" testId="0373cf85-e497-e83a-7045-d41310ec2c85" testName="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZValues_InReasonableRange" computerName="HPOMNI_MJ" duration="00:00:00.0010000" startTime="2025-10-30T16:07:45.1853284-05:00" endTime="2025-10-30T16:07:45.1853284-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="94ded1d2-29b7-4a82-9133-5d6c7460b5af">
+      <Output>
+        <ErrorInfo>
+          <Message>TODO: GZ at 10° is negative instead of positive - stability calculator needs fix</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2b4fe988-949f-4ede-9010-77768c1bd16c" testId="2729f128-c54c-dba0-ba1b-ffb9e3eae1a8" testName="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.SimpsonsRule_Parabola_HighAccuracy" computerName="HPOMNI_MJ" duration="00:00:00.0013869" startTime="2025-10-30T16:07:44.7058547-05:00" endTime="2025-10-30T16:07:44.7058547-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2b4fe988-949f-4ede-9010-77768c1bd16c" />
+    <UnitTestResult executionId="e044a9e6-6878-4d29-b94d-8cdf1e1a9877" testId="57511cb4-90ea-56d5-14b5-70a4b821c47b" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_ReturnsCorrectNumberOfCurves" computerName="HPOMNI_MJ" duration="00:00:00.0027103" startTime="2025-10-30T16:07:45.2845196-05:00" endTime="2025-10-30T16:07:45.2845202-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e044a9e6-6878-4d29-b94d-8cdf1e1a9877" />
+    <UnitTestResult executionId="27c90388-4acb-4d36-b1fd-6872575ca870" testId="18e41801-b2e2-bbea-3bd4-aa609056e734" testName="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test5_StableBarge_PassesIMOCriteria" computerName="HPOMNI_MJ" duration="00:00:00.0192735" startTime="2025-10-30T16:07:45.2643340-05:00" endTime="2025-10-30T16:07:45.2643343-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="27c90388-4acb-4d36-b1fd-6872575ca870" />
+    <UnitTestResult executionId="dbd345a4-974c-4153-af46-4535fee3d0a5" testId="b2179002-dd62-5508-bba7-21649c15eec7" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_VesselWithoutGeometry_ThrowsInvalidOperationException" computerName="HPOMNI_MJ" duration="00:00:00.0015149" startTime="2025-10-30T16:07:45.2932761-05:00" endTime="2025-10-30T16:07:45.2932762-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dbd345a4-974c-4153-af46-4535fee3d0a5" />
+    <UnitTestResult executionId="7bfeefba-c6a2-484a-8618-6d3c17e4333b" testId="4bffaee5-fd6a-6892-f9b4-5e01384ad09e" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateLCBCurve_RectangularBarge_ReturnsCorrectData" computerName="HPOMNI_MJ" duration="00:00:00.6475089" startTime="2025-10-30T16:07:45.2066431-05:00" endTime="2025-10-30T16:07:45.2066433-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7bfeefba-c6a2-484a-8618-6d3c17e4333b" />
+    <UnitTestResult executionId="8fcb2d8c-7826-4aec-b62c-48df96747732" testId="5ab8d534-58f4-717d-7f49-5fedb40d30b7" testName="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_SectionalAreasIncreaseWithDraft" computerName="HPOMNI_MJ" duration="00:00:00.0031292" startTime="2025-10-30T16:07:45.2781121-05:00" endTime="2025-10-30T16:07:45.2781123-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8fcb2d8c-7826-4aec-b62c-48df96747732" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToCsvAsync_ShouldReturnValidCsv" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="d551aefe-9fab-f3ac-5634-0c7d055f9b8f">
+      <Execution id="73fedc92-2689-4123-97d2-19c7e7b94cde" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportToCsvAsync_ShouldReturnValidCsv" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateMultipleCurves_RequestsMultipleTypes_ReturnsAllCurves" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="276d6a2a-6cc5-732e-5c5b-ec752f3ee4e1">
+      <Execution id="9742d36d-3204-412f-8e7c-4db8b0fcd4d1" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateMultipleCurves_RequestsMultipleTypes_ReturnsAllCurves" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToPdfAsync_VesselNotFound_ShouldThrowArgumentException" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="a4c09dc1-2325-2a8d-c4ac-121801e4f856">
+      <Execution id="08b7ec26-466d-4362-a1c3-b85827591a27" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportToPdfAsync_VesselNotFound_ShouldThrowArgumentException" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_WaterplaneArea_WithinTwoPercent" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="abcf848d-e156-4c52-ffd0-1434ee0737bb">
+      <Execution id="c4893eaf-8d6e-4375-bce5-4c5a35d522c7" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_WaterplaneArea_WithinTwoPercent" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZCurve_HasCorrectShape" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="eb8d49cd-87b9-7c5b-3d18-18c7a2b6792b">
+      <Execution id="3c29f064-c81c-42fd-94f0-96f4ed551ec4" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_GZCurve_HasCorrectShape" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test3_BargeGZ_MaxGZAngle_Near45Degrees" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="174582d4-d844-1b53-10bc-f5d7e22ab959">
+      <Execution id="7d37d2d6-82a9-4608-8ad8-f6542eadad31" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.BargeStabilityTests" name="Test3_BargeGZ_MaxGZAngle_Near45Degrees" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.SecondMoment_SimpleCase_CalculatesCorrectly" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="d28d5d94-de5d-e82e-e90a-5f5b4e3bf527">
+      <Execution id="88d73ff0-13b1-4448-95bf-a10434bd028a" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="SecondMoment_SimpleCase_CalculatesCorrectly" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.Integrate_AutoSelectsMethod_ProducesReasonableResult" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="9603c9ed-209a-46d0-4a42-d18f2fcc7f4f">
+      <Execution id="e292997b-319a-4533-bc84-93c2aba6aa1c" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="Integrate_AutoSelectsMethod_ProducesReasonableResult" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.FirstMoment_SimpleCase_CalculatesCorrectly" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="7e049b42-7be5-2a4f-ba5c-8d0d7d161acc">
+      <Execution id="22170cd5-6e68-4e59-b2cc-8d7295babb6b" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="FirstMoment_SimpleCase_CalculatesCorrectly" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_CurvesHaveCorrectStationPositions" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="1ea32669-5794-a7ea-db98-784f2350614a">
+      <Execution id="7204a128-e1fd-4690-8612-03dec7a4bea2" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_RectangularBarge_CurvesHaveCorrectStationPositions" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateKBCurve_RectangularBarge_ReturnsCorrectData" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="e9ec8da7-928c-b705-29dc-c53708ab08bb">
+      <Execution id="96b2af18-7ba7-42b0-a35b-4c2bbef4664c" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateKBCurve_RectangularBarge_ReturnsCorrectData" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_FormCoefficients_WithinTwoPercent" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="7ccca8ac-976e-e2ca-7eb0-5c39fc586a47">
+      <Execution id="6b8d3c2e-6938-4144-bbe0-f249d3c2bcb7" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_FormCoefficients_WithinTwoPercent" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MetacentricRadius_WithinFivePercent" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="1e2d7cdf-7a26-8be6-d0a2-f0620daad12f">
+      <Execution id="1e1a8a7f-6ac9-4333-9ca5-37fbd80c1968" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_MetacentricRadius_WithinFivePercent" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToExcelAsync_VesselNotFound_ShouldThrowArgumentException" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="e0af5d8f-56f3-227b-27a4-5ab6126b82ae">
+      <Execution id="c01c69ff-fb94-4ac8-8c14-3af160df8330" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportToExcelAsync_VesselNotFound_ShouldThrowArgumentException" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_VesselWithoutGeometry_ThrowsInvalidOperationException" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="b2179002-dd62-5508-bba7-21649c15eec7">
+      <Execution id="dbd345a4-974c-4153-af46-4535fee3d0a5" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_VesselWithoutGeometry_ThrowsInvalidOperationException" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.UnitTest1.Test1" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="6cae673e-34e9-ae0b-ffc5-5cce5c8d862d">
+      <Execution id="6473cfc7-c80f-4c17-b307-17eab0caf2a7" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.UnitTest1" name="Test1" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToJsonAsync_ShouldReturnValidJson" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="b32ffdba-2152-0ac9-d373-13e59ff4f34b">
+      <Execution id="d89000d8-e79e-46d2-a9a2-fa2f9c4731ee" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportToJsonAsync_ShouldReturnValidJson" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_SectionalAreasIncreaseWithDraft" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="5ab8d534-58f4-717d-7f49-5fedb40d30b7">
+      <Execution id="8fcb2d8c-7826-4aec-b62c-48df96747732" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_RectangularBarge_SectionalAreasIncreaseWithDraft" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_NonexistentVessel_ThrowsArgumentException" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="266db24b-ee8d-8985-eb71-db966ba58e46">
+      <Execution id="eff24fd9-cd64-4744-a0fe-b0d266d289eb" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_NonexistentVessel_ThrowsArgumentException" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_BMt_MatchesAnalytical" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="acbbd162-e997-2331-d91a-78e5c1f5cc42">
+      <Execution id="8543cc11-e82e-47dd-8d2b-da4cf82cfa85" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests" name="RectangularBarge_BMt_MatchesAnalytical" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test6_UnstableBarge_FailsGMCriterion" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="5a2a2ab0-a437-4e3d-7add-377e4d105346">
+      <Execution id="d5855ade-b946-4c74-a8d6-0bf1d55ea736" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.BargeStabilityTests" name="Test6_UnstableBarge_FailsGMCriterion" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToExcelAsync_ShouldGenerateExcelForValidVessel" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="aa6c212c-9e96-bb3d-e075-7801d853502a">
+      <Execution id="b1898b0d-4173-4a55-988f-bf06974c4a3a" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportToExcelAsync_ShouldGenerateExcelForValidVessel" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_EachCurveHasPointsForAllWaterlines" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="4b024fb7-423b-a0d3-2223-012add8d91ef">
+      <Execution id="544896c9-f1f4-4e95-9bbc-9d25313d8b69" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_RectangularBarge_EachCurveHasPointsForAllWaterlines" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_KB_MatchesAnalytical" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="11712265-3b97-39ca-f7e4-7d297f6988bf">
+      <Execution id="c499c34c-f571-49e9-85ea-6a9da2a61c88" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests" name="RectangularBarge_KB_MatchesAnalytical" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.Test10_WallSidedVsFullMethod_AgreementAtSmallAngles" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="b66485ed-fe54-ab98-94a9-7e411debca40">
+      <Execution id="9d7e8214-d714-4454-81a1-b705ce404570" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests" name="Test10_WallSidedVsFullMethod_AgreementAtSmallAngles" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test4_BargeGMT_MatchesDirectCalculation" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="46553b94-f74b-945c-0470-746f47320dae">
+      <Execution id="d2fc2b21-5c1c-4302-a08e-cbac1cc66878" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.BargeStabilityTests" name="Test4_BargeGMT_MatchesDirectCalculation" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.TestExtremeAngles_FullMethod_ProducesSmoothCurve" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="498c9abb-7ecb-db60-92cf-81d15ab87217">
+      <Execution id="130ca923-ca7e-49f1-938d-3462d12e663c" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests" name="TestExtremeAngles_FullMethod_ProducesSmoothCurve" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateAwpCurve_RectangularBarge_ReturnsCorrectData" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="f6c8de30-d300-6927-b37a-f42703d4733c">
+      <Execution id="35532bd1-c71d-4122-a11e-7e6f4c8c94c5" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateAwpCurve_RectangularBarge_ReturnsCorrectData" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_BlockCoefficient_WithinTwoPercent" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="737c5885-39ff-634f-f206-b189a4f5352d">
+      <Execution id="7b889562-2254-46f2-8331-aefbb2ce2dda" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_BlockCoefficient_WithinTwoPercent" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_CenterOfBuoyancy_WithinTwoPercent" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="2c3347d7-2a68-1b01-8650-32995e470d00">
+      <Execution id="a1a60fa6-1f4e-4acb-af23-79cc7ad72965" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_CenterOfBuoyancy_WithinTwoPercent" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateLCBCurve_RectangularBarge_ReturnsCorrectData" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="4bffaee5-fd6a-6892-f9b4-5e01384ad09e">
+      <Execution id="7bfeefba-c6a2-484a-8618-6d3c17e4333b" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateLCBCurve_RectangularBarge_ReturnsCorrectData" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.Test9_CompleteStabilityWorkflow_EndToEnd" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="8e535950-b7e8-9f9f-4c65-d4de7d21e5d4">
+      <Execution id="b25401e1-8a39-472f-99d4-85fd79941686" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests" name="Test9_CompleteStabilityWorkflow_EndToEnd" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test1_BargeGZ_WallSidedMethod_MatchesAnalytical" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="79fd7924-82ff-fb79-ddf2-fcefd14aa0b4">
+      <Execution id="28154a19-a4b7-4b7c-b8b3-b37dbe3e6989" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.BargeStabilityTests" name="Test1_BargeGZ_WallSidedMethod_MatchesAnalytical" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_TriangularSection_HasZeroAreaAtKeel" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="2c316fd9-9fe0-f8a5-58db-4b120133b3e8">
+      <Execution id="3faac023-84e3-40f8-be9a-30fa45f3b4b4" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_TriangularSection_HasZeroAreaAtKeel" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.TrapezoidalRule_SimpleRectangle_ReturnsCorrectArea" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="9da0ef03-4f4e-52d0-1591-2d775898802e">
+      <Execution id="123e129c-2a5a-46f1-a71e-f40f456db770" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="TrapezoidalRule_SimpleRectangle_ReturnsCorrectArea" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_WithLoadcase_CalculatesGM" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="8003bf6b-720b-758d-dc59-90b1136c0f29">
+      <Execution id="fc1c1705-0747-43d6-ae58-957f94039990" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests" name="RectangularBarge_WithLoadcase_CalculatesGM" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToPdfAsync_WithCurves_ShouldAttemptToGenerateCurves" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="6cbe6083-ff06-29d0-3c06-cb65638aa126">
+      <Execution id="04d67767-94c9-4d0b-bed0-b47925b44cff" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportToPdfAsync_WithCurves_ShouldAttemptToGenerateCurves" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateGMtCurve_WithoutLoadcase_ThrowsArgumentException" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="1d569063-cf9b-8cfb-c593-a5f0a6b93c41">
+      <Execution id="e20383c1-c0a4-4812-8c6c-a90e99f9352b" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateGMtCurve_WithoutLoadcase_ThrowsArgumentException" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZValues_InReasonableRange" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="0373cf85-e497-e83a-7045-d41310ec2c85">
+      <Execution id="94ded1d2-29b7-4a82-9133-5d6c7460b5af" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_GZValues_InReasonableRange" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test2_BargeGZ_AreaUnderCurve_MatchesAnalytical" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="c2455867-3d1b-f9dd-6978-a8378418c36d">
+      <Execution id="9b8faa4d-0f6a-46e0-818a-9467341a277c" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.BargeStabilityTests" name="Test2_BargeGZ_AreaUnderCurve_MatchesAnalytical" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.SimpsonsRule_Parabola_HighAccuracy" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="2729f128-c54c-dba0-ba1b-ffb9e3eae1a8">
+      <Execution id="2b4fe988-949f-4ede-9010-77768c1bd16c" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="SimpsonsRule_Parabola_HighAccuracy" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_Displacement_MatchesAnalytical" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="28e94633-823d-aa2b-11ba-bc0b5b432d7c">
+      <Execution id="32e3011f-03ad-4b60-bcd3-f61c339d9b82" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests" name="RectangularBarge_Displacement_MatchesAnalytical" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateDisplacementCurve_RectangularBarge_ReturnsCorrectData" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="2b8bb774-0fa4-b2af-bef1-ef1e81a2a246">
+      <Execution id="bcc7aa59-b510-4274-87bd-bc3e29d972c8" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateDisplacementCurve_RectangularBarge_ReturnsCorrectData" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportToPdfAsync_ShouldGeneratePdfForValidVessel" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="5ad0c0ef-ff57-04a6-8d13-968743f18c44">
+      <Execution id="8b0297ea-d2b2-4cd6-8c5a-87df66b6f2bf" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportToPdfAsync_ShouldGeneratePdfForValidVessel" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_LCB_IsAtMidship" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="0f5d6992-b467-55aa-00ea-8e19931806ce">
+      <Execution id="f70245df-d6a2-4feb-9bc8-166d37a210ad" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests" name="RectangularBarge_LCB_IsAtMidship" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportCurvesToCsvAsync_ShouldReturnValidCsv" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="c75a8ca8-7696-72b7-7925-885f99de0c43">
+      <Execution id="d7590ded-e719-4ebb-af88-2a7904f3fc31" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportCurvesToCsvAsync_ShouldReturnValidCsv" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.SimpsonsRule_EvenNumberOfPoints_ThrowsException" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="bc92204e-6826-ebce-26a5-b0dee2225858">
+      <Execution id="7598cc0d-60a4-4a6e-9ffe-2e9dc6c7680d" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="SimpsonsRule_EvenNumberOfPoints_ThrowsException" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.TestZeroGM_UnstableVessel" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="ffd71666-93e0-ed60-0de1-41081157f850">
+      <Execution id="2b271d2a-93eb-41a7-9bb0-8c606ee657b7" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests" name="TestZeroGM_UnstableVessel" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test5_StableBarge_PassesIMOCriteria" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="18e41801-b2e2-bbea-3bd4-aa609056e734">
+      <Execution id="27c90388-4acb-4d36-b1fd-6872575ca870" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.BargeStabilityTests" name="Test5_StableBarge_PassesIMOCriteria" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_ReturnsCorrectNumberOfCurves" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="57511cb4-90ea-56d5-14b5-70a4b821c47b">
+      <Execution id="e044a9e6-6878-4d29-b94d-8cdf1e1a9877" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_RectangularBarge_ReturnsCorrectNumberOfCurves" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.ExportServiceTests.ExportCurvesToJsonAsync_ShouldReturnValidJson" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="1bef85f3-9350-579f-f216-48fc4e7622ae">
+      <Execution id="e640f6df-acee-4ee9-9a57-09a0122cd080" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.ExportServiceTests" name="ExportCurvesToJsonAsync_ShouldReturnValidJson" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests.RectangularBarge_Cb_IsUnity" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="8a68b469-2195-897b-b947-cb153823320f">
+      <Execution id="2cdc2131-5346-4b7d-9d89-15f749b45f7f" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.HydroCalculatorTests" name="RectangularBarge_Cb_IsUnity" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.CompositeSimpson_EvenNumberOfPoints_HandlesCorrectly" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="143525d7-7108-1ed7-749c-ddcfb2454c72">
+      <Execution id="daea1d29-1566-460a-ae44-7d6b6b2ae4fd" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="CompositeSimpson_EvenNumberOfPoints_HandlesCorrectly" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests.TrapezoidalRule_Triangle_ReturnsCorrectArea" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="ab6c453d-a758-ff89-88b1-f1c43e8e0c3a">
+      <Execution id="fe81fc7f-5592-4a7c-a81d-2efbe7ba6ad4" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.IntegrationEngineTests" name="TrapezoidalRule_Triangle_ReturnsCorrectArea" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests.GenerateBonjeanCurves_RectangularBarge_SectionalAreaMatchesExpected" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="fad00a4c-e9bf-9442-9315-4541e2d668bf">
+      <Execution id="ddfb684f-1716-4249-8f62-89e73432a7b5" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.CurvesGeneratorTests" name="GenerateBonjeanCurves_RectangularBarge_SectionalAreaMatchesExpected" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_DisplacementVolume_WithinTwoPercent" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="f0c50951-4f95-b503-fde1-f3be3bde32b6">
+      <Execution id="f679dcab-f64d-4986-87ea-9d181cc85ca2" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_DisplacementVolume_WithinTwoPercent" />
+    </UnitTest>
+    <UnitTest name="DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MaxGZ_InExpectedRange" storage="c:\abhi\projects\sri\navarch-studio\backend\dataservice.tests\bin\debug\net8.0\dataservice.tests.dll" id="cf9ef204-f4d6-5ba6-5717-05c0e7faa9e0">
+      <Execution id="4a628241-65a1-4bcc-b0a3-1d036706b381" />
+      <TestMethod codeBase="C:\Abhi\Projects\Sri\navarch-studio\backend\DataService.Tests\bin\Debug\net8.0\DataService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="DataService.Tests.Services.Hydrostatics.WigleyHullTests" name="WigleyHull_MaxGZ_InExpectedRange" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="d551aefe-9fab-f3ac-5634-0c7d055f9b8f" executionId="73fedc92-2689-4123-97d2-19c7e7b94cde" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fad00a4c-e9bf-9442-9315-4541e2d668bf" executionId="ddfb684f-1716-4249-8f62-89e73432a7b5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2b8bb774-0fa4-b2af-bef1-ef1e81a2a246" executionId="bcc7aa59-b510-4274-87bd-bc3e29d972c8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="acbbd162-e997-2331-d91a-78e5c1f5cc42" executionId="8543cc11-e82e-47dd-8d2b-da4cf82cfa85" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bc92204e-6826-ebce-26a5-b0dee2225858" executionId="7598cc0d-60a4-4a6e-9ffe-2e9dc6c7680d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="498c9abb-7ecb-db60-92cf-81d15ab87217" executionId="130ca923-ca7e-49f1-938d-3462d12e663c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f6c8de30-d300-6927-b37a-f42703d4733c" executionId="35532bd1-c71d-4122-a11e-7e6f4c8c94c5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c75a8ca8-7696-72b7-7925-885f99de0c43" executionId="d7590ded-e719-4ebb-af88-2a7904f3fc31" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8e535950-b7e8-9f9f-4c65-d4de7d21e5d4" executionId="b25401e1-8a39-472f-99d4-85fd79941686" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f0c50951-4f95-b503-fde1-f3be3bde32b6" executionId="f679dcab-f64d-4986-87ea-9d181cc85ca2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eb8d49cd-87b9-7c5b-3d18-18c7a2b6792b" executionId="3c29f064-c81c-42fd-94f0-96f4ed551ec4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1ea32669-5794-a7ea-db98-784f2350614a" executionId="7204a128-e1fd-4690-8612-03dec7a4bea2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="abcf848d-e156-4c52-ffd0-1434ee0737bb" executionId="c4893eaf-8d6e-4375-bce5-4c5a35d522c7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c316fd9-9fe0-f8a5-58db-4b120133b3e8" executionId="3faac023-84e3-40f8-be9a-30fa45f3b4b4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d28d5d94-de5d-e82e-e90a-5f5b4e3bf527" executionId="88d73ff0-13b1-4448-95bf-a10434bd028a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="174582d4-d844-1b53-10bc-f5d7e22ab959" executionId="7d37d2d6-82a9-4608-8ad8-f6542eadad31" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8a68b469-2195-897b-b947-cb153823320f" executionId="2cdc2131-5346-4b7d-9d89-15f749b45f7f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e0af5d8f-56f3-227b-27a4-5ab6126b82ae" executionId="c01c69ff-fb94-4ac8-8c14-3af160df8330" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1d569063-cf9b-8cfb-c593-a5f0a6b93c41" executionId="e20383c1-c0a4-4812-8c6c-a90e99f9352b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1bef85f3-9350-579f-f216-48fc4e7622ae" executionId="e640f6df-acee-4ee9-9a57-09a0122cd080" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="737c5885-39ff-634f-f206-b189a4f5352d" executionId="7b889562-2254-46f2-8331-aefbb2ce2dda" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9da0ef03-4f4e-52d0-1591-2d775898802e" executionId="123e129c-2a5a-46f1-a71e-f40f456db770" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8003bf6b-720b-758d-dc59-90b1136c0f29" executionId="fc1c1705-0747-43d6-ae58-957f94039990" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5ad0c0ef-ff57-04a6-8d13-968743f18c44" executionId="8b0297ea-d2b2-4cd6-8c5a-87df66b6f2bf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4b024fb7-423b-a0d3-2223-012add8d91ef" executionId="544896c9-f1f4-4e95-9bbc-9d25313d8b69" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7e049b42-7be5-2a4f-ba5c-8d0d7d161acc" executionId="22170cd5-6e68-4e59-b2cc-8d7295babb6b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c2455867-3d1b-f9dd-6978-a8378418c36d" executionId="9b8faa4d-0f6a-46e0-818a-9467341a277c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1e2d7cdf-7a26-8be6-d0a2-f0620daad12f" executionId="1e1a8a7f-6ac9-4333-9ca5-37fbd80c1968" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab6c453d-a758-ff89-88b1-f1c43e8e0c3a" executionId="fe81fc7f-5592-4a7c-a81d-2efbe7ba6ad4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b32ffdba-2152-0ac9-d373-13e59ff4f34b" executionId="d89000d8-e79e-46d2-a9a2-fa2f9c4731ee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46553b94-f74b-945c-0470-746f47320dae" executionId="d2fc2b21-5c1c-4302-a08e-cbac1cc66878" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5a2a2ab0-a437-4e3d-7add-377e4d105346" executionId="d5855ade-b946-4c74-a8d6-0bf1d55ea736" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c3347d7-2a68-1b01-8650-32995e470d00" executionId="a1a60fa6-1f4e-4acb-af23-79cc7ad72965" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="143525d7-7108-1ed7-749c-ddcfb2454c72" executionId="daea1d29-1566-460a-ae44-7d6b6b2ae4fd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="28e94633-823d-aa2b-11ba-bc0b5b432d7c" executionId="32e3011f-03ad-4b60-bcd3-f61c339d9b82" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ffd71666-93e0-ed60-0de1-41081157f850" executionId="2b271d2a-93eb-41a7-9bb0-8c606ee657b7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="11712265-3b97-39ca-f7e4-7d297f6988bf" executionId="c499c34c-f571-49e9-85ea-6a9da2a61c88" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b66485ed-fe54-ab98-94a9-7e411debca40" executionId="9d7e8214-d714-4454-81a1-b705ce404570" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7ccca8ac-976e-e2ca-7eb0-5c39fc586a47" executionId="6b8d3c2e-6938-4144-bbe0-f249d3c2bcb7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f5d6992-b467-55aa-00ea-8e19931806ce" executionId="f70245df-d6a2-4feb-9bc8-166d37a210ad" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="276d6a2a-6cc5-732e-5c5b-ec752f3ee4e1" executionId="9742d36d-3204-412f-8e7c-4db8b0fcd4d1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6cae673e-34e9-ae0b-ffc5-5cce5c8d862d" executionId="6473cfc7-c80f-4c17-b307-17eab0caf2a7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aa6c212c-9e96-bb3d-e075-7801d853502a" executionId="b1898b0d-4173-4a55-988f-bf06974c4a3a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6cbe6083-ff06-29d0-3c06-cb65638aa126" executionId="04d67767-94c9-4d0b-bed0-b47925b44cff" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="266db24b-ee8d-8985-eb71-db966ba58e46" executionId="eff24fd9-cd64-4744-a0fe-b0d266d289eb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a4c09dc1-2325-2a8d-c4ac-121801e4f856" executionId="08b7ec26-466d-4362-a1c3-b85827591a27" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cf9ef204-f4d6-5ba6-5717-05c0e7faa9e0" executionId="4a628241-65a1-4bcc-b0a3-1d036706b381" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e9ec8da7-928c-b705-29dc-c53708ab08bb" executionId="96b2af18-7ba7-42b0-a35b-4c2bbef4664c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9603c9ed-209a-46d0-4a42-d18f2fcc7f4f" executionId="e292997b-319a-4533-bc84-93c2aba6aa1c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="79fd7924-82ff-fb79-ddf2-fcefd14aa0b4" executionId="28154a19-a4b7-4b7c-b8b3-b37dbe3e6989" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0373cf85-e497-e83a-7045-d41310ec2c85" executionId="94ded1d2-29b7-4a82-9133-5d6c7460b5af" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2729f128-c54c-dba0-ba1b-ffb9e3eae1a8" executionId="2b4fe988-949f-4ede-9010-77768c1bd16c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57511cb4-90ea-56d5-14b5-70a4b821c47b" executionId="e044a9e6-6878-4d29-b94d-8cdf1e1a9877" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="18e41801-b2e2-bbea-3bd4-aa609056e734" executionId="27c90388-4acb-4d36-b1fd-6872575ca870" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b2179002-dd62-5508-bba7-21649c15eec7" executionId="dbd345a4-974c-4153-af46-4535fee3d0a5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4bffaee5-fd6a-6892-f9b4-5e01384ad09e" executionId="7bfeefba-c6a2-484a-8618-6d3c17e4333b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5ab8d534-58f4-717d-7f49-5fedb40d30b7" executionId="8fcb2d8c-7826-4aec-b62c-48df96747732" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="57" executed="46" passed="46" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 8.0.21)&#xD;
+[xUnit.net 00:00:00.25]   Discovering: DataService.Tests&#xD;
+[xUnit.net 00:00:00.27]   Discovered:  DataService.Tests&#xD;
+[xUnit.net 00:00:00.27]   Starting:    DataService.Tests&#xD;
+[xUnit.net 00:00:00.93]       TODO: Investigate waterplane calculation - returns 0.00 instead of expected values&#xD;
+[xUnit.net 00:00:00.93]       TODO: Investigate waterplane calculation - returns 0.00 instead of expected values&#xD;
+[xUnit.net 00:00:00.93]       TODO: Investigate waterplane calculation - returns 0.00 instead of expected values&#xD;
+[xUnit.net 00:00:00.93]       TODO: Investigate waterplane calculation - returns 0.00 instead of expected values&#xD;
+[xUnit.net 00:00:00.93]       TODO: GZ curve shape validation failing - needs stability calculator review&#xD;
+[xUnit.net 00:00:00.93]       TODO: GZ at 10° is negative instead of positive - stability calculator needs fix&#xD;
+[xUnit.net 00:00:00.93]       TODO: Max GZ angle returns 0° instead of 30-50° - needs investigation&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MetacentricRadius_WithinFivePercent' was skipped in the test run.&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_WaterplaneArea_WithinTwoPercent' was skipped in the test run.&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_FormCoefficients_WithinTwoPercent' was skipped in the test run.&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_CenterOfBuoyancy_WithinTwoPercent' was skipped in the test run.&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZCurve_HasCorrectShape' was skipped in the test run.&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZValues_InReasonableRange' was skipped in the test run.&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MaxGZ_InExpectedRange' was skipped in the test run.&#xD;
+[xUnit.net 00:00:00.93]       TODO: Max GZ angle detection needs fix - currently returns 90° instead of ~45°&#xD;
+     Warning:&#xD;
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and&#xD;
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for&#xD;
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.&#xD;
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.&#xD;
+     A paid commercial license supports the development and continued increasing support of&#xD;
+     Fluent Assertions users under both commercial and community licenses. Help us&#xD;
+     keep Fluent Assertions at the forefront of unit testing.&#xD;
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test3_BargeGZ_MaxGZAngle_Near45Degrees' was skipped in the test run.&#xD;
+[xUnit.net 00:00:00.99]       TODO: Area calculation needs calibration - currently 14% error, needs investigation&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test2_BargeGZ_AreaUnderCurve_MatchesAnalytical' was skipped in the test run.&#xD;
+[xUnit.net 00:00:01.00]       TODO: Wall-sided vs Full method showing 42,000% difference - full method needs debugging&#xD;
+[xUnit.net 00:00:01.01]       TODO: Wall-sided method needs calibration - currently 0.76% error, target is 0.5%&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.Test10_WallSidedVsFullMethod_AgreementAtSmallAngles' was skipped in the test run.&#xD;
+Test 'DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test1_BargeGZ_WallSidedMethod_MatchesAnalytical' was skipped in the test run.&#xD;
+[xUnit.net 00:00:02.37]   Finished:    DataService.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1861330-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MetacentricRadius_WithinFivePercent [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1862531-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_WaterplaneArea_WithinTwoPercent [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1862807-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_FormCoefficients_WithinTwoPercent [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1863031-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_CenterOfBuoyancy_WithinTwoPercent [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1863343-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZCurve_HasCorrectShape [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1863582-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_GZValues_InReasonableRange [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1863862-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.WigleyHullTests.WigleyHull_MaxGZ_InExpectedRange [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.1866204-05:00">
+        <Text>[xUnit.net 00:00:00.93]     DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test3_BargeGZ_MaxGZAngle_Near45Degrees [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.2453907-05:00">
+        <Text>[xUnit.net 00:00:00.99]     DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test2_BargeGZ_AreaUnderCurve_MatchesAnalytical [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.2586512-05:00">
+        <Text>[xUnit.net 00:00:01.00]     DataService.Tests.Services.Hydrostatics.StabilityIntegrationTests.Test10_WallSidedVsFullMethod_AgreementAtSmallAngles [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="HPOMNI_MJ" outcome="Warning" timestamp="2025-10-30T16:07:45.2647081-05:00">
+        <Text>[xUnit.net 00:00:01.01]     DataService.Tests.Services.Hydrostatics.BargeStabilityTests.Test1_BargeGZ_WallSidedMethod_MatchesAnalytical [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

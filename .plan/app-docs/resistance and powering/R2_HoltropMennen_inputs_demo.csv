@@ -1,0 +1,2 @@
+name,LWL_m,B_m,T_m,CB,CP,CM,LCB_pct,S_wetted_m2,A_transom_m2,appendage_factor,windage_area_m2,rho_kg_per_m3,nu_m2_per_s,g_m_per_s2,has_bulb,has_shaft_brackets,has_tunnels,unit_system
+demo_ship_A,120.0,20.0,8.0,0.65,0.68,0.96,-2.0,4230.0,20.0,1.05,600.0,1025.0,1.18e-06,9.81,True,True,False,SI

@@ -11,3 +11,4 @@ public class VesselTemplateDto
     public VesselDto Preset { get; set; } = new();
 }
 
+

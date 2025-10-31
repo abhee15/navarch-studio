@@ -132,6 +132,7 @@ public class VesselsController : ControllerBase
             var vesselDetails = new List<object>();
             foreach (var vessel in vessels)
             {
+                var isTemplate = vessel.UserId == Shared.Constants.TemplateVessels.SystemUserId;
                 vesselDetails.Add(new
                 {
                     vessel.Id,
@@ -140,6 +141,8 @@ public class VesselsController : ControllerBase
                     vessel.Lpp,
                     vessel.Beam,
                     vessel.DesignDraft,
+                    vessel.UserId,
+                    IsTemplate = isTemplate,
                     vessel.CreatedAt,
                     vessel.UpdatedAt
                 });

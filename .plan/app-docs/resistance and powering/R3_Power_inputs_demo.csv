@@ -1,0 +1,4 @@
+case,etaD,etaH,etaR,etaO,service_margin_pct
+etaD_only_default,0.65,,,,15
+decomposed_efficiencies,,0.98,1.02,0.65,15
+stress_test_high_margin,0.6,,,,30

@@ -9,3 +9,4 @@ public class MaterialsConfigDto
     public string? SuperstructureMaterial { get; set; }
 }
 
+

@@ -1,0 +1,8 @@
+V_value,V_unit,tag
+0.0,m/s,harbor
+2.57,m/s,low
+5.14,m/s,cruise-1
+7.72,m/s,design
+10.29,m/s,cruise-2
+12.86,m/s,trial
+14.99,m/s,max

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import toast from "react-hot-toast";
 import { settingsStore } from "../../../stores/SettingsStore";
 import type { VesselDetails, Loadcase, HydroResult } from "../../../types/hydrostatics";
 import type { PanelId, WorkspaceMode } from "../../../types/workspace";
@@ -440,8 +441,24 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
             onKgChange={setKg}
             onLcgChange={setLcg}
             onTcgChange={setTcg}
-            onEditGeometry={() => setShowGeometryEditor(true)}
-            onManageLoadcases={() => setShowLoadcasesDialog(true)}
+            onEditGeometry={() => {
+              if (vessel.isTemplate) {
+                toast.error(
+                  "Template vessels cannot be modified. Please create your own vessel to customize."
+                );
+                return;
+              }
+              setShowGeometryEditor(true);
+            }}
+            onManageLoadcases={() => {
+              if (vessel.isTemplate) {
+                toast.error(
+                  "Template vessels cannot be modified. Please create your own vessel to customize."
+                );
+                return;
+              }
+              setShowLoadcasesDialog(true);
+            }}
           />
         )}
       </div>
