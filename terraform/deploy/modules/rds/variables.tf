@@ -53,14 +53,3 @@ variable "publicly_accessible" {
   default     = false
 }
 
-variable "prevent_destroy" {
-  description = "Prevent accidental destruction of RDS instance (typically true for production)"
-  type        = bool
-  default     = false
-}
-
-
-
-
-
-

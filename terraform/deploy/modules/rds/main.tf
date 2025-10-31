@@ -1,8 +1,3 @@
-# Locals for lifecycle blocks (which cannot use variables directly)
-locals {
-  prevent_destroy = var.prevent_destroy
-}
-
 # Random password for RDS
 resource "random_password" "db_password" {
   length           = 32
@@ -88,9 +83,9 @@ resource "aws_db_instance" "main" {
 
   # Lifecycle management to prevent unnecessary recreation
   lifecycle {
-    # Prevent accidental destruction (set via local, which can be computed from variable)
-    # Lifecycle blocks cannot use variables directly, must use locals
-    prevent_destroy = local.prevent_destroy
+    # Note: prevent_destroy cannot use variables (Terraform limitation)
+    # Protection is provided by deletion_protection = var.environment == "prod" above
+    # which works with variables and prevents AWS-level deletion
 
     # Ignore password changes - password is managed via Secrets Manager rotation
     # Without this, Terraform would try to recreate RDS if password changes
