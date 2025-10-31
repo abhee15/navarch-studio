@@ -185,9 +185,7 @@ export const CrossCurvesPanel = observer(({ vesselId, vessel }: CrossCurvesPanel
       <div className="flex-shrink-0 mb-3 space-y-2">
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[10px] font-medium text-foreground block mb-1">
-              Loadcase
-            </label>
+            <label className="text-[10px] font-medium text-foreground block mb-1">Loadcase</label>
             <select
               value={selectedLoadcaseId}
               onChange={(e) => setSelectedLoadcaseId(e.target.value)}
