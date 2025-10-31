@@ -29,6 +29,7 @@ public class CatalogSeeder
         _logger.LogInformation("Starting catalog seed...");
 
         await SeedWaterPropertiesAsync(cancellationToken);
+        await SeedPropellerSeriesAsync(cancellationToken);
         await SeedTemplateHullsAsync(cancellationToken);
         await SeedBenchmarkParticularsAsync(cancellationToken);
 
@@ -111,6 +112,46 @@ public class CatalogSeeder
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Seeded {Count} water property anchor points", waterProps.Length);
+    }
+
+    /// <summary>
+    /// Seed placeholder propeller series data.
+    /// Real Wageningen B-series data will be imported later.
+    /// </summary>
+    private async Task SeedPropellerSeriesAsync(CancellationToken cancellationToken)
+    {
+        if (await _context.CatalogPropellerSeries.AnyAsync(cancellationToken))
+        {
+            _logger.LogInformation("Propeller series already seeded, skipping");
+            return;
+        }
+
+        var propellerSeries = new[]
+        {
+            new CatalogPropellerSeries
+            {
+                Name = "Wageningen B-Series (Placeholder)",
+                BladeCount = 4,
+                ExpandedAreaRatio = 0.55m,
+                PitchDiameterRatio = 1.0m,
+                SourceUrl = "https://www.example.com/wageningen-b-series",
+                License = "Open Data",
+                IsDemo = true,
+                CreatedAt = DateTime.UtcNow,
+                OpenWaterPoints = new List<CatalogPropellerPoint>
+                {
+                    new CatalogPropellerPoint { J = 0.1m, Kt = 0.4m, Kq = 0.05m, Eta0 = 0.6m },
+                    new CatalogPropellerPoint { J = 0.3m, Kt = 0.3m, Kq = 0.04m, Eta0 = 0.7m },
+                    new CatalogPropellerPoint { J = 0.5m, Kt = 0.2m, Kq = 0.03m, Eta0 = 0.65m },
+                    new CatalogPropellerPoint { J = 0.7m, Kt = 0.1m, Kq = 0.02m, Eta0 = 0.5m }
+                }
+            }
+        };
+
+        _context.CatalogPropellerSeries.AddRange(propellerSeries);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("Seeded {Count} propeller series (placeholder)", propellerSeries.Length);
     }
 
     /// <summary>
