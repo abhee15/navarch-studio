@@ -3,6 +3,7 @@ using DataService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
+using Shared.TestData;
 
 namespace DataService.Data.Seeds;
 
@@ -164,6 +165,67 @@ public class CatalogSeeder
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Seeded {Count} template hulls", templates.Length);
+
+        // Add geometry to Wigley hull
+        await SeedWigleyGeometryAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Seed Wigley hull geometry using analytical formula
+    /// </summary>
+    private async Task SeedWigleyGeometryAsync(CancellationToken cancellationToken)
+    {
+        var wigley = await _context.BenchmarkCases
+            .Include(c => c.Geometries)
+            .FirstOrDefaultAsync(c => c.Slug == "wigley-hull", cancellationToken);
+
+        if (wigley == null)
+        {
+            _logger.LogWarning("Wigley hull not found, skipping geometry seed");
+            return;
+        }
+
+        // Check if geometry already exists
+        if (wigley.Geometries.Any())
+        {
+            _logger.LogInformation("Wigley geometry already seeded, skipping");
+            return;
+        }
+
+        // Generate Wigley hull with standard dimensions: L=100m, B=10m, T=6.25m
+        var (stations, waterlines, offsets) = HullTestData.GenerateWigleyHull(
+            length: 100m,
+            beam: 10m,
+            designDraft: 6.25m,
+            numStations: 21,
+            numWaterlines: 13);
+
+        // Serialize to JSON
+        var stationsJson = JsonSerializer.Serialize(stations.Select(s => new { s.Index, s.X }));
+        var waterlinesJson = JsonSerializer.Serialize(waterlines.Select(w => new { w.Index, w.Z }));
+        var offsetsJson = JsonSerializer.Serialize(offsets.Select(o => new { o.StationIndex, o.WaterlineIndex, o.HalfBreadthY }));
+
+        var geometry = new BenchmarkGeometry
+        {
+            Id = Guid.NewGuid(),
+            CaseId = wigley.Id,
+            Type = "analytic",
+            SourceUrl = "Analytical formula",
+            StationsJson = stationsJson,
+            WaterlinesJson = waterlinesJson,
+            OffsetsJson = offsetsJson,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.BenchmarkGeometries.Add(geometry);
+
+        // Mark as complete
+        wigley.GeometryMissing = false;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("Seeded Wigley hull geometry: {Stations} stations, {Waterlines} waterlines, {Offsets} offsets",
+            stations.Count, waterlines.Count, offsets.Count);
     }
 
     /// <summary>
