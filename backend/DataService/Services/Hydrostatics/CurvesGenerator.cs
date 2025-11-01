@@ -268,30 +268,128 @@ public class CurvesGenerator : ICurvesGenerator
         int points = 100,
         CancellationToken cancellationToken = default)
     {
+        // Optimization: Compute all drafts once instead of once per curve type
+        // This reduces DB queries from N to 1 and computations from N*points to points
+        var drafts = GenerateDraftRange(minDraft, maxDraft, points);
+        var results = await _hydroCalculator.ComputeTableAsync(vesselId, loadcaseId, drafts, cancellationToken);
+
         var curves = new Dictionary<string, CurveDto>();
 
         foreach (var type in curveTypes)
         {
-            CurveDto? curve = type.ToLower() switch
+            var normalizedType = type.ToLower();
+            CurveDto? curve = normalizedType switch
             {
-                "displacement" => await GenerateDisplacementCurveAsync(vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken),
-                "kb" => await GenerateKBCurveAsync(vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken),
-                "lcb" => await GenerateLCBCurveAsync(vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken),
-                "gmt" => await GenerateGMtCurveAsync(vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken),
-                "awp" => await GenerateAwpCurveAsync(vesselId, loadcaseId, minDraft, maxDraft, points, cancellationToken),
+                "displacement" => ExtractDisplacementCurve(results),
+                "kb" => ExtractKBCurve(results),
+                "lcb" => ExtractLCBCurve(results),
+                "gmt" => ExtractGMtCurve(results, loadcaseId),
+                "awp" => ExtractAwpCurve(results),
                 _ => null
             };
 
             if (curve != null)
             {
-                curves[type] = curve;
+                curves[normalizedType] = curve;
             }
         }
 
-        _logger.LogInformation("Generated {Count} curves for vessel {VesselId}",
-            curves.Count, vesselId);
+        _logger.LogInformation("Generated {Count} curves for vessel {VesselId} from {Points} draft computations",
+            curves.Count, vesselId, points);
 
         return curves;
+    }
+
+    private static CurveDto ExtractDisplacementCurve(List<HydroResultDto> results)
+    {
+        var curvePoints = results.Select(r => new CurvePointDto
+        {
+            X = r.Draft,
+            Y = r.DispWeight ?? 0
+        }).ToList();
+
+        return new CurveDto
+        {
+            Type = "displacement",
+            XLabel = "Draft (m)",
+            YLabel = "Displacement (kg)",
+            Points = curvePoints
+        };
+    }
+
+    private static CurveDto ExtractKBCurve(List<HydroResultDto> results)
+    {
+        var curvePoints = results.Select(r => new CurvePointDto
+        {
+            X = r.Draft,
+            Y = r.KBz ?? 0
+        }).ToList();
+
+        return new CurveDto
+        {
+            Type = "kb",
+            XLabel = "Draft (m)",
+            YLabel = "KB (m)",
+            Points = curvePoints
+        };
+    }
+
+    private static CurveDto ExtractLCBCurve(List<HydroResultDto> results)
+    {
+        var curvePoints = results.Select(r => new CurvePointDto
+        {
+            X = r.Draft,
+            Y = r.LCBx ?? 0
+        }).ToList();
+
+        return new CurveDto
+        {
+            Type = "lcb",
+            XLabel = "Draft (m)",
+            YLabel = "LCB (m)",
+            Points = curvePoints
+        };
+    }
+
+    private static CurveDto ExtractGMtCurve(List<HydroResultDto> results, Guid? loadcaseId)
+    {
+        if (!loadcaseId.HasValue)
+        {
+            throw new ArgumentException("Loadcase ID is required to compute GM");
+        }
+
+        var curvePoints = results
+            .Where(r => r.GMt.HasValue)
+            .Select(r => new CurvePointDto
+            {
+                X = r.Draft,
+                Y = r.GMt!.Value
+            }).ToList();
+
+        return new CurveDto
+        {
+            Type = "gmt",
+            XLabel = "Draft (m)",
+            YLabel = "GMt (m)",
+            Points = curvePoints
+        };
+    }
+
+    private static CurveDto ExtractAwpCurve(List<HydroResultDto> results)
+    {
+        var curvePoints = results.Select(r => new CurvePointDto
+        {
+            X = r.Draft,
+            Y = r.Awp ?? 0
+        }).ToList();
+
+        return new CurveDto
+        {
+            Type = "awp",
+            XLabel = "Draft (m)",
+            YLabel = "Waterplane Area (m²)",
+            Points = curvePoints
+        };
     }
 
     private static List<decimal> GenerateDraftRange(decimal minDraft, decimal maxDraft, int points)
