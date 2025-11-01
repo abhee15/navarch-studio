@@ -6,7 +6,6 @@ import { getErrorMessage } from "../../types/errors";
 import { benchmarksApi } from "../../services/benchmarksApi";
 import type { BenchmarkCaseDetails, ValidateRequest, MetricResult } from "../../types/benchmarks";
 import { AppHeader } from "../../components/AppHeader";
-import { Footer } from "../../components/Footer";
 
 export const BenchmarkDetail = observer(function BenchmarkDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -82,7 +81,6 @@ export const BenchmarkDetail = observer(function BenchmarkDetail() {
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading benchmark...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -106,7 +104,6 @@ export const BenchmarkDetail = observer(function BenchmarkDetail() {
             <p className="text-red-800 dark:text-red-200">{error || "Benchmark not found"}</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -306,7 +303,6 @@ export const BenchmarkDetail = observer(function BenchmarkDetail() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 });

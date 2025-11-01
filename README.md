@@ -12,6 +12,11 @@ Architecture management platform built with React, .NET microservices, PostgreSQ
   - Email verification flow with code input screen
   - Auto-navigation after login/logout
 - **⚡ Microservices Backend**: .NET 8 with Identity, API Gateway, and Data services
+- **📚 Reference Catalog**: Hull forms, propeller data, and water properties from ITTC and SIMMAN
+  - Wigley analytical hull with complete geometry
+  - ITTC water properties with temperature interpolation
+  - Propeller open-water data (placeholder)
+  - Clone catalog hulls to your workspace
 - **🗄️ Database**: PostgreSQL 15 with EF Core migrations
 - **🔐 Authentication**: AWS Cognito with JWT tokens
 - **☁️ Cloud Infrastructure**: AWS (App Runner, RDS, S3, CloudFront)
@@ -66,10 +71,12 @@ See the detailed guides in `.plan/` directory:
 - [**Setup Guide**](docs/SETUP.md) - Prerequisites, installation, configuration
 - [**Development Guide**](docs/DEVELOPMENT.md) - Local development, testing, debugging
 - [**Deployment Guide**](docs/DEPLOYMENT.md) - AWS deployment, CI/CD, environments
+- [**Catalog Guide**](CATALOG_IMPLEMENTATION_SUMMARY.md) - Reference data catalog overview
 
 ### Architecture & Design
 
 - [**Architecture Overview**](docs/ARCHITECTURE.md) - System design, microservices, data flow
+- [**Catalog Sources**](temp/CATALOG_SOURCES.md) - Data attribution and licensing
 - [**Cost Optimization**](.plan/COST_OPTIMIZATION.md) - AWS cost breakdown and optimization strategies
 - [**IAM Setup Guide**](.plan/IAM_SETUP.md) - AWS permissions and security
 

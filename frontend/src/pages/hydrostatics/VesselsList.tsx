@@ -7,7 +7,6 @@ import { vesselsApi } from "../../services/hydrostaticsApi";
 import type { Vessel } from "../../types/hydrostatics";
 import { useStore } from "../../stores";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
-import { Footer } from "../../components/Footer";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
 import { settingsStore } from "../../stores/SettingsStore";
@@ -431,9 +430,6 @@ export const VesselsList = observer(function VesselsList() {
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      <Footer />
 
       {/* Settings Dialog */}
       <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />

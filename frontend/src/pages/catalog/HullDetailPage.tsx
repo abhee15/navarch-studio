@@ -6,7 +6,6 @@ import { useStore } from "../../stores";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
-import { Footer } from "../../components/Footer";
 import { AppHeader } from "../../components/AppHeader";
 import { getCatalogHull, cloneCatalogHull } from "../../services/catalogApi";
 import type { CatalogHull } from "../../types/catalog";
@@ -104,7 +103,6 @@ export const HullDetailPage: React.FC = observer(() => {
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-        <Footer />
       </div>
     );
   }
@@ -129,7 +127,6 @@ export const HullDetailPage: React.FC = observer(() => {
           <AlertCircle className="h-8 w-8 text-red-500 mr-2" />
           <span className="text-red-600">{error || "Hull not found"}</span>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -368,8 +365,6 @@ export const HullDetailPage: React.FC = observer(() => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 });

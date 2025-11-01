@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
-import { Footer } from "../../components/Footer";
 import { AppHeader } from "../../components/AppHeader";
 import { getCatalogHulls, getWaterProperties, getPropellerSeries } from "../../services/catalogApi";
 import type {
@@ -392,8 +391,6 @@ export const CatalogBrowser: React.FC = observer(() => {
           {activeTab === "water" && renderWaterTab()}
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 });

@@ -6,7 +6,6 @@ import { getErrorMessage } from "../../types/errors";
 import { benchmarksApi } from "../../services/benchmarksApi";
 import type { BenchmarkCase } from "../../types/benchmarks";
 import { AppHeader } from "../../components/AppHeader";
-import { Footer } from "../../components/Footer";
 
 export const BenchmarksList = observer(function BenchmarksList() {
   const navigate = useNavigate();
@@ -104,7 +103,6 @@ export const BenchmarksList = observer(function BenchmarksList() {
           </div>
         )}
       </main>
-      <Footer />
     </div>
   );
 });
