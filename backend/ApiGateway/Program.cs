@@ -199,10 +199,13 @@ try
     // Global Exception Handler (SECOND - catch exceptions and return consistent error responses)
     app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-    // Security Headers (THIRD - add security headers to all responses)
+    // CORS (THIRD - must be early to handle preflight requests properly)
+    app.UseCors("AllowFrontend");
+
+    // Security Headers (FOURTH - add security headers to all responses)
     app.UseMiddleware<SecurityHeadersMiddleware>();
 
-    // Rate Limiting (FOURTH - block abusive requests early)
+    // Rate Limiting (FIFTH - block abusive requests early)
     app.UseRateLimiter();
 
     // Add Serilog request logging
@@ -226,7 +229,6 @@ try
 
     // Don't use HTTPS redirection in production - App Runner handles HTTPS termination
     // app.UseHttpsRedirection();
-    app.UseCors("AllowFrontend");
 
     // JWT Authentication Middleware
     app.UseMiddleware<JwtAuthenticationMiddleware>();

@@ -89,7 +89,7 @@ try
             // Use a separate schema for IdentityService migrations history to avoid conflicts with DataService
             npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "identity");
         })
-        .UseSnakeCaseNamingConvention()
+        // NOTE: Not using snake_case convention - database uses PascalCase column names
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
         .EnableDetailedErrors(builder.Environment.IsDevelopment());
     });
