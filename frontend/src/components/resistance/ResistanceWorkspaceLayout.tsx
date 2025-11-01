@@ -11,9 +11,11 @@ import type {
   PowerCurveResult,
   KcsBenchmarkResult,
 } from "../../types/resistance";
-import { ResistanceCharts } from "./ResistanceCharts";
 import { ResistanceExportDialog } from "./ResistanceExportDialog";
-import { KcsBenchmarkPanel } from "./KcsBenchmarkPanel";
+import { useWorkspaceLayout } from "../../hooks/useWorkspaceLayout";
+import { ModeToggle } from "../hydrostatics/workspace/ModeToggle";
+import { EditModeLayout } from "./workspace/EditModeLayout";
+import { ViewModeLayout } from "./workspace/ViewModeLayout";
 
 interface ResistanceWorkspaceLayoutProps {
   vessel: VesselDetails;
@@ -23,6 +25,29 @@ interface ResistanceWorkspaceLayoutProps {
 
 export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspaceLayoutProps) {
   const vesselId = vessel.id;
+
+  // Layout management
+  const {
+    layout,
+    setMode,
+    updateGridLayout,
+    togglePanelCollapsed,
+    setPanelFullscreen,
+    resetLayout,
+    loadPreset,
+    getPresets,
+  } = useWorkspaceLayout(vesselId, "resistance");
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Data state
   const [speedGrids, setSpeedGrids] = useState<SpeedGrid[]>([]);
@@ -123,6 +148,9 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
       }
 
       toast.success("Calculation completed successfully");
+
+      // Auto-switch to view mode after successful calculation
+      setMode("view");
     } catch (err) {
       const errorMsg = getErrorMessage(err);
       setError(errorMsg);
@@ -144,6 +172,7 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
     etaR,
     etaO,
     useDecomposedEfficiency,
+    setMode,
   ]);
 
   // Recalculate power curves when service margin or efficiency changes (if HM result exists)
@@ -201,8 +230,43 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
             </span>
           </div>
 
+          {/* Center: Mode toggle (hide on mobile) */}
+          {!isMobile && (
+            <ModeToggle
+              mode={layout.mode}
+              onModeChange={setMode}
+              canSwitchToView={ittc57Result !== null || hmResult !== null}
+            />
+          )}
+
           {/* Right: Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Preset Layouts Dropdown (view mode only) */}
+            {layout.mode === "view" && !isMobile && (
+              <select
+                onChange={(e) => {
+                  if (e.target.value === "reset") {
+                    resetLayout();
+                  } else {
+                    loadPreset(e.target.value);
+                  }
+                  e.target.value = "";
+                }}
+                className="border border-border bg-background text-foreground rounded text-xs py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  Layout Presets
+                </option>
+                <option value="reset">Reset to Default</option>
+                {getPresets().map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
             <button
               onClick={() => setShowSpeedGridsDialog(true)}
               className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded hover:bg-accent/10"
@@ -289,410 +353,65 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Panel: Parameters */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Calculation Type */}
-              <div className="bg-card border border-border rounded-lg p-4">
-                <h2 className="text-sm font-semibold mb-3">Calculation Type</h2>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="calcType"
-                      value="ittc57"
-                      checked={calculationType === "ittc57"}
-                      onChange={() => setCalculationType("ittc57")}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">ITTC-57 Friction Only</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="calcType"
-                      value="holtrop-mennen"
-                      checked={calculationType === "holtrop-mennen"}
-                      onChange={() => setCalculationType("holtrop-mennen")}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Holtrop-Mennen (Full)</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Speed Grid Selection */}
-              <div className="bg-card border border-border rounded-lg p-4">
-                <h2 className="text-sm font-semibold mb-3">Speed Grid</h2>
-                <select
-                  value={selectedSpeedGridId}
-                  onChange={(e) => setSelectedSpeedGridId(e.target.value)}
-                  className="w-full rounded-md border-border bg-background text-sm"
-                >
-                  <option value="">Select a speed grid...</option>
-                  {speedGrids.map((grid) => (
-                    <option key={grid.id} value={grid.id}>
-                      {grid.name} ({grid.speedPoints.length} points)
-                    </option>
-                  ))}
-                </select>
-                {selectedGrid && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    <p>Points: {selectedGrid.speedPoints.length}</p>
-                    <p>
-                      Range:{" "}
-                      {selectedGrid.speedPoints.length > 0
-                        ? `${Math.min(...selectedGrid.speedPoints.map((p) => p.speed)).toFixed(2)} - ${Math.max(...selectedGrid.speedPoints.map((p) => p.speed)).toFixed(2)} m/s`
-                        : "N/A"}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Parameters */}
-              <div className="bg-card border border-border rounded-lg p-4">
-                <h2 className="text-sm font-semibold mb-3">Parameters</h2>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
-                      Form Factor (1+k)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formFactor ?? ""}
-                      onChange={(e) =>
-                        setFormFactor(e.target.value ? parseFloat(e.target.value) : undefined)
-                      }
-                      placeholder="Default: 0.20"
-                      className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
-                    />
-                  </div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={applyFormFactor}
-                      onChange={(e) => setApplyFormFactor(e.target.checked)}
-                      className="mr-2"
-                    />
-                    <span className="text-xs">Apply Form Factor</span>
-                  </label>
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
-                      Temperature (°C)
-                    </label>
-                    <input
-                      type="number"
-                      value={tempC}
-                      onChange={(e) => setTempC(parseInt(e.target.value) || 15)}
-                      className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
-                      Salinity (ppt)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={salinityPpt}
-                      onChange={(e) => setSalinityPpt(parseFloat(e.target.value) || 35.0)}
-                      className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* KCS Benchmark Panel */}
-              {calculationType === "holtrop-mennen" && (
-                <KcsBenchmarkPanel
-                  vesselId={vesselId}
-                  vesselLWL={vessel.lpp}
-                  vesselBeam={vessel.beam}
-                  vesselDraft={vessel.designDraft}
-                  onBenchmarkComplete={(result) => setKcsBenchmarkResult(result)}
-                />
-              )}
-
-              {/* Power Calculation Parameters (only show for Holtrop-Mennen) */}
-              {calculationType === "holtrop-mennen" && (
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <h2 className="text-sm font-semibold mb-3">Power Calculation</h2>
-                  <div className="space-y-3">
-                    {/* Service Margin Slider */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs text-muted-foreground">
-                          Service Margin
-                        </label>
-                        <span className="text-xs font-medium">{serviceMargin}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="30"
-                        step="0.5"
-                        value={serviceMargin}
-                        onChange={(e) => setServiceMargin(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                      />
-                      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                        <span>0%</span>
-                        <span>15%</span>
-                        <span>30%</span>
-                      </div>
-                    </div>
-
-                    {/* Efficiency Mode Toggle */}
-                    <div>
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={useDecomposedEfficiency}
-                          onChange={(e) => setUseDecomposedEfficiency(e.target.checked)}
-                          className="mr-2"
-                        />
-                        <span className="text-xs">Use Decomposed Efficiencies</span>
-                      </label>
-                    </div>
-
-                    {/* Efficiency Inputs */}
-                    {useDecomposedEfficiency ? (
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-xs text-muted-foreground mb-1">
-                            ηH (Hull Efficiency)
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0.9"
-                            max="1.05"
-                            value={etaH ?? ""}
-                            onChange={(e) =>
-                              setEtaH(e.target.value ? parseFloat(e.target.value) : undefined)
-                            }
-                            placeholder="0.98"
-                            className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-muted-foreground mb-1">
-                            ηR (Relative Rotative)
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0.95"
-                            max="1.05"
-                            value={etaR ?? ""}
-                            onChange={(e) =>
-                              setEtaR(e.target.value ? parseFloat(e.target.value) : undefined)
-                            }
-                            placeholder="1.02"
-                            className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-muted-foreground mb-1">
-                            ηO (Open Water)
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0.5"
-                            max="0.8"
-                            value={etaO ?? ""}
-                            onChange={(e) =>
-                              setEtaO(e.target.value ? parseFloat(e.target.value) : undefined)
-                            }
-                            placeholder="0.65"
-                            className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-xs text-muted-foreground mb-1">
-                          ηD (Overall Propulsive Efficiency)
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0.5"
-                          max="0.8"
-                          value={etaD ?? ""}
-                          onChange={(e) =>
-                            setEtaD(e.target.value ? parseFloat(e.target.value) : undefined)
-                          }
-                          className="w-full rounded-md border-border bg-background text-sm px-2 py-1"
-                        />
-                      </div>
-                    )}
-
-                    {/* Power Results Summary */}
-                    {powerResult && (
-                      <div className="mt-3 pt-3 border-t border-border text-xs">
-                        <p className="text-muted-foreground mb-1">Current Settings:</p>
-                        <p>
-                          ηD = {(powerResult.etaD ?? 0.65).toFixed(3)}, SM ={" "}
-                          {powerResult.serviceMargin.toFixed(1)}%
-                        </p>
-                        {powerResult.deliveredPower.length > 0 && (
-                          <p className="mt-1">
-                            Max DHP: {Math.max(...powerResult.deliveredPower).toFixed(0)} kW
-                            <br />
-                            Max P_inst: {Math.max(...powerResult.installedPower).toFixed(0)} kW
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Panel: Results */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* ITTC-57 Results */}
-              {ittc57Result && (
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <h2 className="text-sm font-semibold mb-3">ITTC-57 Friction Results</h2>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-xs">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="px-2 py-1 text-left">Speed (m/s)</th>
-                          <th className="px-2 py-1 text-right">Re</th>
-                          <th className="px-2 py-1 text-right">Fn</th>
-                          <th className="px-2 py-1 text-right">CF</th>
-                          <th className="px-2 py-1 text-right">CF_eff</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ittc57Result.speedGrid.map((speed, idx) => (
-                          <tr key={idx} className="border-t border-border">
-                            <td className="px-2 py-1">{speed.toFixed(3)}</td>
-                            <td className="px-2 py-1 text-right">
-                              {ittc57Result.reynoldsNumbers[idx]?.toExponential(2)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {ittc57Result.froudeNumbers[idx]?.toFixed(4)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {ittc57Result.frictionCoefficients[idx]?.toFixed(6)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {ittc57Result.effectiveFrictionCoefficients[idx]?.toFixed(6)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Holtrop-Mennen Results */}
-              {hmResult && (
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <h2 className="text-sm font-semibold mb-3">Holtrop-Mennen Resistance Results</h2>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-xs">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="px-2 py-1 text-left">Speed (m/s)</th>
-                          <th className="px-2 py-1 text-right">RT (N)</th>
-                          <th className="px-2 py-1 text-right">RF (N)</th>
-                          <th className="px-2 py-1 text-right">RR (N)</th>
-                          <th className="px-2 py-1 text-right">EHP (kW)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {hmResult.speedGrid.map((speed, idx) => (
-                          <tr key={idx} className="border-t border-border">
-                            <td className="px-2 py-1">{speed.toFixed(3)}</td>
-                            <td className="px-2 py-1 text-right">
-                              {hmResult.totalResistance[idx]?.toFixed(0)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {hmResult.frictionResistance[idx]?.toFixed(0)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {hmResult.residuaryResistance[idx]?.toFixed(0)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {hmResult.effectivePower[idx]?.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Power Results Table */}
-              {powerResult && (
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <h2 className="text-sm font-semibold mb-3">Power Curves</h2>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-xs">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="px-2 py-1 text-left">Speed (m/s)</th>
-                          <th className="px-2 py-1 text-right">EHP (kW)</th>
-                          <th className="px-2 py-1 text-right">DHP (kW)</th>
-                          <th className="px-2 py-1 text-right">P_inst (kW)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {powerResult.speedGrid.map((speed, idx) => (
-                          <tr key={idx} className="border-t border-border">
-                            <td className="px-2 py-1">{speed.toFixed(3)}</td>
-                            <td className="px-2 py-1 text-right">
-                              {powerResult.effectivePower[idx]?.toFixed(2)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {powerResult.deliveredPower[idx]?.toFixed(2)}
-                            </td>
-                            <td className="px-2 py-1 text-right">
-                              {powerResult.installedPower[idx]?.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {!ittc57Result && !hmResult && (
-                <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground">
-                  <p>Select parameters and click Calculate to see results</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Charts Section */}
-          {(ittc57Result || hmResult || kcsBenchmarkResult) && (
-            <div className="mt-6">
-              <ResistanceCharts
-                ittc57Result={ittc57Result}
-                hmResult={hmResult}
-                powerResult={powerResult}
-                kcsBenchmarkResult={kcsBenchmarkResult}
-              />
-            </div>
-          )}
-        </div>
+      {/* Main Content - Mode-based rendering */}
+      <div className="flex-1 overflow-hidden">
+        {layout.mode === "view" ? (
+          <ViewModeLayout
+            vessel={vessel}
+            calculationType={calculationType}
+            selectedSpeedGrid={selectedGrid}
+            formFactor={formFactor}
+            applyFormFactor={applyFormFactor}
+            tempC={tempC}
+            salinityPpt={salinityPpt}
+            serviceMargin={serviceMargin}
+            etaD={etaD}
+            ittc57Result={ittc57Result}
+            hmResult={hmResult}
+            powerResult={powerResult}
+            kcsBenchmarkResult={kcsBenchmarkResult}
+            gridLayouts={layout.gridLayouts}
+            panelStates={layout.panelStates}
+            onLayoutChange={updateGridLayout}
+            onTogglePanelCollapsed={togglePanelCollapsed}
+            onSetPanelFullscreen={setPanelFullscreen}
+            onSwitchToEditMode={() => setMode("edit")}
+          />
+        ) : (
+          <EditModeLayout
+            vessel={vessel}
+            speedGrids={speedGrids}
+            selectedSpeedGridId={selectedSpeedGridId}
+            calculationType={calculationType}
+            formFactor={formFactor}
+            applyFormFactor={applyFormFactor}
+            tempC={tempC}
+            salinityPpt={salinityPpt}
+            serviceMargin={serviceMargin}
+            etaD={etaD}
+            etaH={etaH}
+            etaR={etaR}
+            etaO={etaO}
+            useDecomposedEfficiency={useDecomposedEfficiency}
+            onCalculationTypeChange={setCalculationType}
+            onSpeedGridChange={setSelectedSpeedGridId}
+            onFormFactorChange={setFormFactor}
+            onApplyFormFactorChange={setApplyFormFactor}
+            onTempChange={setTempC}
+            onSalinityChange={setSalinityPpt}
+            onServiceMarginChange={setServiceMargin}
+            onEtaDChange={setEtaD}
+            onEtaHChange={setEtaH}
+            onEtaRChange={setEtaR}
+            onEtaOChange={setEtaO}
+            onUseDecomposedEfficiencyChange={setUseDecomposedEfficiency}
+            onManageSpeedGrids={() => setShowSpeedGridsDialog(true)}
+            onBenchmarkComplete={(result) => setKcsBenchmarkResult(result)}
+          />
+        )}
       </div>
 
-      {/* Speed Grids Dialog */}
+      {/* Dialogs */}
       <ManageSpeedGridsDialog
         vesselId={vesselId}
         isOpen={showSpeedGridsDialog}

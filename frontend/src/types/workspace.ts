@@ -11,6 +11,7 @@ export type WorkspaceMode = "view" | "edit";
  * Panel identifier - unique key for each panel type
  */
 export type PanelId =
+  // Hydrostatics panels
   | "kpis"
   | "curves"
   | "hull"
@@ -18,7 +19,17 @@ export type PanelId =
   | "geometry"
   | "parameters"
   | "status"
-  | "vessel3d";
+  | "vessel3d"
+  // Resistance panels
+  | "resistance-calc-type"
+  | "resistance-speed-grid"
+  | "resistance-parameters"
+  | "resistance-power-params"
+  | "resistance-kcs-benchmark"
+  | "resistance-ittc-results"
+  | "resistance-hm-results"
+  | "resistance-power-results"
+  | "resistance-charts";
 
 /**
  * Panel state - tracks individual panel visibility and behavior
@@ -60,7 +71,7 @@ export interface WorkspaceLayout {
     md: GridLayout[];
     sm: GridLayout[];
   };
-  panelStates: Record<PanelId, PanelState>;
+  panelStates: Partial<Record<PanelId, PanelState>>;
   lastModified: string;
 }
 
@@ -110,9 +121,9 @@ export const DEFAULT_GRID_LAYOUTS: { lg: GridLayout[]; md: GridLayout[]; sm: Gri
 };
 
 /**
- * Panel definitions with metadata
+ * Panel definitions with metadata (Hydrostatics panels)
  */
-export const PANEL_DEFINITIONS: Record<PanelId, PanelDefinition> = {
+export const PANEL_DEFINITIONS: Partial<Record<PanelId, PanelDefinition>> = {
   kpis: {
     id: "kpis",
     title: "Key Performance Indicators",
@@ -180,9 +191,9 @@ export const PANEL_DEFINITIONS: Record<PanelId, PanelDefinition> = {
 };
 
 /**
- * Default panel states - all visible and expanded initially
+ * Default panel states - all visible and expanded initially (Hydrostatics panels)
  */
-export const DEFAULT_PANEL_STATES: Record<PanelId, PanelState> = {
+export const DEFAULT_PANEL_STATES: Partial<Record<PanelId, PanelState>> = {
   kpis: { id: "kpis", collapsed: false, hidden: false, fullscreen: false },
   curves: { id: "curves", collapsed: false, hidden: false, fullscreen: false },
   hull: { id: "hull", collapsed: false, hidden: false, fullscreen: false },
@@ -278,6 +289,309 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
         geometry: { id: "geometry", collapsed: false, hidden: false, fullscreen: false },
         parameters: { id: "parameters", collapsed: false, hidden: false, fullscreen: false },
         status: { id: "status", collapsed: false, hidden: false, fullscreen: false },
+      },
+      lastModified: new Date().toISOString(),
+    },
+  },
+];
+
+// ============================================================================
+// RESISTANCE WORKSPACE CONFIGURATION
+// ============================================================================
+
+/**
+ * Resistance panel definitions with metadata
+ */
+export const RESISTANCE_PANEL_DEFINITIONS: Partial<Record<PanelId, PanelDefinition>> = {
+  "resistance-calc-type": {
+    id: "resistance-calc-type",
+    title: "Calculation Type",
+    description: "Select ITTC-57 or Holtrop-Mennen method",
+    icon: "calculator",
+    defaultSize: { w: 4, h: 2, minW: 3, minH: 2 },
+    availableInMobile: true,
+  },
+  "resistance-speed-grid": {
+    id: "resistance-speed-grid",
+    title: "Speed Grid",
+    description: "Select speed points for computation",
+    icon: "speed",
+    defaultSize: { w: 4, h: 3, minW: 3, minH: 2 },
+    availableInMobile: true,
+  },
+  "resistance-parameters": {
+    id: "resistance-parameters",
+    title: "Resistance Parameters",
+    description: "Form factor, temperature, salinity",
+    icon: "settings",
+    defaultSize: { w: 4, h: 4, minW: 3, minH: 3 },
+    availableInMobile: true,
+  },
+  "resistance-power-params": {
+    id: "resistance-power-params",
+    title: "Power Parameters",
+    description: "Efficiency and service margin settings",
+    icon: "zap",
+    defaultSize: { w: 4, h: 5, minW: 3, minH: 4 },
+    availableInMobile: true,
+  },
+  "resistance-kcs-benchmark": {
+    id: "resistance-kcs-benchmark",
+    title: "KCS Benchmark",
+    description: "Compare with KCS hull validation data",
+    icon: "target",
+    defaultSize: { w: 4, h: 4, minW: 3, minH: 3 },
+    availableInMobile: false,
+  },
+  "resistance-ittc-results": {
+    id: "resistance-ittc-results",
+    title: "ITTC-57 Results",
+    description: "Friction coefficient results",
+    icon: "table",
+    defaultSize: { w: 8, h: 6, minW: 6, minH: 4 },
+    availableInMobile: true,
+  },
+  "resistance-hm-results": {
+    id: "resistance-hm-results",
+    title: "Holtrop-Mennen Results",
+    description: "Total resistance breakdown",
+    icon: "table",
+    defaultSize: { w: 8, h: 6, minW: 6, minH: 4 },
+    availableInMobile: true,
+  },
+  "resistance-power-results": {
+    id: "resistance-power-results",
+    title: "Power Curves",
+    description: "EHP, DHP, and installed power",
+    icon: "table",
+    defaultSize: { w: 8, h: 6, minW: 6, minH: 4 },
+    availableInMobile: true,
+  },
+  "resistance-charts": {
+    id: "resistance-charts",
+    title: "Charts",
+    description: "Resistance and power visualization",
+    icon: "chart",
+    defaultSize: { w: 12, h: 8, minW: 8, minH: 6 },
+    availableInMobile: true,
+  },
+};
+
+/**
+ * Default grid layout positions for resistance panels
+ */
+export const RESISTANCE_DEFAULT_GRID_LAYOUTS: {
+  lg: GridLayout[];
+  md: GridLayout[];
+  sm: GridLayout[];
+} = {
+  lg: [
+    // Left column: Input panels (33% width = 4 columns)
+    { i: "resistance-calc-type", x: 0, y: 0, w: 4, h: 2, minW: 3, minH: 2 },
+    { i: "resistance-speed-grid", x: 0, y: 2, w: 4, h: 3, minW: 3, minH: 2 },
+    { i: "resistance-parameters", x: 0, y: 5, w: 4, h: 4, minW: 3, minH: 3 },
+    { i: "resistance-power-params", x: 0, y: 9, w: 4, h: 5, minW: 3, minH: 4 },
+    { i: "resistance-kcs-benchmark", x: 0, y: 14, w: 4, h: 4, minW: 3, minH: 3 },
+    // Right column: Results panels (67% width = 8 columns)
+    { i: "resistance-ittc-results", x: 4, y: 0, w: 8, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-hm-results", x: 4, y: 6, w: 8, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-power-results", x: 4, y: 12, w: 8, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-charts", x: 4, y: 18, w: 8, h: 8, minW: 8, minH: 6 },
+  ],
+  md: [
+    // Tablet: 3 columns for params, 7 for results
+    { i: "resistance-calc-type", x: 0, y: 0, w: 3, h: 2, minW: 3, minH: 2 },
+    { i: "resistance-speed-grid", x: 0, y: 2, w: 3, h: 3, minW: 3, minH: 2 },
+    { i: "resistance-parameters", x: 0, y: 5, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "resistance-power-params", x: 0, y: 9, w: 3, h: 5, minW: 3, minH: 4 },
+    { i: "resistance-kcs-benchmark", x: 0, y: 14, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "resistance-ittc-results", x: 3, y: 0, w: 7, h: 6, minW: 5, minH: 4 },
+    { i: "resistance-hm-results", x: 3, y: 6, w: 7, h: 6, minW: 5, minH: 4 },
+    { i: "resistance-power-results", x: 3, y: 12, w: 7, h: 6, minW: 5, minH: 4 },
+    { i: "resistance-charts", x: 0, y: 18, w: 10, h: 8, minW: 8, minH: 6 },
+  ],
+  sm: [
+    // Mobile: stack all panels vertically
+    { i: "resistance-calc-type", x: 0, y: 0, w: 6, h: 2, minW: 6, minH: 2 },
+    { i: "resistance-speed-grid", x: 0, y: 2, w: 6, h: 3, minW: 6, minH: 2 },
+    { i: "resistance-parameters", x: 0, y: 5, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "resistance-power-params", x: 0, y: 9, w: 6, h: 5, minW: 6, minH: 4 },
+    { i: "resistance-kcs-benchmark", x: 0, y: 14, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "resistance-ittc-results", x: 0, y: 18, w: 6, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-hm-results", x: 0, y: 24, w: 6, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-power-results", x: 0, y: 30, w: 6, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-charts", x: 0, y: 36, w: 6, h: 8, minW: 6, minH: 6 },
+  ],
+};
+
+/**
+ * Default panel states for resistance workspace
+ */
+export const RESISTANCE_DEFAULT_PANEL_STATES: Partial<Record<PanelId, PanelState>> = {
+  // Input panels - visible in edit mode
+  "resistance-calc-type": {
+    id: "resistance-calc-type",
+    collapsed: false,
+    hidden: false,
+    fullscreen: false,
+  },
+  "resistance-speed-grid": {
+    id: "resistance-speed-grid",
+    collapsed: false,
+    hidden: false,
+    fullscreen: false,
+  },
+  "resistance-parameters": {
+    id: "resistance-parameters",
+    collapsed: false,
+    hidden: false,
+    fullscreen: false,
+  },
+  "resistance-power-params": {
+    id: "resistance-power-params",
+    collapsed: false,
+    hidden: false,
+    fullscreen: false,
+  },
+  "resistance-kcs-benchmark": {
+    id: "resistance-kcs-benchmark",
+    collapsed: false,
+    hidden: false,
+    fullscreen: false,
+  },
+  // Results panels - initially hidden (no results yet)
+  "resistance-ittc-results": {
+    id: "resistance-ittc-results",
+    collapsed: false,
+    hidden: true,
+    fullscreen: false,
+  },
+  "resistance-hm-results": {
+    id: "resistance-hm-results",
+    collapsed: false,
+    hidden: true,
+    fullscreen: false,
+  },
+  "resistance-power-results": {
+    id: "resistance-power-results",
+    collapsed: false,
+    hidden: true,
+    fullscreen: false,
+  },
+  "resistance-charts": {
+    id: "resistance-charts",
+    collapsed: false,
+    hidden: true,
+    fullscreen: false,
+  },
+};
+
+/**
+ * Preset layouts for resistance workspace
+ */
+export const RESISTANCE_LAYOUT_PRESETS: LayoutPreset[] = [
+  {
+    id: "default",
+    name: "Default Split",
+    description: "Parameters on left (33%), Results on right (67%)",
+    layout: {
+      mode: "edit",
+      gridLayouts: RESISTANCE_DEFAULT_GRID_LAYOUTS,
+      panelStates: RESISTANCE_DEFAULT_PANEL_STATES as Record<PanelId, PanelState>,
+      lastModified: new Date().toISOString(),
+    },
+  },
+  {
+    id: "parameters-focus",
+    name: "Parameters Focus",
+    description: "Wider left panel for detailed parameter tuning",
+    layout: {
+      mode: "edit",
+      gridLayouts: {
+        lg: [
+          { i: "resistance-calc-type", x: 0, y: 0, w: 6, h: 2, minW: 3, minH: 2 },
+          { i: "resistance-speed-grid", x: 0, y: 2, w: 6, h: 3, minW: 3, minH: 2 },
+          { i: "resistance-parameters", x: 0, y: 5, w: 6, h: 4, minW: 3, minH: 3 },
+          { i: "resistance-power-params", x: 0, y: 9, w: 6, h: 6, minW: 3, minH: 4 },
+          { i: "resistance-kcs-benchmark", x: 0, y: 15, w: 6, h: 4, minW: 3, minH: 3 },
+          { i: "resistance-ittc-results", x: 6, y: 0, w: 6, h: 8, minW: 4, minH: 4 },
+          { i: "resistance-hm-results", x: 6, y: 8, w: 6, h: 8, minW: 4, minH: 4 },
+          { i: "resistance-power-results", x: 6, y: 16, w: 6, h: 6, minW: 4, minH: 4 },
+          { i: "resistance-charts", x: 0, y: 22, w: 12, h: 8, minW: 8, minH: 6 },
+        ],
+        md: RESISTANCE_DEFAULT_GRID_LAYOUTS.md,
+        sm: RESISTANCE_DEFAULT_GRID_LAYOUTS.sm,
+      },
+      panelStates: RESISTANCE_DEFAULT_PANEL_STATES as Record<PanelId, PanelState>,
+      lastModified: new Date().toISOString(),
+    },
+  },
+  {
+    id: "results-focus",
+    name: "Results Focus",
+    description: "Maximize space for tables and charts",
+    layout: {
+      mode: "view",
+      gridLayouts: {
+        lg: [
+          { i: "resistance-calc-type", x: 0, y: 0, w: 3, h: 2, minW: 3, minH: 2 },
+          { i: "resistance-speed-grid", x: 0, y: 2, w: 3, h: 3, minW: 3, minH: 2 },
+          { i: "resistance-parameters", x: 0, y: 5, w: 3, h: 4, minW: 3, minH: 3 },
+          { i: "resistance-hm-results", x: 3, y: 0, w: 9, h: 6, minW: 6, minH: 4 },
+          { i: "resistance-power-results", x: 3, y: 6, w: 9, h: 6, minW: 6, minH: 4 },
+          { i: "resistance-charts", x: 0, y: 12, w: 12, h: 10, minW: 8, minH: 6 },
+        ],
+        md: RESISTANCE_DEFAULT_GRID_LAYOUTS.md,
+        sm: RESISTANCE_DEFAULT_GRID_LAYOUTS.sm,
+      },
+      panelStates: {
+        ...(RESISTANCE_DEFAULT_PANEL_STATES as Record<PanelId, PanelState>),
+        "resistance-power-params": {
+          ...RESISTANCE_DEFAULT_PANEL_STATES["resistance-power-params"],
+          hidden: true,
+        } as PanelState,
+        "resistance-kcs-benchmark": {
+          ...RESISTANCE_DEFAULT_PANEL_STATES["resistance-kcs-benchmark"],
+          hidden: true,
+        } as PanelState,
+      },
+      lastModified: new Date().toISOString(),
+    },
+  },
+  {
+    id: "charts-focus",
+    name: "Charts Focus",
+    description: "Large chart area with compact results tables",
+    layout: {
+      mode: "view",
+      gridLayouts: {
+        lg: [
+          { i: "resistance-parameters", x: 0, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
+          { i: "resistance-charts", x: 3, y: 0, w: 9, h: 12, minW: 8, minH: 8 },
+          { i: "resistance-hm-results", x: 0, y: 12, w: 6, h: 6, minW: 6, minH: 4 },
+          { i: "resistance-power-results", x: 6, y: 12, w: 6, h: 6, minW: 6, minH: 4 },
+        ],
+        md: RESISTANCE_DEFAULT_GRID_LAYOUTS.md,
+        sm: RESISTANCE_DEFAULT_GRID_LAYOUTS.sm,
+      },
+      panelStates: {
+        ...(RESISTANCE_DEFAULT_PANEL_STATES as Record<PanelId, PanelState>),
+        "resistance-calc-type": {
+          ...RESISTANCE_DEFAULT_PANEL_STATES["resistance-calc-type"],
+          hidden: true,
+        } as PanelState,
+        "resistance-speed-grid": {
+          ...RESISTANCE_DEFAULT_PANEL_STATES["resistance-speed-grid"],
+          hidden: true,
+        } as PanelState,
+        "resistance-power-params": {
+          ...RESISTANCE_DEFAULT_PANEL_STATES["resistance-power-params"],
+          hidden: true,
+        } as PanelState,
+        "resistance-kcs-benchmark": {
+          ...RESISTANCE_DEFAULT_PANEL_STATES["resistance-kcs-benchmark"],
+          hidden: true,
+        } as PanelState,
       },
       lastModified: new Date().toISOString(),
     },

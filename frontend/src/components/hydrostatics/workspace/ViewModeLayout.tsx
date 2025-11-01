@@ -38,7 +38,9 @@ interface ViewModeLayoutProps {
     md: GridLayout[];
     sm: GridLayout[];
   };
-  panelStates: Record<PanelId, { collapsed: boolean; hidden: boolean; fullscreen: boolean }>;
+  panelStates: Partial<
+    Record<PanelId, { collapsed: boolean; hidden: boolean; fullscreen: boolean }>
+  >;
   onLayoutChange: (breakpoint: "lg" | "md" | "sm", layout: GridLayout[]) => void;
   onTogglePanelCollapsed: (panelId: PanelId) => void;
   onSetPanelFullscreen: (panelId: PanelId, fullscreen: boolean) => void;
@@ -304,7 +306,7 @@ export function ViewModeLayout({
 
   // Get panel title
   const getPanelTitle = (panelId: PanelId): string => {
-    const titles: Record<PanelId, string> = {
+    const titles: Partial<Record<PanelId, string>> = {
       kpis: "Key Performance Indicators",
       curves: "Hydrostatic Curves",
       hull: "Hull Diagram",
@@ -314,7 +316,7 @@ export function ViewModeLayout({
       status: "Computation Status",
       vessel3d: "3D Vessel Visualization",
     };
-    return titles[panelId];
+    return titles[panelId] || "Panel";
   };
 
   return (
@@ -335,6 +337,8 @@ export function ViewModeLayout({
       >
         {visiblePanels.map((panelId) => {
           const state = panelStates[panelId];
+          if (!state) return null; // Skip panels without state
+
           return (
             <div key={panelId}>
               <PanelWrapper
