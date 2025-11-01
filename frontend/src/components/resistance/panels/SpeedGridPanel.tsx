@@ -1,4 +1,5 @@
 import type { SpeedGrid } from "../../../types/resistance";
+import { Select } from "../../ui/select";
 
 interface SpeedGridPanelProps {
   speedGrids: SpeedGrid[];
@@ -18,21 +19,23 @@ export function SpeedGridPanel({
 }: SpeedGridPanelProps) {
   const selectedGrid = speedGrids.find((g) => g.id === selectedSpeedGridId);
 
+  const options = [
+    { value: "", label: "Select a speed grid..." },
+    ...speedGrids.map((grid) => ({
+      value: grid.id,
+      label: `${grid.name} (${grid.speedPoints.length} points)`,
+    })),
+  ];
+
   return (
     <div className="space-y-2">
-      <select
+      <Select
         value={selectedSpeedGridId}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
+        options={options}
         disabled={disabled}
-        className="w-full rounded-md border-border bg-background text-sm px-2 py-1.5 disabled:opacity-50"
-      >
-        <option value="">Select a speed grid...</option>
-        {speedGrids.map((grid) => (
-          <option key={grid.id} value={grid.id}>
-            {grid.name} ({grid.speedPoints.length} points)
-          </option>
-        ))}
-      </select>
+        className="w-full text-sm"
+      />
       {selectedGrid && (
         <div className="mt-2 text-xs text-muted-foreground space-y-1">
           <p>

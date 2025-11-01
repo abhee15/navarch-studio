@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { settingsStore, type UnitSystem } from "../stores/SettingsStore";
 import { getErrorMessage } from "../types/errors";
+import { Select } from "./ui/select";
 
 interface UserSettingsDialogProps {
   isOpen: boolean;
@@ -86,16 +87,17 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
                     Choose how you want to view measurements throughout the application. Vessels
                     will display in your preferred units regardless of their native unit system.
                   </p>
-                  <select
+                  <Select
                     id="preferredUnits"
                     name="preferredUnits"
                     value={preferredUnits}
-                    onChange={(e) => setPreferredUnits(e.target.value as UnitSystem)}
-                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value="SI">SI (Metric) - meters, kg, m², m³</option>
-                    <option value="Imperial">Imperial - feet, lb, ft², ft³</option>
-                  </select>
+                    onChange={(value) => setPreferredUnits(value as UnitSystem)}
+                    options={[
+                      { value: "SI", label: "SI (Metric) - meters, kg, m², m³" },
+                      { value: "Imperial", label: "Imperial - feet, lb, ft², ft³" },
+                    ]}
+                    className="mt-1 w-full"
+                  />
                 </div>
 
                 {/* Preview */}

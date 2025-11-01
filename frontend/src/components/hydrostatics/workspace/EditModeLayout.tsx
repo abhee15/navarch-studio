@@ -3,6 +3,7 @@ import type { VesselDetails, Loadcase } from "../../../types/hydrostatics";
 import { CollapsibleSection } from "../CollapsibleSection";
 import { settingsStore } from "../../../stores/SettingsStore";
 import { getUnitSymbol } from "../../../utils/unitSymbols";
+import { Select } from "../../ui/select";
 
 interface EditModeLayoutProps {
   vessel: VesselDetails | null;
@@ -165,18 +166,15 @@ export const EditModeLayout = observer(
           {/* Loadcases */}
           <CollapsibleSection title="Loadcase" defaultExpanded={true}>
             <div className="space-y-2 min-w-0">
-              <select
+              <Select
                 value={selectedLoadcaseId}
-                onChange={(e) => onLoadcaseChange(e.target.value)}
-                className="w-full border border-border bg-background text-foreground rounded text-xs py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Design Waterline</option>
-                {loadcases.map((lc) => (
-                  <option key={lc.id} value={lc.id}>
-                    {lc.name}
-                  </option>
-                ))}
-              </select>
+                onChange={onLoadcaseChange}
+                options={[
+                  { value: "", label: "Design Waterline" },
+                  ...loadcases.map((lc) => ({ value: lc.id, label: lc.name })),
+                ]}
+                className="w-full text-xs"
+              />
               <button
                 onClick={onManageLoadcases}
                 className="w-full inline-flex items-center justify-center px-3 py-1.5 border border-border text-xs font-medium rounded text-foreground bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
@@ -227,34 +225,24 @@ export const EditModeLayout = observer(
                 <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   Integration
                 </label>
-                <select
+                <Select
                   value={integrationRule}
-                  onChange={(e) => onIntegrationRuleChange(e.target.value)}
-                  className="w-full border border-border bg-background text-foreground rounded text-xs py-0.5 px-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {integrationRules.map((rule) => (
-                    <option key={rule} value={rule}>
-                      {rule}
-                    </option>
-                  ))}
-                </select>
+                  onChange={onIntegrationRuleChange}
+                  options={integrationRules.map((rule) => ({ value: rule, label: rule }))}
+                  className="w-full text-xs"
+                />
               </div>
 
               <div className="min-w-0">
                 <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   Smoothing
                 </label>
-                <select
+                <Select
                   value={smoothing}
-                  onChange={(e) => onSmoothingChange(e.target.value)}
-                  className="w-full border border-border bg-background text-foreground rounded text-xs py-0.5 px-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {smoothingOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                  onChange={onSmoothingChange}
+                  options={smoothingOptions.map((opt) => ({ value: opt, label: opt }))}
+                  className="w-full text-xs"
+                />
               </div>
             </div>
           </CollapsibleSection>
@@ -310,17 +298,12 @@ export const EditModeLayout = observer(
                 <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
                   Water Type
                 </label>
-                <select
+                <Select
                   value={waterType}
-                  onChange={(e) => onWaterTypeChange(e.target.value)}
-                  className="w-full border border-border bg-background text-foreground rounded text-xs py-0.5 px-1.5 focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {waterTypes.map((wt) => (
-                    <option key={wt.label} value={wt.label}>
-                      {wt.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={onWaterTypeChange}
+                  options={waterTypes.map((wt) => ({ value: wt.label, label: wt.label }))}
+                  className="w-full text-xs"
+                />
               </div>
               <div className="text-[11px]">
                 <span className="text-muted-foreground">Density:</span>

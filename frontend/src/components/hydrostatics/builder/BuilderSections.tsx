@@ -1,4 +1,5 @@
 import type { CreateVesselDto } from "../../../types/hydrostatics";
+import { Select } from "../../ui/select";
 
 interface BuilderSectionsProps {
   formData: CreateVesselDto;
@@ -31,45 +32,35 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-muted-foreground">Type</label>
-            <select
+            <Select
               value={formData.metadata?.vesselType || "Boat"}
-              onChange={(e) =>
+              onChange={(value) =>
                 onChange({
                   metadata: {
                     ...formData.metadata,
-                    vesselType: e.target.value as "Boat" | "Yacht" | "Ship",
+                    vesselType: value as "Boat" | "Yacht" | "Ship",
                   },
                 })
               }
-              className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2"
-            >
-              {VESSEL_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
+              options={VESSEL_TYPES.map((type) => ({ value: type, label: type }))}
+              className="mt-1 w-full"
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-muted-foreground">Size</label>
-            <select
+            <Select
               value={formData.metadata?.size || "Small"}
-              onChange={(e) =>
+              onChange={(value) =>
                 onChange({
                   metadata: {
                     ...formData.metadata,
-                    size: e.target.value as "Small" | "Medium" | "Large",
+                    size: value as "Small" | "Medium" | "Large",
                   },
                 })
               }
-              className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2"
-            >
-              {SIZES.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
+              options={SIZES.map((size) => ({ value: size, label: size }))}
+              className="mt-1 w-full"
+            />
           </div>
         </div>
 
@@ -146,28 +137,19 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               <div className="space-y-2">
                 <div>
                   <label className="block text-[11px] text-muted-foreground">Hull Family</label>
-                  <select
+                  <Select
                     value={formData.metadata?.hullFamily || "Wigley"}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       onChange({
                         metadata: {
                           ...formData.metadata,
-                          hullFamily: e.target.value as
-                            | "Wigley"
-                            | "Series 60"
-                            | "NPL"
-                            | "Prismatic",
+                          hullFamily: value as "Wigley" | "Series 60" | "NPL" | "Prismatic",
                         },
                       })
                     }
-                    className="mt-1 w-full rounded-lg border border-input bg-background px-2 py-1.5"
-                  >
-                    {HULL_FAMILIES.map((family) => (
-                      <option key={family} value={family}>
-                        {family}
-                      </option>
-                    ))}
-                  </select>
+                    options={HULL_FAMILIES.map((family) => ({ value: family, label: family }))}
+                    className="mt-1 w-full text-xs"
+                  />
                 </div>
                 <div>
                   <label className="block text-[11px] text-muted-foreground">
@@ -228,13 +210,13 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-[11px] text-muted-foreground">Hull</label>
-                  <select
+                  <Select
                     value={formData.materials?.hullMaterial || ""}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       onChange({
                         materials: {
                           ...formData.materials,
-                          hullMaterial: (e.target.value || undefined) as
+                          hullMaterial: (value || undefined) as
                             | "Steel"
                             | "Aluminium"
                             | "FRP"
@@ -243,25 +225,22 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                         },
                       })
                     }
-                    className="w-full rounded-lg border border-input bg-background px-2 py-1.5"
-                  >
-                    <option value="">Select...</option>
-                    {HULL_MATERIALS.map((material) => (
-                      <option key={material} value={material}>
-                        {material}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "Select..." },
+                      ...HULL_MATERIALS.map((material) => ({ value: material, label: material })),
+                    ]}
+                    className="w-full text-xs"
+                  />
                 </div>
                 <div>
                   <label className="block text-[11px] text-muted-foreground">Superstructure</label>
-                  <select
+                  <Select
                     value={formData.materials?.superstructureMaterial || ""}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       onChange({
                         materials: {
                           ...formData.materials,
-                          superstructureMaterial: (e.target.value || undefined) as
+                          superstructureMaterial: (value || undefined) as
                             | "Aluminium"
                             | "Composite"
                             | "Steel"
@@ -269,15 +248,15 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                         },
                       })
                     }
-                    className="w-full rounded-lg border border-input bg-background px-2 py-1.5"
-                  >
-                    <option value="">Select...</option>
-                    {SUPERSTRUCTURE_MATERIALS.map((material) => (
-                      <option key={material} value={material}>
-                        {material}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "Select..." },
+                      ...SUPERSTRUCTURE_MATERIALS.map((material) => ({
+                        value: material,
+                        label: material,
+                      })),
+                    ]}
+                    className="w-full text-xs"
+                  />
                 </div>
               </div>
             </div>

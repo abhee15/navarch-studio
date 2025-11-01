@@ -17,6 +17,7 @@ import { BonjeanCurvesPanel } from "./BonjeanCurvesPanel";
 import { CrossCurvesPanel } from "./CrossCurvesPanel";
 import { GZCurvePanel } from "./GZCurvePanel";
 import { CoefficientsEvolutionPanel } from "./CoefficientsEvolutionPanel";
+import { Select } from "../../../ui/select";
 
 interface HydrostaticCurvesPanelProps {
   vesselId: string;
@@ -48,6 +49,19 @@ export const HydrostaticCurvesPanel = observer(
     const formatNumber = (value: number): string => {
       return value.toFixed(2);
     };
+
+    // Curve type options
+    const curveTypeOptions = [
+      { value: "displacement", label: "Displacement" },
+      { value: "kb", label: "KB (Center of Buoyancy Height)" },
+      { value: "lcb", label: "LCB (Longitudinal Center of Buoyancy)" },
+      { value: "awp", label: "Waterplane Area (AWP)" },
+      { value: "gmt", label: "GMt (Transverse Metacentric Height)" },
+      { value: "coefficients", label: "Coefficients Evolution (CB, CP, CM, CWP)" },
+      { value: "bonjean", label: "Bonjean Curves" },
+      { value: "cross-curves", label: "Cross-Curves (KN)" },
+      { value: "gz-curve", label: "GZ Curve (Righting Arm)" },
+    ];
 
     // Get the selected curve data
     const selectedCurve = curves[selectedCurveType];
@@ -99,13 +113,13 @@ export const HydrostaticCurvesPanel = observer(
     return (
       <div className="h-full flex flex-col">
         {/* Curve Type Selector */}
-        <div className="flex items-center justify-between mb-3 flex-shrink-0">
-          <h4 className="text-sm font-medium text-foreground">Curve Type</h4>
-          <select
+        <div className="flex items-center justify-between mb-3 flex-shrink-0 gap-3">
+          <h4 className="text-sm font-medium text-foreground whitespace-nowrap">Curve Type</h4>
+          <Select
             value={selectedCurveType}
-            onChange={(e) =>
+            onChange={(value) =>
               setSelectedCurveType(
-                e.target.value as
+                value as
                   | "displacement"
                   | "kb"
                   | "lcb"
@@ -117,18 +131,9 @@ export const HydrostaticCurvesPanel = observer(
                   | "gz-curve"
               )
             }
-            className="border border-border bg-background text-foreground rounded text-xs py-1 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="displacement">Displacement</option>
-            <option value="kb">KB (Center of Buoyancy Height)</option>
-            <option value="lcb">LCB (Longitudinal Center of Buoyancy)</option>
-            <option value="awp">Waterplane Area (AWP)</option>
-            <option value="gmt">GMt (Transverse Metacentric Height)</option>
-            <option value="coefficients">Coefficients Evolution (CB, CP, CM, CWP)</option>
-            <option value="bonjean">Bonjean Curves</option>
-            <option value="cross-curves">Cross-Curves (KN)</option>
-            <option value="gz-curve">GZ Curve (Righting Arm)</option>
-          </select>
+            options={curveTypeOptions}
+            className="text-xs flex-1 min-w-0"
+          />
         </div>
 
         {/* Chart */}

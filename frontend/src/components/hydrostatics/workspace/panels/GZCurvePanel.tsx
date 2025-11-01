@@ -18,7 +18,7 @@ import type { VesselDetails, Loadcase } from "../../../../types/hydrostatics";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getErrorMessage } from "../../../../types/errors";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
-import { Select } from "../../../ui/select";
+import { Select } from "../../../ui/select.tsx";
 
 interface GZCurvePanelProps {
   vesselId: string;
@@ -395,7 +395,7 @@ export const GZCurvePanel = observer(({ vesselId, vessel }: GZCurvePanelProps) =
             <label className="text-[10px] font-medium text-foreground block mb-1">Method</label>
             <Select
               value={method}
-              onChange={(value) => setMethod(value as "WallSided" | "FullImmersion")}
+              onChange={(value: string) => setMethod(value as "WallSided" | "FullImmersion")}
               options={[
                 { value: "WallSided", label: "Wall-Sided" },
                 { value: "FullImmersion", label: "Full Immersion" },

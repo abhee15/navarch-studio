@@ -19,3 +19,4 @@ Examples
 - Good: `git add -- frontend/src/components/AppHeader.tsx frontend/src/pages/DashboardPage.tsx`
 - Bad: `git add .`
 
+

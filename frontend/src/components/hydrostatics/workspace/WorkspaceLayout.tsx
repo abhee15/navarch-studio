@@ -12,6 +12,7 @@ import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydr
 import { GeometryManagementDialog } from "../GeometryManagementDialog";
 import { ManageLoadcasesDialog } from "../ManageLoadcasesDialog";
 import { getErrorMessage } from "../../../types/errors";
+import { Select } from "../../ui/select";
 
 interface WorkspaceLayoutProps {
   vessel: VesselDetails;
@@ -303,28 +304,25 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Preset Layouts Dropdown */}
             {layout.mode === "view" && !isMobile && (
-              <select
-                onChange={(e) => {
-                  if (e.target.value === "reset") {
+              <Select
+                value=""
+                onChange={(value) => {
+                  if (value === "reset") {
                     resetLayout();
-                  } else {
-                    loadPreset(e.target.value);
+                  } else if (value) {
+                    loadPreset(value);
                   }
-                  e.target.value = ""; // Reset dropdown
                 }}
-                className="border border-border bg-background text-foreground rounded text-xs py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Layout Presets
-                </option>
-                <option value="reset">Reset to Default</option>
-                {getPresets().map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "Layout Presets" },
+                  { value: "reset", label: "Reset to Default" },
+                  ...getPresets().map((preset) => ({
+                    value: preset.id,
+                    label: preset.name,
+                  })),
+                ]}
+                className="text-xs"
+              />
             )}
 
             {/* Compute Button */}

@@ -168,4 +168,3 @@ Any new microservice that uses PostgreSQL MUST:
 - Current implementations:
   - `backend/IdentityService/Program.cs` (lines 71-95)
   - `backend/DataService/Program.cs` (lines 107-133)
-

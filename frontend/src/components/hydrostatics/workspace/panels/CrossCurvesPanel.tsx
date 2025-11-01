@@ -15,7 +15,7 @@ import type { VesselDetails, Loadcase } from "../../../../types/hydrostatics";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getErrorMessage } from "../../../../types/errors";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
-import { Select } from "../../../ui/select";
+import { Select } from "../../../ui/select.tsx";
 
 interface CrossCurvesPanelProps {
   vesselId: string;
