@@ -32,7 +32,7 @@ public class HydroCalculator : IHydroCalculator
         // Load vessel geometry and compute
         var vessel = await GetVesselWithGeometryAsync(vesselId, cancellationToken);
         var (rho, kg) = await GetLoadcaseParametersAsync(loadcaseId, cancellationToken);
-        
+
         return ComputeAtDraftCore(vessel, rho, kg, draft);
     }
 
@@ -299,4 +299,3 @@ public class HydroCalculator : IHydroCalculator
         public List<Shared.Models.Offset> Offsets { get; init; } = new();
     }
 }
-
