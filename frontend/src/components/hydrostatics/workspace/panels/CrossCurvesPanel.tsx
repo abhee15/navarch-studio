@@ -15,6 +15,7 @@ import type { VesselDetails, Loadcase } from "../../../../types/hydrostatics";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getErrorMessage } from "../../../../types/errors";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
+import { Select } from "../../../ui/select";
 
 interface CrossCurvesPanelProps {
   vesselId: string;
@@ -186,17 +187,12 @@ export const CrossCurvesPanel = observer(({ vesselId, vessel }: CrossCurvesPanel
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] font-medium text-foreground block mb-1">Loadcase</label>
-            <select
+            <Select
               value={selectedLoadcaseId}
-              onChange={(e) => setSelectedLoadcaseId(e.target.value)}
-              className="w-full border border-border bg-background text-foreground rounded text-xs py-1 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {loadcases.map((lc) => (
-                <option key={lc.id} value={lc.id}>
-                  {lc.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedLoadcaseId}
+              options={loadcases.map((lc) => ({ value: lc.id, label: lc.name }))}
+              className="w-full text-xs"
+            />
           </div>
           <div>
             <label className="text-[10px] font-medium text-foreground block mb-1">
@@ -259,54 +255,56 @@ export const CrossCurvesPanel = observer(({ vesselId, vessel }: CrossCurvesPanel
       </div>
 
       {/* Chart */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         {curves.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={curves}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-700"
-              />
-              <XAxis
-                dataKey="angle"
-                label={{
-                  value: `Heel Angle (°)`,
-                  position: "insideBottom",
-                  offset: -5,
-                  style: { fontSize: "10px" },
-                }}
-                tick={{ fontSize: 9 }}
-                stroke="currentColor"
-                className="text-muted-foreground"
-              />
-              <YAxis
-                label={{
-                  value: `KN (${lengthUnit})`,
-                  angle: -90,
-                  position: "insideLeft",
-                  style: { fontSize: "10px" },
-                }}
-                tick={{ fontSize: 9 }}
-                stroke="currentColor"
-                className="text-muted-foreground"
-              />
-              <Tooltip
-                contentStyle={{ fontSize: "10px", padding: "4px 6px" }}
-                formatter={(value: number) => value.toFixed(3)}
-                labelFormatter={(label) => `Angle: ${label}°`}
-              />
-              <Legend wrapperStyle={{ fontSize: "9px", paddingTop: "4px" }} iconSize={8} />
-              <Line
-                type="monotone"
-                dataKey="kn"
-                stroke="#3B82F6"
-                strokeWidth={1.5}
-                dot={false}
-                name="KN"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="absolute inset-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={curves}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e5e7eb"
+                  className="dark:stroke-gray-700"
+                />
+                <XAxis
+                  dataKey="angle"
+                  label={{
+                    value: `Heel Angle (°)`,
+                    position: "insideBottom",
+                    offset: -5,
+                    style: { fontSize: "10px" },
+                  }}
+                  tick={{ fontSize: 9 }}
+                  stroke="currentColor"
+                  className="text-muted-foreground"
+                />
+                <YAxis
+                  label={{
+                    value: `KN (${lengthUnit})`,
+                    angle: -90,
+                    position: "insideLeft",
+                    style: { fontSize: "10px" },
+                  }}
+                  tick={{ fontSize: 9 }}
+                  stroke="currentColor"
+                  className="text-muted-foreground"
+                />
+                <Tooltip
+                  contentStyle={{ fontSize: "10px", padding: "4px 6px" }}
+                  formatter={(value: number) => value.toFixed(3)}
+                  labelFormatter={(label) => `Angle: ${label}°`}
+                />
+                <Legend wrapperStyle={{ fontSize: "9px", paddingTop: "4px" }} iconSize={8} />
+                <Line
+                  type="monotone"
+                  dataKey="kn"
+                  stroke="#3B82F6"
+                  strokeWidth={1.5}
+                  dot={false}
+                  name="KN"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">

@@ -264,60 +264,62 @@ export const BonjeanCurvesPanel = observer(
         </div>
 
         {/* Chart */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 relative">
           {selectedStations.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#e5e7eb"
-                  className="dark:stroke-gray-700"
-                />
-                <XAxis
-                  dataKey="draft"
-                  label={{
-                    value: `Draft (${lengthUnit})`,
-                    position: "insideBottom",
-                    offset: -5,
-                    style: { fontSize: "10px" },
-                  }}
-                  tick={{ fontSize: 9 }}
-                  stroke="currentColor"
-                  className="text-muted-foreground"
-                />
-                <YAxis
-                  label={{
-                    value: `Sectional Area (${areaUnit})`,
-                    angle: -90,
-                    position: "insideLeft",
-                    style: { fontSize: "10px" },
-                  }}
-                  tick={{ fontSize: 9 }}
-                  stroke="currentColor"
-                  className="text-muted-foreground"
-                />
-                <Tooltip
-                  contentStyle={{ fontSize: "10px", padding: "4px 6px" }}
-                  formatter={(value: number) => value.toFixed(3)}
-                  labelFormatter={(label) => `Draft: ${label} ${lengthUnit}`}
-                />
-                <Legend wrapperStyle={{ fontSize: "9px", paddingTop: "4px" }} iconSize={8} />
-                {selectedStations.map((stationIndex) => {
-                  const curve = curves.find((c) => c.stationIndex === stationIndex);
-                  return (
-                    <Line
-                      key={stationIndex}
-                      type="monotone"
-                      dataKey={`station_${stationIndex}`}
-                      name={`Stn ${stationIndex} (x=${curve?.stationX.toFixed(1)}${lengthUnit})`}
-                      stroke={getStationColor(stationIndex)}
-                      strokeWidth={1.5}
-                      dot={false}
-                    />
-                  );
-                })}
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="absolute inset-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#e5e7eb"
+                    className="dark:stroke-gray-700"
+                  />
+                  <XAxis
+                    dataKey="draft"
+                    label={{
+                      value: `Draft (${lengthUnit})`,
+                      position: "insideBottom",
+                      offset: -5,
+                      style: { fontSize: "10px" },
+                    }}
+                    tick={{ fontSize: 9 }}
+                    stroke="currentColor"
+                    className="text-muted-foreground"
+                  />
+                  <YAxis
+                    label={{
+                      value: `Sectional Area (${areaUnit})`,
+                      angle: -90,
+                      position: "insideLeft",
+                      style: { fontSize: "10px" },
+                    }}
+                    tick={{ fontSize: 9 }}
+                    stroke="currentColor"
+                    className="text-muted-foreground"
+                  />
+                  <Tooltip
+                    contentStyle={{ fontSize: "10px", padding: "4px 6px" }}
+                    formatter={(value: number) => value.toFixed(3)}
+                    labelFormatter={(label) => `Draft: ${label} ${lengthUnit}`}
+                  />
+                  <Legend wrapperStyle={{ fontSize: "9px", paddingTop: "4px" }} iconSize={8} />
+                  {selectedStations.map((stationIndex) => {
+                    const curve = curves.find((c) => c.stationIndex === stationIndex);
+                    return (
+                      <Line
+                        key={stationIndex}
+                        type="monotone"
+                        dataKey={`station_${stationIndex}`}
+                        name={`Stn ${stationIndex} (x=${curve?.stationX.toFixed(1)}${lengthUnit})`}
+                        stroke={getStationColor(stationIndex)}
+                        strokeWidth={1.5}
+                        dot={false}
+                      />
+                    );
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full">
               <p className="text-xs text-muted-foreground">Select stations to view curves</p>

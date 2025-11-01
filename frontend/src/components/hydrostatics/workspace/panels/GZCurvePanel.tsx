@@ -18,6 +18,7 @@ import type { VesselDetails, Loadcase } from "../../../../types/hydrostatics";
 import { settingsStore } from "../../../../stores/SettingsStore";
 import { getErrorMessage } from "../../../../types/errors";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
+import { Select } from "../../../ui/select";
 
 interface GZCurvePanelProps {
   vesselId: string;
@@ -328,17 +329,12 @@ export const GZCurvePanel = observer(({ vesselId, vessel }: GZCurvePanelProps) =
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] font-medium text-foreground block mb-1">Loadcase</label>
-            <select
+            <Select
               value={selectedLoadcaseId}
-              onChange={(e) => setSelectedLoadcaseId(e.target.value)}
-              className="w-full border border-border bg-background text-foreground rounded text-xs py-1 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {loadcases.map((lc) => (
-                <option key={lc.id} value={lc.id}>
-                  {lc.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedLoadcaseId}
+              options={loadcases.map((lc) => ({ value: lc.id, label: lc.name }))}
+              className="w-full text-xs"
+            />
           </div>
           <div>
             <label className="text-[10px] font-medium text-foreground block mb-1">
@@ -397,14 +393,15 @@ export const GZCurvePanel = observer(({ vesselId, vessel }: GZCurvePanelProps) =
           </div>
           <div>
             <label className="text-[10px] font-medium text-foreground block mb-1">Method</label>
-            <select
+            <Select
               value={method}
-              onChange={(e) => setMethod(e.target.value as "WallSided" | "FullImmersion")}
-              className="w-full border border-border bg-background text-foreground rounded text-xs py-1 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="WallSided">Wall-Sided</option>
-              <option value="FullImmersion">Full Immersion</option>
-            </select>
+              onChange={(value) => setMethod(value as "WallSided" | "FullImmersion")}
+              options={[
+                { value: "WallSided", label: "Wall-Sided" },
+                { value: "FullImmersion", label: "Full Immersion" },
+              ]}
+              className="w-full text-xs"
+            />
           </div>
         </div>
 
@@ -443,153 +440,155 @@ export const GZCurvePanel = observer(({ vesselId, vessel }: GZCurvePanelProps) =
       </div>
 
       {/* Chart */}
-      <div className="flex-1 min-h-0" ref={chartRef}>
+      <div className="flex-1 min-h-0 relative" ref={chartRef}>
         {curve && curve.points.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={curve.points.map((p) => ({
-                angle: p.heelAngle,
-                gz: p.gz,
-                kn: p.kn,
-              }))}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                className="dark:stroke-gray-700"
-              />
-              <XAxis
-                dataKey="angle"
-                label={{
-                  value: `Heel Angle (°)`,
-                  position: "insideBottom",
-                  offset: -5,
-                  style: { fontSize: "10px" },
-                }}
-                tick={{ fontSize: 9 }}
-                stroke="currentColor"
-                className="text-muted-foreground"
-              />
-              <YAxis
-                label={{
-                  value: `GZ (${lengthUnit})`,
-                  angle: -90,
-                  position: "insideLeft",
-                  style: { fontSize: "10px" },
-                }}
-                tick={{ fontSize: 9 }}
-                stroke="currentColor"
-                className="text-muted-foreground"
-              />
-              <Tooltip
-                contentStyle={{ fontSize: "10px", padding: "4px 6px" }}
-                formatter={(value: number) => value.toFixed(3)}
-                labelFormatter={(label) => `Angle: ${label}°`}
-              />
-              <Legend wrapperStyle={{ fontSize: "9px", paddingTop: "4px" }} iconSize={8} />
-
-              {/* GZ Curve */}
-              <Line
-                type="monotone"
-                dataKey="gz"
-                stroke="#3B82F6"
-                strokeWidth={2}
-                dot={false}
-                name="GZ"
-              />
-
-              {/* KN Curve (optional, lighter) */}
-              <Line
-                type="monotone"
-                dataKey="kn"
-                stroke="#9CA3AF"
-                strokeWidth={1}
-                dot={false}
-                name="KN"
-                strokeDasharray="5 5"
-              />
-
-              {/* Max GZ Marker */}
-              {metrics && (
-                <ReferenceDot
-                  x={metrics.angleAtMaxGZ}
-                  y={metrics.maxGZ}
-                  r={4}
-                  fill="#EF4444"
-                  stroke="#fff"
-                  strokeWidth={1}
-                  label={{
-                    value: `Max GZ: ${metrics.maxGZ.toFixed(3)}${lengthUnit} @ ${metrics.angleAtMaxGZ.toFixed(1)}°`,
-                    position: "top",
-                    fontSize: 9,
-                    fill: "#EF4444",
-                  }}
-                />
-              )}
-
-              {/* Vanishing Angle Marker */}
-              {metrics && metrics.vanishingAngle < maxAngle && (
-                <ReferenceLine
-                  x={metrics.vanishingAngle}
-                  stroke="#F59E0B"
+          <div className="absolute inset-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={curve.points.map((p) => ({
+                  angle: p.heelAngle,
+                  gz: p.gz,
+                  kn: p.kn,
+                }))}
+              >
+                <CartesianGrid
                   strokeDasharray="3 3"
-                  label={{
-                    value: `Vanishing: ${metrics.vanishingAngle.toFixed(1)}°`,
-                    position: "top",
-                    fontSize: 9,
-                    fill: "#F59E0B",
-                  }}
+                  stroke="#e5e7eb"
+                  className="dark:stroke-gray-700"
                 />
-              )}
+                <XAxis
+                  dataKey="angle"
+                  label={{
+                    value: `Heel Angle (°)`,
+                    position: "insideBottom",
+                    offset: -5,
+                    style: { fontSize: "10px" },
+                  }}
+                  tick={{ fontSize: 9 }}
+                  stroke="currentColor"
+                  className="text-muted-foreground"
+                />
+                <YAxis
+                  label={{
+                    value: `GZ (${lengthUnit})`,
+                    angle: -90,
+                    position: "insideLeft",
+                    style: { fontSize: "10px" },
+                  }}
+                  tick={{ fontSize: 9 }}
+                  stroke="currentColor"
+                  className="text-muted-foreground"
+                />
+                <Tooltip
+                  contentStyle={{ fontSize: "10px", padding: "4px 6px" }}
+                  formatter={(value: number) => value.toFixed(3)}
+                  labelFormatter={(label) => `Angle: ${label}°`}
+                />
+                <Legend wrapperStyle={{ fontSize: "9px", paddingTop: "4px" }} iconSize={8} />
 
-              {/* IMO Criteria Overlays */}
-              {showIMOCriteria && (
-                <>
-                  {/* IMO A.749(18) - Area under GZ curve */}
-                  <ReferenceArea
-                    x1={0}
-                    x2={30}
-                    fill="#10B981"
-                    fillOpacity={0.1}
+                {/* GZ Curve */}
+                <Line
+                  type="monotone"
+                  dataKey="gz"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  dot={false}
+                  name="GZ"
+                />
+
+                {/* KN Curve (optional, lighter) */}
+                <Line
+                  type="monotone"
+                  dataKey="kn"
+                  stroke="#9CA3AF"
+                  strokeWidth={1}
+                  dot={false}
+                  name="KN"
+                  strokeDasharray="5 5"
+                />
+
+                {/* Max GZ Marker */}
+                {metrics && (
+                  <ReferenceDot
+                    x={metrics.angleAtMaxGZ}
+                    y={metrics.maxGZ}
+                    r={4}
+                    fill="#EF4444"
+                    stroke="#fff"
+                    strokeWidth={1}
                     label={{
-                      value: "A1 (0-30°)",
-                      position: "insideTop",
-                      fontSize: 8,
-                      fill: "#10B981",
+                      value: `Max GZ: ${metrics.maxGZ.toFixed(3)}${lengthUnit} @ ${metrics.angleAtMaxGZ.toFixed(1)}°`,
+                      position: "top",
+                      fontSize: 9,
+                      fill: "#EF4444",
                     }}
                   />
-                  <ReferenceArea
-                    x1={30}
-                    x2={metrics?.vanishingAngle || 40}
-                    fill="#3B82F6"
-                    fillOpacity={0.1}
-                    label={{
-                      value: "A2 (30°-vanish)",
-                      position: "insideTop",
-                      fontSize: 8,
-                      fill: "#3B82F6",
-                    }}
-                  />
+                )}
 
-                  {/* IMO minimum GM line (reference at 0.15m typical) */}
+                {/* Vanishing Angle Marker */}
+                {metrics && metrics.vanishingAngle < maxAngle && (
                   <ReferenceLine
-                    y={0.15}
-                    stroke="#9CA3AF"
-                    strokeDasharray="2 2"
+                    x={metrics.vanishingAngle}
+                    stroke="#F59E0B"
+                    strokeDasharray="3 3"
                     label={{
-                      value: "IMO Min GZ (0.15m typical)",
-                      position: "right",
-                      fontSize: 8,
-                      fill: "#9CA3AF",
+                      value: `Vanishing: ${metrics.vanishingAngle.toFixed(1)}°`,
+                      position: "top",
+                      fontSize: 9,
+                      fill: "#F59E0B",
                     }}
                   />
-                </>
-              )}
+                )}
 
-              {/* Zero line */}
-              <ReferenceLine y={0} stroke="#000" strokeWidth={1} />
-            </LineChart>
-          </ResponsiveContainer>
+                {/* IMO Criteria Overlays */}
+                {showIMOCriteria && (
+                  <>
+                    {/* IMO A.749(18) - Area under GZ curve */}
+                    <ReferenceArea
+                      x1={0}
+                      x2={30}
+                      fill="#10B981"
+                      fillOpacity={0.1}
+                      label={{
+                        value: "A1 (0-30°)",
+                        position: "insideTop",
+                        fontSize: 8,
+                        fill: "#10B981",
+                      }}
+                    />
+                    <ReferenceArea
+                      x1={30}
+                      x2={metrics?.vanishingAngle || 40}
+                      fill="#3B82F6"
+                      fillOpacity={0.1}
+                      label={{
+                        value: "A2 (30°-vanish)",
+                        position: "insideTop",
+                        fontSize: 8,
+                        fill: "#3B82F6",
+                      }}
+                    />
+
+                    {/* IMO minimum GM line (reference at 0.15m typical) */}
+                    <ReferenceLine
+                      y={0.15}
+                      stroke="#9CA3AF"
+                      strokeDasharray="2 2"
+                      label={{
+                        value: "IMO Min GZ (0.15m typical)",
+                        position: "right",
+                        fontSize: 8,
+                        fill: "#9CA3AF",
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* Zero line */}
+                <ReferenceLine y={0} stroke="#000" strokeWidth={1} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">
