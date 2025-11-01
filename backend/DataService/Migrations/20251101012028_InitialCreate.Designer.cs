@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataService.Migrations
 {
     [DbContext(typeof(DataDbContext))]
-    [Migration("20251031181158_AddCatalogSchema")]
-    partial class AddCatalogSchema
+    [Migration("20251101012028_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
