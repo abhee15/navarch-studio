@@ -127,7 +127,7 @@ try
             // Explicit migration history table in data schema (matches IdentityService using identity schema)
             npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "data");
         })
-        .UseSnakeCaseNamingConvention()
+        .UseSnakeCaseNamingConvention()  // Use PostgreSQL standard snake_case naming
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
         .EnableDetailedErrors(builder.Environment.IsDevelopment());
     });
