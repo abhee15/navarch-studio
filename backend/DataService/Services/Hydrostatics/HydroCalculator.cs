@@ -125,13 +125,33 @@ public class HydroCalculator : IHydroCalculator
         var tcb = 0m; // Assuming port/starboard symmetry
 
         // 6. Compute waterplane area and second moments at current draft
+        // Need to interpolate half-breadths at exact draft (not just use last active waterline)
         var waterplaneHalfBreadths = new List<decimal>();
+
+        // Check if draft is very close to the last active waterline (within 0.1%)
+        var lastActiveWL = activeWaterlines[^1];
+        var useExactWaterline = Math.Abs(draft - lastActiveWL.Z) / draft < 0.001m;
+
         foreach (var station in stations)
         {
-            var offset = offsets.FirstOrDefault(o =>
-                o.StationIndex == station.StationIndex &&
-                o.WaterlineIndex == activeWaterlines[^1].WaterlineIndex);
-            waterplaneHalfBreadths.Add(offset?.HalfBreadthY ?? 0m);
+            decimal halfBreadthAtDraft;
+
+            if (useExactWaterline)
+            {
+                // Draft is essentially at a waterline, use exact values
+                var offset = offsets.FirstOrDefault(o =>
+                    o.StationIndex == station.StationIndex &&
+                    o.WaterlineIndex == lastActiveWL.WaterlineIndex);
+                halfBreadthAtDraft = offset?.HalfBreadthY ?? 0m;
+            }
+            else
+            {
+                // Interpolate between waterlines
+                halfBreadthAtDraft = InterpolateHalfBreadthAtDraft(
+                    station.StationIndex, draft, waterlines, offsets);
+            }
+
+            waterplaneHalfBreadths.Add(halfBreadthAtDraft);
         }
 
         var awp = 2 * _integrationEngine.Integrate(stationXPositions, waterplaneHalfBreadths);
@@ -285,6 +305,84 @@ public class HydroCalculator : IHydroCalculator
         }
 
         return (rho, kg);
+    }
+
+    /// <summary>
+    /// Interpolates half-breadth at a specific draft
+    /// </summary>
+    private decimal InterpolateHalfBreadthAtDraft(
+        int stationIndex,
+        decimal draft,
+        List<Shared.Models.Waterline> waterlines,
+        List<Shared.Models.Offset> offsets)
+    {
+        const decimal tolerance = 0.0001m; // Tolerance for decimal comparison
+
+        // Find waterlines immediately above and below the draft
+        var wlBelow = waterlines
+            .Where(w => w.Z <= draft + tolerance) // Add tolerance for floating point comparison
+            .OrderByDescending(w => w.Z)
+            .FirstOrDefault();
+
+        var wlAbove = waterlines
+            .Where(w => w.Z >= draft - tolerance) // Add tolerance
+            .OrderBy(w => w.Z)
+            .FirstOrDefault();
+
+        // If draft matches a waterline exactly (within tolerance)
+        if (wlBelow != null && Math.Abs(wlBelow.Z - draft) < tolerance)
+        {
+            var offset = offsets.FirstOrDefault(o =>
+                o.StationIndex == stationIndex &&
+                o.WaterlineIndex == wlBelow.WaterlineIndex);
+            return offset?.HalfBreadthY ?? 0m;
+        }
+
+        if (wlAbove != null && Math.Abs(wlAbove.Z - draft) < tolerance)
+        {
+            var offset = offsets.FirstOrDefault(o =>
+                o.StationIndex == stationIndex &&
+                o.WaterlineIndex == wlAbove.WaterlineIndex);
+            return offset?.HalfBreadthY ?? 0m;
+        }
+
+        // If only one waterline found, use it
+        if (wlBelow == null && wlAbove != null)
+        {
+            var offset = offsets.FirstOrDefault(o =>
+                o.StationIndex == stationIndex &&
+                o.WaterlineIndex == wlAbove.WaterlineIndex);
+            return offset?.HalfBreadthY ?? 0m;
+        }
+
+        if (wlAbove == null && wlBelow != null)
+        {
+            var offset = offsets.FirstOrDefault(o =>
+                o.StationIndex == stationIndex &&
+                o.WaterlineIndex == wlBelow.WaterlineIndex);
+            return offset?.HalfBreadthY ?? 0m;
+        }
+
+        // Interpolate between two waterlines
+        if (wlBelow != null && wlAbove != null && Math.Abs(wlBelow.Z - wlAbove.Z) > tolerance)
+        {
+            var offsetBelow = offsets.FirstOrDefault(o =>
+                o.StationIndex == stationIndex &&
+                o.WaterlineIndex == wlBelow.WaterlineIndex);
+
+            var offsetAbove = offsets.FirstOrDefault(o =>
+                o.StationIndex == stationIndex &&
+                o.WaterlineIndex == wlAbove.WaterlineIndex);
+
+            var yBelow = offsetBelow?.HalfBreadthY ?? 0m;
+            var yAbove = offsetAbove?.HalfBreadthY ?? 0m;
+
+            // Linear interpolation
+            var fraction = (draft - wlBelow.Z) / (wlAbove.Z - wlBelow.Z);
+            return yBelow + fraction * (yAbove - yBelow);
+        }
+
+        return 0m;
     }
 
     /// <summary>

@@ -157,7 +157,7 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.Cb:F4}, Got: {computed.Cb:F4}");
     }
 
-    [Fact(Skip = "TODO: Investigate waterplane calculation - returns 0.00 instead of expected values")]
+    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_CenterOfBuoyancy_WithinTwoPercent()
     {
         // Arrange
@@ -183,7 +183,7 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.LCB:F2}, Got: {computed.LCBx:F2}");
     }
 
-    [Fact(Skip = "TODO: Investigate waterplane calculation - returns 0.00 instead of expected values")]
+    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_WaterplaneArea_WithinTwoPercent()
     {
         // Arrange
@@ -203,7 +203,7 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.Awp:F2}, Got: {computed.Awp:F2}");
     }
 
-    [Fact(Skip = "TODO: Investigate waterplane calculation - returns 0.00 instead of expected values")]
+    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_MetacentricRadius_WithinFivePercent()
     {
         // Arrange - Note: Metacentric radius has relaxed tolerance (5%) due to
@@ -224,7 +224,7 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.BMt:F3}, Got: {computed.BMt:F3}");
     }
 
-    [Fact(Skip = "TODO: Investigate waterplane calculation - returns 0.00 instead of expected values")]
+    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_FormCoefficients_WithinTwoPercent()
     {
         // Arrange
@@ -348,5 +348,3 @@ public class WigleyHullTests : IDisposable
         Assert.True(gzAt10 > 0, $"GZ at 10° should be positive, got {gzAt10}m");
     }
 }
-
-

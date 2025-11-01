@@ -113,7 +113,7 @@ public class BargeStabilityTests : IDisposable
         return (vessel.Id, loadcase.Id);
     }
 
-    [Fact(Skip = "TODO: Wall-sided method needs calibration - currently 0.76% error, target is 0.5%")]
+    [Fact]
     public async Task Test1_BargeGZ_WallSidedMethod_MatchesAnalytical()
     {
         // Arrange
@@ -145,7 +145,7 @@ public class BargeStabilityTests : IDisposable
         }
     }
 
-    [Fact(Skip = "TODO: Area calculation needs calibration - currently 14% error, needs investigation")]
+    [Fact]
     public async Task Test2_BargeGZ_AreaUnderCurve_MatchesAnalytical()
     {
         // Arrange
@@ -183,7 +183,7 @@ public class BargeStabilityTests : IDisposable
             $"Area 0-40°: Expected {analyticalArea_0_40:F6} m·rad, Got {area_0_40:F6} m·rad (error {error_0_40:P2})");
     }
 
-    [Fact(Skip = "TODO: Max GZ angle detection needs fix - currently returns 90° instead of ~45°")]
+    [Fact]
     public async Task Test3_BargeGZ_MaxGZAngle_Near45Degrees()
     {
         // Arrange
@@ -309,4 +309,3 @@ public class BargeStabilityTests : IDisposable
         _context.Dispose();
     }
 }
-
