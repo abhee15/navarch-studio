@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using DataService.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ namespace DataService.Controllers;
 /// Controller for catalog propeller series
 /// </summary>
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/v1/catalog/propellers")]
 [Produces("application/json")]
 public class CatalogPropellersController : ControllerBase

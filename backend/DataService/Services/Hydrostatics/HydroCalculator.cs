@@ -29,36 +29,26 @@ public class HydroCalculator : IHydroCalculator
         decimal draft,
         CancellationToken cancellationToken = default)
     {
-        // Get vessel data
-        var vessel = await _context.Vessels
-            .Include(v => v.Stations)
-            .Include(v => v.Waterlines)
-            .Include(v => v.Offsets)
-            .FirstOrDefaultAsync(v => v.Id == vesselId, cancellationToken);
+        // Load vessel geometry and compute
+        var vessel = await GetVesselWithGeometryAsync(vesselId, cancellationToken);
+        var (rho, kg) = await GetLoadcaseParametersAsync(loadcaseId, cancellationToken);
+        
+        return ComputeAtDraftCore(vessel, rho, kg, draft);
+    }
 
-        if (vessel == null)
-        {
-            throw new ArgumentException($"Vessel with ID {vesselId} not found");
-        }
-
-        // Get loadcase if specified
-        decimal rho = 1025m; // Default saltwater density
-        decimal? kg = null;
-
-        if (loadcaseId.HasValue)
-        {
-            var loadcase = await _context.Loadcases.FindAsync(new object[] { loadcaseId.Value }, cancellationToken);
-            if (loadcase != null)
-            {
-                rho = loadcase.Rho;
-                kg = loadcase.KG;
-            }
-        }
-
+    /// <summary>
+    /// Core computation method that works with pre-loaded data
+    /// </summary>
+    private HydroResultDto ComputeAtDraftCore(
+        VesselWithGeometry vessel,
+        decimal rho,
+        decimal? kg,
+        decimal draft)
+    {
         // Get geometry
-        var stations = vessel.Stations.OrderBy(s => s.StationIndex).ToList();
-        var waterlines = vessel.Waterlines.OrderBy(w => w.WaterlineIndex).ToList();
-        var offsets = vessel.Offsets.ToList();
+        var stations = vessel.Stations;
+        var waterlines = vessel.Waterlines;
+        var offsets = vessel.Offsets;
 
         if (stations.Count == 0 || waterlines.Count == 0 || offsets.Count == 0)
         {
@@ -69,7 +59,7 @@ public class HydroCalculator : IHydroCalculator
         var activeWaterlines = waterlines.Where(w => w.Z <= draft).ToList();
         if (activeWaterlines.Count < 2)
         {
-            throw new ArgumentException($"Draft {draft} is below minimum waterline {waterlines[0].Z}");
+            throw new ArgumentException($"Draft {draft} is below minimum waterline {waterlines.FirstOrDefault()?.Z ?? 0}");
         }
 
         // 1. Compute sectional areas at each station
@@ -195,9 +185,9 @@ public class HydroCalculator : IHydroCalculator
             ? awp / (vessel.Lpp * vessel.Beam)
             : 0;
 
-        _logger.LogInformation(
-            "Computed hydrostatics for vessel {VesselId} at draft {Draft}m: Vol={Volume}m³, Disp={Displacement}kg, KB={KB}m, LCB={LCB}m",
-            vesselId, draft, volume, displacement, kb, lcb);
+        _logger.LogDebug(
+            "Computed hydrostatics at draft {Draft}m: Vol={Volume}m³, Disp={Displacement}kg, KB={KB}m, LCB={LCB}m",
+            draft, volume, displacement, kb, lcb);
 
         return new HydroResultDto
         {
@@ -227,11 +217,15 @@ public class HydroCalculator : IHydroCalculator
         List<decimal> drafts,
         CancellationToken cancellationToken = default)
     {
+        // Load vessel geometry and loadcase once for all drafts (optimization)
+        var vessel = await GetVesselWithGeometryAsync(vesselId, cancellationToken);
+        var (rho, kg) = await GetLoadcaseParametersAsync(loadcaseId, cancellationToken);
+
         var results = new List<HydroResultDto>();
 
         foreach (var draft in drafts)
         {
-            var result = await ComputeAtDraftAsync(vesselId, loadcaseId, draft, cancellationToken);
+            var result = ComputeAtDraftCore(vessel, rho, kg, draft);
             results.Add(result);
         }
 
@@ -240,6 +234,69 @@ public class HydroCalculator : IHydroCalculator
             vesselId, results.Count);
 
         return results;
+    }
+
+    /// <summary>
+    /// Helper method to load vessel geometry once
+    /// </summary>
+    private async Task<VesselWithGeometry> GetVesselWithGeometryAsync(
+        Guid vesselId,
+        CancellationToken cancellationToken)
+    {
+        var vessel = await _context.Vessels
+            .Include(v => v.Stations)
+            .Include(v => v.Waterlines)
+            .Include(v => v.Offsets)
+            .FirstOrDefaultAsync(v => v.Id == vesselId, cancellationToken);
+
+        if (vessel == null)
+        {
+            throw new ArgumentException($"Vessel with ID {vesselId} not found");
+        }
+
+        return new VesselWithGeometry
+        {
+            Lpp = vessel.Lpp,
+            Beam = vessel.Beam,
+            Stations = vessel.Stations.OrderBy(s => s.StationIndex).ToList(),
+            Waterlines = vessel.Waterlines.OrderBy(w => w.WaterlineIndex).ToList(),
+            Offsets = vessel.Offsets.ToList()
+        };
+    }
+
+    /// <summary>
+    /// Helper method to get loadcase parameters
+    /// </summary>
+    private async Task<(decimal rho, decimal? kg)> GetLoadcaseParametersAsync(
+        Guid? loadcaseId,
+        CancellationToken cancellationToken)
+    {
+        decimal rho = 1025m; // Default saltwater density
+        decimal? kg = null;
+
+        if (loadcaseId.HasValue)
+        {
+            var loadcase = await _context.Loadcases.FindAsync(new object[] { loadcaseId.Value }, cancellationToken);
+            if (loadcase != null)
+            {
+                rho = loadcase.Rho;
+                kg = loadcase.KG;
+            }
+        }
+
+        return (rho, kg);
+    }
+
+    /// <summary>
+    /// Internal data structure to hold vessel geometry
+    /// </summary>
+    private class VesselWithGeometry
+    {
+        public decimal Lpp { get; init; }
+        public decimal Beam { get; init; }
+        public List<Shared.Models.Station> Stations { get; init; } = new();
+        public List<Shared.Models.Waterline> Waterlines { get; init; } = new();
+        public List<Shared.Models.Offset> Offsets { get; init; } = new();
     }
 }
 

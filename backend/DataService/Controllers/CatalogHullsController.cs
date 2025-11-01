@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using DataService.Data;
 using DataService.Data.Seeds;
 using DataService.Services.Hydrostatics;
@@ -12,6 +13,7 @@ namespace DataService.Controllers;
 /// Controller for catalog hull reference data
 /// </summary>
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/v1/catalog/hulls")]
 [Produces("application/json")]
 public class CatalogHullsController : ControllerBase

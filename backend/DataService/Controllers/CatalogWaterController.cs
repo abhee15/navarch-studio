@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using DataService.Services.Catalog;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
@@ -9,6 +10,7 @@ namespace DataService.Controllers;
 /// Controller for catalog water properties
 /// </summary>
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/v1/catalog/water")]
 [Produces("application/json")]
 public class CatalogWaterController : ControllerBase
