@@ -195,6 +195,42 @@ public class CatalogHullsController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the geometry data for a catalog hull
+    /// </summary>
+    [HttpGet("{id}/geometry")]
+    [ProducesResponseType(typeof(CatalogGeometryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CatalogGeometryDto>> GetHullGeometry(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var hull = await _context.BenchmarkCases
+            .Include(h => h.Geometries)
+            .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
+
+        if (hull == null)
+        {
+            return NotFound(new { error = $"Catalog hull with ID {id} not found" });
+        }
+
+        if (hull.GeometryMissing || !hull.Geometries.Any())
+        {
+            return NotFound(new { error = "Geometry data not available for this hull" });
+        }
+
+        var geometry = hull.Geometries.First();
+
+        return Ok(new CatalogGeometryDto
+        {
+            StationsJson = geometry.StationsJson,
+            WaterlinesJson = geometry.WaterlinesJson,
+            OffsetsJson = geometry.OffsetsJson,
+            Type = geometry.Type,
+            SourceUrl = geometry.SourceUrl
+        });
+    }
+
+    /// <summary>
     /// Request DTO for cloning a hull
     /// </summary>
     public class CloneHullRequestDto
@@ -211,5 +247,17 @@ public class CatalogHullsController : ControllerBase
         public required Guid VesselId { get; set; }
         public required string VesselName { get; set; }
         public required string Message { get; set; }
+    }
+
+    /// <summary>
+    /// Response DTO for catalog geometry
+    /// </summary>
+    public class CatalogGeometryDto
+    {
+        public required string? StationsJson { get; set; }
+        public required string? WaterlinesJson { get; set; }
+        public required string? OffsetsJson { get; set; }
+        public required string? Type { get; set; }
+        public required string? SourceUrl { get; set; }
     }
 }

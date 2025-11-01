@@ -67,6 +67,14 @@ export interface CloneHullResponse {
   message: string;
 }
 
+export interface CatalogHullGeometry {
+  stationsJson: string | null;
+  waterlinesJson: string | null;
+  offsetsJson: string | null;
+  type: string | null;
+  sourceUrl: string | null;
+}
+
 // ============================================================================
 // Propeller Series
 // ============================================================================

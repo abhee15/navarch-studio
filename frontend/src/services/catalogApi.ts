@@ -6,6 +6,7 @@ import {
   CatalogHull,
   CloneHullRequest,
   CloneHullResponse,
+  CatalogHullGeometry,
   CatalogPropellerSeriesListItem,
   CatalogPropellerSeries,
 } from "../types/catalog";
@@ -79,6 +80,14 @@ export const cloneCatalogHull = async (
   request: CloneHullRequest = {}
 ): Promise<CloneHullResponse> => {
   const response = await api.post(`/catalog/hulls/${id}/clone`, request);
+  return response.data;
+};
+
+/**
+ * Get geometry data for a catalog hull
+ */
+export const getCatalogHullGeometry = async (id: string): Promise<CatalogHullGeometry> => {
+  const response = await api.get(`/catalog/hulls/${id}/geometry`);
   return response.data;
 };
 

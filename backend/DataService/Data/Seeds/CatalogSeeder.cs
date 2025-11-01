@@ -234,10 +234,14 @@ public class CatalogSeeder
         }
 
         // Generate Wigley hull with standard dimensions: L=100m, B=10m, T=6.25m
+        decimal lpp = 100m;
+        decimal beam = 10m;
+        decimal draft = 6.25m;
+
         var (stations, waterlines, offsets) = HullTestData.GenerateWigleyHull(
-            length: 100m,
-            beam: 10m,
-            designDraft: 6.25m,
+            length: lpp,
+            beam: beam,
+            designDraft: draft,
             numStations: 21,
             numWaterlines: 13);
 
@@ -259,6 +263,12 @@ public class CatalogSeeder
         };
 
         _context.BenchmarkGeometries.Add(geometry);
+
+        // Update principal particulars
+        wigley.Lpp_m = lpp;
+        wigley.B_m = beam;
+        wigley.T_m = draft;
+        wigley.Cb = 0.444m;  // Typical Wigley Cb
 
         // Mark as complete
         wigley.GeometryMissing = false;

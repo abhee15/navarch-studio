@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import { ArrowLeft, Copy, Loader2, AlertCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Copy, Loader2, AlertCircle, AlertTriangle, Table } from "lucide-react";
 import { useStore } from "../../stores";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { AppHeader } from "../../components/AppHeader";
-import { getCatalogHull, cloneCatalogHull } from "../../services/catalogApi";
-import type { CatalogHull } from "../../types/catalog";
+import {
+  getCatalogHull,
+  cloneCatalogHull,
+  getCatalogHullGeometry,
+} from "../../services/catalogApi";
+import type { CatalogHull, CatalogHullGeometry } from "../../types/catalog";
 import { toast } from "react-hot-toast";
 
 export const HullDetailPage: React.FC = observer(() => {
@@ -16,8 +20,10 @@ export const HullDetailPage: React.FC = observer(() => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [hull, setHull] = useState<CatalogHull | null>(null);
+  const [geometry, setGeometry] = useState<CatalogHullGeometry | null>(null);
   const [loading, setLoading] = useState(true);
   const [cloning, setCloning] = useState(false);
+  const [showGeometry, setShowGeometry] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,6 +38,17 @@ export const HullDetailPage: React.FC = observer(() => {
     try {
       const data = await getCatalogHull(hullId);
       setHull(data);
+
+      // Try to load geometry if available
+      if (!data.geometryMissing) {
+        try {
+          const geometryData = await getCatalogHullGeometry(hullId);
+          setGeometry(geometryData);
+        } catch (err) {
+          console.warn("Failed to load geometry:", err);
+          // Geometry load failure is not critical
+        }
+      }
     } catch (err) {
       console.error("Failed to load hull:", err);
       setError("Failed to load catalog hull");
@@ -267,6 +284,149 @@ export const HullDetailPage: React.FC = observer(() => {
                     {hull.canonicalRefs}
                   </p>
                 </CardContent>
+              </Card>
+            )}
+
+            {/* Geometry Viewer */}
+            {geometry && !hull.geometryMissing && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Geometry Data</CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowGeometry(!showGeometry)}
+                    >
+                      <Table className="h-4 w-4 mr-2" />
+                      {showGeometry ? "Hide" : "View"} Offsets Table
+                    </Button>
+                  </div>
+                </CardHeader>
+                {showGeometry && (
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Geometry Summary */}
+                      <div className="grid grid-cols-3 gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                        <div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">Stations</div>
+                          <div className="font-semibold">
+                            {geometry.stationsJson ? JSON.parse(geometry.stationsJson).length : 0}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">Waterlines</div>
+                          <div className="font-semibold">
+                            {geometry.waterlinesJson
+                              ? JSON.parse(geometry.waterlinesJson).length
+                              : 0}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">Offsets</div>
+                          <div className="font-semibold">
+                            {geometry.offsetsJson ? JSON.parse(geometry.offsetsJson).length : 0}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Offsets Preview */}
+                      <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                        <table className="w-full text-sm border-collapse">
+                          <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
+                            <tr>
+                              <th className="px-3 py-2 text-left border dark:border-gray-600">
+                                Station
+                              </th>
+                              <th className="px-3 py-2 text-left border dark:border-gray-600">
+                                X (m)
+                              </th>
+                              <th className="px-3 py-2 text-left border dark:border-gray-600">
+                                Waterline
+                              </th>
+                              <th className="px-3 py-2 text-left border dark:border-gray-600">
+                                Z (m)
+                              </th>
+                              <th className="px-3 py-2 text-left border dark:border-gray-600">
+                                Y (m)
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {geometry.offsetsJson &&
+                              geometry.stationsJson &&
+                              geometry.waterlinesJson &&
+                              (() => {
+                                const offsets = JSON.parse(geometry.offsetsJson) as Array<{
+                                  StationIndex: number;
+                                  WaterlineIndex: number;
+                                  HalfBreadthY: number;
+                                }>;
+                                const stations = JSON.parse(geometry.stationsJson) as Array<{
+                                  Index: number;
+                                  X: number;
+                                }>;
+                                const waterlines = JSON.parse(geometry.waterlinesJson) as Array<{
+                                  Index: number;
+                                  Z: number;
+                                }>;
+
+                                // Take only first 50 offsets for preview
+                                return offsets.slice(0, 50).map((offset, idx: number) => {
+                                  const station = stations.find(
+                                    (s) => s.Index === offset.StationIndex
+                                  );
+                                  const waterline = waterlines.find(
+                                    (w) => w.Index === offset.WaterlineIndex
+                                  );
+
+                                  return (
+                                    <tr
+                                      key={idx}
+                                      className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    >
+                                      <td className="px-3 py-2 border dark:border-gray-700">
+                                        {offset.StationIndex}
+                                      </td>
+                                      <td className="px-3 py-2 border dark:border-gray-700">
+                                        {station?.X?.toFixed(3) || "-"}
+                                      </td>
+                                      <td className="px-3 py-2 border dark:border-gray-700">
+                                        {offset.WaterlineIndex}
+                                      </td>
+                                      <td className="px-3 py-2 border dark:border-gray-700">
+                                        {waterline?.Z?.toFixed(3) || "-"}
+                                      </td>
+                                      <td className="px-3 py-2 border dark:border-gray-700">
+                                        {offset.HalfBreadthY?.toFixed(3) || "-"}
+                                      </td>
+                                    </tr>
+                                  );
+                                });
+                              })()}
+                          </tbody>
+                        </table>
+                        {geometry.offsetsJson && JSON.parse(geometry.offsetsJson).length > 50 && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                            Showing first 50 of {JSON.parse(geometry.offsetsJson).length} offsets
+                          </div>
+                        )}
+                      </div>
+
+                      {geometry.type && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          <strong>Type:</strong> {geometry.type}
+                          {geometry.sourceUrl && (
+                            <>
+                              {" • "}
+                              <strong>Source:</strong> {geometry.sourceUrl}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                )}
               </Card>
             )}
           </div>
