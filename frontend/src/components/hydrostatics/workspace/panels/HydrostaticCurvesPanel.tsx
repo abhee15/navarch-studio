@@ -16,6 +16,7 @@ import { getUnitSymbol } from "../../../../utils/unitSymbols";
 import { BonjeanCurvesPanel } from "./BonjeanCurvesPanel";
 import { CrossCurvesPanel } from "./CrossCurvesPanel";
 import { GZCurvePanel } from "./GZCurvePanel";
+import { CoefficientsEvolutionPanel } from "./CoefficientsEvolutionPanel";
 
 interface HydrostaticCurvesPanelProps {
   vesselId: string;
@@ -28,7 +29,15 @@ interface HydrostaticCurvesPanelProps {
 export const HydrostaticCurvesPanel = observer(
   ({ vesselId, vessel, results, curves, onDraftHover }: HydrostaticCurvesPanelProps) => {
     const [selectedCurveType, setSelectedCurveType] = useState<
-      "displacement" | "kb" | "lcb" | "awp" | "gmt" | "bonjean" | "cross-curves" | "gz-curve"
+      | "displacement"
+      | "kb"
+      | "lcb"
+      | "awp"
+      | "gmt"
+      | "coefficients"
+      | "bonjean"
+      | "cross-curves"
+      | "gz-curve"
     >("displacement");
 
     const displayUnits = settingsStore.preferredUnits;
@@ -102,6 +111,7 @@ export const HydrostaticCurvesPanel = observer(
                   | "lcb"
                   | "awp"
                   | "gmt"
+                  | "coefficients"
                   | "bonjean"
                   | "cross-curves"
                   | "gz-curve"
@@ -114,6 +124,7 @@ export const HydrostaticCurvesPanel = observer(
             <option value="lcb">LCB (Longitudinal Center of Buoyancy)</option>
             <option value="awp">Waterplane Area (AWP)</option>
             <option value="gmt">GMt (Transverse Metacentric Height)</option>
+            <option value="coefficients">Coefficients Evolution (CB, CP, CM, CWP)</option>
             <option value="bonjean">Bonjean Curves</option>
             <option value="cross-curves">Cross-Curves (KN)</option>
             <option value="gz-curve">GZ Curve (Righting Arm)</option>
@@ -122,7 +133,13 @@ export const HydrostaticCurvesPanel = observer(
 
         {/* Chart */}
         <div className="flex-1 min-h-0">
-          {selectedCurveType === "bonjean" ? (
+          {selectedCurveType === "coefficients" ? (
+            <CoefficientsEvolutionPanel
+              vessel={vessel}
+              results={results}
+              onDraftHover={onDraftHover}
+            />
+          ) : selectedCurveType === "bonjean" ? (
             <BonjeanCurvesPanel
               vesselId={vesselId}
               stationsCount={vessel?.stationsCount}

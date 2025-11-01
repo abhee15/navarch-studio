@@ -264,7 +264,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Top Toolbar */}
-      <div className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
+      <div className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 relative z-40">
         <div className="h-14 px-4 flex items-center justify-between gap-4">
           {/* Left: Back button + Vessel name */}
           <div className="flex items-center gap-3 min-w-0">

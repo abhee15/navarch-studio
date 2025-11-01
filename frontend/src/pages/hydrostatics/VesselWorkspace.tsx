@@ -94,7 +94,7 @@ export const VesselWorkspace = observer(function VesselWorkspace() {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Main Navigation Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 relative z-50">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
