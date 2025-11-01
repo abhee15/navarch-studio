@@ -32,6 +32,7 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
     layout,
     setMode,
     updateGridLayout,
+    updatePanelState,
     togglePanelCollapsed,
     setPanelFullscreen,
     resetLayout,
@@ -121,6 +122,13 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
         setIttc57Result(result);
         setHmResult(null);
         setPowerResult(null);
+
+        // Unhide ITTC-57 results and charts panels
+        updatePanelState("resistance-ittc-results", { hidden: false });
+        updatePanelState("resistance-charts", { hidden: false });
+        // Hide HM and power panels
+        updatePanelState("resistance-hm-results", { hidden: true });
+        updatePanelState("resistance-power-results", { hidden: true });
       } else {
         const result = await resistanceCalculationsApi.calculateHoltropMennen({
           vesselId,
@@ -132,6 +140,12 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
         });
         setHmResult(result);
         setIttc57Result(null);
+
+        // Unhide HM results and charts panels
+        updatePanelState("resistance-hm-results", { hidden: false });
+        updatePanelState("resistance-charts", { hidden: false });
+        // Hide ITTC-57 panel
+        updatePanelState("resistance-ittc-results", { hidden: true });
 
         // Auto-calculate power curves if EHP is available
         if (result.effectivePower.length > 0) {
@@ -145,6 +159,11 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
             serviceMargin,
           });
           setPowerResult(powerCurves);
+          // Unhide power results panel
+          updatePanelState("resistance-power-results", { hidden: false });
+        } else {
+          // Hide power panel if no power curves
+          updatePanelState("resistance-power-results", { hidden: true });
         }
       }
 
@@ -174,6 +193,7 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
     etaO,
     useDecomposedEfficiency,
     setMode,
+    updatePanelState,
   ]);
 
   // Recalculate power curves when service margin or efficiency changes (if HM result exists)
