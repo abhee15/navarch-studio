@@ -129,11 +129,11 @@ public class CatalogWaterServiceTests : IDisposable
         result.Medium.Should().Be("Fresh");
         result.Temperature_C.Should().Be(10m);
         result.IsInterpolated.Should().BeTrue();
-        
+
         // Density should be between 999.8425 (0°C) and 999.1026 (15°C)
         result.Density.Should().BeGreaterThan(999.1026m);
         result.Density.Should().BeLessThan(999.8425m);
-        
+
         // Viscosity should be between values at 0°C and 15°C
         result.KinematicViscosity_m2s.Should().BeGreaterThan(0.000001139m);
         result.KinematicViscosity_m2s.Should().BeLessThan(0.000001792m);
@@ -213,4 +213,3 @@ public class CatalogWaterServiceTests : IDisposable
         _context.Dispose();
     }
 }
-
