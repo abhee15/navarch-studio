@@ -374,6 +374,27 @@ try
                 // Don't throw - seeding is optional, but log warning for monitoring
             }
 
+            // Auto-seed template vessel in ALL environments (required for proper functioning)
+            Console.WriteLine("[SEED] Checking for template vessel...");
+            Log.Information("[SEED] Checking for template vessel...");
+
+            try
+            {
+                var seedService = scope.ServiceProvider.GetRequiredService<DataService.Services.Hydrostatics.SampleVesselSeedService>();
+
+                // Seed template vessel (with fixed ID) - always run to ensure geometry exists
+                await seedService.SeedTemplateVesselAsync();
+
+                Console.WriteLine("[SEED] Template vessel check complete!");
+                Log.Information("[SEED] Template vessel check complete!");
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"[SEED] WARNING: Failed to seed template vessel: {seedEx.Message}");
+                Log.Warning(seedEx, "[SEED] Failed to seed template vessel: {Message}", seedEx.Message);
+                // Don't throw - seeding is optional
+            }
+
             // Auto-seed sample vessels in development
             if (app.Environment.IsDevelopment())
             {

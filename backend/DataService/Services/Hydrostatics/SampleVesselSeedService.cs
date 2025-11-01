@@ -124,6 +124,69 @@ public class SampleVesselSeedService
     }
 
     /// <summary>
+    /// Seeds the template vessel with fixed ID for all users
+    /// This is the default vessel shown on first load
+    /// </summary>
+    public async Task SeedTemplateVesselAsync(CancellationToken cancellationToken = default)
+    {
+        var templateVesselId = Shared.Constants.TemplateVessels.HydrostaticsVesselId;
+
+        // Check if template vessel already exists
+        var existingTemplate = await _context.Vessels.FindAsync(new object[] { templateVesselId }, cancellationToken);
+
+        if (existingTemplate != null)
+        {
+            // Check if it has geometry
+            var hasGeometry = await _context.Stations.AnyAsync(s => s.VesselId == templateVesselId, cancellationToken);
+            if (hasGeometry)
+            {
+                _logger.LogInformation("Template vessel already exists with geometry");
+                return;
+            }
+
+            // Has vessel but no geometry - seed geometry
+            _logger.LogInformation("Template vessel exists but has no geometry. Seeding geometry...");
+            await SeedWigleyGeometryAsync(templateVesselId, 100m, 10m, 6.25m, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Template vessel geometry seeded");
+            return;
+        }
+
+        // Create template vessel with Wigley hull form (well-known analytical hull)
+        var templateVessel = new Vessel
+        {
+            Id = templateVesselId,
+            UserId = Shared.Constants.TemplateVessels.SystemUserId, // System user (all zeros)
+            Name = "Wigley Hull (Template)",
+            Description = "Template vessel for hydrostatic analysis demonstration. Classical Wigley parabolic hull form with known analytical properties.",
+            Lpp = 100m,
+            Beam = 10m,
+            DesignDraft = 6.25m,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var templateMetadata = new VesselMetadata
+        {
+            VesselId = templateVessel.Id,
+            VesselType = "Ship",
+            Size = "Small",
+            BlockCoefficient = 0.444m,
+            HullFamily = "Wigley",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Vessels.Add(templateVessel);
+        _context.VesselMetadata.Add(templateMetadata);
+
+        // Generate Wigley geometry
+        await SeedWigleyGeometryAsync(templateVessel.Id, templateVessel.Lpp, templateVessel.Beam, templateVessel.DesignDraft, cancellationToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Seeded template vessel {VesselId}", templateVessel.Id);
+    }
+
+    /// <summary>
     /// Seeds both sample vessels
     /// </summary>
     public async Task SeedAllSampleVesselsAsync(Guid userId, CancellationToken cancellationToken = default)
