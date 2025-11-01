@@ -11,7 +11,7 @@ namespace DataService.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/v1/catalog/water")]
+[Route("api/v{version:apiVersion}/catalog/water")]
 [Produces("application/json")]
 public class CatalogWaterController : ControllerBase
 {
