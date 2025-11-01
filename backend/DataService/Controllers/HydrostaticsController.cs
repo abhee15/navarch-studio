@@ -70,6 +70,11 @@ public class HydrostaticsController : ControllerBase
             _logger.LogWarning(ex, "Invalid operation computing hydrostatic table for vessel {VesselId}", vesselId);
             return BadRequest(new { error = ex.Message });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error computing hydrostatic table for vessel {VesselId}", vesselId);
+            return StatusCode(500, new { error = "An unexpected error occurred", details = ex.Message });
+        }
     }
 
     /// <summary>
@@ -103,6 +108,12 @@ public class HydrostaticsController : ControllerBase
         {
             _logger.LogWarning(ex, "Invalid operation computing hydrostatics for vessel {VesselId}", vesselId);
             return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error computing hydrostatics at draft {Draft} for vessel {VesselId}",
+                request.Draft, vesselId);
+            return StatusCode(500, new { error = "An unexpected error occurred", details = ex.Message });
         }
     }
 
@@ -153,6 +164,11 @@ public class HydrostaticsController : ControllerBase
         {
             _logger.LogWarning(ex, "Vessel {VesselId} not found", vesselId);
             return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error solving trim for vessel {VesselId}", vesselId);
+            return StatusCode(500, new { error = "An unexpected error occurred", details = ex.Message });
         }
     }
 }

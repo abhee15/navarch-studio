@@ -77,6 +77,11 @@ public class CurvesController : ControllerBase
             _logger.LogWarning(ex, "Invalid operation generating curves for vessel {VesselId}", vesselId);
             return BadRequest(new { error = ex.Message });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error generating curves for vessel {VesselId}", vesselId);
+            return StatusCode(500, new { error = "An unexpected error occurred", details = ex.Message });
+        }
     }
 
     /// <summary>
@@ -103,6 +108,11 @@ public class CurvesController : ControllerBase
         {
             _logger.LogWarning(ex, "Invalid operation generating Bonjean curves for vessel {VesselId}", vesselId);
             return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error generating Bonjean curves for vessel {VesselId}", vesselId);
+            return StatusCode(500, new { error = "An unexpected error occurred", details = ex.Message });
         }
     }
 }
