@@ -15,6 +15,7 @@ import { settingsStore } from "../../../../stores/SettingsStore";
 import { getUnitSymbol } from "../../../../utils/unitSymbols";
 import { BonjeanCurvesPanel } from "./BonjeanCurvesPanel";
 import { CrossCurvesPanel } from "./CrossCurvesPanel";
+import { GZCurvePanel } from "./GZCurvePanel";
 
 interface HydrostaticCurvesPanelProps {
   vesselId: string;
@@ -27,7 +28,7 @@ interface HydrostaticCurvesPanelProps {
 export const HydrostaticCurvesPanel = observer(
   ({ vesselId, vessel, results, curves, onDraftHover }: HydrostaticCurvesPanelProps) => {
     const [selectedCurveType, setSelectedCurveType] = useState<
-      "displacement" | "kb" | "lcb" | "awp" | "gmt" | "bonjean" | "cross-curves"
+      "displacement" | "kb" | "lcb" | "awp" | "gmt" | "bonjean" | "cross-curves" | "gz-curve"
     >("displacement");
 
     const displayUnits = settingsStore.preferredUnits;
@@ -103,6 +104,7 @@ export const HydrostaticCurvesPanel = observer(
                   | "gmt"
                   | "bonjean"
                   | "cross-curves"
+                  | "gz-curve"
               )
             }
             className="border border-border bg-background text-foreground rounded text-xs py-1 px-2 focus:outline-none focus:ring-2 focus:ring-ring"
@@ -114,6 +116,7 @@ export const HydrostaticCurvesPanel = observer(
             <option value="gmt">GMt (Transverse Metacentric Height)</option>
             <option value="bonjean">Bonjean Curves</option>
             <option value="cross-curves">Cross-Curves (KN)</option>
+            <option value="gz-curve">GZ Curve (Righting Arm)</option>
           </select>
         </div>
 
@@ -128,6 +131,8 @@ export const HydrostaticCurvesPanel = observer(
             />
           ) : selectedCurveType === "cross-curves" ? (
             <CrossCurvesPanel vesselId={vesselId} vessel={vessel} />
+          ) : selectedCurveType === "gz-curve" ? (
+            <GZCurvePanel vesselId={vesselId} vessel={vessel} />
           ) : selectedCurve ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
