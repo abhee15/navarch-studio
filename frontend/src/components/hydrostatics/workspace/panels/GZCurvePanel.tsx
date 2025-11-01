@@ -91,7 +91,7 @@ export const GZCurvePanel = observer(({ vesselId, vessel }: GZCurvePanelProps) =
         const gz2 = points[i].gz;
         const angle1 = points[i - 1].heelAngle;
         const angle2 = points[i].heelAngle;
-        vanishingAngle = angle1 - gz1 * (angle2 - angle1) / (gz2 - gz1);
+        vanishingAngle = angle1 - (gz1 * (angle2 - angle1)) / (gz2 - gz1);
         break;
       }
     }
@@ -384,9 +384,7 @@ export const GZCurvePanel = observer(({ vesselId, vessel }: GZCurvePanelProps) =
             />
           </div>
           <div>
-            <label className="text-[10px] font-medium text-foreground block mb-1">
-              Step (°)
-            </label>
+            <label className="text-[10px] font-medium text-foreground block mb-1">Step (°)</label>
             <input
               type="number"
               value={angleIncrement}
