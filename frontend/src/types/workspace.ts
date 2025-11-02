@@ -16,6 +16,8 @@ export type PanelId =
   | "curves"
   | "hull"
   | "bodyplan"
+  | "bonjean"
+  | "waterlines-buttocks"
   | "table"
   | "geometry"
   | "parameters"
@@ -99,11 +101,13 @@ export const DEFAULT_GRID_LAYOUTS: { lg: GridLayout[]; md: GridLayout[]; sm: Gri
     { i: "hull", x: 8, y: 2, w: 4, h: 6, minW: 3, minH: 4 },
     { i: "vessel3d", x: 0, y: 8, w: 6, h: 8, minW: 4, minH: 6 },
     { i: "bodyplan", x: 6, y: 8, w: 6, h: 8, minW: 4, minH: 6 },
-    { i: "animated-waterplane3d", x: 0, y: 16, w: 12, h: 10, minW: 6, minH: 8 },
-    { i: "table", x: 0, y: 26, w: 12, h: 8, minW: 6, minH: 4 },
-    { i: "geometry", x: 0, y: 34, w: 6, h: 4, minW: 4, minH: 3 },
-    { i: "parameters", x: 6, y: 34, w: 3, h: 4, minW: 3, minH: 3 },
-    { i: "status", x: 9, y: 34, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "bonjean", x: 0, y: 16, w: 6, h: 8, minW: 4, minH: 6 },
+    { i: "waterlines-buttocks", x: 6, y: 16, w: 6, h: 8, minW: 4, minH: 6 },
+    { i: "animated-waterplane3d", x: 0, y: 24, w: 12, h: 10, minW: 6, minH: 8 },
+    { i: "table", x: 0, y: 34, w: 12, h: 8, minW: 6, minH: 4 },
+    { i: "geometry", x: 0, y: 42, w: 6, h: 4, minW: 4, minH: 3 },
+    { i: "parameters", x: 6, y: 42, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "status", x: 9, y: 42, w: 3, h: 4, minW: 3, minH: 3 },
   ],
   md: [
     { i: "kpis", x: 0, y: 0, w: 10, h: 2, minW: 5, minH: 2 },
@@ -111,22 +115,26 @@ export const DEFAULT_GRID_LAYOUTS: { lg: GridLayout[]; md: GridLayout[]; sm: Gri
     { i: "hull", x: 6, y: 2, w: 4, h: 6, minW: 3, minH: 4 },
     { i: "vessel3d", x: 0, y: 8, w: 5, h: 8, minW: 4, minH: 6 },
     { i: "bodyplan", x: 5, y: 8, w: 5, h: 8, minW: 4, minH: 6 },
-    { i: "animated-waterplane3d", x: 0, y: 16, w: 10, h: 10, minW: 6, minH: 8 },
-    { i: "table", x: 0, y: 26, w: 10, h: 8, minW: 5, minH: 4 },
-    { i: "geometry", x: 0, y: 34, w: 5, h: 4, minW: 4, minH: 3 },
-    { i: "parameters", x: 5, y: 34, w: 3, h: 4, minW: 3, minH: 3 },
-    { i: "status", x: 8, y: 34, w: 2, h: 4, minW: 2, minH: 3 },
+    { i: "bonjean", x: 0, y: 16, w: 5, h: 8, minW: 4, minH: 6 },
+    { i: "waterlines-buttocks", x: 5, y: 16, w: 5, h: 8, minW: 4, minH: 6 },
+    { i: "animated-waterplane3d", x: 0, y: 24, w: 10, h: 10, minW: 6, minH: 8 },
+    { i: "table", x: 0, y: 34, w: 10, h: 8, minW: 5, minH: 4 },
+    { i: "geometry", x: 0, y: 42, w: 5, h: 4, minW: 4, minH: 3 },
+    { i: "parameters", x: 5, y: 42, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "status", x: 8, y: 42, w: 2, h: 4, minW: 2, minH: 3 },
   ],
   sm: [
     { i: "kpis", x: 0, y: 0, w: 6, h: 2, minW: 6, minH: 2 },
     { i: "curves", x: 0, y: 2, w: 6, h: 6, minW: 6, minH: 4 },
     { i: "hull", x: 0, y: 8, w: 6, h: 6, minW: 6, minH: 4 },
     { i: "bodyplan", x: 0, y: 14, w: 6, h: 8, minW: 6, minH: 6 },
-    { i: "animated-waterplane3d", x: 0, y: 22, w: 6, h: 10, minW: 6, minH: 8 },
-    { i: "table", x: 0, y: 32, w: 6, h: 8, minW: 6, minH: 4 },
-    { i: "geometry", x: 0, y: 40, w: 6, h: 4, minW: 6, minH: 3 },
-    { i: "parameters", x: 0, y: 44, w: 6, h: 4, minW: 6, minH: 3 },
-    { i: "status", x: 0, y: 48, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "bonjean", x: 0, y: 22, w: 6, h: 8, minW: 6, minH: 6 },
+    { i: "waterlines-buttocks", x: 0, y: 30, w: 6, h: 8, minW: 6, minH: 6 },
+    { i: "animated-waterplane3d", x: 0, y: 38, w: 6, h: 10, minW: 6, minH: 8 },
+    { i: "table", x: 0, y: 48, w: 6, h: 8, minW: 6, minH: 4 },
+    { i: "geometry", x: 0, y: 56, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "parameters", x: 0, y: 60, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "status", x: 0, y: 64, w: 6, h: 4, minW: 6, minH: 3 },
   ],
 };
 
@@ -163,6 +171,22 @@ export const PANEL_DEFINITIONS: Partial<Record<PanelId, PanelDefinition>> = {
     title: "Body Plan",
     description: "2D sectional view of hull stations",
     icon: "layers",
+    defaultSize: { w: 6, h: 8, minW: 4, minH: 6 },
+    availableInMobile: false,
+  },
+  bonjean: {
+    id: "bonjean",
+    title: "Bonjean Curves",
+    description: "Sectional area curves at each station",
+    icon: "chart-line",
+    defaultSize: { w: 6, h: 8, minW: 4, minH: 6 },
+    availableInMobile: false,
+  },
+  "waterlines-buttocks": {
+    id: "waterlines-buttocks",
+    title: "Waterlines & Buttocks",
+    description: "XY waterlines and XZ buttock projections",
+    icon: "lines",
     defaultSize: { w: 6, h: 8, minW: 4, minH: 6 },
     availableInMobile: false,
   },
@@ -224,6 +248,8 @@ export const DEFAULT_PANEL_STATES: Partial<Record<PanelId, PanelState>> = {
   curves: { id: "curves", collapsed: false, hidden: false, fullscreen: false },
   hull: { id: "hull", collapsed: false, hidden: false, fullscreen: false },
   bodyplan: { id: "bodyplan", collapsed: false, hidden: false, fullscreen: false },
+  bonjean: { id: "bonjean", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
+  "waterlines-buttocks": { id: "waterlines-buttocks", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
   table: { id: "table", collapsed: false, hidden: false, fullscreen: false },
   geometry: { id: "geometry", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
   parameters: { id: "parameters", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default

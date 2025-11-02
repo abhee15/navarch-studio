@@ -14,6 +14,9 @@ import { GeometryEditorPanel } from "./panels/GeometryEditorPanel";
 import { ParametersSummaryPanel } from "./panels/ParametersSummaryPanel";
 import { ComputationStatusPanel } from "./panels/ComputationStatusPanel";
 import { Vessel3DPanel } from "./panels/Vessel3DPanel";
+import { AnimatedWaterplane3DPanel } from "./panels/AnimatedWaterplane3DPanel";
+import { BonjeanCurvesPanel } from "./panels/BonjeanCurvesPanel";
+import { WaterlinesButtocksPanel } from "./panels/WaterlinesButtocksPanel";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -260,6 +263,26 @@ export function ViewModeLayout({
       case "bodyplan":
         return <BodyPlanPanel vesselId={vessel?.id || ""} lpp={vessel?.lpp || 0} />;
 
+      case "bonjean":
+        return (
+          <BonjeanCurvesPanel
+            vesselId={vessel?.id || ""}
+            stationsCount={vessel?.stationsCount}
+            waterlinesCount={vessel?.waterlinesCount}
+            offsetsCount={vessel?.offsetsCount}
+          />
+        );
+
+      case "waterlines-buttocks":
+        return (
+          <WaterlinesButtocksPanel
+            vesselId={vessel?.id || ""}
+            stationsCount={vessel?.stationsCount}
+            waterlinesCount={vessel?.waterlinesCount}
+            offsetsCount={vessel?.offsetsCount}
+          />
+        );
+
       case "table":
         return (
           <HydrostaticsTablePanel
@@ -303,6 +326,16 @@ export function ViewModeLayout({
       case "vessel3d":
         return <Vessel3DPanel vessel={vessel} currentResult={currentResult} kg={kg} lcg={lcg} />;
 
+      case "animated-waterplane3d":
+        return (
+          <AnimatedWaterplane3DPanel
+            vessel={vessel}
+            loadcaseId={selectedLoadcaseId}
+            kg={kg}
+            lcg={lcg}
+          />
+        );
+
       default:
         return <div className="text-sm text-muted-foreground">Unknown panel: {panelId}</div>;
     }
@@ -315,11 +348,14 @@ export function ViewModeLayout({
       curves: "Hydrostatic Curves",
       hull: "Hull Diagram",
       bodyplan: "Body Plan (2D Sections)",
+      bonjean: "Bonjean Curves",
+      "waterlines-buttocks": "Waterlines & Buttocks",
       table: "Hydrostatics Table",
       geometry: "Geometry Editor",
       parameters: "Parameters Summary",
       status: "Computation Status",
       vessel3d: "3D Vessel Visualization",
+      "animated-waterplane3d": "Animated Waterplane 3D",
     };
     return titles[panelId] || "Panel";
   };
