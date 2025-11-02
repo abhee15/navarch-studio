@@ -456,6 +456,16 @@ jobs:
           docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:latest
           echo "image=${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+      - name: Build and push Hull Sizing Service
+        id: build-hullsizing
+        if: steps.build-plan.outputs.build_backend == 'true'
+        run: |
+          IMAGE_TAG="${GITHUB_SHA:0:7}"
+          docker build -f backend/HullSizingService/Dockerfile -t ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:latest .
+          docker push ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:latest
+          echo "image=${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
       - name: Build and push Frontend
         id: build-frontend
         if: steps.build-plan.outputs.build_frontend == 'true'
@@ -470,10 +480,11 @@ jobs:
         if: always()
         run: |
           echo "📊 Build Summary:"
-          echo "  Identity Service: ${{ steps.build-identity.outcome }}"
-          echo "  API Gateway:     ${{ steps.build-gateway.outcome }}"
-          echo "  Data Service:     ${{ steps.build-data.outcome }}"
-          echo "  Frontend:         ${{ steps.build-frontend.outcome }}"
+          echo "  Identity Service:     ${{ steps.build-identity.outcome }}"
+          echo "  API Gateway:          ${{ steps.build-gateway.outcome }}"
+          echo "  Data Service:         ${{ steps.build-data.outcome }}"
+          echo "  Hull Sizing Service:  ${{ steps.build-hullsizing.outcome }}"
+          echo "  Frontend:             ${{ steps.build-frontend.outcome }}"
 
   deploy-infrastructure:
     runs-on: ubuntu-latest
@@ -667,6 +678,10 @@ jobs:
             --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-data-service')].ServiceArn | [0]" \
             --output text)
 
+          HULLSIZING_ARN=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-hull-sizing-service')].ServiceArn | [0]" \
+            --output text)
+
           API_ARN=$(aws apprunner list-services \
             --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceArn | [0]" \
             --output text)
@@ -687,6 +702,15 @@ jobs:
             echo "✅ Data Service deployment initiated"
           else
             echo "⚠️  Data Service not found, skipping"
+          fi
+
+          echo ""
+          echo "📦 Deploying Hull Sizing Service..."
+          if [ -n "$HULLSIZING_ARN" ] && [ "$HULLSIZING_ARN" != "None" ]; then
+            aws apprunner start-deployment --service-arn "$HULLSIZING_ARN"
+            echo "✅ Hull Sizing Service deployment initiated"
+          else
+            echo "⚠️  Hull Sizing Service not found, skipping"
           fi
 
           echo ""
@@ -711,6 +735,7 @@ jobs:
           # Log group names for services
           IDENTITY_LOG_GROUP="/aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-identity-service"
           DATA_LOG_GROUP="/aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-data-service"
+          HULLSIZING_LOG_GROUP="/aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-hull-sizing-service"
 
           # Calculate start time (15 minutes ago to catch recent deployments)
           START_TIME=$(($(date +%s) - 900))000
@@ -769,6 +794,33 @@ jobs:
             echo "   Looking for: '[MIGRATION] Migrations applied successfully!' or '[MIGRATION] Database schema is up to date'"
           fi
 
+          # Check Hull Sizing Service migrations
+          echo ""
+          echo "Checking Hull Sizing Service migrations..."
+
+          # Hull Sizing Service uses [MIGRATION] prefix: "[MIGRATION] Migrations applied successfully!" or "[MIGRATION] Database schema is up to date"
+          HULLSIZING_MIGRATION_SUCCESS=$(aws logs filter-log-events \
+            --log-group-name "$HULLSIZING_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "[MIGRATION] Migrations applied successfully" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+
+          HULLSIZING_MIGRATION_UP_TO_DATE=$(aws logs filter-log-events \
+            --log-group-name "$HULLSIZING_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "[MIGRATION] Database schema is up to date" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$HULLSIZING_MIGRATION_SUCCESS" ] || [ -n "$HULLSIZING_MIGRATION_UP_TO_DATE" ]; then
+            echo "✅ Hull Sizing Service: Migrations verified"
+          else
+            echo "⚠️  Hull Sizing Service: Migration status inconclusive (may still be starting)"
+            echo "   Check logs manually: aws logs tail $HULLSIZING_LOG_GROUP --since 15m --region ${{ env.AWS_REGION }}"
+            echo "   Looking for: '[MIGRATION] Migrations applied successfully!' or '[MIGRATION] Database schema is up to date'"
+          fi
+
           # Check for migration errors (fail if found)
           echo ""
           echo "Checking for migration errors..."
@@ -786,6 +838,13 @@ jobs:
             --query 'events[*].message' \
             --output text 2>/dev/null || echo "")
 
+          HULLSIZING_ERROR=$(aws logs filter-log-events \
+            --log-group-name "$HULLSIZING_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "Migration check failed" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+
           if [ -n "$IDENTITY_ERROR" ]; then
             echo "❌ Identity Service migration failed!"
             echo "$IDENTITY_ERROR"
@@ -795,6 +854,12 @@ jobs:
           if [ -n "$DATA_ERROR" ]; then
             echo "❌ Data Service migration failed!"
             echo "$DATA_ERROR"
+            exit 1
+          fi
+
+          if [ -n "$HULLSIZING_ERROR" ]; then
+            echo "❌ Hull Sizing Service migration failed!"
+            echo "$HULLSIZING_ERROR"
             exit 1
           fi
 
@@ -856,7 +921,7 @@ jobs:
 
           echo ""
           echo "✅ Migration verification complete"
-          echo "   Both services have either applied migrations successfully or are up to date"
+          echo "   All services have either applied migrations successfully or are up to date"
 
   deploy-frontend:
     runs-on: ubuntu-latest
