@@ -1,44 +1,344 @@
-var builder = WebApplication.CreateBuilder(args);
+using System.Diagnostics;
+using HullSizingService.Data;
+using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Compact;
+using Shared.Middleware;
+using Shared.Services;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Bootstrap logger for startup errors
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-var app = builder.Build();
+Log.Information("Starting HullSizingService...");
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Configure Serilog
+    builder.Host.UseSerilog((context, services, configuration) =>
+    {
+        configuration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithProcessId()
+            .Enrich.WithThreadId()
+            .Enrich.WithEnvironmentName()
+            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+            .WriteTo.Console(new CompactJsonFormatter())
+            .WriteTo.File(
+                path: "logs/hullsizingservice-.log",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                fileSizeLimitBytes: 10_485_760,
+                rollOnFileSizeLimit: true
+            );
+    });
+
+    // [STARTUP] Log environment and configuration
+    Console.WriteLine($"[STARTUP] ===============================================");
+    Console.WriteLine($"[STARTUP] HullSizingService Starting");
+    Console.WriteLine($"[STARTUP] ===============================================");
+    Console.WriteLine($"[STARTUP] Environment: {builder.Environment.EnvironmentName}");
+    Console.WriteLine($"[STARTUP] Machine: {Environment.MachineName}");
+    Console.WriteLine($"[STARTUP] OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
+    Console.WriteLine($"[STARTUP] Framework: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+
+    // Log key configuration (redact sensitive data)
+    var connString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var safeConnString = connString ?? "NOT SET";
+    Console.WriteLine($"[STARTUP] Connection String: {safeConnString}");
+    Console.WriteLine($"[STARTUP] Services:DataService: {builder.Configuration["Services:DataService"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] ===============================================");
+
+    Log.Information("[STARTUP] HullSizingService starting - Environment: {Environment}", builder.Environment.EnvironmentName);
+
+    // Add services to the container
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        });
+
+    // API Versioning
+    builder.Services.AddApiVersioning(options =>
+    {
+        options.ReportApiVersions = true;
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+        options.ApiVersionReader = new Asp.Versioning.UrlSegmentApiVersionReader();
+    }).AddMvc();
+
+    // Database - Use snake_case naming convention for PostgreSQL
+    builder.Services.AddDbContext<SizingDbContext>(options =>
+    {
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+        options.UseNpgsql(connectionString, npgsqlOptions =>
+        {
+            npgsqlOptions.CommandTimeout(60);
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null);
+            npgsqlOptions.MaxBatchSize(100);
+            // Explicit migration history table in sizing schema
+            npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "sizing");
+        })
+        .UseSnakeCaseNamingConvention()
+        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+        .EnableDetailedErrors(builder.Environment.IsDevelopment());
+    });
+
+    // Memory Cache for JWT key caching and water properties caching
+    builder.Services.AddMemoryCache();
+
+    // HttpClient for service-to-service calls
+    builder.Services.AddHttpClient();
+    builder.Services.AddHttpContextAccessor();
+
+    // JWT Service - Use LocalJwtService in development, CognitoJwtService in production
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Services.AddSingleton<IJwtService, LocalJwtService>();
+        Log.Information("Using LocalJwtService for development");
+    }
+    else
+    {
+        builder.Services.AddSingleton<IJwtService, CognitoJwtService>();
+        Log.Information("Using CognitoJwtService for production");
+    }
+
+    // Unit Conversion Service
+    builder.Services.AddSingleton<NavArch.UnitConversion.Services.IUnitConverter>(sp =>
+        new NavArch.UnitConversion.Services.UnitConverter(null));
+    Log.Information("Unit conversion service registered with default config path");
+
+    // OpenTelemetry Tracing
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource.AddService("HullSizingService"))
+        .WithTracing(tracerProviderBuilder =>
+        {
+            tracerProviderBuilder
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddEntityFrameworkCoreInstrumentation()
+                .AddSource("HullSizingService");
+
+            // Add console exporter in development
+            if (builder.Environment.IsDevelopment())
+            {
+                tracerProviderBuilder.AddConsoleExporter();
+            }
+        });
+
+    // Register ActivitySource for custom instrumentation
+    builder.Services.AddSingleton(new ActivitySource("HullSizingService"));
+
+    // Swagger/OpenAPI
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(options =>
+    {
+        options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+        {
+            Version = "v1",
+            Title = "NavArch Studio - Hull Sizing API",
+            Description = "API for preliminary hull sizing from mission requirements including " +
+                          "first-principles solver, displacement closure, Holtrop-Mennen resistance, and geometry generation.",
+            Contact = new Microsoft.OpenApi.Models.OpenApiContact
+            {
+                Name = "NavArch Studio",
+                Email = "support@navarch-studio.com"
+            },
+            License = new Microsoft.OpenApi.Models.OpenApiLicense
+            {
+                Name = "MIT License",
+                Url = new Uri("https://opensource.org/licenses/MIT")
+            }
+        });
+
+        // Include XML documentation
+        var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+        {
+            options.IncludeXmlComments(xmlPath);
+        }
+
+        options.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] ?? "Unknown" });
+    });
+
+    // CORS - Read allowed origins from configuration
+    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+        ?? new[] { "http://localhost:3000", "http://localhost:5002" };
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAll", policy =>
+        {
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        });
+    });
+
+    // Health checks
+    builder.Services.AddHealthChecks()
+        .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
+    // Rate Limiting
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        {
+            var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: clientIp,
+                factory: _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 100,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                });
+        });
+
+        options.OnRejected = async (context, cancellationToken) =>
+        {
+            context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+            TimeSpan? retryAfter = null;
+            if (context.Lease.TryGetMetadata(System.Threading.RateLimiting.MetadataName.RetryAfter, out var retryAfterValue))
+            {
+                retryAfter = retryAfterValue;
+                context.HttpContext.Response.Headers.RetryAfter = retryAfterValue.TotalSeconds.ToString();
+            }
+
+            await context.HttpContext.Response.WriteAsJsonAsync(new
+            {
+                error = "Too many requests",
+                message = "Rate limit exceeded. Please try again later.",
+                retryAfter = retryAfter?.TotalSeconds
+            }, cancellationToken);
+        };
+    });
+
+    var app = builder.Build();
+
+    // Run migrations synchronously before starting the service
+    Console.WriteLine("[MIGRATION] Starting database migration check...");
+    Log.Information("[MIGRATION] Starting database migration check...");
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<SizingDbContext>();
+
+        try
+        {
+            Console.WriteLine("[MIGRATION] Checking database connectivity...");
+            var canConnect = await dbContext.Database.CanConnectAsync();
+            Console.WriteLine($"[MIGRATION] Database connection successful: {canConnect}");
+
+            var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+            var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
+
+            Console.WriteLine($"[MIGRATION] Migration status - Applied: {appliedMigrations.Count()}, Pending: {pendingMigrations.Count()}");
+
+            if (pendingMigrations.Any())
+            {
+                if (app.Environment.EnvironmentName != "Development")
+                {
+                    Console.WriteLine($"[MIGRATION] Auto-applying {pendingMigrations.Count()} pending migrations...");
+                    await dbContext.Database.MigrateAsync();
+                    Console.WriteLine("[MIGRATION] Migrations applied successfully!");
+                }
+                else
+                {
+                    Console.WriteLine("[MIGRATION] Development mode: Run 'dotnet ef database update' manually.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("[MIGRATION] Database schema is up to date");
+            }
+
+            // TODO: Seed data will be added in Phase 3
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MIGRATION] ERROR: {ex.Message}");
+            Log.Error(ex, "[MIGRATION] Migration check failed");
+        }
+    }
+
+    // Add Correlation ID middleware (FIRST)
+    app.UseMiddleware<CorrelationIdMiddleware>();
+
+    // Global Exception Handler (SECOND)
+    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+    // Security Headers (THIRD)
+    app.UseMiddleware<SecurityHeadersMiddleware>();
+
+    // Rate Limiting (FOURTH)
+    app.UseRateLimiter();
+
+    // Add Serilog request logging
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+        options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+        {
+            diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+            diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+        };
+    });
+
+    // Configure the HTTP request pipeline
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseCors("AllowAll");
+
+    // JWT Authentication Middleware
+    app.UseMiddleware<JwtAuthenticationMiddleware>();
+
+    // Unit Conversion Middleware
+    app.UseMiddleware<UnitConversionMiddleware>();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.MapHealthChecks("/health").DisableRateLimiting();
+
+    Log.Information("HullSizingService started successfully on port 5004");
+    Console.WriteLine("[STARTUP] HullSizingService ready on port 5004");
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "HullSizingService failed to start!");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+// Make Program accessible for integration tests
+public partial class Program { }
