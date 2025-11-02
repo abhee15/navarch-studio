@@ -1,7 +1,7 @@
 import { Responsive, WidthProvider, Layout as GridLayout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import type { VesselDetails } from "../../../types/hydrostatics";
+import type { VesselDetails, HydroResult, Loadcase } from "../../../types/hydrostatics";
 import type {
   SpeedGrid,
   Ittc57CalculationResult,
@@ -15,6 +15,7 @@ import { Ittc57ResultsPanel } from "../panels/Ittc57ResultsPanel";
 import { HoltropMennenResultsPanel } from "../panels/HoltropMennenResultsPanel";
 import { PowerResultsPanel } from "../panels/PowerResultsPanel";
 import { ResistanceChartsPanel } from "../panels/ResistanceChartsPanel";
+import { UnifiedSummaryPanel } from "../panels/UnifiedSummaryPanel";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -34,6 +35,10 @@ interface ViewModeLayoutProps {
   hmResult: HoltropMennenCalculationResult | null;
   powerResult: PowerCurveResult | null;
   kcsBenchmarkResult: KcsBenchmarkResult | null;
+  // Summary data
+  designDraftHydro: HydroResult | null;
+  selectedLoadcase: Loadcase | undefined;
+  serviceSpeedIndex: number | null;
   // Layout
   gridLayouts: { lg: GridLayout[]; md: GridLayout[]; sm: GridLayout[] };
   panelStates: Partial<Record<PanelId, PanelState>>;
@@ -200,6 +205,30 @@ export function ViewModeLayout(props: ViewModeLayoutProps) {
             </PanelWrapper>
           </div>
         )}
+
+        {/* Unified Summary Panel */}
+        {props.hmResult &&
+          props.powerResult &&
+          !getPanelState("resistance-unified-summary").hidden && (
+            <div key="resistance-unified-summary">
+              <PanelWrapper
+                panelId="resistance-unified-summary"
+                title="Unified Summary"
+                panelState={getPanelState("resistance-unified-summary")}
+                onToggleCollapse={() => onTogglePanelCollapsed("resistance-unified-summary")}
+                onToggleFullscreen={() => onSetPanelFullscreen("resistance-unified-summary", true)}
+              >
+                <UnifiedSummaryPanel
+                  vessel={props.vessel}
+                  designDraftHydro={props.designDraftHydro}
+                  loadcase={props.selectedLoadcase || null}
+                  hmResult={props.hmResult}
+                  powerResult={props.powerResult}
+                  serviceSpeedIndex={props.serviceSpeedIndex}
+                />
+              </PanelWrapper>
+            </div>
+          )}
       </ResponsiveGridLayout>
     </div>
   );

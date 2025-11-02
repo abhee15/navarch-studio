@@ -14,6 +14,9 @@ import {
   Legend,
   ResponsiveContainer,
   ComposedChart,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import type {
   Ittc57CalculationResult,
@@ -38,6 +41,22 @@ interface ComponentBreakdownData {
   name: string;
   value: number;
   color: string;
+}
+
+interface PieChartData {
+  name: string;
+  value: number;
+  color: string;
+  fullName: string;
+}
+
+interface PieLabelProps {
+  name?: string;
+  value?: number;
+}
+
+interface TooltipPayload {
+  payload?: PieChartData;
 }
 
 export function ResistanceCharts({
@@ -458,6 +477,173 @@ export function ResistanceCharts({
               </ResponsiveContainer>
             </div>
           )}
+
+          {/* Component Breakdown Pie Chart */}
+          {selectedSpeedIndex !== null &&
+            hmData[selectedSpeedIndex] &&
+            (() => {
+              const selectedData = hmData[selectedSpeedIndex];
+              const pieData = [
+                {
+                  name: "Friction (RF)",
+                  value: selectedData.rf,
+                  color: "#3B82F6",
+                  fullName: "Frictional Resistance",
+                },
+                {
+                  name: "Residuary (RR)",
+                  value: selectedData.rr,
+                  color: "#10B981",
+                  fullName: "Residuary Resistance",
+                },
+                {
+                  name: "Appendage (RA)",
+                  value: selectedData.ra,
+                  color: "#F59E0B",
+                  fullName: "Appendage Resistance",
+                },
+                ...(selectedData.rca !== undefined && selectedData.rca > 0
+                  ? [
+                      {
+                        name: "Correlation (RCA)",
+                        value: selectedData.rca,
+                        color: "#8B5CF6",
+                        fullName: "Correlation Allowance",
+                      },
+                    ]
+                  : []),
+                ...(selectedData.raa !== undefined && selectedData.raa > 0
+                  ? [
+                      {
+                        name: "Air (RAA)",
+                        value: selectedData.raa,
+                        color: "#EF4444",
+                        fullName: "Air Resistance",
+                      },
+                    ]
+                  : []),
+              ].filter((item) => item.value > 0);
+
+              const total = pieData.reduce((sum, item) => sum + item.value, 0);
+
+              const exportPieData = () => {
+                const csvContent = [
+                  "Component,Resistance (kN),Percentage (%)",
+                  ...pieData.map(
+                    (item) =>
+                      `${item.fullName},${item.value.toFixed(3)},${((item.value / total) * 100).toFixed(2)}`
+                  ),
+                  `Total,${total.toFixed(3)},100.00`,
+                ].join("\n");
+
+                const blob = new Blob([csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `resistance-components-${selectedData.speedKnots.toFixed(2)}kts.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              };
+
+              return (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium">
+                      Component Distribution at {selectedData.speedKnots.toFixed(2)} knots
+                      <button
+                        onClick={() => setSelectedSpeedIndex(null)}
+                        className="ml-2 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        (Clear)
+                      </button>
+                    </h4>
+                    <button
+                      onClick={exportPieData}
+                      className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded border border-blue-200 dark:border-blue-700"
+                    >
+                      Export CSV
+                    </button>
+                  </div>
+                  <div className="flex flex-col lg:flex-row items-center gap-4">
+                    {/* Pie Chart */}
+                    <div className="w-full lg:w-1/2">
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={(entry: PieLabelProps) => {
+                              const value = typeof entry.value === "number" ? entry.value : 0;
+                              const percent = ((value / total) * 100).toFixed(1);
+                              const name = entry.name || "";
+                              return `${name.split(" ")[0]}: ${percent}%`;
+                            }}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#FFF",
+                              border: "1px solid #E5E7EB",
+                              borderRadius: "0.375rem",
+                              padding: "8px",
+                            }}
+                            formatter={(value: number, _name: string, props: TooltipPayload) => {
+                              const percent = ((value / total) * 100).toFixed(2);
+                              return [
+                                `${value.toFixed(2)} kN (${percent}%)`,
+                                props.payload?.fullName || "",
+                              ];
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Legend with Details */}
+                    <div className="w-full lg:w-1/2 space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-3">
+                        Component Details
+                      </div>
+                      {pieData.map((item) => {
+                        const percent = ((item.value / total) * 100).toFixed(2);
+                        return (
+                          <div
+                            key={item.name}
+                            className="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-800/50"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <span className="text-sm font-medium">{item.fullName}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-sm font-semibold">
+                                {item.value.toFixed(2)} kN
+                              </span>
+                              <span className="text-xs text-muted-foreground">{percent}%</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="flex items-center justify-between p-2 rounded bg-blue-50 dark:bg-blue-900/30 border-t-2 border-blue-300 dark:border-blue-700">
+                        <span className="text-sm font-semibold">Total Resistance</span>
+                        <span className="text-sm font-bold">{total.toFixed(2)} kN</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
           {/* Power Curves vs Speed */}
           <div className="bg-card border border-border rounded-lg p-4">
