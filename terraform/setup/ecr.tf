@@ -51,6 +51,19 @@ resource "aws_ecr_repository" "frontend" {
   }
 }
 
+resource "aws_ecr_repository" "hull_sizing_service" {
+  name                 = "${var.project_name}-hull-sizing-service"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-hull-sizing-service"
+  }
+}
+
 # ECR lifecycle policies
 resource "aws_ecr_lifecycle_policy" "identity_service" {
   repository = aws_ecr_repository.identity_service.name
@@ -120,6 +133,28 @@ resource "aws_ecr_lifecycle_policy" "data_service" {
 
 resource "aws_ecr_lifecycle_policy" "frontend" {
   repository = aws_ecr_repository.frontend.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last 10 images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = ["v"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 10
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_ecr_lifecycle_policy" "hull_sizing_service" {
+  repository = aws_ecr_repository.hull_sizing_service.name
 
   policy = jsonencode({
     rules = [

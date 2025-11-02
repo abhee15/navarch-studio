@@ -33,6 +33,16 @@ output "data_service_arn" {
   value       = aws_apprunner_service.data_service.arn
 }
 
+output "hull_sizing_service_url" {
+  description = "Hull Sizing Service URL"
+  value       = "https://${aws_apprunner_service.hull_sizing_service.service_url}"
+}
+
+output "hull_sizing_service_arn" {
+  description = "Hull Sizing Service ARN"
+  value       = aws_apprunner_service.hull_sizing_service.arn
+}
+
 output "instance_role_arn" {
   description = "App Runner instance role ARN"
   value       = aws_iam_role.app_runner_instance.arn
