@@ -21,6 +21,7 @@ public class ResistanceCalculationController : ControllerBase
     private readonly HoltropMennenService _hmService;
     private readonly PowerCalculationService _powerService;
     private readonly KcsBenchmarkService _kcsBenchmarkService;
+    private readonly SpeedDraftMatrixService _matrixService;
     private readonly ILogger<ResistanceCalculationController> _logger;
 
     public ResistanceCalculationController(
@@ -29,6 +30,7 @@ public class ResistanceCalculationController : ControllerBase
         HoltropMennenService hmService,
         PowerCalculationService powerService,
         KcsBenchmarkService kcsBenchmarkService,
+        SpeedDraftMatrixService matrixService,
         ILogger<ResistanceCalculationController> logger)
     {
         _context = context;
@@ -36,6 +38,7 @@ public class ResistanceCalculationController : ControllerBase
         _hmService = hmService;
         _powerService = powerService;
         _kcsBenchmarkService = kcsBenchmarkService;
+        _matrixService = matrixService;
         _logger = logger;
     }
 
@@ -278,6 +281,70 @@ public class ResistanceCalculationController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating KCS benchmark");
+            return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Calculates speed-draft matrix (heatmap) for resistance and power analysis
+    /// </summary>
+    [HttpPost("speed-draft-matrix")]
+    [ProducesResponseType(typeof(SpeedDraftMatrixResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CalculateSpeedDraftMatrix(
+        [FromBody] SpeedDraftMatrixRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Validate vessel exists
+        var vessel = await _context.Vessels.FindAsync(new object[] { request.VesselId }, cancellationToken);
+        if (vessel == null)
+        {
+            return NotFound(new { error = $"Vessel with ID {request.VesselId} not found" });
+        }
+
+        // Validate input ranges
+        if (request.MinSpeed >= request.MaxSpeed)
+        {
+            return BadRequest(new { error = "MaxSpeed must be greater than MinSpeed" });
+        }
+
+        if (request.MinDraft >= request.MaxDraft)
+        {
+            return BadRequest(new { error = "MaxDraft must be greater than MinDraft" });
+        }
+
+        if (request.SpeedSteps < 2 || request.SpeedSteps > 100)
+        {
+            return BadRequest(new { error = "SpeedSteps must be between 2 and 100" });
+        }
+
+        if (request.DraftSteps < 2 || request.DraftSteps > 100)
+        {
+            return BadRequest(new { error = "DraftSteps must be between 2 and 100" });
+        }
+
+        try
+        {
+            var result = await _matrixService.CalculateMatrixAsync(request, cancellationToken);
+
+            _logger.LogInformation(
+                "Speed-draft matrix calculation complete for vessel {VesselId}: {TotalPoints} points, Power range {MinPower}-{MaxPower} kW",
+                request.VesselId,
+                result.TotalPoints,
+                result.PowerMatrix.SelectMany(row => row).Min(),
+                result.PowerMatrix.SelectMany(row => row).Max());
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid speed-draft matrix request");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating speed-draft matrix");
             return StatusCode(500, new { error = "Internal server error", details = ex.Message });
         }
     }

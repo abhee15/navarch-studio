@@ -5,6 +5,7 @@ import { SpeedGridPanel } from "../panels/SpeedGridPanel";
 import { ResistanceParametersPanel } from "../panels/ResistanceParametersPanel";
 import { PowerParametersPanel } from "../panels/PowerParametersPanel";
 import { KcsBenchmarkPanel } from "../KcsBenchmarkPanel";
+import { SpeedDraftMatrixPanel } from "../panels/SpeedDraftMatrixPanel";
 
 interface EditModeLayoutProps {
   vessel: VesselDetails;
@@ -131,6 +132,11 @@ export function EditModeLayout(props: EditModeLayoutProps) {
                 vesselDraft={props.vessel.designDraft}
                 onBenchmarkComplete={props.onBenchmarkComplete || (() => {})}
               />
+
+              {/* Speed-Power-Draft Matrix (Heatmap) */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <SpeedDraftMatrixPanel vessel={props.vessel} />
+              </div>
             </>
           )}
 

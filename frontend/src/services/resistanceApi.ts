@@ -11,6 +11,8 @@ import type {
   PowerCurveResult,
   KcsBenchmarkRequest,
   KcsBenchmarkResult,
+  SpeedDraftMatrixRequest,
+  SpeedDraftMatrixResult,
 } from "../types/resistance";
 
 // Use shared API client which includes auth headers and interceptors
@@ -77,6 +79,13 @@ export const resistanceCalculationsApi = {
 
   async validateKcsBenchmark(request: KcsBenchmarkRequest): Promise<KcsBenchmarkResult> {
     const response = await api.post("/resistance/kcs-benchmark", request);
+    return response.data;
+  },
+
+  async calculateSpeedDraftMatrix(
+    request: SpeedDraftMatrixRequest
+  ): Promise<SpeedDraftMatrixResult> {
+    const response = await api.post("/resistance/speed-draft-matrix", request);
     return response.data;
   },
 };

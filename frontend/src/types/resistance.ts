@@ -159,3 +159,91 @@ export interface KcsBenchmarkResult {
   // Calculation details
   calculationDetails?: HoltropMennenCalculationResult;
 }
+
+// Speed-Draft Matrix Types
+export interface DesignPoint {
+  name: string;
+  speed: number; // m/s
+  draft: number; // m
+  expectedPower?: number; // kW (optional)
+}
+
+export interface TrialPoint {
+  name: string;
+  speed: number; // m/s
+  draft: number; // m
+  measuredPower: number; // kW
+  trialDate?: string;
+}
+
+export interface SpeedDraftMatrixRequest {
+  vesselId: string;
+  // Speed range
+  minSpeed: number; // m/s
+  maxSpeed: number; // m/s
+  speedSteps?: number; // default 20
+  // Draft range
+  minDraft: number; // m
+  maxDraft: number; // m
+  draftSteps?: number; // default 15
+  // Calculation parameters (optional)
+  lWL?: number;
+  b?: number;
+  cB?: number;
+  cP?: number;
+  cM?: number;
+  lCB_pct?: number;
+  s?: number;
+  appendageFactor?: number;
+  a_transom?: number;
+  windageArea?: number;
+  k?: number;
+  applyFormFactor?: boolean;
+  // Water properties
+  tempC?: number;
+  salinityPpt?: number;
+  // Design and trial points (optional)
+  designPoints?: DesignPoint[];
+  trialPoints?: TrialPoint[];
+}
+
+export interface MatrixPointDetails {
+  speedIndex: number;
+  draftIndex: number;
+  speed: number; // m/s
+  draft: number; // m
+  // Resistance components
+  frictionResistance: number; // RF (N)
+  residuaryResistance: number; // RR (N)
+  appendageResistance: number; // RA (N)
+  correlationAllowance: number; // RCA (N)
+  airResistance: number; // RAA (N)
+  totalResistance: number; // RT (N)
+  // Power
+  effectivePower: number; // EHP (kW)
+  // Non-dimensional parameters
+  reynoldsNumber: number;
+  froudeNumber: number;
+  frictionCoefficient: number;
+  // Form coefficients at this draft
+  cB: number;
+  cP: number;
+  cM: number;
+}
+
+export interface SpeedDraftMatrixResult {
+  speedGrid: number[]; // m/s
+  draftGrid: number[]; // m
+  // Matrix data: [draftIndex][speedIndex] = value
+  powerMatrix: number[][]; // Effective Power (kW)
+  resistanceMatrix: number[][]; // Total Resistance (N)
+  froudeNumberMatrix: number[][];
+  // Detailed breakdown available for each point
+  pointDetails: MatrixPointDetails[];
+  // Design and trial points echoed back
+  designPoints?: DesignPoint[];
+  trialPoints?: TrialPoint[];
+  // Calculation metadata
+  totalPoints: number;
+  calculationMethod: string;
+}
