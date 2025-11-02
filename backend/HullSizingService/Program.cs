@@ -3,6 +3,8 @@ using HullSizingService.Data;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Polly;
+using Polly.Extensions.Http;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
@@ -106,6 +108,25 @@ try
     // HttpClient for service-to-service calls
     builder.Services.AddHttpClient();
     builder.Services.AddHttpContextAccessor();
+
+    // DataService HTTP Client with Polly resilience policies
+    builder.Services.AddHttpClient<HullSizingService.Services.Integration.IDataServiceClient, HullSizingService.Services.Integration.DataServiceClient>(client =>
+    {
+        var dataServiceUrl = builder.Configuration["Services:DataService"];
+        if (string.IsNullOrEmpty(dataServiceUrl))
+        {
+            throw new InvalidOperationException("Services:DataService configuration is missing");
+        }
+        client.BaseAddress = new Uri(dataServiceUrl);
+        client.Timeout = TimeSpan.FromSeconds(30); // Overall timeout (allows for retries)
+    })
+    .AddPolicyHandler(GetRetryPolicy())
+    .AddPolicyHandler(GetCircuitBreakerPolicy())
+    .AddPolicyHandler(GetTimeoutPolicy());
+
+    // Water Properties Service with caching
+    builder.Services.AddScoped<HullSizingService.Services.IWaterPropertiesService, HullSizingService.Services.WaterPropertiesService>();
+    Log.Information("Water properties service registered with 12h cache and stale fallback");
 
     // JWT Service - Use LocalJwtService in development, CognitoJwtService in production
     if (builder.Environment.IsDevelopment())
@@ -338,6 +359,62 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// Polly Policies for DataService HTTP Client
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt =>
+                TimeSpan.FromMilliseconds(200 + Random.Shared.Next(0, 400)), // Jittered backoff: 200-600ms
+            onRetry: (outcome, timespan, retryCount, context) =>
+            {
+                Log.Warning(
+                    "[POLLY] Retry {RetryCount} after {Delay}ms due to {Reason}",
+                    retryCount,
+                    timespan.TotalMilliseconds,
+                    outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString() ?? "Unknown");
+            });
+}
+
+static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .CircuitBreakerAsync(
+            handledEventsAllowedBeforeBreaking: 5,
+            durationOfBreak: TimeSpan.FromSeconds(30),
+            onBreak: (outcome, breakDelay) =>
+            {
+                Log.Error(
+                    "[POLLY] Circuit breaker opened for {BreakDelay}s due to {Reason}",
+                    breakDelay.TotalSeconds,
+                    outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString() ?? "Unknown");
+            },
+            onReset: () =>
+            {
+                Log.Information("[POLLY] Circuit breaker reset - DataService is healthy again");
+            },
+            onHalfOpen: () =>
+            {
+                Log.Information("[POLLY] Circuit breaker half-open - testing DataService");
+            });
+}
+
+static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
+{
+    return Policy.TimeoutAsync<HttpResponseMessage>(
+        TimeSpan.FromSeconds(2), // Individual request timeout
+        onTimeoutAsync: (context, timespan, task) =>
+        {
+            Log.Warning("[POLLY] Request timed out after {Timeout}s", timespan.TotalSeconds);
+            return Task.CompletedTask;
+        });
 }
 
 // Make Program accessible for integration tests
