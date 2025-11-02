@@ -226,4 +226,3 @@ public class DefaultValuesServiceTests
         Assert.True(tankerResult.EtaD!.Value > ferryResult.EtaD!.Value);
     }
 }
-
