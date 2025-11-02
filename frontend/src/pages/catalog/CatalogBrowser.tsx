@@ -33,21 +33,20 @@ export const CatalogBrowser: React.FC = observer(() => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load all data on mount for accurate counts
   useEffect(() => {
-    const loadData = async () => {
+    const loadAllData = async () => {
       setLoading(true);
       setError(null);
       try {
-        if (activeTab === "hulls") {
-          const data = await getCatalogHulls();
-          setHulls(data);
-        } else if (activeTab === "propellers") {
-          const data = await getPropellerSeries();
-          setPropellerSeries(data);
-        } else if (activeTab === "water") {
-          const data = await getWaterProperties();
-          setWaterProperties(data);
-        }
+        const [hullsData, propellersData, waterData] = await Promise.all([
+          getCatalogHulls(),
+          getPropellerSeries(),
+          getWaterProperties(),
+        ]);
+        setHulls(hullsData);
+        setPropellerSeries(propellersData);
+        setWaterProperties(waterData);
       } catch (err) {
         console.error("Failed to load catalog data:", err);
         setError("Failed to load catalog data");
@@ -57,8 +56,8 @@ export const CatalogBrowser: React.FC = observer(() => {
       }
     };
 
-    loadData();
-  }, [activeTab]);
+    loadAllData();
+  }, []); // Empty dependency array - load once on mount
 
   const handleHome = () => {
     navigate("/dashboard");
@@ -143,13 +142,13 @@ export const CatalogBrowser: React.FC = observer(() => {
                     <span className="font-medium">{hull.hullType}</span>
                   </div>
                 )}
-                {hull.lpp && (
+                {hull.lpp != null && (
                   <div className="flex justify-between">
                     <span>Lpp:</span>
                     <span className="font-medium">{hull.lpp.toFixed(2)} m</span>
                   </div>
                 )}
-                {hull.cb && (
+                {hull.cb != null && (
                   <div className="flex justify-between">
                     <span>Cb:</span>
                     <span className="font-medium">{hull.cb.toFixed(3)}</span>
@@ -216,11 +215,13 @@ export const CatalogBrowser: React.FC = observer(() => {
                   <span>Blades:</span>
                   <span className="font-medium">{series.bladeCount}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>AE/A0:</span>
-                  <span className="font-medium">{series.expandedAreaRatio.toFixed(3)}</span>
-                </div>
-                {series.pitchDiameterRatio && (
+                {series.expandedAreaRatio != null && (
+                  <div className="flex justify-between">
+                    <span>AE/A0:</span>
+                    <span className="font-medium">{series.expandedAreaRatio.toFixed(3)}</span>
+                  </div>
+                )}
+                {series.pitchDiameterRatio != null && (
                   <div className="flex justify-between">
                     <span>P/D:</span>
                     <span className="font-medium">{series.pitchDiameterRatio.toFixed(2)}</span>
@@ -285,12 +286,16 @@ export const CatalogBrowser: React.FC = observer(() => {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Density:</span>
-                        <span className="font-medium">{prop.density.toFixed(1)} kg/m³</span>
+                        <span className="font-medium">
+                          {prop.density != null ? `${prop.density.toFixed(1)} kg/m³` : "N/A"}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Viscosity:</span>
                         <span className="font-medium">
-                          {(prop.kinematicViscosity_m2s * 1e6).toFixed(2)} ×10⁻⁶ m²/s
+                          {prop.kinematicViscosity_m2s != null
+                            ? `${(prop.kinematicViscosity_m2s * 1e6).toFixed(2)} ×10⁻⁶ m²/s`
+                            : "N/A"}
                         </span>
                       </div>
                     </div>
