@@ -227,4 +227,3 @@ public class ComparisonController : ControllerBase
         return userId;
     }
 }
-
