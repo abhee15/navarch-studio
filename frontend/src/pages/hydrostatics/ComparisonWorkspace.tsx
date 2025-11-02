@@ -31,12 +31,14 @@ export const ComparisonWorkspace = observer(function ComparisonWorkspace() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vesselId]);
 
   useEffect(() => {
     if (baselineId && candidateId) {
       compareRuns();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baselineId, candidateId]);
 
   const loadData = async () => {
