@@ -156,3 +156,35 @@ export interface GenerateCurvesRequest {
   maxDraft: number;
   points?: number;
 }
+
+// Hull Projections Types
+
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
+export interface PointXZ {
+  x: number;
+  z: number;
+}
+
+export interface WaterlineCurve {
+  waterlineIndex: number;
+  z: number; // Height of this waterline
+  points: Point2D[]; // XY points along this waterline
+}
+
+export interface ButtockCurve {
+  buttockIndex: number;
+  y: number; // Y-offset from centerline
+  points: PointXZ[]; // XZ points along this buttock
+}
+
+export interface WaterlinesDto {
+  waterlines: WaterlineCurve[];
+}
+
+export interface ButtocksDto {
+  buttocks: ButtockCurve[];
+}

@@ -16,6 +16,8 @@ import type {
   GenerateCurvesRequest,
   CurveData,
   BonjeanCurve,
+  WaterlinesDto,
+  ButtocksDto,
 } from "../types/hydrostatics";
 
 // Use shared API client which includes auth headers and interceptors
@@ -188,6 +190,22 @@ export const curvesApi = {
 
   async getBonjean(vesselId: string): Promise<{ curves: BonjeanCurve[] }> {
     const response = await api.get(`/hydrostatics/vessels/${vesselId}/curves/bonjean`);
+    return response.data;
+  },
+};
+
+// Hull Projections API
+export const projectionsApi = {
+  async getWaterlines(vesselId: string): Promise<WaterlinesDto> {
+    const response = await api.get(`/hydrostatics/vessels/${vesselId}/projections/waterlines`);
+    return response.data;
+  },
+
+  async getButtocks(vesselId: string, numButtocks?: number): Promise<ButtocksDto> {
+    const params = numButtocks ? { numButtocks } : {};
+    const response = await api.get(`/hydrostatics/vessels/${vesselId}/projections/buttocks`, {
+      params,
+    });
     return response.data;
   },
 };

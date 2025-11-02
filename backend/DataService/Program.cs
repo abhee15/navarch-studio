@@ -172,6 +172,7 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IExportService, DataService.Services.Hydrostatics.ExportService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCalculator, DataService.Services.Hydrostatics.StabilityCalculator>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCriteriaChecker, DataService.Services.Hydrostatics.StabilityCriteriaChecker>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IHullProjectionsService, DataService.Services.Hydrostatics.HullProjectionsService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.SampleVesselSeedService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ITemplateVesselSeeder, DataService.Services.Hydrostatics.TemplateVesselSeeder>();
 
@@ -181,6 +182,7 @@ try
     builder.Services.AddScoped<DataService.Services.Resistance.HoltropMennenService>();
     builder.Services.AddScoped<DataService.Services.Resistance.PowerCalculationService>();
     builder.Services.AddScoped<DataService.Services.Resistance.KcsBenchmarkService>();
+    builder.Services.AddScoped<DataService.Services.Resistance.SpeedDraftMatrixService>();
     builder.Services.AddScoped<DataService.Services.Resistance.IDefaultValuesService, DataService.Services.Resistance.DefaultValuesService>();
 
     // Comparison service
