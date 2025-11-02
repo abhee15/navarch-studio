@@ -187,11 +187,15 @@ try
     Console.WriteLine($"[STARTUP] Framework: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
     Console.WriteLine($"[STARTUP] IdentityService URL: {builder.Configuration["Services:IdentityService"] ?? "NOT SET"}");
     Console.WriteLine($"[STARTUP] DataService URL: {builder.Configuration["Services:DataService"] ?? "NOT SET"}");
+    Console.WriteLine($"[STARTUP] HullSizingService URL: {builder.Configuration["Services:HullSizingService"] ?? "NOT SET"}");
     Console.WriteLine($"[STARTUP] CORS Allowed Origins: {string.Join(", ", allowedOrigins)}");
     Console.WriteLine($"[STARTUP] ===============================================");
 
-    Log.Information("[STARTUP] ApiGateway starting - Environment: {Environment}, DataService: {DataServiceUrl}",
-        app.Environment.EnvironmentName, builder.Configuration["Services:DataService"] ?? "NOT SET");
+    Log.Information("[STARTUP] ApiGateway starting - Environment: {Environment}, IdentityService: {IdentityServiceUrl}, DataService: {DataServiceUrl}, HullSizingService: {HullSizingServiceUrl}",
+        app.Environment.EnvironmentName,
+        builder.Configuration["Services:IdentityService"] ?? "NOT SET",
+        builder.Configuration["Services:DataService"] ?? "NOT SET",
+        builder.Configuration["Services:HullSizingService"] ?? "NOT SET");
 
     // Add Correlation ID middleware (FIRST - so all logs have correlation ID)
     app.UseMiddleware<CorrelationIdMiddleware>();

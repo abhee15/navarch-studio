@@ -47,3 +47,7 @@ public interface IStabilityCriteriaChecker
 
 
 
+
+
+
+
