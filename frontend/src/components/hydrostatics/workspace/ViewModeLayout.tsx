@@ -8,6 +8,7 @@ import { PanelWrapper } from "./panels/PanelWrapper";
 import { KPISummaryPanel } from "./panels/KPISummaryPanel";
 import { HydrostaticCurvesPanel } from "./panels/HydrostaticCurvesPanel";
 import { HullDiagramPanel } from "./panels/HullDiagramPanel";
+import { BodyPlanPanel } from "./panels/BodyPlanPanel";
 import { HydrostaticsTablePanel } from "./panels/HydrostaticsTablePanel";
 import { GeometryEditorPanel } from "./panels/GeometryEditorPanel";
 import { ParametersSummaryPanel } from "./panels/ParametersSummaryPanel";
@@ -256,6 +257,9 @@ export function ViewModeLayout({
           />
         );
 
+      case "bodyplan":
+        return <BodyPlanPanel vesselId={vessel?.id || ""} lpp={vessel?.lpp || 0} />;
+
       case "table":
         return (
           <HydrostaticsTablePanel
@@ -310,6 +314,7 @@ export function ViewModeLayout({
       kpis: "Key Performance Indicators",
       curves: "Hydrostatic Curves",
       hull: "Hull Diagram",
+      bodyplan: "Body Plan (2D Sections)",
       table: "Hydrostatics Table",
       geometry: "Geometry Editor",
       parameters: "Parameters Summary",
