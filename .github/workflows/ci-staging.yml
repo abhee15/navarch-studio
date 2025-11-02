@@ -125,6 +125,15 @@ jobs:
           docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:staging
           echo "image=${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+      - name: Build and push Hull Sizing Service
+        id: build-hullsizing
+        run: |
+          IMAGE_TAG="${GITHUB_SHA:0:7}-staging"
+          docker build -f backend/HullSizingService/Dockerfile -t ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:staging .
+          docker push ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:staging
+          echo "image=${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
       - name: Build and push Frontend
         id: build-frontend
         run: |
@@ -445,6 +454,10 @@ jobs:
             --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-data-service')].ServiceArn | [0]" \
             --output text)
 
+          HULLSIZING_ARN=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-hull-sizing-service')].ServiceArn | [0]" \
+            --output text)
+
           API_ARN=$(aws apprunner list-services \
             --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceArn | [0]" \
             --output text)
@@ -465,6 +478,15 @@ jobs:
             echo "✅ Data Service deployment initiated"
           else
             echo "⚠️  Data Service not found, skipping"
+          fi
+
+          echo ""
+          echo "📦 Deploying Hull Sizing Service..."
+          if [ -n "$HULLSIZING_ARN" ] && [ "$HULLSIZING_ARN" != "None" ]; then
+            aws apprunner start-deployment --service-arn "$HULLSIZING_ARN"
+            echo "✅ Hull Sizing Service deployment initiated"
+          else
+            echo "⚠️  Hull Sizing Service not found, skipping"
           fi
 
           echo ""
