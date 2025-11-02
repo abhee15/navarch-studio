@@ -16,6 +16,7 @@ import { HoltropMennenResultsPanel } from "../panels/HoltropMennenResultsPanel";
 import { PowerResultsPanel } from "../panels/PowerResultsPanel";
 import { ResistanceChartsPanel } from "../panels/ResistanceChartsPanel";
 import { UnifiedSummaryPanel } from "../panels/UnifiedSummaryPanel";
+import { ResistanceBreakdownPanel } from "../panels/ResistanceBreakdownPanel";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -167,6 +168,21 @@ export function ViewModeLayout(props: ViewModeLayoutProps) {
               onToggleFullscreen={() => onSetPanelFullscreen("resistance-hm-results", true)}
             >
               <HoltropMennenResultsPanel result={props.hmResult} />
+            </PanelWrapper>
+          </div>
+        )}
+
+        {/* Resistance Breakdown Sparklines Table */}
+        {props.hmResult && !getPanelState("resistance-breakdown").hidden && (
+          <div key="resistance-breakdown">
+            <PanelWrapper
+              panelId="resistance-breakdown"
+              title="Resistance Breakdown"
+              panelState={getPanelState("resistance-breakdown")}
+              onToggleCollapse={() => onTogglePanelCollapsed("resistance-breakdown")}
+              onToggleFullscreen={() => onSetPanelFullscreen("resistance-breakdown", true)}
+            >
+              <ResistanceBreakdownPanel result={props.hmResult} />
             </PanelWrapper>
           </div>
         )}

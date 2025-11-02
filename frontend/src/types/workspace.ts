@@ -21,6 +21,7 @@ export type PanelId =
   | "parameters"
   | "status"
   | "vessel3d"
+  | "animated-waterplane3d"
   // Resistance panels
   | "resistance-calc-type"
   | "resistance-speed-grid"
@@ -29,6 +30,7 @@ export type PanelId =
   | "resistance-kcs-benchmark"
   | "resistance-ittc-results"
   | "resistance-hm-results"
+  | "resistance-breakdown"
   | "resistance-power-results"
   | "resistance-charts"
   | "resistance-unified-summary";
@@ -97,10 +99,11 @@ export const DEFAULT_GRID_LAYOUTS: { lg: GridLayout[]; md: GridLayout[]; sm: Gri
     { i: "hull", x: 8, y: 2, w: 4, h: 6, minW: 3, minH: 4 },
     { i: "vessel3d", x: 0, y: 8, w: 6, h: 8, minW: 4, minH: 6 },
     { i: "bodyplan", x: 6, y: 8, w: 6, h: 8, minW: 4, minH: 6 },
-    { i: "table", x: 0, y: 16, w: 12, h: 8, minW: 6, minH: 4 },
-    { i: "geometry", x: 0, y: 24, w: 6, h: 4, minW: 4, minH: 3 },
-    { i: "parameters", x: 6, y: 24, w: 3, h: 4, minW: 3, minH: 3 },
-    { i: "status", x: 9, y: 24, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "animated-waterplane3d", x: 0, y: 16, w: 12, h: 10, minW: 6, minH: 8 },
+    { i: "table", x: 0, y: 26, w: 12, h: 8, minW: 6, minH: 4 },
+    { i: "geometry", x: 0, y: 34, w: 6, h: 4, minW: 4, minH: 3 },
+    { i: "parameters", x: 6, y: 34, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "status", x: 9, y: 34, w: 3, h: 4, minW: 3, minH: 3 },
   ],
   md: [
     { i: "kpis", x: 0, y: 0, w: 10, h: 2, minW: 5, minH: 2 },
@@ -108,20 +111,22 @@ export const DEFAULT_GRID_LAYOUTS: { lg: GridLayout[]; md: GridLayout[]; sm: Gri
     { i: "hull", x: 6, y: 2, w: 4, h: 6, minW: 3, minH: 4 },
     { i: "vessel3d", x: 0, y: 8, w: 5, h: 8, minW: 4, minH: 6 },
     { i: "bodyplan", x: 5, y: 8, w: 5, h: 8, minW: 4, minH: 6 },
-    { i: "table", x: 0, y: 16, w: 10, h: 8, minW: 5, minH: 4 },
-    { i: "geometry", x: 0, y: 24, w: 5, h: 4, minW: 4, minH: 3 },
-    { i: "parameters", x: 5, y: 24, w: 3, h: 4, minW: 3, minH: 3 },
-    { i: "status", x: 8, y: 24, w: 2, h: 4, minW: 2, minH: 3 },
+    { i: "animated-waterplane3d", x: 0, y: 16, w: 10, h: 10, minW: 6, minH: 8 },
+    { i: "table", x: 0, y: 26, w: 10, h: 8, minW: 5, minH: 4 },
+    { i: "geometry", x: 0, y: 34, w: 5, h: 4, minW: 4, minH: 3 },
+    { i: "parameters", x: 5, y: 34, w: 3, h: 4, minW: 3, minH: 3 },
+    { i: "status", x: 8, y: 34, w: 2, h: 4, minW: 2, minH: 3 },
   ],
   sm: [
     { i: "kpis", x: 0, y: 0, w: 6, h: 2, minW: 6, minH: 2 },
     { i: "curves", x: 0, y: 2, w: 6, h: 6, minW: 6, minH: 4 },
     { i: "hull", x: 0, y: 8, w: 6, h: 6, minW: 6, minH: 4 },
     { i: "bodyplan", x: 0, y: 14, w: 6, h: 8, minW: 6, minH: 6 },
-    { i: "table", x: 0, y: 22, w: 6, h: 8, minW: 6, minH: 4 },
-    { i: "geometry", x: 0, y: 30, w: 6, h: 4, minW: 6, minH: 3 },
-    { i: "parameters", x: 0, y: 34, w: 6, h: 4, minW: 6, minH: 3 },
-    { i: "status", x: 0, y: 38, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "animated-waterplane3d", x: 0, y: 22, w: 6, h: 10, minW: 6, minH: 8 },
+    { i: "table", x: 0, y: 32, w: 6, h: 8, minW: 6, minH: 4 },
+    { i: "geometry", x: 0, y: 40, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "parameters", x: 0, y: 44, w: 6, h: 4, minW: 6, minH: 3 },
+    { i: "status", x: 0, y: 48, w: 6, h: 4, minW: 6, minH: 3 },
   ],
 };
 
@@ -201,6 +206,14 @@ export const PANEL_DEFINITIONS: Partial<Record<PanelId, PanelDefinition>> = {
     defaultSize: { w: 6, h: 8, minW: 4, minH: 6 },
     availableInMobile: false,
   },
+  "animated-waterplane3d": {
+    id: "animated-waterplane3d",
+    title: "Animated Waterplane 3D",
+    description: "3D visualization with draft animation and hydrostatics HUD",
+    icon: "waves",
+    defaultSize: { w: 12, h: 10, minW: 6, minH: 8 },
+    availableInMobile: false,
+  },
 };
 
 /**
@@ -216,6 +229,12 @@ export const DEFAULT_PANEL_STATES: Partial<Record<PanelId, PanelState>> = {
   parameters: { id: "parameters", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
   status: { id: "status", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
   vessel3d: { id: "vessel3d", collapsed: false, hidden: false, fullscreen: false },
+  "animated-waterplane3d": {
+    id: "animated-waterplane3d",
+    collapsed: false,
+    hidden: true,
+    fullscreen: false,
+  }, // Hidden by default
 };
 
 /**
@@ -373,6 +392,14 @@ export const RESISTANCE_PANEL_DEFINITIONS: Partial<Record<PanelId, PanelDefiniti
     defaultSize: { w: 8, h: 6, minW: 6, minH: 4 },
     availableInMobile: true,
   },
+  "resistance-breakdown": {
+    id: "resistance-breakdown",
+    title: "Resistance Breakdown",
+    description: "Sparklines table showing resistance components by speed",
+    icon: "table",
+    defaultSize: { w: 12, h: 6, minW: 8, minH: 4 },
+    availableInMobile: true,
+  },
   "resistance-power-results": {
     id: "resistance-power-results",
     title: "Power Curves",
@@ -417,9 +444,10 @@ export const RESISTANCE_DEFAULT_GRID_LAYOUTS: {
     // Right column: Results panels (67% width = 8 columns)
     { i: "resistance-ittc-results", x: 4, y: 0, w: 8, h: 6, minW: 6, minH: 4 },
     { i: "resistance-hm-results", x: 4, y: 6, w: 8, h: 6, minW: 6, minH: 4 },
-    { i: "resistance-power-results", x: 4, y: 12, w: 8, h: 6, minW: 6, minH: 4 },
-    { i: "resistance-charts", x: 4, y: 18, w: 8, h: 8, minW: 8, minH: 6 },
-    { i: "resistance-unified-summary", x: 0, y: 26, w: 12, h: 8, minW: 8, minH: 6 },
+    { i: "resistance-breakdown", x: 4, y: 12, w: 8, h: 6, minW: 8, minH: 4 },
+    { i: "resistance-power-results", x: 4, y: 18, w: 8, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-charts", x: 4, y: 24, w: 8, h: 8, minW: 8, minH: 6 },
+    { i: "resistance-unified-summary", x: 0, y: 32, w: 12, h: 8, minW: 8, minH: 6 },
   ],
   md: [
     // Tablet: 3 columns for params, 7 for results
@@ -430,9 +458,10 @@ export const RESISTANCE_DEFAULT_GRID_LAYOUTS: {
     { i: "resistance-kcs-benchmark", x: 0, y: 14, w: 3, h: 4, minW: 3, minH: 3 },
     { i: "resistance-ittc-results", x: 3, y: 0, w: 7, h: 6, minW: 5, minH: 4 },
     { i: "resistance-hm-results", x: 3, y: 6, w: 7, h: 6, minW: 5, minH: 4 },
-    { i: "resistance-power-results", x: 3, y: 12, w: 7, h: 6, minW: 5, minH: 4 },
-    { i: "resistance-charts", x: 0, y: 18, w: 10, h: 8, minW: 8, minH: 6 },
-    { i: "resistance-unified-summary", x: 0, y: 26, w: 10, h: 8, minW: 8, minH: 6 },
+    { i: "resistance-breakdown", x: 3, y: 12, w: 7, h: 6, minW: 7, minH: 4 },
+    { i: "resistance-power-results", x: 3, y: 18, w: 7, h: 6, minW: 5, minH: 4 },
+    { i: "resistance-charts", x: 0, y: 24, w: 10, h: 8, minW: 8, minH: 6 },
+    { i: "resistance-unified-summary", x: 0, y: 32, w: 10, h: 8, minW: 8, minH: 6 },
   ],
   sm: [
     // Mobile: stack all panels vertically
@@ -443,9 +472,10 @@ export const RESISTANCE_DEFAULT_GRID_LAYOUTS: {
     { i: "resistance-kcs-benchmark", x: 0, y: 14, w: 6, h: 4, minW: 6, minH: 3 },
     { i: "resistance-ittc-results", x: 0, y: 18, w: 6, h: 6, minW: 6, minH: 4 },
     { i: "resistance-hm-results", x: 0, y: 24, w: 6, h: 6, minW: 6, minH: 4 },
-    { i: "resistance-power-results", x: 0, y: 30, w: 6, h: 6, minW: 6, minH: 4 },
-    { i: "resistance-charts", x: 0, y: 36, w: 6, h: 8, minW: 6, minH: 6 },
-    { i: "resistance-unified-summary", x: 0, y: 44, w: 6, h: 8, minW: 6, minH: 6 },
+    { i: "resistance-breakdown", x: 0, y: 30, w: 6, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-power-results", x: 0, y: 36, w: 6, h: 6, minW: 6, minH: 4 },
+    { i: "resistance-charts", x: 0, y: 42, w: 6, h: 8, minW: 6, minH: 6 },
+    { i: "resistance-unified-summary", x: 0, y: 50, w: 6, h: 8, minW: 6, minH: 6 },
   ],
 };
 
@@ -493,6 +523,12 @@ export const RESISTANCE_DEFAULT_PANEL_STATES: Partial<Record<PanelId, PanelState
   },
   "resistance-hm-results": {
     id: "resistance-hm-results",
+    collapsed: false,
+    hidden: true,
+    fullscreen: false,
+  },
+  "resistance-breakdown": {
+    id: "resistance-breakdown",
     collapsed: false,
     hidden: true,
     fullscreen: false,

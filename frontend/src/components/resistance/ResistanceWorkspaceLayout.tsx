@@ -265,8 +265,9 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
         setHmResult(result);
         setIttc57Result(null);
 
-        // Unhide HM results and charts panels
+        // Unhide HM results, breakdown, and charts panels
         updatePanelState("resistance-hm-results", { hidden: false });
+        updatePanelState("resistance-breakdown", { hidden: false });
         updatePanelState("resistance-charts", { hidden: false });
         // Hide ITTC-57 panel
         updatePanelState("resistance-ittc-results", { hidden: true });
