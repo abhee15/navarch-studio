@@ -338,6 +338,9 @@ try
     // JWT Authentication Middleware
     app.UseMiddleware<JwtAuthenticationMiddleware>();
 
+    // Claims Forwarding Middleware (AFTER JWT authentication)
+    app.UseMiddleware<ClaimsForwardingMiddleware>();
+
     // Unit Conversion Middleware
     app.UseMiddleware<UnitConversionMiddleware>();
 
