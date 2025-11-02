@@ -93,23 +93,26 @@ export const AnimatedWaterplane3DPanel = observer(function AnimatedWaterplane3DP
     return () => clearTimeout(timer);
   }, [lppSI, beamSI, designDraftSI]);
 
-  const fetchHydrostatics = useCallback(async (draft: number) => {
-    if (!vessel) return;
+  const fetchHydrostatics = useCallback(
+    async (draft: number) => {
+      if (!vessel) return;
 
-    try {
-      setIsLoadingHydro(true);
-      const result = await hydrostaticsApi.computeSingle(vessel.id, loadcaseId, draft);
-      setCurrentResult(result);
-    } catch (error) {
-      console.error("Failed to compute hydrostatics:", error);
-      // Don't show toast during animation/recording to avoid clutter
-      if (!isRecording) {
-        toast.error("Failed to compute hydrostatics");
+      try {
+        setIsLoadingHydro(true);
+        const result = await hydrostaticsApi.computeSingle(vessel.id, loadcaseId, draft);
+        setCurrentResult(result);
+      } catch (error) {
+        console.error("Failed to compute hydrostatics:", error);
+        // Don't show toast during animation/recording to avoid clutter
+        if (!isRecording) {
+          toast.error("Failed to compute hydrostatics");
+        }
+      } finally {
+        setIsLoadingHydro(false);
       }
-    } finally {
-      setIsLoadingHydro(false);
-    }
-  }, [vessel, loadcaseId, isRecording]);
+    },
+    [vessel, loadcaseId, isRecording]
+  );
 
   // Fetch hydrostatics when draft changes (debounced)
   useEffect(() => {

@@ -249,7 +249,12 @@ export const DEFAULT_PANEL_STATES: Partial<Record<PanelId, PanelState>> = {
   hull: { id: "hull", collapsed: false, hidden: false, fullscreen: false },
   bodyplan: { id: "bodyplan", collapsed: false, hidden: false, fullscreen: false },
   bonjean: { id: "bonjean", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
-  "waterlines-buttocks": { id: "waterlines-buttocks", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
+  "waterlines-buttocks": {
+    id: "waterlines-buttocks",
+    collapsed: false,
+    hidden: true,
+    fullscreen: false,
+  }, // Hidden by default
   table: { id: "table", collapsed: false, hidden: false, fullscreen: false },
   geometry: { id: "geometry", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
   parameters: { id: "parameters", collapsed: false, hidden: true, fullscreen: false }, // Hidden by default
