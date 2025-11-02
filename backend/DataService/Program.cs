@@ -181,6 +181,10 @@ try
     builder.Services.AddScoped<DataService.Services.Resistance.HoltropMennenService>();
     builder.Services.AddScoped<DataService.Services.Resistance.PowerCalculationService>();
     builder.Services.AddScoped<DataService.Services.Resistance.KcsBenchmarkService>();
+    builder.Services.AddScoped<DataService.Services.Resistance.IDefaultValuesService, DataService.Services.Resistance.DefaultValuesService>();
+
+    // Comparison service
+    builder.Services.AddScoped<ComparisonService>();
 
     // Catalog services
     builder.Services.AddScoped<DataService.Data.Seeds.CatalogSeeder>();

@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import type { VesselDetails } from "../../types/hydrostatics";
+import type { VesselDetails, Loadcase, HydroResult } from "../../types/hydrostatics";
 import { speedGridsApi, resistanceCalculationsApi } from "../../services/resistanceApi";
+import { loadcasesApi, hydrostaticsApi } from "../../services/hydrostaticsApi";
+import { defaultValuesApi } from "../../api/defaultValues";
 import { ManageSpeedGridsDialog } from "./ManageSpeedGridsDialog";
 import { getErrorMessage } from "../../types/errors";
 import type {
@@ -57,6 +59,12 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
   const [showSpeedGridsDialog, setShowSpeedGridsDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
 
+  // Loadcase and hydrostatics for summary
+  const [loadcases, setLoadcases] = useState<Loadcase[]>([]);
+  const [selectedLoadcaseId, setSelectedLoadcaseId] = useState<string>("");
+  const [designDraftHydro, setDesignDraftHydro] = useState<HydroResult | null>(null);
+  const [serviceSpeedIndex, setServiceSpeedIndex] = useState<number | null>(null);
+
   // Calculation state
   const [calculationType, setCalculationType] = useState<"ittc57" | "holtrop-mennen">("ittc57");
   const [computing, setComputing] = useState(false);
@@ -82,6 +90,13 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
   const [etaO, setEtaO] = useState<number | undefined>(undefined);
   const [useDecomposedEfficiency, setUseDecomposedEfficiency] = useState(false);
 
+  // Provenance tracking for default values
+  const [formFactorProvenance, setFormFactorProvenance] = useState<string | undefined>(undefined);
+  const [etaDProvenance, setEtaDProvenance] = useState<string | undefined>(undefined);
+  const [etaHProvenance, setEtaHProvenance] = useState<string | undefined>(undefined);
+  const [etaRProvenance, setEtaRProvenance] = useState<string | undefined>(undefined);
+  const [etaOProvenance, setEtaOProvenance] = useState<string | undefined>(undefined);
+
   // Load speed grids
   useEffect(() => {
     const loadGrids = async () => {
@@ -98,6 +113,115 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
     loadGrids();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vesselId]);
+
+  // Load loadcases
+  useEffect(() => {
+    const loadLoadcases = async () => {
+      try {
+        const data = await loadcasesApi.list(vesselId);
+        setLoadcases(data.loadcases);
+        if (data.loadcases.length > 0 && !selectedLoadcaseId) {
+          setSelectedLoadcaseId(data.loadcases[0].id);
+        }
+      } catch (err) {
+        console.error("Error loading loadcases:", err);
+      }
+    };
+    loadLoadcases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vesselId]);
+
+  // Load design draft hydrostatics when loadcase is selected
+  useEffect(() => {
+    const loadHydrostatics = async () => {
+      if (!selectedLoadcaseId) {
+        setDesignDraftHydro(null);
+        return;
+      }
+
+      try {
+        const result = await hydrostaticsApi.computeSingle(
+          vesselId,
+          selectedLoadcaseId,
+          vessel.designDraft
+        );
+        setDesignDraftHydro(result);
+      } catch (err) {
+        console.error("Error loading hydrostatics:", err);
+        setDesignDraftHydro(null);
+      }
+    };
+    loadHydrostatics();
+  }, [vesselId, selectedLoadcaseId, vessel.designDraft]);
+
+  // Handle "Use Typical Values" for resistance parameters
+  const handleUseTypicalValuesResistance = useCallback(async () => {
+    try {
+      const request = {
+        cb: designDraftHydro?.cb,
+        lb_Ratio: vessel.lpp / vessel.beam,
+        bt_Ratio: vessel.beam / vessel.designDraft,
+        lpp: vessel.lpp,
+        beam: vessel.beam,
+        draft: vessel.designDraft,
+      };
+
+      const result = await defaultValuesApi.getTypicalValues(request);
+
+      if (result.formFactor) {
+        setFormFactor(result.formFactor.value);
+        setFormFactorProvenance(result.formFactor.provenance);
+      }
+
+      toast.success("Typical resistance values applied!");
+    } catch (err) {
+      console.error("Error fetching typical values:", err);
+      toast.error(getErrorMessage(err));
+    }
+  }, [vessel, designDraftHydro]);
+
+  // Handle "Use Typical Values" for power parameters
+  const handleUseTypicalValuesPower = useCallback(async () => {
+    try {
+      const request = {
+        cb: designDraftHydro?.cb,
+        lb_Ratio: vessel.lpp / vessel.beam,
+        bt_Ratio: vessel.beam / vessel.designDraft,
+        lpp: vessel.lpp,
+        beam: vessel.beam,
+        draft: vessel.designDraft,
+      };
+
+      const result = await defaultValuesApi.getTypicalValues(request);
+
+      if (useDecomposedEfficiency) {
+        // Apply decomposed efficiencies
+        if (result.etaH) {
+          setEtaH(result.etaH.value);
+          setEtaHProvenance(result.etaH.provenance);
+        }
+        if (result.etaR) {
+          setEtaR(result.etaR.value);
+          setEtaRProvenance(result.etaR.provenance);
+        }
+        if (result.etaO) {
+          setEtaO(result.etaO.value);
+          setEtaOProvenance(result.etaO.provenance);
+        }
+      } else {
+        // Apply overall efficiency
+        if (result.etaD) {
+          setEtaD(result.etaD.value);
+          setEtaDProvenance(result.etaD.provenance);
+        }
+      }
+
+      toast.success("Typical power values applied!");
+    } catch (err) {
+      console.error("Error fetching typical values:", err);
+      toast.error(getErrorMessage(err));
+    }
+  }, [vessel, designDraftHydro, useDecomposedEfficiency]);
 
   // Handle calculation
   const handleCalculate = useCallback(async () => {
@@ -146,6 +270,10 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
         updatePanelState("resistance-charts", { hidden: false });
         // Hide ITTC-57 panel
         updatePanelState("resistance-ittc-results", { hidden: true });
+        // Show unified summary if we have all needed data
+        if (selectedLoadcaseId && designDraftHydro) {
+          updatePanelState("resistance-unified-summary", { hidden: false });
+        }
 
         // Auto-calculate power curves if EHP is available
         if (result.effectivePower.length > 0) {
@@ -161,6 +289,10 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
           setPowerResult(powerCurves);
           // Unhide power results panel
           updatePanelState("resistance-power-results", { hidden: false });
+          // Show unified summary if we have all needed data
+          if (selectedLoadcaseId && designDraftHydro) {
+            updatePanelState("resistance-unified-summary", { hidden: false });
+          }
         } else {
           // Hide power panel if no power curves
           updatePanelState("resistance-power-results", { hidden: true });
@@ -194,6 +326,8 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
     useDecomposedEfficiency,
     setMode,
     updatePanelState,
+    selectedLoadcaseId,
+    designDraftHydro,
   ]);
 
   // Recalculate power curves when service margin or efficiency changes (if HM result exists)
@@ -221,6 +355,7 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
   }, [serviceMargin, etaD, etaH, etaR, etaO, useDecomposedEfficiency]);
 
   const selectedGrid = speedGrids.find((g) => g.id === selectedSpeedGridId);
+  const selectedLoadcase = loadcases.find((lc) => lc.id === selectedLoadcaseId);
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -262,6 +397,38 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Loadcase Selector */}
+            {loadcases.length > 0 && (
+              <Select
+                value={selectedLoadcaseId}
+                onChange={setSelectedLoadcaseId}
+                options={[
+                  { value: "", label: "Select Loadcase" },
+                  ...loadcases.map((lc) => ({
+                    value: lc.id,
+                    label: lc.name,
+                  })),
+                ]}
+                className="text-xs min-w-[140px]"
+              />
+            )}
+
+            {/* Service Speed Selector */}
+            {hmResult && hmResult.speedGrid.length > 0 && (
+              <Select
+                value={serviceSpeedIndex !== null ? String(serviceSpeedIndex) : ""}
+                onChange={(value) => setServiceSpeedIndex(value ? parseInt(value) : null)}
+                options={[
+                  { value: "", label: "Service Speed" },
+                  ...hmResult.speedGrid.map((speed, idx) => ({
+                    value: String(idx),
+                    label: `${speed.toFixed(2)} m/s (${(speed * 1.94384).toFixed(1)} kn)`,
+                  })),
+                ]}
+                className="text-xs min-w-[160px]"
+              />
+            )}
+
             {/* Preset Layouts Dropdown (view mode only) */}
             {layout.mode === "view" && !isMobile && (
               <Select
@@ -388,6 +555,9 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
             hmResult={hmResult}
             powerResult={powerResult}
             kcsBenchmarkResult={kcsBenchmarkResult}
+            designDraftHydro={designDraftHydro}
+            selectedLoadcase={selectedLoadcase}
+            serviceSpeedIndex={serviceSpeedIndex}
             gridLayouts={layout.gridLayouts}
             panelStates={layout.panelStates}
             onLayoutChange={updateGridLayout}
@@ -411,6 +581,11 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
             etaR={etaR}
             etaO={etaO}
             useDecomposedEfficiency={useDecomposedEfficiency}
+            formFactorProvenance={formFactorProvenance}
+            etaDProvenance={etaDProvenance}
+            etaHProvenance={etaHProvenance}
+            etaRProvenance={etaRProvenance}
+            etaOProvenance={etaOProvenance}
             onCalculationTypeChange={setCalculationType}
             onSpeedGridChange={setSelectedSpeedGridId}
             onFormFactorChange={setFormFactor}
@@ -423,6 +598,8 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
             onEtaRChange={setEtaR}
             onEtaOChange={setEtaO}
             onUseDecomposedEfficiencyChange={setUseDecomposedEfficiency}
+            onUseTypicalValuesResistance={handleUseTypicalValuesResistance}
+            onUseTypicalValuesPower={handleUseTypicalValuesPower}
             onManageSpeedGrids={() => setShowSpeedGridsDialog(true)}
             onBenchmarkComplete={(result) => setKcsBenchmarkResult(result)}
           />

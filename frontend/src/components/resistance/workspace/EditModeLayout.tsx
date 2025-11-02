@@ -21,6 +21,11 @@ interface EditModeLayoutProps {
   etaR: number | undefined;
   etaO: number | undefined;
   useDecomposedEfficiency: boolean;
+  formFactorProvenance?: string;
+  etaDProvenance?: string;
+  etaHProvenance?: string;
+  etaRProvenance?: string;
+  etaOProvenance?: string;
   onCalculationTypeChange: (type: "ittc57" | "holtrop-mennen") => void;
   onSpeedGridChange: (id: string) => void;
   onFormFactorChange: (value: number | undefined) => void;
@@ -33,6 +38,8 @@ interface EditModeLayoutProps {
   onEtaRChange: (value: number | undefined) => void;
   onEtaOChange: (value: number | undefined) => void;
   onUseDecomposedEfficiencyChange: (value: boolean) => void;
+  onUseTypicalValuesResistance?: () => void;
+  onUseTypicalValuesPower?: () => void;
   onManageSpeedGrids: () => void;
   onBenchmarkComplete?: (result: KcsBenchmarkResult) => void;
 }
@@ -85,6 +92,8 @@ export function EditModeLayout(props: EditModeLayoutProps) {
               onApplyFormFactorChange={props.onApplyFormFactorChange}
               onTempChange={props.onTempChange}
               onSalinityChange={props.onSalinityChange}
+              onUseTypicalValues={props.onUseTypicalValuesResistance}
+              formFactorProvenance={props.formFactorProvenance}
             />
           </div>
 
@@ -106,6 +115,11 @@ export function EditModeLayout(props: EditModeLayoutProps) {
                   onEtaRChange={props.onEtaRChange}
                   onEtaOChange={props.onEtaOChange}
                   onUseDecomposedEfficiencyChange={props.onUseDecomposedEfficiencyChange}
+                  onUseTypicalValues={props.onUseTypicalValuesPower}
+                  etaDProvenance={props.etaDProvenance}
+                  etaHProvenance={props.etaHProvenance}
+                  etaRProvenance={props.etaRProvenance}
+                  etaOProvenance={props.etaOProvenance}
                 />
               </div>
 
