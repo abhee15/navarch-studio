@@ -1,0 +1,6 @@
+metric,weight_0to1
+delta_balance,0.35
+installed_power,0.25
+constraints_ok,0.2
+stability_screen,0.1
+teu_or_volume_fit,0.1

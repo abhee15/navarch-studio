@@ -1,0 +1,6 @@
+@HullSizingService_HostAddress = http://localhost:5227
+
+GET {{HullSizingService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,4 @@
+mission_category,candidate_families
+Commercial,"container, tanker, bulk, roro_ropax, lpg_lng"
+Government,"dredger, naval_patrol"
+Pleasure,"yacht_disp, hsc_planing, catamaran_hsc, pontoon_barge"

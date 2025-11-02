@@ -1,0 +1,257 @@
+# Generate additional CSV templates and a README for the Mission→Hull Sizing data pack
+import pandas as pd
+import numpy as np
+from textwrap import dedent
+
+base = "/mnt/data"
+
+# 1) Extended hull families
+families_ext = [
+    # family, L/B_min, L/B_max, B/T_min, B/T_max, D/T_min, D/T_max, Cb_min, Cb_max, Cp_min, Cp_max, Cwp_min, Cwp_max, notes
+    ("container", 6.5, 8.5, 2.3, 3.0, 1.30, 1.55, 0.60, 0.70, 0.60, 0.70, 0.85, 0.95, "Fine/full mix; high Cwp"),
+    ("tanker",    5.0, 6.5, 2.7, 3.5, 1.35, 1.60, 0.80, 0.85, 0.80, 0.85, 0.80, 0.90, "Very full; low Fn"),
+    ("bulk",      5.0, 6.0, 2.6, 3.4, 1.35, 1.60, 0.75, 0.85, 0.78, 0.84, 0.80, 0.90, "Full; low Fn"),
+    ("fishing",   4.5, 5.5, 2.0, 2.8, 1.25, 1.45, 0.55, 0.65, 0.62, 0.70, 0.85, 0.92, "Medium"),
+    ("yacht_disp",5.0, 7.0, 2.2, 3.0, 1.25, 1.45, 0.45, 0.55, 0.60, 0.68, 0.86, 0.94, "Displacement yacht"),
+    ("hsc_planing",3.0,4.0, 1.6, 2.2, 1.10, 1.30, 0.35, 0.50, np.nan, np.nan, np.nan, np.nan, "Savitsky branch"),
+    ("dredger",   4.0, 5.5, 2.3, 3.0, 1.40, 1.70, 0.75, 0.85, 0.70, 0.80, 0.80, 0.90, "Workboat; high D/T"),
+    ("lpg_lng",   5.5, 7.0, 2.4, 3.2, 1.35, 1.60, 0.70, 0.82, 0.72, 0.82, 0.82, 0.92, "Membrane/sphere variants"),
+    ("roro_ropax",5.5, 7.5, 2.2, 3.0, 1.30, 1.55, 0.60, 0.72, 0.62, 0.74, 0.85, 0.95, "Vehicle decks; larger B"),
+    ("naval_patrol",6.0, 8.0, 2.0, 2.8, 1.20, 1.40, 0.45, 0.60, 0.58, 0.68, 0.86, 0.94, "Fine hull at mid/high Fn"),
+    ("catamaran_hsc",8.0,12.0, 3.5, 5.0, 1.10, 1.30, 0.35, 0.50, np.nan, np.nan, np.nan, np.nan, "Twin demi-hulls; planing"),
+    ("pontoon_barge",3.0, 5.0, 2.5, 4.0, 1.40, 1.80, 0.85, 0.95, 0.80, 0.90, 0.85, 0.95, "Rectangular; very full")
+]
+df_families_ext = pd.DataFrame(families_ext, columns=[
+    "family","L_over_B_min","L_over_B_max","B_over_T_min","B_over_T_max","D_over_T_min","D_over_T_max",
+    "Cb_min","Cb_max","Cp_min","Cp_max","Cwp_min","Cwp_max","notes"
+])
+df_families_ext.to_csv(f"{base}/hull_family_presets_extended.csv", index=False)
+
+# 2) Type inference rules
+rules = [
+    ("R1", 0.10, 0.18, "high", "draft<=21", "tanker,bulk", 0.9),
+    ("R2", 0.18, 0.30, "medium", "beam<=40", "container,naval_patrol", 0.8),
+    ("R3", 0.22, 0.32, "low", "loose", "yacht_disp,container", 0.7),
+    ("R4", 0.35, 0.60, "low", "draft<=4", "hsc_planing,catamaran_hsc", 0.95),
+    ("R5", 0.12, 0.22, "medium", "airdraft<=50", "roro_ropax,fishing", 0.7),
+    ("R6", 0.12, 0.20, "medium", "dredging", "dredger", 0.85),
+    ("R7", 0.14, 0.22, "low", "membrane", "lpg_lng", 0.8),
+]
+df_rules = pd.DataFrame(rules, columns=[
+    "rule_id","fn_min","fn_max","cargo_density_class","constraints_hint","suggested_families","priority_0to1"
+])
+df_rules.to_csv(f"{base}/type_inference_rules.csv", index=False)
+
+# 3) Canal/Route rule template (values left blank for user to fill/verify)
+df_canal = pd.DataFrame([
+    ("Panamax","","","","","Legacy constraints; verify operator doc",""),
+    ("New Panamax","","","","","Post-2016 constraints",""),
+    ("Suezmax","","","","","Suez Canal Authority tables",""),
+    ("Seawaymax","","","","","St. Lawrence Seaway",""),
+    ("Malaccamax","","","","","Strait of Malacca depth-driven","")
+], columns=["rule_name","loa_max_m","beam_max_m","draft_max_m","air_draft_max_m","notes","source_url"])
+df_canal.to_csv(f"{base}/canal_rules_template.csv", index=False)
+
+# 4) Freeboard presets (simplified)
+df_freeboard = pd.DataFrame([
+    ("container",1.30,1.55,0.50,"Higher sheer typical"),
+    ("tanker",1.35,1.60,0.30,"Consult ICLL tables"),
+    ("bulk",1.35,1.60,0.35,"Consult ICLL tables"),
+    ("fishing",1.25,1.45,0.25,"Small vessels vary"),
+    ("roro_ropax",1.30,1.55,0.45,"Superstructure effects"),
+    ("yacht_disp",1.25,1.45,0.20,""),
+], columns=["family","D_over_T_min","D_over_T_max","freeboard_extra_m","notes"])
+df_freeboard.to_csv(f"{base}/freeboard_presets_template.csv", index=False)
+
+# 5) Water properties salinity template
+df_wps = pd.DataFrame([
+    # temp_C, salinity_psu, rho_kg_per_m3(optional), nu_m2_per_s(optional)
+    (-2,35,"",""), (0,35,"",""), (10,35,"",""), (20,35,"",""), (30,35,"",""),
+    (10,30,"",""), (20,30,"",""), (20,38,"","")
+], columns=["temp_C","salinity_psu","rho_kg_per_m3","nu_m2_per_s"])
+df_wps.to_csv(f"{base}/water_properties_salinity_template.csv", index=False)
+
+# 6) Sea state template (approximate defaults left editable)
+df_sea = pd.DataFrame([
+    (3,"","", "Moderate"), (4,"","", "Moderate rough"),
+    (5,"","", "Rough"), (6,"","", "Very rough")
+], columns=["sea_state","Hs_m","Tz_s","label"])
+df_sea.to_csv(f"{base}/sea_state_template.csv", index=False)
+
+# 7) Holtrop inputs template
+df_holtrop = pd.DataFrame([{
+    "Lpp_m":"", "Lwl_m":"", "Bwl_m":"", "T_m":"", "D_m":"", "Cb":"", "Cp":"", "Cwp":"",
+    "A_transom_m2":"", "bulbous":"yes|no", "stern_type":"U|V|transom", "shaft_brackets":"none|twin|single",
+    "appendage_area_ratio":"", "prismatic_curve_param":"", "roughness_k":"75e-6",
+    "viscosity_nu_m2s":"", "rho_kgm3":"", "service_speed_kn":""
+}])
+df_holtrop.to_csv(f"{base}/holtrop_input_template.csv", index=False)
+
+# 8) Savitsky planing inputs template
+df_sav = pd.DataFrame([{
+    "deadrise_beta_deg":"", "beam_chine_m":"", "Lk_wetted_m":"",
+    "cg_from_transom_m":"", "displacement_t":"",
+    "trim_initial_deg":"", "speed_kn":""
+}])
+df_sav.to_csv(f"{base}/savitsky_input_template.csv", index=False)
+
+# 9) DXF layer mapping
+df_layers = pd.DataFrame([
+    ("HULL_SHELL","#000000"), ("WLINES","#000000"), ("STATIONS","#000000"),
+    ("BUTTOCKS","#000000"), ("WATERPLANE","#000000"), ("DIMENSIONS","#000000"),
+    ("MARKERS","#000000"), ("TEXT","#000000")
+], columns=["layer_name","rgb_hex"])
+df_layers.to_csv(f"{base}/export_layers_dxf.csv", index=False)
+
+# 10) Offsets grid template (sparse sample rows)
+rows=[]
+stations = np.linspace(0, 1, 11)  # 0..1 as x/Lpp
+waterlines = np.linspace(0, 1, 6) # 0..1 as z/T
+for si, x in enumerate(stations):
+    for wi, z in enumerate(waterlines):
+        rows.append((si, round(x,3), wi, round(z,3), ""))  # y_half_m left blank
+df_offsets = pd.DataFrame(rows, columns=["station_index","x_over_Lpp","wl_index","z_over_T","half_breadth_y_m"])
+df_offsets.to_csv(f"{base}/offsets_template.csv", index=False)
+
+# 11) KPI weights
+df_weights = pd.DataFrame([
+    ("delta_balance", 0.35), ("installed_power", 0.25), ("constraints_ok", 0.20),
+    ("stability_screen", 0.10), ("teu_or_volume_fit", 0.10)
+], columns=["metric","weight_0to1"])
+df_weights.to_csv(f"{base}/kpi_weights.csv", index=False)
+
+# 12) Dataset registry template
+df_registry = pd.DataFrame([
+    ("KCS_geometry","v1","", "Public research use; cite source",""),
+    ("KVLCC2_geometry","v1","", "Public research use; cite source",""),
+    ("Series60_tables","v1","", "Research reproduction; verify rights",""),
+    ("FAO_fishing_dims","v1","", "FAO docs; attribution","")
+], columns=["dataset_name","version","url","license_summary","checksum_sha256"])
+df_registry.to_csv(f"{base}/dataset_registry_template.csv", index=False)
+
+# 13) License registry template
+df_lic = pd.DataFrame([
+    ("Equasis","free_with_registration","no","Manual lookups; no bulk export"),
+    ("VesselFinder","paid_api","no","Store IDs/metadata permitted by ToS"),
+    ("MarineTraffic","paid_api","no","Store IDs/metadata permitted by ToS")
+], columns=["provider","license_type","redistribution_allowed","notes"])
+df_lic.to_csv(f"{base}/license_registry.csv", index=False)
+
+# 14) Localization strings template
+df_i18n = pd.DataFrame([
+    ("compute_button","Compute",""),
+    ("push_to_hydro","Push → Hydrostatics",""),
+    ("keep_fn","Keep Fn",""),
+    ("shape_slider","Speed / Shape Adjust","")
+], columns=["key","en_US","notes"])
+df_i18n.to_csv(f"{base}/localization_strings.csv", index=False)
+
+# 15) Keyboard shortcuts
+df_keys = pd.DataFrame([
+    ("Toggle 3D/2D","V"),
+    ("Add section plane","S"),
+    ("Reset camera","R"),
+    ("Export DXF","Ctrl+E")
+], columns=["action","shortcut"])
+df_keys.to_csv(f"{base}/keyboard_shortcuts.csv", index=False)
+
+# 16) Rendering presets
+df_lod = pd.DataFrame([
+    ("near", 200000, 1.0),
+    ("mid",  80000,  0.6),
+    ("far",  20000,  0.3)
+], columns=["preset","triangles_max","curve_sampling_scale"])
+df_lod.to_csv(f"{base}/rendering_presets.csv", index=False)
+
+# 17) UI defaults
+df_ui = pd.DataFrame([
+    ("speed_kn","slider_min", 4), ("speed_kn","slider_max", 30), ("speed_kn","slider_step", 0.5),
+    ("L_over_B","slider_min", 4.0), ("L_over_B","slider_max", 12.0), ("L_over_B","slider_step", 0.1),
+    ("B_over_T","slider_min", 1.6), ("B_over_T","slider_max", 5.0), ("B_over_T","slider_step", 0.05)
+], columns=["param","property","value"])
+df_ui.to_csv(f"{base}/ui_defaults.csv", index=False)
+
+# 18) Vessel type mappings
+df_map = pd.DataFrame([
+    ("Commercial","container, tanker, bulk, roro_ropax, lpg_lng"),
+    ("Government","dredger, naval_patrol"),
+    ("Pleasure","yacht_disp, hsc_planing, catamaran_hsc, pontoon_barge")
+], columns=["mission_category","candidate_families"])
+df_map.to_csv(f"{base}/vessel_type_mappings.csv", index=False)
+
+# 19) Waves lookup (Tz→lambda)
+g=9.80665
+Tz_vals = np.arange(4, 18, 1)
+lambda_vals = g*(Tz_vals**2)/(2*np.pi)
+df_wave = pd.DataFrame({"Tz_s":Tz_vals, "wavelength_m":np.round(lambda_vals,2)})
+df_wave.to_csv(f"{base}/wave_period_lookup.csv", index=False)
+
+# README
+readme = dedent("""
+# Mission→Hull Sizing – Data Pack (Free-Friendly)
+
+This folder contains CSV/YAML templates and seed files to quickly stand up the independent Mission→Hull Sizing app,
+focused on **free** sources and CAD interoperability.
+
+## Folder ingestion order
+1. `hull_family_presets_extended.csv` – ranges for L/B, B/T, D/T, Cb, Cp, Cwp by family.
+2. `type_inference_rules.csv` – quick inference of candidate families from Fn + payload + constraints.
+3. `iso_containers.csv` – standard container sizes for TEU fit (UI defaults).
+4. `water_properties.csv` and `water_properties_salinity_template.csv` – seawater ρ and ν (derive/interpolate).
+5. `sea_state_template.csv` – add your Hs/Tz pairs and labels.
+6. `vessel_catalog_seed.csv` – register KCS/KVLCC2/Series-60/FAO rows (fill real values from sources).
+7. `dataset_registry_template.csv` / `license_registry.csv` – track provenance and license limits.
+8. `holtrop_input_template.csv` / `savitsky_input_template.csv` – solver inputs if you decouple UI and solver.
+9. `offsets_template.csv` – grid for manual offsets import; keep x/Lpp & z/T normalized.
+10. `export_layers_dxf.csv` – DXF layer names/colors for clean drawings in AutoCAD.
+11. `kpi_weights.csv` – objective weights for scoring candidates.
+12. `rendering_presets.csv` – LOD & sampling for fast, smooth interactions.
+13. `ui_defaults.csv`, `keyboard_shortcuts.csv`, `localization_strings.csv` – polish & UX.
+14. `canal_rules_template.csv`, `freeboard_presets_template.csv` – constraints and depth/freeboard heuristics.
+
+## Where to place free geometry
+- Put KCS/KVLCC2 **IGES** files under `data/iges/` and register them in `vessel_catalog_seed.csv` (source fields filled).
+- For Series-60 and FAO examples, register principal dimensions/ratios; keep any scans internal-only.
+
+## Import steps
+- Create schema `sizing` and tables (see EPIC in canvas).
+- Bulk import CSVs in this order: families → rules → ISO/water → catalog → weights → presets → UI.
+- Verify `dataset_registry_template.csv` entries and fill `url` + `checksum_sha256` after download.
+
+## CAD round-trip
+- For export: DXF (2D plan/sections), IGES (NURBS surfaces). STEP/SAT optional.
+- For import: IGES/STEP/SAT → fit to parametric hull (least-squares) → update (L,B,T,Cb,Cp).
+
+## Notes
+- All numeric ranges are **starting bands** for early-phase design; refine as you curate data.
+- Keep everything **at system units**; avoid per-field units in UI forms.
+- When in doubt, lock **Fn** and **L/B** during interactive edits for stability.
+""").strip()
+
+with open(f"{base}/README_MissionHull_DataPack.md", "w", encoding="utf-8") as f:
+    f.write(readme)
+
+paths = [
+    f"{base}/hull_family_presets_extended.csv",
+    f"{base}/type_inference_rules.csv",
+    f"{base}/canal_rules_template.csv",
+    f"{base}/freeboard_presets_template.csv",
+    f"{base}/water_properties_salinity_template.csv",
+    f"{base}/sea_state_template.csv",
+    f"{base}/holtrop_input_template.csv",
+    f"{base}/savitsky_input_template.csv",
+    f"{base}/export_layers_dxf.csv",
+    f"{base}/offsets_template.csv",
+    f"{base}/kpi_weights.csv",
+    f"{base}/dataset_registry_template.csv",
+    f"{base}/license_registry.csv",
+    f"{base}/localization_strings.csv",
+    f"{base}/keyboard_shortcuts.csv",
+    f"{base}/rendering_presets.csv",
+    f"{base}/ui_defaults.csv",
+    f"{base}/vessel_type_mappings.csv",
+    f"{base}/wave_period_lookup.csv",
+    f"{base}/README_MissionHull_DataPack.md"
+]
+paths
+s

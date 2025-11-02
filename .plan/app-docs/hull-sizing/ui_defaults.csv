@@ -1,0 +1,10 @@
+param,property,value
+speed_kn,slider_min,4.0
+speed_kn,slider_max,30.0
+speed_kn,slider_step,0.5
+L_over_B,slider_min,4.0
+L_over_B,slider_max,12.0
+L_over_B,slider_step,0.1
+B_over_T,slider_min,1.6
+B_over_T,slider_max,5.0
+B_over_T,slider_step,0.05

@@ -1,0 +1,8 @@
+rule_id,fn_min,fn_max,cargo_density_class,constraints_hint,suggested_families,priority_0to1
+R1,0.1,0.18,high,draft<=21,"tanker,bulk",0.9
+R2,0.18,0.3,medium,beam<=40,"container,naval_patrol",0.8
+R3,0.22,0.32,low,loose,"yacht_disp,container",0.7
+R4,0.35,0.6,low,draft<=4,"hsc_planing,catamaran_hsc",0.95
+R5,0.12,0.22,medium,airdraft<=50,"roro_ropax,fishing",0.7
+R6,0.12,0.2,medium,dredging,dredger,0.85
+R7,0.14,0.22,low,membrane,lpg_lng,0.8

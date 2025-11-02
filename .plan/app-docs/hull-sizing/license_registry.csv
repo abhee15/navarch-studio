@@ -1,0 +1,4 @@
+provider,license_type,redistribution_allowed,notes
+Equasis,free_with_registration,no,Manual lookups; no bulk export
+VesselFinder,paid_api,no,Store IDs/metadata permitted by ToS
+MarineTraffic,paid_api,no,Store IDs/metadata permitted by ToS

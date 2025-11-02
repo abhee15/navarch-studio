@@ -1,0 +1,6 @@
+rule_name,loa_max_m,beam_max_m,draft_max_m,air_draft_max_m,notes,source_url
+Panamax,,,,,Legacy constraints; verify operator doc,
+New Panamax,,,,,Post-2016 constraints,
+Suezmax,,,,,Suez Canal Authority tables,
+Seawaymax,,,,,St. Lawrence Seaway,
+Malaccamax,,,,,Strait of Malacca depth-driven,

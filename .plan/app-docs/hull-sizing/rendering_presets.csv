@@ -1,0 +1,4 @@
+preset,triangles_max,curve_sampling_scale
+near,200000,1.0
+mid,80000,0.6
+far,20000,0.3

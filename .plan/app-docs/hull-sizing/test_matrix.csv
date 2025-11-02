@@ -1,0 +1,4 @@
+case_id,mode,family_hint,basis,basis_value_t,basis_volume_m3,speed_kn,locks,acceptance
+FP_Container_Base,first_principles,container,weight,58000,,24.0,default locks,"Δ<=1%, Fn band OK, draft<=12m"
+FP_Tanker_Base,first_principles,tanker,weight,300000,,16.0,default locks,"Δ<=1%, Fn band OK, draft<=21m"
+DATA_KCS,data,container,weight,,,24.0,family hint=container,Dims within ±5% of KCS

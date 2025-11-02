@@ -1,0 +1,7 @@
+family,D_over_T_min,D_over_T_max,freeboard_extra_m,notes
+container,1.3,1.55,0.5,Higher sheer typical
+tanker,1.35,1.6,0.3,Consult ICLL tables
+bulk,1.35,1.6,0.35,Consult ICLL tables
+fishing,1.25,1.45,0.25,Small vessels vary
+roro_ropax,1.3,1.55,0.45,Superstructure effects
+yacht_disp,1.25,1.45,0.2,

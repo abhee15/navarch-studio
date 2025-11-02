@@ -1,0 +1,13 @@
+family,L_over_B_min,L_over_B_max,B_over_T_min,B_over_T_max,D_over_T_min,D_over_T_max,Cb_min,Cb_max,Cp_min,Cp_max,Cwp_min,Cwp_max,notes
+container,6.5,8.5,2.3,3.0,1.3,1.55,0.6,0.7,0.6,0.7,0.85,0.95,Fine/full mix; high Cwp
+tanker,5.0,6.5,2.7,3.5,1.35,1.6,0.8,0.85,0.8,0.85,0.8,0.9,Very full; low Fn
+bulk,5.0,6.0,2.6,3.4,1.35,1.6,0.75,0.85,0.78,0.84,0.8,0.9,Full; low Fn
+fishing,4.5,5.5,2.0,2.8,1.25,1.45,0.55,0.65,0.62,0.7,0.85,0.92,Medium
+yacht_disp,5.0,7.0,2.2,3.0,1.25,1.45,0.45,0.55,0.6,0.68,0.86,0.94,Displacement yacht
+hsc_planing,3.0,4.0,1.6,2.2,1.1,1.3,0.35,0.5,,,,,Savitsky branch
+dredger,4.0,5.5,2.3,3.0,1.4,1.7,0.75,0.85,0.7,0.8,0.8,0.9,Workboat; high D/T
+lpg_lng,5.5,7.0,2.4,3.2,1.35,1.6,0.7,0.82,0.72,0.82,0.82,0.92,Membrane/sphere variants
+roro_ropax,5.5,7.5,2.2,3.0,1.3,1.55,0.6,0.72,0.62,0.74,0.85,0.95,Vehicle decks; larger B
+naval_patrol,6.0,8.0,2.0,2.8,1.2,1.4,0.45,0.6,0.58,0.68,0.86,0.94,Fine hull at mid/high Fn
+catamaran_hsc,8.0,12.0,3.5,5.0,1.1,1.3,0.35,0.5,,,,,Twin demi-hulls; planing
+pontoon_barge,3.0,5.0,2.5,4.0,1.4,1.8,0.85,0.95,0.8,0.9,0.85,0.95,Rectangular; very full
