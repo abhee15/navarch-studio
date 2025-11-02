@@ -132,7 +132,7 @@ export const HydrostaticCurvesPanel = observer(
               )
             }
             options={curveTypeOptions}
-            className="text-xs flex-1 min-w-0"
+            className="text-xs w-80 max-w-[55%]"
           />
         </div>
 

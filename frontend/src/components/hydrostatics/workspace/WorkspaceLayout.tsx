@@ -354,7 +354,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
                     label: preset.name,
                   })),
                 ]}
-                className="text-xs"
+                className="text-xs w-52"
               />
             )}
 

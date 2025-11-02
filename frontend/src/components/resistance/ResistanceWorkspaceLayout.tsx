@@ -448,7 +448,7 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
                     label: preset.name,
                   })),
                 ]}
-                className="text-xs"
+                className="text-xs w-52"
               />
             )}
 
