@@ -8,6 +8,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { VesselsList } from "./pages/hydrostatics/VesselsList";
 import { VesselBuilder } from "./pages/hydrostatics/VesselBuilder";
 import { VesselWorkspace } from "./pages/hydrostatics/VesselWorkspace";
+import { ComparisonWorkspace } from "./pages/hydrostatics/ComparisonWorkspace";
 import { VesselResistanceWorkspace } from "./pages/resistance/VesselResistanceWorkspace";
 import { BenchmarksList } from "./pages/benchmarks/BenchmarksList";
 import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
@@ -123,6 +124,14 @@ export const App: React.FC = observer(() => (
                 element={
                   <ProtectedRoute>
                     <VesselWorkspace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hydrostatics/vessels/:vesselId/compare"
+                element={
+                  <ProtectedRoute>
+                    <ComparisonWorkspace />
                   </ProtectedRoute>
                 }
               />

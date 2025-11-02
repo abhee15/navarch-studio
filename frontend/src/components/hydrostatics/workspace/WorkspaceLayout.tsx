@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { settingsStore } from "../../../stores/SettingsStore";
 import type { VesselDetails, Loadcase, HydroResult } from "../../../types/hydrostatics";
@@ -9,6 +10,7 @@ import { ModeToggle } from "./ModeToggle";
 import { ViewModeLayout } from "./ViewModeLayout";
 import { EditModeLayout } from "./EditModeLayout";
 import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydrostaticsApi";
+import { comparisonApi } from "../../../services/comparisonApi";
 import { GeometryManagementDialog } from "../GeometryManagementDialog";
 import { ManageLoadcasesDialog } from "../ManageLoadcasesDialog";
 import { getErrorMessage } from "../../../types/errors";
@@ -22,6 +24,7 @@ interface WorkspaceLayoutProps {
 
 export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLayoutProps) {
   const vesselId = vessel.id;
+  const navigate = useNavigate();
 
   // Layout management
   const {
@@ -62,6 +65,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
   const [showGeometryEditor, setShowGeometryEditor] = useState(false);
   const [showLoadcasesDialog, setShowLoadcasesDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showSaveSnapshotPrompt, setShowSaveSnapshotPrompt] = useState(false);
 
   // Detect mobile
   useEffect(() => {
@@ -172,6 +176,9 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
 
       // Auto-switch to view mode
       setMode("view");
+
+      // Prompt to save snapshot for comparison
+      setShowSaveSnapshotPrompt(true);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -260,6 +267,32 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
     [setMode]
   );
 
+  // Save snapshot for comparison
+  const handleSaveSnapshot = useCallback(
+    async (runName: string) => {
+      if (results.length === 0 || computationTime === null) return;
+
+      try {
+        await comparisonApi.createSnapshot(vesselId, {
+          runName,
+          description: `Computation at ${new Date().toLocaleString()}`,
+          isBaseline: false,
+          loadcaseId: selectedLoadcaseId || undefined,
+          minDraft,
+          maxDraft,
+          draftStep,
+          results,
+          computationTimeMs: computationTime,
+        });
+        toast.success(`Snapshot "${runName}" saved for comparison`);
+        setShowSaveSnapshotPrompt(false);
+      } catch (err) {
+        toast.error(`Failed to save snapshot: ${getErrorMessage(err)}`);
+      }
+    },
+    [vesselId, selectedLoadcaseId, minDraft, maxDraft, draftStep, results, computationTime]
+  );
+
   const canSwitchToView = results.length > 0;
 
   return (
@@ -323,6 +356,30 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
                 ]}
                 className="text-xs"
               />
+            )}
+
+            {/* Compare Button */}
+            {results.length > 0 && (
+              <button
+                onClick={() => navigate(`/hydrostatics/vessels/${vesselId}/compare`)}
+                className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded text-foreground hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                title="Compare runs side-by-side"
+              >
+                <svg
+                  className="h-3.5 w-3.5 mr-1.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+                Compare
+              </button>
             )}
 
             {/* Compute Button */}
@@ -502,6 +559,52 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
             reloadLoadcases();
           }}
         />
+      )}
+
+      {/* Save Snapshot Prompt */}
+      {showSaveSnapshotPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card border border-border rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-foreground mb-2">Save for Comparison?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Save this computation run to compare it with other runs later.
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const runName = formData.get("runName") as string;
+                if (runName.trim()) {
+                  handleSaveSnapshot(runName.trim());
+                }
+              }}
+            >
+              <input
+                type="text"
+                name="runName"
+                placeholder="Run name (e.g., Baseline v1.0)"
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm mb-4"
+                defaultValue={`Run ${new Date().toLocaleDateString()}`}
+                autoFocus
+              />
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSaveSnapshotPrompt(false)}
+                  className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground border border-border rounded hover:bg-accent/10"
+                >
+                  Skip
+                </button>
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary rounded hover:bg-primary/90"
+                >
+                  Save Snapshot
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

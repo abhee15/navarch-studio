@@ -30,6 +30,9 @@ public class DataDbContext : DbContext
     public DbSet<BenchmarkGeometry> BenchmarkGeometries => Set<BenchmarkGeometry>();
     public DbSet<BenchmarkTestPoint> BenchmarkTestPoints => Set<BenchmarkTestPoint>();
     public DbSet<BenchmarkMetricRef> BenchmarkMetricRefs => Set<BenchmarkMetricRef>();
+
+    // Comparison entities
+    public DbSet<ComparisonSnapshot> ComparisonSnapshots => Set<ComparisonSnapshot>();
     public DbSet<BenchmarkAsset> BenchmarkAssets => Set<BenchmarkAsset>();
     public DbSet<BenchmarkValidationRun> BenchmarkValidationRuns => Set<BenchmarkValidationRun>();
 
@@ -520,6 +523,40 @@ public class DataDbContext : DbContext
             entity.Property(e => e.SourceRef).IsRequired().HasMaxLength(200);
 
             entity.HasIndex(e => new { e.Medium, e.Temperature_C });
+        });
+
+        // ComparisonSnapshot configuration
+        modelBuilder.Entity<ComparisonSnapshot>(entity =>
+        {
+            entity.ToTable("comparison_snapshots");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RunName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.Tags).HasMaxLength(500);
+            entity.Property(e => e.VesselLpp).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.VesselBeam).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.VesselDesignDraft).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.LoadcaseRho).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.LoadcaseKG).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.MinDraft).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.MaxDraft).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.DraftStep).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.ResultsJson).HasColumnType("text").IsRequired();
+
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.VesselId);
+            entity.HasIndex(e => new { e.VesselId, e.IsBaseline });
+            entity.HasQueryFilter(e => e.DeletedAt == null);
+
+            entity.HasOne(e => e.Vessel)
+                .WithMany()
+                .HasForeignKey(e => e.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Loadcase)
+                .WithMany()
+                .HasForeignKey(e => e.LoadcaseId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 

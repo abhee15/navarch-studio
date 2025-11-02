@@ -570,6 +570,115 @@ namespace DataService.Migrations
                     b.ToTable("catalog_water_properties", "data");
                 });
 
+            modelBuilder.Entity("Shared.Models.ComparisonSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("ComputationTimeMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("computation_time_ms");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<decimal>("DraftStep")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("draft_step");
+
+                    b.Property<bool>("IsBaseline")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_baseline");
+
+                    b.Property<Guid?>("LoadcaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("loadcase_id");
+
+                    b.Property<decimal?>("LoadcaseKG")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("loadcase_kg");
+
+                    b.Property<decimal?>("LoadcaseRho")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("loadcase_rho");
+
+                    b.Property<decimal>("MaxDraft")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("max_draft");
+
+                    b.Property<decimal>("MinDraft")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("min_draft");
+
+                    b.Property<string>("ResultsJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("results_json");
+
+                    b.Property<string>("RunName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("run_name");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("tags");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<decimal>("VesselBeam")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("vessel_beam");
+
+                    b.Property<decimal>("VesselDesignDraft")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("vessel_design_draft");
+
+                    b.Property<Guid>("VesselId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vessel_id");
+
+                    b.Property<decimal>("VesselLpp")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("vessel_lpp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_comparison_snapshots");
+
+                    b.HasIndex("LoadcaseId")
+                        .HasDatabaseName("ix_comparison_snapshots_loadcase_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_comparison_snapshots_user_id");
+
+                    b.HasIndex("VesselId")
+                        .HasDatabaseName("ix_comparison_snapshots_vessel_id");
+
+                    b.HasIndex("VesselId", "IsBaseline")
+                        .HasDatabaseName("ix_comparison_snapshots_vessel_id_is_baseline");
+
+                    b.ToTable("comparison_snapshots", "data");
+                });
+
             modelBuilder.Entity("Shared.Models.Curve", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1428,6 +1537,26 @@ namespace DataService.Migrations
                         .HasConstraintName("fk_catalog_propeller_points_catalog_propeller_series_series_id");
 
                     b.Navigation("Series");
+                });
+
+            modelBuilder.Entity("Shared.Models.ComparisonSnapshot", b =>
+                {
+                    b.HasOne("Shared.Models.Loadcase", "Loadcase")
+                        .WithMany()
+                        .HasForeignKey("LoadcaseId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_comparison_snapshots_loadcases_loadcase_id");
+
+                    b.HasOne("Shared.Models.Vessel", "Vessel")
+                        .WithMany()
+                        .HasForeignKey("VesselId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_comparison_snapshots_vessels_vessel_id");
+
+                    b.Navigation("Loadcase");
+
+                    b.Navigation("Vessel");
                 });
 
             modelBuilder.Entity("Shared.Models.Curve", b =>
