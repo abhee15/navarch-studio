@@ -270,4 +270,3 @@ public class HullProjectionsService : IHullProjectionsService
         return null;
     }
 }
-

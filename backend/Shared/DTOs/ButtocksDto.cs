@@ -48,4 +48,3 @@ public record PointXZ
     /// </summary>
     public decimal Z { get; init; }
 }
-

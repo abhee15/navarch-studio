@@ -117,6 +117,12 @@ export const BodyPlanViewer = observer(
 
     // Generate station curves with optional fairing
     const stationCurves = useMemo<StationCurve[]>(() => {
+      console.log(
+        "[BodyPlan] Recalculating curves. Fairing enabled:",
+        viewOptions.enableFairing,
+        "Resolution:",
+        viewOptions.fairingResolution
+      );
       const curves: StationCurve[] = [];
 
       for (let stationIdx = 0; stationIdx < data.stations.length; stationIdx++) {
@@ -134,11 +140,17 @@ export const BodyPlanViewer = observer(
 
         // Apply fairing if enabled
         let finalPoints: { z: number; y: number }[];
-        if (viewOptions.enableFairing && points.length > 2) {
+        if (viewOptions.enableFairing && points.length >= 2) {
           const smoothed = generateSmoothCurve(points, viewOptions.fairingResolution);
           finalPoints = smoothed.map((p) => ({ z: p.x, y: p.y }));
+          console.log(
+            `[BodyPlan] Station ${stationIdx}: Smoothed ${points.length} points -> ${finalPoints.length} points`
+          );
         } else {
           finalPoints = points.map((p) => ({ z: p.x, y: p.y }));
+          console.log(
+            `[BodyPlan] Station ${stationIdx}: Using original ${finalPoints.length} points (no smoothing)`
+          );
         }
 
         curves.push({
@@ -336,22 +348,30 @@ export const BodyPlanViewer = observer(
                 <input
                   type="checkbox"
                   checked={viewOptions.showGrid}
-                  onChange={(e) => setViewOptions({ ...viewOptions, showGrid: e.target.checked })}
+                  onChange={(e) => {
+                    console.log("[BodyPlan] Grid toggled:", e.target.checked);
+                    setViewOptions({ ...viewOptions, showGrid: e.target.checked });
+                  }}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
-                <span className="ml-2 text-gray-700 dark:text-gray-300">Grid</span>
+                <span className="ml-2 text-gray-700 dark:text-gray-300">
+                  Grid {viewOptions.showGrid && <span className="text-green-500">●</span>}
+                </span>
               </label>
 
               <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={viewOptions.enableFairing}
-                  onChange={(e) =>
-                    setViewOptions({ ...viewOptions, enableFairing: e.target.checked })
-                  }
+                  onChange={(e) => {
+                    console.log("[BodyPlan] Smooth toggled:", e.target.checked);
+                    setViewOptions({ ...viewOptions, enableFairing: e.target.checked });
+                  }}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
-                <span className="ml-2 text-gray-700 dark:text-gray-300">Smooth</span>
+                <span className="ml-2 text-gray-700 dark:text-gray-300">
+                  Smooth {viewOptions.enableFairing && <span className="text-green-500">●</span>}
+                </span>
               </label>
             </div>
 
@@ -446,9 +466,9 @@ export const BodyPlanViewer = observer(
                   y1={toSvgY(z)}
                   x2={margin.left + drawWidth}
                   y2={toSvgY(z)}
-                  className="stroke-gray-200 dark:stroke-gray-700"
-                  strokeWidth="0.5"
-                  strokeDasharray="2,2"
+                  className="stroke-gray-300 dark:stroke-gray-600"
+                  strokeWidth="1"
+                  strokeDasharray="4,4"
                 />
               ))}
 

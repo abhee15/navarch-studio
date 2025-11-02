@@ -34,7 +34,8 @@ public class HydrostaticsController : ControllerBase
             var response = await _httpClientService.GetAsync("data", $"api/v1/hydrostatics/{path}", cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return StatusCode((int)response.StatusCode, content);
+            // Return raw content to avoid double JSON encoding
+            return Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
         }
         catch (Exception ex)
         {
@@ -81,7 +82,8 @@ public class HydrostaticsController : ControllerBase
                 var response = await _httpClientService.PostAsync("data", $"api/v1/hydrostatics/{path}", multipartContent, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                return StatusCode((int)response.StatusCode, responseContent);
+                // Return raw content to avoid double JSON encoding
+                return Content(responseContent, response.Content.Headers.ContentType?.ToString() ?? "application/json");
             }
             else
             {
@@ -93,7 +95,8 @@ public class HydrostaticsController : ControllerBase
                 var response = await _httpClientService.PostAsync("data", $"api/v1/hydrostatics/{path}", content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                return StatusCode((int)response.StatusCode, responseContent);
+                // Return raw content to avoid double JSON encoding
+                return Content(responseContent, response.Content.Headers.ContentType?.ToString() ?? "application/json");
             }
         }
         catch (Exception ex)
@@ -121,7 +124,8 @@ public class HydrostaticsController : ControllerBase
             var response = await _httpClientService.PutAsync("data", $"api/v1/hydrostatics/{path}", content, cancellationToken);
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return StatusCode((int)response.StatusCode, responseContent);
+            // Return raw content to avoid double JSON encoding
+            return Content(responseContent, response.Content.Headers.ContentType?.ToString() ?? "application/json");
         }
         catch (Exception ex)
         {
@@ -142,7 +146,8 @@ public class HydrostaticsController : ControllerBase
             var response = await _httpClientService.DeleteAsync("data", $"api/v1/hydrostatics/{path}", cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return StatusCode((int)response.StatusCode, content);
+            // Return raw content to avoid double JSON encoding
+            return Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
         }
         catch (Exception ex)
         {
@@ -151,4 +156,3 @@ public class HydrostaticsController : ControllerBase
         }
     }
 }
-

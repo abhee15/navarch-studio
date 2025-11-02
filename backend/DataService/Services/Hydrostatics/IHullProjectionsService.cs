@@ -24,4 +24,3 @@ public interface IHullProjectionsService
     /// <returns>Buttock curves at each Y-offset</returns>
     Task<ButtocksDto> GetButtocksAsync(Guid vesselId, int? numButtocks = null, CancellationToken cancellationToken = default);
 }
-

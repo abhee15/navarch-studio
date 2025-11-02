@@ -66,6 +66,9 @@ export function ResistanceCharts({
   kcsBenchmarkResult,
 }: ResistanceChartsProps) {
   const [selectedSpeedIndex, setSelectedSpeedIndex] = useState<number | null>(null);
+  const [compareMode, setCompareMode] = useState<boolean>(false);
+  const [compareSpeed1Index, setCompareSpeed1Index] = useState<number | null>(null);
+  const [compareSpeed2Index, setCompareSpeed2Index] = useState<number | null>(null);
 
   // Prepare ITTC-57 data
   const ittc57Data = useMemo(() => {
@@ -103,6 +106,9 @@ export function ResistanceCharts({
   // Reset selected speed when HM result changes
   useEffect(() => {
     setSelectedSpeedIndex(null);
+    setCompareMode(false);
+    setCompareSpeed1Index(null);
+    setCompareSpeed2Index(null);
   }, [hmResult]);
 
   // Prepare power curve data (merge with HM data if available)
@@ -478,8 +484,46 @@ export function ResistanceCharts({
             </div>
           )}
 
+          {/* Toggle for Compare Mode */}
+          {hmData.length >= 2 && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">Component Distribution Analysis</h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {compareMode
+                      ? "Compare resistance components at two different speeds"
+                      : "View resistance component breakdown at a single speed"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setCompareMode(!compareMode);
+                    if (!compareMode) {
+                      // Initialize with first and last speeds when entering compare mode
+                      setCompareSpeed1Index(0);
+                      setCompareSpeed2Index(hmData.length - 1);
+                      setSelectedSpeedIndex(null);
+                    } else {
+                      setCompareSpeed1Index(null);
+                      setCompareSpeed2Index(null);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                    compareMode
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-muted text-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  {compareMode ? "Single View" : "Compare Two Speeds"}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Component Breakdown Pie Chart */}
-          {selectedSpeedIndex !== null &&
+          {!compareMode &&
+            selectedSpeedIndex !== null &&
             hmData[selectedSpeedIndex] &&
             (() => {
               const selectedData = hmData[selectedSpeedIndex];
@@ -644,6 +688,384 @@ export function ResistanceCharts({
                 </div>
               );
             })()}
+
+          {/* Two-Speed Comparison View */}
+          {compareMode && compareSpeed1Index !== null && compareSpeed2Index !== null && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <h4 className="text-sm font-medium mb-4">Component Comparison</h4>
+
+              {/* Speed Selectors */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-2">
+                    Speed 1
+                  </label>
+                  <select
+                    value={compareSpeed1Index}
+                    onChange={(e) => setCompareSpeed1Index(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {hmData.map((data, idx) => (
+                      <option key={idx} value={idx}>
+                        {data.speedKnots.toFixed(2)} knots ({data.speed.toFixed(2)} m/s)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-2">
+                    Speed 2
+                  </label>
+                  <select
+                    value={compareSpeed2Index}
+                    onChange={(e) => setCompareSpeed2Index(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {hmData.map((data, idx) => (
+                      <option key={idx} value={idx}>
+                        {data.speedKnots.toFixed(2)} knots ({data.speed.toFixed(2)} m/s)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Pie Charts Side by Side */}
+              {(() => {
+                const speed1Data = hmData[compareSpeed1Index];
+                const speed2Data = hmData[compareSpeed2Index];
+
+                const createPieData = (data: typeof speed1Data) => {
+                  return [
+                    {
+                      name: "Friction (RF)",
+                      value: data.rf,
+                      color: "#3B82F6",
+                      fullName: "Frictional Resistance",
+                    },
+                    {
+                      name: "Residuary (RR)",
+                      value: data.rr,
+                      color: "#10B981",
+                      fullName: "Residuary Resistance",
+                    },
+                    {
+                      name: "Appendage (RA)",
+                      value: data.ra,
+                      color: "#F59E0B",
+                      fullName: "Appendage Resistance",
+                    },
+                    ...(data.rca !== undefined && data.rca > 0
+                      ? [
+                          {
+                            name: "Correlation (RCA)",
+                            value: data.rca,
+                            color: "#8B5CF6",
+                            fullName: "Correlation Allowance",
+                          },
+                        ]
+                      : []),
+                    ...(data.raa !== undefined && data.raa > 0
+                      ? [
+                          {
+                            name: "Air (RAA)",
+                            value: data.raa,
+                            color: "#EF4444",
+                            fullName: "Air Resistance",
+                          },
+                        ]
+                      : []),
+                  ].filter((item) => item.value > 0);
+                };
+
+                const pieData1 = createPieData(speed1Data);
+                const pieData2 = createPieData(speed2Data);
+                const total1 = pieData1.reduce((sum, item) => sum + item.value, 0);
+                const total2 = pieData2.reduce((sum, item) => sum + item.value, 0);
+
+                return (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Speed 1 Pie Chart */}
+                    <div className="border border-border rounded-lg p-4">
+                      <div className="text-center mb-3">
+                        <h5 className="text-sm font-semibold">
+                          {speed1Data.speedKnots.toFixed(2)} knots
+                        </h5>
+                        <p className="text-xs text-muted-foreground">
+                          Total: {total1.toFixed(2)} kN
+                        </p>
+                      </div>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                          <Pie
+                            data={pieData1}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={(entry: PieLabelProps) => {
+                              const value = typeof entry.value === "number" ? entry.value : 0;
+                              const percent = ((value / total1) * 100).toFixed(1);
+                              const name = entry.name || "";
+                              return `${name.split(" ")[0]}: ${percent}%`;
+                            }}
+                            outerRadius={90}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {pieData1.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#FFF",
+                              border: "1px solid #E5E7EB",
+                              borderRadius: "0.375rem",
+                              padding: "8px",
+                            }}
+                            formatter={(value: number, _name: string, props: TooltipPayload) => {
+                              const percent = ((value / total1) * 100).toFixed(2);
+                              return [
+                                `${value.toFixed(2)} kN (${percent}%)`,
+                                props.payload?.fullName || "",
+                              ];
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      {/* Legend for Speed 1 */}
+                      <div className="mt-4 space-y-1">
+                        {pieData1.map((item) => {
+                          const percent = ((item.value / total1) * 100).toFixed(2);
+                          return (
+                            <div
+                              key={item.name}
+                              className="flex items-center justify-between text-xs p-1.5 rounded bg-gray-50 dark:bg-gray-800/50"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2.5 h-2.5 rounded-full"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <span>{item.fullName}</span>
+                              </div>
+                              <span className="font-medium">
+                                {item.value.toFixed(2)} kN ({percent}%)
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Speed 2 Pie Chart */}
+                    <div className="border border-border rounded-lg p-4">
+                      <div className="text-center mb-3">
+                        <h5 className="text-sm font-semibold">
+                          {speed2Data.speedKnots.toFixed(2)} knots
+                        </h5>
+                        <p className="text-xs text-muted-foreground">
+                          Total: {total2.toFixed(2)} kN
+                        </p>
+                      </div>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                          <Pie
+                            data={pieData2}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={(entry: PieLabelProps) => {
+                              const value = typeof entry.value === "number" ? entry.value : 0;
+                              const percent = ((value / total2) * 100).toFixed(1);
+                              const name = entry.name || "";
+                              return `${name.split(" ")[0]}: ${percent}%`;
+                            }}
+                            outerRadius={90}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {pieData2.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#FFF",
+                              border: "1px solid #E5E7EB",
+                              borderRadius: "0.375rem",
+                              padding: "8px",
+                            }}
+                            formatter={(value: number, _name: string, props: TooltipPayload) => {
+                              const percent = ((value / total2) * 100).toFixed(2);
+                              return [
+                                `${value.toFixed(2)} kN (${percent}%)`,
+                                props.payload?.fullName || "",
+                              ];
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      {/* Legend for Speed 2 */}
+                      <div className="mt-4 space-y-1">
+                        {pieData2.map((item) => {
+                          const percent = ((item.value / total2) * 100).toFixed(2);
+                          return (
+                            <div
+                              key={item.name}
+                              className="flex items-center justify-between text-xs p-1.5 rounded bg-gray-50 dark:bg-gray-800/50"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2.5 h-2.5 rounded-full"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <span>{item.fullName}</span>
+                              </div>
+                              <span className="font-medium">
+                                {item.value.toFixed(2)} kN ({percent}%)
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Comparison Metrics */}
+              {(() => {
+                const speed1Data = hmData[compareSpeed1Index];
+                const speed2Data = hmData[compareSpeed2Index];
+                const total1 =
+                  speed1Data.rf +
+                  speed1Data.rr +
+                  speed1Data.ra +
+                  (speed1Data.rca || 0) +
+                  (speed1Data.raa || 0);
+                const total2 =
+                  speed2Data.rf +
+                  speed2Data.rr +
+                  speed2Data.ra +
+                  (speed2Data.rca || 0) +
+                  (speed2Data.raa || 0);
+                const deltaTotalKN = total2 - total1;
+                const deltaTotalPercent = (deltaTotalKN / total1) * 100;
+
+                const componentComparisons = [
+                  {
+                    name: "Friction (RF)",
+                    val1: speed1Data.rf,
+                    val2: speed2Data.rf,
+                    color: "#3B82F6",
+                  },
+                  {
+                    name: "Residuary (RR)",
+                    val1: speed1Data.rr,
+                    val2: speed2Data.rr,
+                    color: "#10B981",
+                  },
+                  {
+                    name: "Appendage (RA)",
+                    val1: speed1Data.ra,
+                    val2: speed2Data.ra,
+                    color: "#F59E0B",
+                  },
+                  ...(speed1Data.rca !== undefined && speed2Data.rca !== undefined
+                    ? [
+                        {
+                          name: "Correlation (RCA)",
+                          val1: speed1Data.rca,
+                          val2: speed2Data.rca,
+                          color: "#8B5CF6",
+                        },
+                      ]
+                    : []),
+                  ...(speed1Data.raa !== undefined && speed2Data.raa !== undefined
+                    ? [
+                        {
+                          name: "Air (RAA)",
+                          val1: speed1Data.raa,
+                          val2: speed2Data.raa,
+                          color: "#EF4444",
+                        },
+                      ]
+                    : []),
+                ];
+
+                return (
+                  <div className="mt-6 border-t border-border pt-4">
+                    <h5 className="text-sm font-semibold mb-3">Comparison Metrics</h5>
+                    <div className="space-y-2">
+                      {/* Total Resistance Change */}
+                      <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Total Resistance Change</span>
+                          <div className="text-right">
+                            <div className="text-sm font-bold">
+                              {deltaTotalKN > 0 ? "+" : ""}
+                              {deltaTotalKN.toFixed(2)} kN
+                            </div>
+                            <div
+                              className={`text-xs ${
+                                deltaTotalPercent > 0
+                                  ? "text-red-600 dark:text-red-400"
+                                  : deltaTotalPercent < 0
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-gray-600"
+                              }`}
+                            >
+                              {deltaTotalPercent > 0 ? "+" : ""}
+                              {deltaTotalPercent.toFixed(2)}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Component-wise Changes */}
+                      {componentComparisons.map((comp) => {
+                        const delta = comp.val2 - comp.val1;
+                        const deltaPercent = (delta / comp.val1) * 100;
+                        return (
+                          <div
+                            key={comp.name}
+                            className="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-800/50"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-2.5 h-2.5 rounded-full"
+                                style={{ backgroundColor: comp.color }}
+                              />
+                              <span className="text-xs font-medium">{comp.name}</span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs font-semibold">
+                                {delta > 0 ? "+" : ""}
+                                {delta.toFixed(2)} kN
+                              </div>
+                              <div
+                                className={`text-xs ${
+                                  deltaPercent > 0
+                                    ? "text-red-600 dark:text-red-400"
+                                    : deltaPercent < 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-gray-600"
+                                }`}
+                              >
+                                {deltaPercent > 0 ? "+" : ""}
+                                {deltaPercent.toFixed(2)}%
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
           {/* Power Curves vs Speed */}
           <div className="bg-card border border-border rounded-lg p-4">

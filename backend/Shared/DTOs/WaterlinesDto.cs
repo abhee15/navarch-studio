@@ -48,4 +48,3 @@ public record Point2D
     /// </summary>
     public decimal Y { get; init; }
 }
-
