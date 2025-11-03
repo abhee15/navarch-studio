@@ -127,13 +127,23 @@ export class SizingStore {
     this.error = null;
     try {
       const run = await sizingApi.createSizingRun(dto);
+      console.log('[SizingStore] Received run from API:', run);
+      console.log('[SizingStore] Run ID:', run.id);
+      console.log('[SizingStore] Run keys:', Object.keys(run));
+      
       runInAction(() => {
         this.currentRun = run;
         this.isLoading = false;
       });
 
-      // Load candidates
-      await this.loadCandidates(run.id);
+      // Load candidates - use defensive check for ID
+      const runId = run.id || (run as any).Id;
+      if (!runId) {
+        console.error('[SizingStore] Run object has no id field!', run);
+        throw new Error('Run ID is missing from API response');
+      }
+      
+      await this.loadCandidates(runId);
 
       return run;
     } catch (error) {

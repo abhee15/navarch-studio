@@ -82,7 +82,7 @@ export const MissionCasesList: React.FC = observer(() => {
                     {mission.name}
                   </h3>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {mission.missionType} • {mission.cargoBasis.toUpperCase()}
+                    {mission.missionType} • {mission.cargoBasis?.toUpperCase() || 'N/A'}
                   </p>
 
                   <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
