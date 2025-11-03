@@ -130,6 +130,12 @@ export class SizingStore {
       console.log("[SizingStore] Received run from API:", run);
       console.log("[SizingStore] Run ID:", run.id);
       console.log("[SizingStore] Run keys:", Object.keys(run));
+      console.log("[SizingStore] Full run object JSON:", JSON.stringify(run, null, 2));
+      
+      // If it's an error object, log it clearly
+      if ('error' in run || 'message' in run) {
+        console.error("[SizingStore] ❌ Backend returned error instead of run:", run);
+      }
 
       runInAction(() => {
         this.currentRun = run;
