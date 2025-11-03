@@ -87,6 +87,39 @@ export const DashboardPage: React.FC = observer(() => {
             </Card>
             <Card
               className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+              onClick={() => navigate("/sizing/missions")}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="rounded-lg bg-purple-500/10 p-3 mb-2">
+                    <svg
+                      className="h-6 w-6 text-purple-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <CardTitle>Hull Sizing</CardTitle>
+                <CardDescription>
+                  AI-powered preliminary hull design from mission requirements
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" variant="outline">
+                  Open Hull Sizing →
+                </Button>
+              </CardContent>
+            </Card>
+            <Card
+              className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
               onClick={() => navigate("/resistance/vessels")}
             >
               <CardHeader>

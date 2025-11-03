@@ -14,6 +14,10 @@ import { BenchmarksList } from "./pages/benchmarks/BenchmarksList";
 import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
 import { CatalogBrowser } from "./pages/catalog/CatalogBrowser";
 import { HullDetailPage } from "./pages/catalog/HullDetailPage";
+import { MissionCasesList } from "./pages/sizing/MissionCasesList";
+import { MissionWizard } from "./pages/sizing/MissionWizard";
+import { SizingRunResults } from "./pages/sizing/SizingRunResults";
+import { CandidateWorkspace } from "./pages/sizing/CandidateWorkspace";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/common/Toast";
 import { loadConfig } from "./config/runtime";
@@ -180,6 +184,38 @@ export const App: React.FC = observer(() => (
                 element={
                   <ProtectedRoute>
                     <HullDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sizing/missions"
+                element={
+                  <ProtectedRoute>
+                    <MissionCasesList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sizing/wizard"
+                element={
+                  <ProtectedRoute>
+                    <MissionWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sizing/runs/:runId"
+                element={
+                  <ProtectedRoute>
+                    <SizingRunResults />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sizing/workspace/:candidateId"
+                element={
+                  <ProtectedRoute>
+                    <CandidateWorkspace />
                   </ProtectedRoute>
                 }
               />
