@@ -9,7 +9,7 @@ import type {
   ExportFormat,
 } from "../types/sizing";
 
-const BASE_PATH = "/api/v1/hull-sizing";
+const BASE_PATH = "/hull-sizing";
 
 // Mission Cases
 export const createMissionCase = async (dto: CreateMissionCaseDto): Promise<MissionCase> => {
