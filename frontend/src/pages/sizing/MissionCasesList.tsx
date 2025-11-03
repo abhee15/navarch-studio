@@ -1,18 +1,31 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../../stores";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 
 export const MissionCasesList: React.FC = observer(() => {
   const navigate = useNavigate();
   const { sizingStore } = useStore();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
 
   useEffect(() => {
     sizingStore.loadMissionCases();
   }, [sizingStore]);
+
+  // Filter missions based on search and type
+  const filteredMissions = sizingStore.missionCases.filter((mission) => {
+    const matchesSearch =
+      !searchQuery ||
+      mission.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mission.missionType?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = filterType === "all" || mission.missionType === filterType;
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
@@ -30,8 +43,91 @@ export const MissionCasesList: React.FC = observer(() => {
                 Manage your mission requirements and generate preliminary hull designs
               </p>
             </div>
-            <Button onClick={() => navigate("/sizing/wizard")}>+ New Mission</Button>
+            <Button onClick={() => navigate("/sizing/wizard")} className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+              🚀 New Mission
+            </Button>
           </div>
+
+          {/* Search and Filter */}
+          {!sizingStore.isLoading && sizingStore.missionCases.length > 0 && (
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  placeholder="🔍 Search missions by name or type..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex gap-2">
+                {["all", "commercial", "government", "research", "pleasure"].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                      filterType === type
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Stats */}
+          {!sizingStore.isLoading && sizingStore.missionCases.length > 0 && (
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-90">Total Missions</p>
+                    <p className="text-3xl font-bold mt-1">{sizingStore.missionCases.length}</p>
+                  </div>
+                  <div className="text-4xl opacity-75">📋</div>
+                </div>
+              </div>
+              
+              <div className="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-90">Commercial</p>
+                    <p className="text-3xl font-bold mt-1">
+                      {sizingStore.missionCases.filter(m => m.missionType === 'commercial').length}
+                    </p>
+                  </div>
+                  <div className="text-4xl opacity-75">🚢</div>
+                </div>
+              </div>
+              
+              <div className="rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-90">TEU-Based</p>
+                    <p className="text-3xl font-bold mt-1">
+                      {sizingStore.missionCases.filter(m => m.cargoBasis === 'teu').length}
+                    </p>
+                  </div>
+                  <div className="text-4xl opacity-75">📦</div>
+                </div>
+              </div>
+              
+              <div className="rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-90">Avg Speed</p>
+                    <p className="text-3xl font-bold mt-1">
+                      {(sizingStore.missionCases.reduce((sum, m) => sum + (m.serviceSpeedKn || 0), 0) / sizingStore.missionCases.length).toFixed(0)} kn
+                    </p>
+                  </div>
+                  <div className="text-4xl opacity-75">⚡</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Loading State */}
           {sizingStore.isLoading && (
@@ -72,7 +168,7 @@ export const MissionCasesList: React.FC = observer(() => {
           {/* Mission Cards */}
           {!sizingStore.isLoading && sizingStore.missionCases.length > 0 && (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {sizingStore.missionCases.map((mission) => (
+              {filteredMissions.map((mission) => (
                 <div
                   key={mission.id}
                   className="cursor-pointer rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-lg dark:bg-gray-800"
