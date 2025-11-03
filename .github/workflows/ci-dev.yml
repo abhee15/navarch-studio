@@ -925,21 +925,23 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    # Depend on infrastructure deployment and build-and-push
+    # For frontend-only changes: run immediately after quality checks
+    # For backend/infra changes: wait for those deployments to complete
     needs:
       - check-infrastructure
       - check-changed-paths
       - check-previous-run
+      - frontend-quality
       - build-and-push
       - deploy-infrastructure
       - deploy-services
     # Run when infra is configured and frontend changed, or via manual overrides
     # OR if previous run had any failures (to ensure everything runs after a failed run)
-    # Always wait for deploy-infrastructure and deploy-services (will be skipped if not needed)
-    # Note: deploy-services may be skipped if backend wasn't built, but that's OK - services should already exist
+    # Note: deploy-infrastructure and deploy-services may be skipped - that's OK, we'll discover existing resources
     if: |
       needs.check-infrastructure.outputs.has-secrets == 'true' &&
-      needs.build-and-push.result == 'success' &&
+      needs.frontend-quality.result == 'success' &&
+      (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') &&
       (needs.deploy-infrastructure.result == 'success' || needs.deploy-infrastructure.result == 'skipped') &&
       (needs.deploy-services.result == 'success' || needs.deploy-services.result == 'skipped') &&
       (
