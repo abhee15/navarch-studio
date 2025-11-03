@@ -48,7 +48,12 @@ export class SizingStore {
       runInAction(() => {
         // Clear and repopulate to maintain observable array
         this.missionCases.length = 0;
-        this.missionCases.push(...cases);
+        // Defensive: Ensure cases is an array before spreading
+        if (Array.isArray(cases)) {
+          cases.forEach(c => this.missionCases.push(c));
+        } else {
+          console.warn('[SizingStore] getMissionCases returned non-array:', cases);
+        }
         this.isLoading = false;
       });
     } catch (error) {
@@ -148,10 +153,15 @@ export class SizingStore {
       runInAction(() => {
         // Clear and repopulate to maintain observable array
         this.candidates.length = 0;
-        this.candidates.push(...candidates);
-        // Auto-select first candidate
-        if (candidates.length > 0 && !this.selectedCandidate) {
-          this.selectedCandidate = candidates[0];
+        // Defensive: Use forEach instead of spread to avoid Symbol.iterator issues
+        if (Array.isArray(candidates)) {
+          candidates.forEach(c => this.candidates.push(c));
+          // Auto-select first candidate
+          if (candidates.length > 0 && !this.selectedCandidate) {
+            this.selectedCandidate = candidates[0];
+          }
+        } else {
+          console.warn('[SizingStore] getRunCandidates returned non-array:', candidates);
         }
         this.isLoading = false;
       });
