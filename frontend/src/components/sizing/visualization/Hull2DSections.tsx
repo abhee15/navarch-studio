@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 
 interface Hull2DSectionsProps {
@@ -21,14 +21,14 @@ interface Hull2DSectionsProps {
  * - Hover effects and tooltips
  * - Engineering drawing aesthetic
  */
-export const Hull2DSections: React.FC<Hull2DSectionsProps> = ({
+export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(({
   candidate,
   showCenterline = true,
   showWaterline = true,
   showBaseline = true,
   showDimensions = true,
   stationCount = 10,
-}) => {
+}, ref) => {
   const [hoveredSection, setHoveredSection] = useState<number | null>(null);
 
   const sections = useMemo(() => {
@@ -96,6 +96,7 @@ export const Hull2DSections: React.FC<Hull2DSectionsProps> = ({
   return (
     <div className="w-full h-full bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 relative">
       <svg
+        ref={ref}
         width="100%"
         height="100%"
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -475,4 +476,6 @@ export const Hull2DSections: React.FC<Hull2DSectionsProps> = ({
       `}</style>
     </div>
   );
-};
+});
+
+Hull2DSections.displayName = "Hull2DSections";

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Hull3DScene } from "./Hull3DScene";
 import { Hull2DPlan } from "./Hull2DPlan";
 import { Hull2DProfile } from "./Hull2DProfile";
 import { Hull2DSections } from "./Hull2DSections";
 import type { CandidateDesign } from "../../../types/sizing";
+import { exportSVG, exportSVGToPNG, exportCanvasToPNG, generateFilename } from "../../../utils/exportViewport";
 
 interface ViewportQuadLayoutProps {
   candidate: CandidateDesign;
@@ -34,6 +35,81 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
   const [show3DCenters] = useState(true);
   const [show3DGrid] = useState(true);
 
+  // Refs for export
+  const planRef = useRef<SVGSVGElement>(null);
+  const profileRef = useRef<SVGSVGElement>(null);
+  const sectionsRef = useRef<SVGSVGElement>(null);
+
+  // Export handlers
+  const handleExportSVG = () => {
+    let svgElement: SVGSVGElement | null = null;
+    let viewType: "plan" | "profile" | "sections" | "3d" = "plan";
+
+    switch (mode) {
+      case "plan":
+        svgElement = planRef.current;
+        viewType = "plan";
+        break;
+      case "profile":
+        svgElement = profileRef.current;
+        viewType = "profile";
+        break;
+      case "sections":
+        svgElement = sectionsRef.current;
+        viewType = "sections";
+        break;
+      default:
+        return;
+    }
+
+    if (svgElement) {
+      const filename = generateFilename(candidate.id, viewType, candidate.hullFamily);
+      exportSVG(svgElement, filename);
+    }
+  };
+
+  const handleExportPNG = async () => {
+    // For 3D view, export canvas
+    if (mode === "3d") {
+      const canvas = document.querySelector("canvas");
+      if (canvas) {
+        const filename = generateFilename(candidate.id, "3d", candidate.hullFamily);
+        exportCanvasToPNG(canvas, filename);
+      }
+      return;
+    }
+
+    // For 2D views, export SVG to PNG
+    let svgElement: SVGSVGElement | null = null;
+    let viewType: "plan" | "profile" | "sections" | "3d" = "plan";
+
+    switch (mode) {
+      case "plan":
+        svgElement = planRef.current;
+        viewType = "plan";
+        break;
+      case "profile":
+        svgElement = profileRef.current;
+        viewType = "profile";
+        break;
+      case "sections":
+        svgElement = sectionsRef.current;
+        viewType = "sections";
+        break;
+      default:
+        return;
+    }
+
+    if (svgElement) {
+      const filename = generateFilename(candidate.id, viewType, candidate.hullFamily);
+      try {
+        await exportSVGToPNG(svgElement, filename, 2);
+      } catch (error) {
+        console.error("Failed to export PNG:", error);
+      }
+    }
+  };
+
   // Maximized view with smooth transition
   if (mode !== "quad") {
     return (
@@ -54,13 +130,39 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
               {mode === "3d" ? "3D Isometric" : `${mode} View`}
             </span>
           </div>
+          
+          {/* Export Buttons */}
+          <div className="flex items-center gap-2">
+            {mode !== "3d" && (
+              <button
+                onClick={handleExportSVG}
+                className="px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg shadow hover:shadow-md transition-all duration-200 flex items-center gap-2"
+                title="Export as SVG (vector)"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                <span>SVG</span>
+              </button>
+            )}
+            <button
+              onClick={handleExportPNG}
+              className="px-3 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow hover:shadow-md transition-all duration-200 flex items-center gap-2"
+              title="Export as PNG (raster, 2x resolution)"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>PNG</span>
+            </button>
+          </div>
         </div>
 
         {/* Maximized viewport */}
         <div className="flex-1">
-          {mode === "plan" && <Hull2DPlan candidate={candidate} />}
-          {mode === "profile" && <Hull2DProfile candidate={candidate} />}
-          {mode === "sections" && <Hull2DSections candidate={candidate} />}
+          {mode === "plan" && <Hull2DPlan candidate={candidate} ref={planRef} />}
+          {mode === "profile" && <Hull2DProfile candidate={candidate} ref={profileRef} />}
+          {mode === "sections" && <Hull2DSections candidate={candidate} ref={sectionsRef} />}
           {mode === "3d" && (
             <Hull3DScene
               candidate={candidate}

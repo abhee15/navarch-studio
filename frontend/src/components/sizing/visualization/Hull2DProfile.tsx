@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 
 interface Hull2DProfileProps {
@@ -20,14 +20,14 @@ interface Hull2DProfileProps {
  * - Professional dimension annotations
  * - Drop shadows for depth
  */
-export const Hull2DProfile: React.FC<Hull2DProfileProps> = ({
+export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(({
   candidate,
   showButtocks = true,
   showWaterline = true,
   showDimensions = true,
   showBaseline = true,
   buttockCount = 5,
-}) => {
+}, ref) => {
   const [hoveredButtock, setHoveredButtock] = useState<number | null>(null);
 
   const buttocks = useMemo(() => {
@@ -118,6 +118,7 @@ export const Hull2DProfile: React.FC<Hull2DProfileProps> = ({
   return (
     <div className="w-full h-full bg-gradient-to-b from-sky-100 via-blue-50 to-cyan-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 relative">
       <svg
+        ref={ref}
         width="100%"
         height="100%"
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -483,4 +484,6 @@ export const Hull2DProfile: React.FC<Hull2DProfileProps> = ({
       `}</style>
     </div>
   );
-};
+});
+
+Hull2DProfile.displayName = "Hull2DProfile";

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 
 interface Hull2DPlanProps {
@@ -20,14 +20,14 @@ interface Hull2DPlanProps {
  * - Professional engineering drawing aesthetic
  * - SVG-based for crisp scaling and export
  */
-export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
+export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(({
   candidate,
   showWaterlines = true,
   showStations = true,
   showDimensions = true,
   showCenterline = true,
   waterlineCount = 7,
-}) => {
+}, ref) => {
   const [hoveredWaterline, setHoveredWaterline] = useState<number | null>(null);
   const [hoveredStation, setHoveredStation] = useState<number | null>(null);
 
@@ -99,6 +99,7 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
   return (
     <div className="w-full h-full bg-gradient-to-b from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 relative">
       <svg
+        ref={ref}
         width="100%"
         height="100%"
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -523,4 +524,6 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
       `}</style>
     </div>
   );
-};
+});
+
+Hull2DPlan.displayName = "Hull2DPlan";
