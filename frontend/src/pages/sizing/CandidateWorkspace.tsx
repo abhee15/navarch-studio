@@ -1,19 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import { useParams, useNavigate } from "react-router-dom";
 import { useStore } from "../../stores";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
-import { Hull3DScene } from "../../components/sizing/visualization/Hull3DScene";
+import { ViewportQuadLayout } from "../../components/sizing/visualization/ViewportQuadLayout";
 
 export const CandidateWorkspace: React.FC = observer(() => {
-  const { candidateId } = useParams<{ candidateId: string }>();
+  const { candidateId} = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
   const { sizingStore } = useStore();
-  const [showWaterplane, setShowWaterplane] = useState(true);
-  const [showCenters, setShowCenters] = useState(true);
-  const [showGrid, setShowGrid] = useState(true);
 
   const candidate = sizingStore.selectedCandidate;
 
@@ -108,49 +105,18 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
         {/* Content */}
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          {/* 3D Visualization */}
+          {/* CAD-Style Quad Viewport */}
           <div className="mb-6 rounded-lg bg-white shadow dark:bg-gray-800 overflow-hidden">
-            <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+            <div className="border-b border-gray-200 dark:border-gray-700 p-4">
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                3D Hull Visualization
+                Hull Visualization (CAD Layout)
               </h3>
-              <div className="flex items-center space-x-4 text-sm">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showWaterplane}
-                    onChange={(e) => setShowWaterplane(e.target.checked)}
-                    className="rounded"
-                  />
-                  <span className="text-gray-700 dark:text-gray-300">Waterplane</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showCenters}
-                    onChange={(e) => setShowCenters(e.target.checked)}
-                    className="rounded"
-                  />
-                  <span className="text-gray-700 dark:text-gray-300">Centers</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showGrid}
-                    onChange={(e) => setShowGrid(e.target.checked)}
-                    className="rounded"
-                  />
-                  <span className="text-gray-700 dark:text-gray-300">Grid</span>
-                </label>
-              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Click any viewport header to maximize. Plan view shows waterlines, 3D shows parametric Wigley hull.
+              </p>
             </div>
-            <div className="h-[600px]">
-              <Hull3DScene
-                candidate={candidate}
-                showWaterplane={showWaterplane}
-                showCenters={showCenters}
-                showGrid={showGrid}
-              />
+            <div className="h-[700px]">
+              <ViewportQuadLayout candidate={candidate} />
             </div>
           </div>
 
