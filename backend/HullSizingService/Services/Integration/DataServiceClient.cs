@@ -1,201 +1,74 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using Polly;
-using Polly.Extensions.Http;
 
 namespace HullSizingService.Services.Integration;
 
 /// <summary>
-/// Resilient HTTP client for calling DataService with Polly policies
+/// HTTP client for DataService with Polly resilience policies
 /// </summary>
 public class DataServiceClient : IDataServiceClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<DataServiceClient> _logger;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public DataServiceClient(
-        HttpClient httpClient,
-        ILogger<DataServiceClient> logger,
-        IHttpContextAccessor httpContextAccessor)
+    public DataServiceClient(HttpClient httpClient, ILogger<DataServiceClient> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _httpContextAccessor = httpContextAccessor;
     }
 
-    /// <inheritdoc/>
-    public async Task<WaterPropertiesResponse> GetWaterPropertiesAsync(
-        decimal tempC,
-        decimal salinityPsu,
+    public async Task<WaterPropertiesResponse?> GetWaterPropertiesAsync(
+        decimal temperatureCelsius,
+        decimal salinityPpt,
         CancellationToken cancellationToken = default)
     {
-        var url = $"/api/v1/water-properties?temp={tempC}&salinity={salinityPsu}";
-
-        _logger.LogInformation(
-            "[DATASERVICE_CLIENT] Getting water properties: temp={TempC}°C, salinity={SalinityPsu} PSU",
-            tempC, salinityPsu);
-
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            ForwardClaims(request);
-            ForwardCorrelationId(request);
+            _logger.LogInformation("[DATA_CLIENT] Fetching water properties for T={Temp}°C, S={Salinity}ppt", temperatureCelsius, salinityPpt);
 
-            var response = await _httpClient.SendAsync(request, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            var response = await _httpClient.GetAsync(
+                $"/api/v1/water/properties?temperature={temperatureCelsius}&salinity={salinityPpt}",
+                cancellationToken);
 
-            var result = await response.Content.ReadFromJsonAsync<WaterPropertiesResponse>(cancellationToken);
-
-            if (result == null)
+            if (!response.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException("DataService returned null water properties");
+                _logger.LogWarning("[DATA_CLIENT] Water properties request failed: {StatusCode}", response.StatusCode);
+                return null;
             }
 
-            _logger.LogInformation(
-                "[DATASERVICE_CLIENT] Water properties retrieved: rho={Rho} kg/m³, nu={Nu} m²/s",
-                result.RhoKgM3, result.NuM2S);
-
-            return result;
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<WaterPropertiesResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
-            _logger.LogError(ex,
-                "[DATASERVICE_CLIENT] HTTP error getting water properties: {Message}",
-                ex.Message);
-            throw;
-        }
-        catch (TaskCanceledException ex) when (ex.CancellationToken == cancellationToken)
-        {
-            _logger.LogWarning("[DATASERVICE_CLIENT] Request cancelled by user");
-            throw;
-        }
-        catch (TaskCanceledException ex)
-        {
-            _logger.LogError(ex,
-                "[DATASERVICE_CLIENT] Timeout getting water properties (> 2s)");
-            throw new TimeoutException("Request to DataService timed out", ex);
+            _logger.LogError(ex, "[DATA_CLIENT] Failed to fetch water properties");
+            return null;
         }
     }
 
-    /// <inheritdoc/>
-    public async Task<Guid> CreateVesselAsync(
-        CreateVesselFromCandidateDto vesselDto,
-        string idempotencyKey,
-        CancellationToken cancellationToken = default)
+    public async Task<HoltropResponse?> CalculateResistanceAsync(HoltropRequest request, CancellationToken cancellationToken = default)
     {
-        var url = "/api/v1/vessels";
-
-        _logger.LogInformation(
-            "[DATASERVICE_CLIENT] Creating vessel: {VesselName}, IdempotencyKey={IdempotencyKey}",
-            vesselDto.Name, idempotencyKey);
-
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            _logger.LogInformation("[DATA_CLIENT] Calculating resistance for Lpp={Lpp}m, V={Speed}kn", request.LppM, request.SpeedKn);
+
+            var json = JsonSerializer.Serialize(request);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("/api/v1/resistance/holtrop", content, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
             {
-                Content = JsonContent.Create(vesselDto)
-            };
-
-            ForwardClaims(request);
-            ForwardCorrelationId(request);
-            request.Headers.Add("Idempotency-Key", idempotencyKey);
-
-            var response = await _httpClient.SendAsync(request, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<CreateVesselResponse>(cancellationToken);
-
-            if (result == null || result.Id == Guid.Empty)
-            {
-                throw new InvalidOperationException("DataService returned invalid vessel ID");
+                _logger.LogWarning("[DATA_CLIENT] Holtrop calculation failed: {StatusCode}", response.StatusCode);
+                return null;
             }
 
-            _logger.LogInformation(
-                "[DATASERVICE_CLIENT] Vessel created: {VesselId}, IdempotencyKey={IdempotencyKey}",
-                result.Id, idempotencyKey);
-
-            return result.Id;
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<HoltropResponse>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
-            _logger.LogError(ex,
-                "[DATASERVICE_CLIENT] HTTP error creating vessel: {Message}",
-                ex.Message);
-            throw;
+            _logger.LogError(ex, "[DATA_CLIENT] Failed to calculate resistance");
+            return null;
         }
-        catch (TaskCanceledException ex) when (ex.CancellationToken == cancellationToken)
-        {
-            _logger.LogWarning("[DATASERVICE_CLIENT] Request cancelled by user");
-            throw;
-        }
-        catch (TaskCanceledException ex)
-        {
-            _logger.LogError(ex,
-                "[DATASERVICE_CLIENT] Timeout creating vessel (> 2s)");
-            throw new TimeoutException("Request to DataService timed out", ex);
-        }
-    }
-
-    /// <summary>
-    /// Forward user claims from HttpContext to DataService request
-    /// </summary>
-    private void ForwardClaims(HttpRequestMessage request)
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.Items == null)
-        {
-            return;
-        }
-
-        // Forward claims that were extracted by ClaimsForwardingMiddleware
-        if (httpContext.Items.TryGetValue("Claims:TenantId", out var tenantId))
-            request.Headers.Add("X-Tenant-Id", tenantId?.ToString());
-
-        if (httpContext.Items.TryGetValue("Claims:Sub", out var sub))
-            request.Headers.Add("X-User-Id", sub?.ToString());
-
-        if (httpContext.Items.TryGetValue("Claims:OrgId", out var orgId))
-            request.Headers.Add("X-Org-Id", orgId?.ToString());
-
-        if (httpContext.Items.TryGetValue("Claims:Roles", out var roles))
-            request.Headers.Add("X-User-Roles", roles?.ToString());
-
-        if (httpContext.Items.TryGetValue("Claims:Scope", out var scope))
-            request.Headers.Add("X-Scope", scope?.ToString());
-
-        // Also forward the Authorization header (JWT token)
-        var authHeader = httpContext.Request.Headers["Authorization"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(authHeader))
-        {
-            request.Headers.Add("Authorization", authHeader);
-        }
-    }
-
-    /// <summary>
-    /// Forward correlation ID for distributed tracing
-    /// </summary>
-    private void ForwardCorrelationId(HttpRequestMessage request)
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.Items == null)
-        {
-            return;
-        }
-
-        if (httpContext.Items.TryGetValue("CorrelationId", out var correlationId))
-        {
-            request.Headers.Add("X-Correlation-Id", correlationId?.ToString());
-        }
-    }
-
-    /// <summary>
-    /// Response from vessel creation
-    /// </summary>
-    private record CreateVesselResponse
-    {
-        public Guid Id { get; init; }
-        public string Name { get; init; } = string.Empty;
     }
 }
-

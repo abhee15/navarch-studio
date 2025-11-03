@@ -5,9 +5,6 @@ using Shared.Models.Sizing;
 
 namespace HullSizingService.Services;
 
-/// <summary>
-/// Implementation of mission case service with tenant isolation
-/// </summary>
 public class MissionCaseService : IMissionCaseService
 {
     private readonly SizingDbContext _context;
@@ -23,18 +20,16 @@ public class MissionCaseService : IMissionCaseService
     {
         _logger.LogInformation("[MISSION_SERVICE] Getting all mission cases for tenant {TenantId}", tenantId);
 
-        var missionCases = await _context.MissionCases
+        var cases = await _context.MissionCases
             .Where(mc => mc.TenantId == tenantId)
             .OrderByDescending(mc => mc.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return missionCases.Select(MapToDto).ToList();
+        return cases.Select(MapToDto).ToList();
     }
 
     public async Task<MissionCaseDto?> GetByIdAsync(Guid id, string tenantId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("[MISSION_SERVICE] Getting mission case {Id} for tenant {TenantId}", id, tenantId);
-
         var missionCase = await _context.MissionCases
             .Where(mc => mc.Id == id && mc.TenantId == tenantId)
             .FirstOrDefaultAsync(cancellationToken);
@@ -75,30 +70,23 @@ public class MissionCaseService : IMissionCaseService
         _context.MissionCases.Add(missionCase);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("[MISSION_SERVICE] Mission case created: {Id}", missionCase.Id);
+        _logger.LogInformation("[MISSION_SERVICE] Created mission case {Id}", missionCase.Id);
 
         return MapToDto(missionCase);
     }
 
     public async Task<MissionCaseDto?> UpdateAsync(Guid id, UpdateMissionCaseDto dto, string tenantId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("[MISSION_SERVICE] Updating mission case {Id} for tenant {TenantId}", id, tenantId);
-
         var missionCase = await _context.MissionCases
             .Where(mc => mc.Id == id && mc.TenantId == tenantId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (missionCase == null)
-        {
-            _logger.LogWarning("[MISSION_SERVICE] Mission case {Id} not found for tenant {TenantId}", id, tenantId);
-            return null;
-        }
+        if (missionCase == null) return null;
 
-        // Update only provided fields
         if (dto.Name != null) missionCase.Name = dto.Name;
         if (dto.MissionType != null) missionCase.MissionType = dto.MissionType.ToLower();
         if (dto.CargoBasis != null) missionCase.CargoBasis = dto.CargoBasis.ToLower();
-        if (dto.CargoValue.HasValue) missionCase.CargoValue = dto.CargoValue.Value;
+        if (dto.CargoValue.HasValue) missionCase.CargoValue = dto.CargoValue;
         if (dto.CargoDensityTPerM3.HasValue) missionCase.CargoDensityTPerM3 = dto.CargoDensityTPerM3;
         if (dto.CargoVolumeM3.HasValue) missionCase.CargoVolumeM3 = dto.CargoVolumeM3;
         if (dto.TeuCount.HasValue) missionCase.TeuCount = dto.TeuCount;
@@ -114,32 +102,21 @@ public class MissionCaseService : IMissionCaseService
         if (dto.Notes != null) missionCase.Notes = dto.Notes;
 
         missionCase.UpdatedAt = DateTime.UtcNow;
-
         await _context.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("[MISSION_SERVICE] Mission case {Id} updated successfully", id);
 
         return MapToDto(missionCase);
     }
 
     public async Task<bool> DeleteAsync(Guid id, string tenantId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("[MISSION_SERVICE] Soft deleting mission case {Id} for tenant {TenantId}", id, tenantId);
-
         var missionCase = await _context.MissionCases
             .Where(mc => mc.Id == id && mc.TenantId == tenantId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (missionCase == null)
-        {
-            _logger.LogWarning("[MISSION_SERVICE] Mission case {Id} not found for tenant {TenantId}", id, tenantId);
-            return false;
-        }
+        if (missionCase == null) return false;
 
         missionCase.DeletedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("[MISSION_SERVICE] Mission case {Id} soft deleted successfully", id);
 
         return true;
     }
@@ -173,4 +150,3 @@ public class MissionCaseService : IMissionCaseService
         };
     }
 }
-

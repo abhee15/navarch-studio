@@ -149,9 +149,18 @@ try
     builder.Services.AddScoped<HullSizingService.Services.IMissionCaseService, HullSizingService.Services.MissionCaseService>();
     Log.Information("Mission case service registered");
 
+    // Sizing Run Service
+    builder.Services.AddScoped<HullSizingService.Services.ISizingRunService, HullSizingService.Services.SizingRunService>();
+    Log.Information("Sizing run service registered");
+
+    // Candidate Design Service
+    builder.Services.AddScoped<HullSizingService.Services.ICandidateDesignService, HullSizingService.Services.CandidateDesignService>();
+    Log.Information("Candidate design service registered");
+
     // FluentValidation validators
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.CreateMissionCaseDto>, Shared.Validators.Sizing.CreateMissionCaseDtoValidator>();
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.UpdateMissionCaseDto>, Shared.Validators.Sizing.UpdateMissionCaseDtoValidator>();
+    builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.CreateSizingRunDto>, Shared.Validators.Sizing.CreateSizingRunDtoValidator>();
     Log.Information("FluentValidation validators registered");
 
     // OpenTelemetry Tracing

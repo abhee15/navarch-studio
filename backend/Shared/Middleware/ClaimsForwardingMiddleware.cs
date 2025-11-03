@@ -5,7 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace Shared.Middleware;
 
 /// <summary>
-/// Middleware to extract and forward JWT claims for service-to-service calls
+/// Middleware to extract JWT claims and forward them for service-to-service calls
+/// Denies requests if tenantId is missing (enforces tenant isolation)
 /// </summary>
 public class ClaimsForwardingMiddleware
 {
@@ -20,68 +21,39 @@ public class ClaimsForwardingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Check if user is authenticated
-        if (context.User.Identity?.IsAuthenticated == true)
+        // Extract claims from HttpContext.Items (set by JwtAuthenticationMiddleware)
+        var sub = context.Items["Claims:Sub"]?.ToString();
+        var tenantId = context.Items["Claims:TenantId"]?.ToString();
+        var orgId = context.Items["Claims:OrgId"]?.ToString();
+        var roles = context.Items["Claims:Roles"]?.ToString();
+        var scope = context.Items["Claims:Scope"]?.ToString();
+
+        _logger.LogDebug("[CLAIMS_FWD] Extracted claims: sub={Sub}, tenantId={TenantId}, orgId={OrgId}", sub, tenantId, orgId);
+
+        // DENY if tenantId is missing (enforce tenant isolation)
+        if (string.IsNullOrEmpty(tenantId))
         {
-            // Extract tenantId claim (REQUIRED for multi-tenancy)
-            var tenantId = context.User.FindFirst("tenantId")?.Value;
+            _logger.LogWarning("[CLAIMS_FWD] Request denied - missing tenantId");
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
 
-            if (string.IsNullOrEmpty(tenantId))
+            var errorJson = JsonSerializer.Serialize(new
             {
-                _logger.LogWarning(
-                    "[CLAIMS_FORWARDING] Missing required 'tenantId' claim - denying request (User: {UserId})",
-                    context.User.FindFirst("sub")?.Value ?? "unknown");
+                error = "Forbidden",
+                message = "Tenant ID is required for this operation"
+            });
 
-                context.Response.StatusCode = 403; // Forbidden
-                context.Response.ContentType = "application/json";
-                var errorResponse = JsonSerializer.Serialize(new
-                {
-                    error = "Forbidden",
-                    message = "Missing required tenant claim. Please re-authenticate."
-                });
-                await context.Response.WriteAsync(errorResponse);
-                return;
-            }
-
-            // Store claims in HttpContext.Items for S2S calls
-            context.Items["Claims:TenantId"] = tenantId;
-
-            var sub = context.User.FindFirst("sub")?.Value;
-            if (!string.IsNullOrEmpty(sub))
-            {
-                context.Items["Claims:Sub"] = sub;
-            }
-
-            var orgId = context.User.FindFirst("orgId")?.Value;
-            if (!string.IsNullOrEmpty(orgId))
-            {
-                context.Items["Claims:OrgId"] = orgId;
-            }
-
-            // Collect all role claims
-            var roles = string.Join(",", context.User.FindAll("roles").Select(c => c.Value));
-            if (!string.IsNullOrEmpty(roles))
-            {
-                context.Items["Claims:Roles"] = roles;
-            }
-
-            var scope = context.User.FindFirst("scope")?.Value;
-            if (!string.IsNullOrEmpty(scope))
-            {
-                context.Items["Claims:Scope"] = scope;
-            }
-
-            _logger.LogDebug(
-                "[CLAIMS_FORWARDING] Claims extracted: TenantId={TenantId}, Sub={Sub}, OrgId={OrgId}, Roles={Roles}",
-                tenantId, sub, orgId, roles);
+            await context.Response.WriteAsync(errorJson);
+            return;
         }
-        else
-        {
-            // Unauthenticated request - allow through (controller will check authorization)
-            _logger.LogDebug("[CLAIMS_FORWARDING] Unauthenticated request - skipping claims extraction");
-        }
+
+        // Store claims in HttpContext.Items for downstream use
+        context.Items["Claims:Sub"] = sub;
+        context.Items["Claims:TenantId"] = tenantId;
+        context.Items["Claims:OrgId"] = orgId;
+        context.Items["Claims:Roles"] = roles;
+        context.Items["Claims:Scope"] = scope;
 
         await _next(context);
     }
 }
-

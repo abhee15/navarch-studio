@@ -1,74 +1,43 @@
 namespace HullSizingService.Services.Integration;
 
 /// <summary>
-/// Client for making resilient HTTP calls to DataService
+/// Client for communicating with the DataService (Holtrop-Mennen resistance, water properties, etc.)
 /// </summary>
 public interface IDataServiceClient
 {
     /// <summary>
-    /// Get water properties for displacement calculations
+    /// Get water properties (density, viscosity) for a given temperature and salinity
     /// </summary>
-    /// <param name="tempC">Temperature in Celsius</param>
-    /// <param name="salinityPsu">Salinity in PSU (Practical Salinity Units)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Water properties (density, kinematic viscosity)</returns>
-    Task<WaterPropertiesResponse> GetWaterPropertiesAsync(
-        decimal tempC,
-        decimal salinityPsu,
-        CancellationToken cancellationToken = default);
+    Task<WaterPropertiesResponse?> GetWaterPropertiesAsync(decimal temperatureCelsius, decimal salinityPpt, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Create a vessel in DataService from a candidate design (Push to Hydrostatics)
+    /// Calculate resistance using Holtrop-Mennen method (Phase 2 - integration with DataService)
     /// </summary>
-    /// <param name="vesselDto">Vessel creation DTO with dimensions and geometry</param>
-    /// <param name="idempotencyKey">Idempotency key to prevent duplicate creation</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Created vessel ID</returns>
-    Task<Guid> CreateVesselAsync(
-        CreateVesselFromCandidateDto vesselDto,
-        string idempotencyKey,
-        CancellationToken cancellationToken = default);
+    Task<HoltropResponse?> CalculateResistanceAsync(HoltropRequest request, CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// Water properties response from DataService
-/// </summary>
-public record WaterPropertiesResponse
-{
-    /// <summary>
-    /// Temperature in Celsius
-    /// </summary>
-    public decimal TempC { get; init; }
+public record WaterPropertiesResponse(
+    decimal DensityKgM3,
+    decimal KinematicViscosityM2S,
+    decimal TemperatureCelsius,
+    decimal SalinityPpt
+);
 
-    /// <summary>
-    /// Salinity in PSU
-    /// </summary>
-    public decimal SalinityPsu { get; init; }
+public record HoltropRequest(
+    decimal LppM,
+    decimal LwlM,
+    decimal BeamM,
+    decimal DraftM,
+    decimal Cb,
+    decimal Cp,
+    decimal Cwp,
+    decimal Cm,
+    decimal SpeedKn
+);
 
-    /// <summary>
-    /// Density in kg/m³
-    /// </summary>
-    public decimal RhoKgM3 { get; init; }
-
-    /// <summary>
-    /// Kinematic viscosity in m²/s
-    /// </summary>
-    public decimal NuM2S { get; init; }
-}
-
-/// <summary>
-/// DTO for creating a vessel from a candidate design
-/// </summary>
-public record CreateVesselFromCandidateDto
-{
-    public string Name { get; init; } = string.Empty;
-    public string VesselType { get; init; } = string.Empty;
-    public decimal Lpp { get; init; }
-    public decimal Lwl { get; init; }
-    public decimal Beam { get; init; }
-    public decimal Draft { get; init; }
-    public decimal Depth { get; init; }
-    public string? Notes { get; init; }
-    // TODO: Add stations/waterlines/offsets when geometry generation is implemented (Phase 2)
-}
-
+public record HoltropResponse(
+    decimal EhpKw,
+    decimal ShpKw,
+    decimal ResistanceKn,
+    decimal FroudeNumber
+);

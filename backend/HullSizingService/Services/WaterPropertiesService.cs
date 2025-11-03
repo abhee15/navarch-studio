@@ -4,119 +4,67 @@ using Microsoft.Extensions.Caching.Memory;
 namespace HullSizingService.Services;
 
 /// <summary>
-/// Service for retrieving water properties with caching and fallback
-/// </summary>
-public interface IWaterPropertiesService
-{
-    /// <summary>
-    /// Get water properties (with caching and stale fallback if DataService is down)
-    /// </summary>
-    Task<WaterPropertiesResponse> GetPropertiesAsync(
-        decimal tempC,
-        decimal salinityPsu,
-        CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Implementation of water properties service with read-through cache
+/// Cached water properties service with stale fallback
 /// </summary>
 public class WaterPropertiesService : IWaterPropertiesService
 {
+    private readonly IDataServiceClient _dataClient;
     private readonly IMemoryCache _cache;
-    private readonly IDataServiceClient _dataServiceClient;
     private readonly ILogger<WaterPropertiesService> _logger;
 
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(12);
-    private const string CacheKeyPrefix = "water_props";
-    private const string StaleCacheKeySuffix = "_stale";
+    // Default seawater properties at 15°C, 35ppt (ISO standard)
+    private static readonly WaterPropertiesResponse DefaultProperties = new(
+        DensityKgM3: 1025.87m,
+        KinematicViscosityM2S: 0.000001188m,
+        TemperatureCelsius: 15.0m,
+        SalinityPpt: 35.0m
+    );
 
     public WaterPropertiesService(
+        IDataServiceClient dataClient,
         IMemoryCache cache,
-        IDataServiceClient dataServiceClient,
         ILogger<WaterPropertiesService> logger)
     {
+        _dataClient = dataClient;
         _cache = cache;
-        _dataServiceClient = dataServiceClient;
         _logger = logger;
     }
 
-    /// <inheritdoc/>
-    public async Task<WaterPropertiesResponse> GetPropertiesAsync(
-        decimal tempC,
-        decimal salinityPsu,
+    public async Task<WaterPropertiesResponse> GetWaterPropertiesAsync(
+        decimal temperatureCelsius,
+        decimal salinityPpt,
         CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"{CacheKeyPrefix}_{tempC}_{salinityPsu}";
-        var staleCacheKey = $"{cacheKey}{StaleCacheKeySuffix}";
+        var cacheKey = $"water_{temperatureCelsius:F1}_{salinityPpt:F1}";
 
-        // Try to get from cache (fresh, within TTL)
-        if (_cache.TryGetValue(cacheKey, out WaterPropertiesResponse? cached))
+        // Try to get from cache (12h TTL)
+        if (_cache.TryGetValue<WaterPropertiesResponse>(cacheKey, out var cached))
         {
-            _logger.LogDebug(
-                "[WATER_CACHE] Cache hit: temp={TempC}°C, salinity={SalinityPsu} PSU",
-                tempC, salinityPsu);
+            _logger.LogDebug("[WATER_CACHE] HIT for {CacheKey}", cacheKey);
             return cached!;
         }
 
-        // Cache miss - fetch from DataService
-        _logger.LogInformation(
-            "[WATER_CACHE] Cache miss: fetching from DataService (temp={TempC}°C, salinity={SalinityPsu} PSU)",
-            tempC, salinityPsu);
+        _logger.LogDebug("[WATER_CACHE] MISS for {CacheKey}, fetching from DataService", cacheKey);
 
-        try
+        // Fetch from DataService
+        var properties = await _dataClient.GetWaterPropertiesAsync(temperatureCelsius, salinityPpt, cancellationToken);
+
+        if (properties == null)
         {
-            var result = await _dataServiceClient.GetWaterPropertiesAsync(tempC, salinityPsu, cancellationToken);
-
-            // Store in cache with TTL
-            var cacheOptions = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = CacheTtl,
-                Priority = CacheItemPriority.High
-            };
-            _cache.Set(cacheKey, result, cacheOptions);
-
-            // Also store as "stale" cache (no expiration) for fallback
-            var staleCacheOptions = new MemoryCacheEntryOptions
-            {
-                Priority = CacheItemPriority.Low // Lower priority so it can be evicted if memory is low
-            };
-            _cache.Set(staleCacheKey, result, staleCacheOptions);
-
-            _logger.LogInformation(
-                "[WATER_CACHE] Cached water properties: rho={Rho} kg/m³, nu={Nu} m²/s (TTL={Ttl}h)",
-                result.RhoKgM3, result.NuM2S, CacheTtl.TotalHours);
-
-            return result;
+            _logger.LogWarning("[WATER_CACHE] DataService unavailable, returning default properties");
+            return DefaultProperties;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TimeoutException)
+
+        // Cache for 12 hours
+        var cacheOptions = new MemoryCacheEntryOptions
         {
-            // DataService is down or slow - try to serve stale cache
-            _logger.LogWarning(ex,
-                "[WATER_CACHE] DataService unavailable ({ErrorType}), attempting stale cache fallback",
-                ex.GetType().Name);
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12),
+            SlidingExpiration = TimeSpan.FromHours(6)
+        };
 
-            if (_cache.TryGetValue(staleCacheKey, out WaterPropertiesResponse? stale))
-            {
-                _logger.LogWarning(
-                    "[WATER_CACHE] Serving STALE cache: temp={TempC}°C, salinity={SalinityPsu} PSU, rho={Rho} kg/m³",
-                    tempC, salinityPsu, stale!.RhoKgM3);
+        _cache.Set(cacheKey, properties, cacheOptions);
+        _logger.LogInformation("[WATER_CACHE] Cached water properties for {CacheKey} (12h TTL)", cacheKey);
 
-                // Re-cache as fresh (to avoid repeated fallback attempts)
-                var refreshCacheOptions = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5), // Short TTL, retry DataService soon
-                    Priority = CacheItemPriority.High
-                };
-                _cache.Set(cacheKey, stale, refreshCacheOptions);
-
-                return stale!;
-            }
-
-            // No stale cache available - propagate exception
-            _logger.LogError(ex,
-                "[WATER_CACHE] DataService unavailable and no stale cache found - failing request");
-            throw;
-        }
+        return properties;
     }
 }
-
