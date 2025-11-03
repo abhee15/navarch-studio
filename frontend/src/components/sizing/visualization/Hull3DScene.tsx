@@ -1,8 +1,8 @@
-import React, { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Grid, Environment } from '@react-three/drei';
-import { WigleyHull3D } from './WigleyHull3D';
-import type { CandidateDesign } from '../../../types/sizing';
+import React, { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Grid, Environment } from "@react-three/drei";
+import { WigleyHull3D } from "./WigleyHull3D";
+import type { CandidateDesign } from "../../../types/sizing";
 
 interface Hull3DSceneProps {
   candidate: CandidateDesign;
@@ -13,7 +13,7 @@ interface Hull3DSceneProps {
 
 /**
  * 3D Scene Container for Hull Visualization
- * 
+ *
  * Features:
  * - Orbit controls (rotate, zoom, pan)
  * - Grid helper (XZ plane)
@@ -133,12 +133,17 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
       {/* Controls hint */}
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 text-xs text-gray-600">
         <div className="space-y-1">
-          <div><span className="font-medium">Left Click + Drag:</span> Rotate</div>
-          <div><span className="font-medium">Right Click + Drag:</span> Pan</div>
-          <div><span className="font-medium">Scroll:</span> Zoom</div>
+          <div>
+            <span className="font-medium">Left Click + Drag:</span> Rotate
+          </div>
+          <div>
+            <span className="font-medium">Right Click + Drag:</span> Pan
+          </div>
+          <div>
+            <span className="font-medium">Scroll:</span> Zoom
+          </div>
         </div>
       </div>
     </div>
   );
 };
-

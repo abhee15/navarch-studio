@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { Hull3DScene } from './Hull3DScene';
-import { Hull2DPlan } from './Hull2DPlan';
-import type { CandidateDesign } from '../../../types/sizing';
+import React, { useState } from "react";
+import { Hull3DScene } from "./Hull3DScene";
+import { Hull2DPlan } from "./Hull2DPlan";
+import type { CandidateDesign } from "../../../types/sizing";
 
 interface ViewportQuadLayoutProps {
   candidate: CandidateDesign;
 }
 
-type ViewportMode = 'quad' | 'plan' | 'profile' | 'sections' | '3d';
+type ViewportMode = "quad" | "plan" | "profile" | "sections" | "3d";
 
 /**
  * CAD-Style Quad Viewport Layout
- * 
+ *
  * Layout:
  * ┌─────────────┬─────────────┐
  * │  Plan (Top) │ Profile     │
@@ -20,41 +20,41 @@ type ViewportMode = 'quad' | 'plan' | 'profile' | 'sections' | '3d';
  * │  Sections   │ 3D          │
  * │  (Body Plan)│ (Isometric) │
  * └─────────────┴─────────────┘
- * 
+ *
  * Features:
  * - Click viewport header to maximize
  * - Synchronized highlighting across views
  * - Responsive (collapses to 1-up on mobile)
  */
 export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidate }) => {
-  const [mode, setMode] = useState<ViewportMode>('quad');
+  const [mode, setMode] = useState<ViewportMode>("quad");
   const [show3DWaterplane] = useState(true);
   const [show3DCenters] = useState(true);
   const [show3DGrid] = useState(true);
 
   // Maximized view
-  if (mode !== 'quad') {
+  if (mode !== "quad") {
     return (
       <div className="w-full h-full flex flex-col">
         {/* Toolbar */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setMode('quad')}
+              onClick={() => setMode("quad")}
               className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
             >
               ← Back to Quad View
             </button>
             <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
-              {mode === '3d' ? '3D Isometric' : mode} View
+              {mode === "3d" ? "3D Isometric" : mode} View
             </span>
           </div>
         </div>
 
         {/* Maximized viewport */}
         <div className="flex-1">
-          {mode === 'plan' && <Hull2DPlan candidate={candidate} />}
-          {mode === 'profile' && (
+          {mode === "plan" && <Hull2DPlan candidate={candidate} />}
+          {mode === "profile" && (
             <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
               <div className="text-center text-gray-500">
                 <p className="text-lg font-semibold">Profile View</p>
@@ -62,7 +62,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
               </div>
             </div>
           )}
-          {mode === 'sections' && (
+          {mode === "sections" && (
             <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
               <div className="text-center text-gray-500">
                 <p className="text-lg font-semibold">Sections View (Body Plan)</p>
@@ -70,7 +70,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
               </div>
             </div>
           )}
-          {mode === '3d' && (
+          {mode === "3d" && (
             <Hull3DScene
               candidate={candidate}
               showWaterplane={show3DWaterplane}
@@ -90,7 +90,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
-          onClick={() => setMode('plan')}
+          onClick={() => setMode("plan")}
         >
           <span className="text-sm font-semibold text-gray-900 dark:text-white">
             Plan View (Top)
@@ -108,7 +108,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
-          onClick={() => setMode('profile')}
+          onClick={() => setMode("profile")}
         >
           <span className="text-sm font-semibold text-gray-900 dark:text-white">
             Profile View (Side)
@@ -129,7 +129,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
-          onClick={() => setMode('sections')}
+          onClick={() => setMode("sections")}
         >
           <span className="text-sm font-semibold text-gray-900 dark:text-white">
             Sections (Body Plan)
@@ -150,11 +150,9 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
-          onClick={() => setMode('3d')}
+          onClick={() => setMode("3d")}
         >
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-            3D Isometric
-          </span>
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">3D Isometric</span>
           <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
             Maximize →
           </button>
@@ -171,4 +169,3 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
     </div>
   );
 };
-

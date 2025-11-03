@@ -8,7 +8,7 @@ import { Button } from "../../components/ui/button";
 import { ViewportQuadLayout } from "../../components/sizing/visualization/ViewportQuadLayout";
 
 export const CandidateWorkspace: React.FC = observer(() => {
-  const { candidateId} = useParams<{ candidateId: string }>();
+  const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
   const { sizingStore } = useStore();
 
@@ -112,7 +112,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                 Hull Visualization (CAD Layout)
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Click any viewport header to maximize. Plan view shows waterlines, 3D shows parametric Wigley hull.
+                Click any viewport header to maximize. Plan view shows waterlines, 3D shows
+                parametric Wigley hull.
               </p>
             </div>
             <div className="h-[700px]">

@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import type { CandidateDesign } from '../../../types/sizing';
+import React, { useMemo } from "react";
+import type { CandidateDesign } from "../../../types/sizing";
 
 interface Hull2DPlanProps {
   candidate: CandidateDesign;
@@ -12,7 +12,7 @@ interface Hull2DPlanProps {
 
 /**
  * 2D Plan View (Top-Down Projection)
- * 
+ *
  * Shows:
  * - Waterlines (horizontal sections at different depths)
  * - Stations (vertical transverse sections)
@@ -20,7 +20,7 @@ interface Hull2DPlanProps {
  * - Perpendiculars (AP, FP)
  * - Dimensions (Lpp, Lwl, LOA, B)
  * - Maximum beam line
- * 
+ *
  * Coordinate system:
  * - X: Longitudinal (bow = +X, stern = -X)
  * - Y: Transverse (starboard = +Y, port = -Y)
@@ -41,31 +41,31 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
     const draft = candidate.tM;
 
     const lines = [];
-    
+
     for (let i = 0; i <= waterlineCount; i++) {
       const z = -(i / waterlineCount) * draft; // Depth: 0 (surface) to -draft (keel)
       const zNorm = z / draft; // Normalized: 0 to -1
-      
+
       const points: [number, number][] = [];
       const numPoints = 60; // Points along length
-      
+
       for (let j = 0; j <= numPoints; j++) {
         const x = (j / numPoints) * lpp - lpp / 2; // x: -L/2 to +L/2
         const xNorm = (2 * j) / numPoints - 1; // x: -1 to +1
-        
+
         // Wigley formula: y = (B/2) * (1 - z²/T²) * (1 - x²)
         const y = (beam / 2) * (1 - zNorm * zNorm) * (1 - xNorm * xNorm);
-        
+
         points.push([x, y]);
       }
-      
+
       lines.push({
         depth: Math.abs(z),
         points,
         isDesignWaterline: i === waterlineCount, // Bottom waterline = design draft
       });
     }
-    
+
     return lines;
   }, [candidate.lppM, candidate.bM, candidate.tM, waterlineCount]);
 
@@ -73,13 +73,13 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
   const stations = useMemo(() => {
     const lpp = candidate.lppM;
     const numStations = 10; // 0 (AP) to 10 (FP)
-    
+
     const stationPositions = [];
     for (let i = 0; i <= numStations; i++) {
       const x = (i / numStations) * lpp - lpp / 2;
       stationPositions.push({ number: i, x });
     }
-    
+
     return stationPositions;
   }, [candidate.lppM]);
 
@@ -87,7 +87,7 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
   const padding = 60; // Padding for dimensions/labels
   const svgWidth = 800;
   const svgHeight = 400;
-  
+
   // Calculate scale (fit hull to viewport)
   const lpp = candidate.lppM;
   const beam = candidate.bM;
@@ -98,7 +98,7 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
   // Transform: Convert ship coordinates to SVG coordinates
   const toSVG = (x: number, y: number): [number, number] => {
     return [
-      svgWidth / 2 + x * scale,  // Center horizontally
+      svgWidth / 2 + x * scale, // Center horizontally
       svgHeight / 2 - y * scale, // Center vertically, flip Y (SVG Y down, ship Y up)
     ];
   };
@@ -106,14 +106,18 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
   // Generate SVG path for waterline
   const waterlinePath = (points: [number, number][]) => {
     const svgPoints = points.map(([x, y]) => toSVG(x, y));
-    
+
     // Create path: M (move to first point) + L (line to subsequent points)
-    const path = svgPoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
-    
+    const path = svgPoints
+      .map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`)
+      .join(" ");
+
     // Mirror for port side
     const mirroredPoints = points.map(([x, y]) => toSVG(x, -y));
-    const mirrorPath = mirroredPoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
-    
+    const mirrorPath = mirroredPoints
+      .map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`)
+      .join(" ");
+
     return { starboard: path, port: mirrorPath };
   };
 
@@ -132,7 +136,7 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
           textAnchor="middle"
           className="fill-gray-900 dark:fill-gray-100 text-sm font-semibold"
         >
-          Plan View (Top-Down) - {candidate.hullFamily.replace('_', ' ').toUpperCase()}
+          Plan View (Top-Down) - {candidate.hullFamily.replace("_", " ").toUpperCase()}
         </text>
 
         {/* Centerline */}
@@ -218,69 +222,71 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
         )}
 
         {/* Station markers (every 10% Lpp) */}
-        {showStations && stations.map((station) => {
-          const [sx] = toSVG(station.x, 0);
-          return (
-            <g key={station.number}>
-              <line
-                x1={toSVG(station.x, -beam / 2)[0]}
-                y1={toSVG(station.x, -beam / 2)[1]}
-                x2={toSVG(station.x, beam / 2)[0]}
-                y2={toSVG(station.x, beam / 2)[1]}
-                stroke="#d1d5db"
-                strokeWidth="0.5"
-                strokeDasharray="2,2"
-              />
-              <text
-                x={sx}
-                y={toSVG(station.x, beam / 2 + 3)[1]}
-                textAnchor="middle"
-                className="fill-gray-400 text-[10px]"
-              >
-                {station.number}
-              </text>
-            </g>
-          );
-        })}
+        {showStations &&
+          stations.map((station) => {
+            const [sx] = toSVG(station.x, 0);
+            return (
+              <g key={station.number}>
+                <line
+                  x1={toSVG(station.x, -beam / 2)[0]}
+                  y1={toSVG(station.x, -beam / 2)[1]}
+                  x2={toSVG(station.x, beam / 2)[0]}
+                  y2={toSVG(station.x, beam / 2)[1]}
+                  stroke="#d1d5db"
+                  strokeWidth="0.5"
+                  strokeDasharray="2,2"
+                />
+                <text
+                  x={sx}
+                  y={toSVG(station.x, beam / 2 + 3)[1]}
+                  textAnchor="middle"
+                  className="fill-gray-400 text-[10px]"
+                >
+                  {station.number}
+                </text>
+              </g>
+            );
+          })}
 
         {/* Waterlines (horizontal sections at different depths) */}
-        {showWaterlines && waterlines.map((wl, idx) => {
-          const paths = waterlinePath(wl.points);
-          const color = wl.isDesignWaterline ? '#3b82f6' : '#60a5fa'; // Design WL darker
-          const strokeWidth = wl.isDesignWaterline ? 2 : 1;
-          
-          return (
-            <g key={idx}>
-              {/* Starboard side */}
-              <path
-                d={paths.starboard}
-                fill="none"
-                stroke={color}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-              />
-              {/* Port side */}
-              <path
-                d={paths.port}
-                fill="none"
-                stroke={color}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-              />
-              
-              {/* Label */}
-              {idx % 2 === 0 && ( // Label every other waterline to avoid clutter
-                <text
-                  x={toSVG(lpp / 2 + 8, 0)[0]}
-                  y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1]}
-                  className="fill-blue-600 text-[10px]"
-                >
-                  WL{idx} ({wl.depth.toFixed(1)}m)
-                </text>
-              )}
-            </g>
-          );
-        })}
+        {showWaterlines &&
+          waterlines.map((wl, idx) => {
+            const paths = waterlinePath(wl.points);
+            const color = wl.isDesignWaterline ? "#3b82f6" : "#60a5fa"; // Design WL darker
+            const strokeWidth = wl.isDesignWaterline ? 2 : 1;
+
+            return (
+              <g key={idx}>
+                {/* Starboard side */}
+                <path
+                  d={paths.starboard}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                />
+                {/* Port side */}
+                <path
+                  d={paths.port}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                />
+
+                {/* Label */}
+                {idx % 2 === 0 && ( // Label every other waterline to avoid clutter
+                  <text
+                    x={toSVG(lpp / 2 + 8, 0)[0]}
+                    y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1]}
+                    className="fill-blue-600 text-[10px]"
+                  >
+                    WL{idx} ({wl.depth.toFixed(1)}m)
+                  </text>
+                )}
+              </g>
+            );
+          })}
 
         {/* Dimensions */}
         {showDimensions && (
@@ -309,13 +315,10 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
                   refY="3.5"
                   orient="auto"
                 >
-                  <polygon
-                    points="0 0, 10 3.5, 0 7"
-                    className="fill-gray-700 dark:fill-gray-300"
-                  />
+                  <polygon points="0 0, 10 3.5, 0 7" className="fill-gray-700 dark:fill-gray-300" />
                 </marker>
               </defs>
-              
+
               {/* Lpp dimension line */}
               <line
                 x1={toSVG(-lpp / 2, -beam / 2 - 8)[0]}
@@ -387,11 +390,7 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
 
         {/* Scale ruler */}
         <g>
-          <text
-            x={20}
-            y={svgHeight - 10}
-            className="fill-gray-500 text-[10px]"
-          >
+          <text x={20} y={svgHeight - 10} className="fill-gray-500 text-[10px]">
             Scale: 1:{Math.round(1 / scale)} | Grid: 1m
           </text>
         </g>
@@ -419,7 +418,9 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
         {candidate.lcbPctLpp && (
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span className="text-gray-700 dark:text-gray-300">LCB ({candidate.lcbPctLpp.toFixed(1)}% Lpp)</span>
+            <span className="text-gray-700 dark:text-gray-300">
+              LCB ({candidate.lcbPctLpp.toFixed(1)}% Lpp)
+            </span>
           </div>
         )}
       </div>
@@ -430,7 +431,9 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
           <input
             type="checkbox"
             checked={showWaterlines}
-            onChange={() => {/* Handle in parent */}}
+            onChange={() => {
+              /* Handle in parent */
+            }}
             className="rounded"
             disabled
           />
@@ -440,7 +443,9 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
           <input
             type="checkbox"
             checked={showStations}
-            onChange={() => {/* Handle in parent */}}
+            onChange={() => {
+              /* Handle in parent */
+            }}
             className="rounded"
             disabled
           />
@@ -450,7 +455,9 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
           <input
             type="checkbox"
             checked={showDimensions}
-            onChange={() => {/* Handle in parent */}}
+            onChange={() => {
+              /* Handle in parent */
+            }}
             className="rounded"
             disabled
           />
@@ -460,4 +467,3 @@ export const Hull2DPlan: React.FC<Hull2DPlanProps> = ({
     </div>
   );
 };
-

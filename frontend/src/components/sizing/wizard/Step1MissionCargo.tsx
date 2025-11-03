@@ -144,13 +144,14 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
             step="0.1"
             placeholder={formData.cargoBasis === "teu" ? "0.5 (default)" : "e.g., 0.8"}
             value={formData.cargoDensityTPerM3 || ""}
-            onChange={(e) => updateFormData({ cargoDensityTPerM3: parseFloat(e.target.value) || undefined })}
+            onChange={(e) =>
+              updateFormData({ cargoDensityTPerM3: parseFloat(e.target.value) || undefined })
+            }
           />
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {formData.cargoBasis === "teu" 
+            {formData.cargoBasis === "teu"
               ? "Optional: For cargo holds sizing. Default: 0.5 t/m³ (typical containers)"
-              : "Required: Used to convert volume to weight. Typical: Grain 0.6-0.8, Coal 0.8-1.0, Iron ore 2.0-2.5"
-            }
+              : "Required: Used to convert volume to weight. Typical: Grain 0.6-0.8, Coal 0.8-1.0, Iron ore 2.0-2.5"}
           </p>
         </div>
       )}
