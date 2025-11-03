@@ -58,14 +58,14 @@ If you have been granted access to this repository:
 
 ## 📞 Contact
 
-- **Repository Issues**: [Open an issue](https://github.com/{username}/navarch-studio/issues) for licensing inquiries
-- **GitHub**: Contact repository owner directly through GitHub
+- **Repository Issues**: [Open an issue](https://github.com/abhee15/navarch-studio/issues) for licensing inquiries
+- **GitHub**: Contact @abhee15 (Sri Abhishikth Mallepudi) directly through GitHub
 
 ---
 
 ## 📄 License
 
-**Copyright (c) 2025 NavArch Studio. All Rights Reserved.**
+**Copyright (c) 2025 Sri Abhishikth Mallepudi (NavArch Studio). All Rights Reserved.**
 
 This project is proprietary software protected by copyright law. Unauthorized use, reproduction, or distribution is strictly prohibited and may result in legal action.
 
