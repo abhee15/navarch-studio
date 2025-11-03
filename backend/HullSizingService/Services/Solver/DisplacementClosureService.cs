@@ -48,12 +48,12 @@ public class DisplacementClosureService : IDisplacementClosureService
         {
             flags.Add("all_locked_cannot_converge");
             _logger.LogWarning("[CLOSURE] All parameters locked - cannot adjust to meet target displacement");
-            
+
             // Return initial guess values (no convergence possible)
             var initialVol = lpp * beam * draft * cb;
             currentDisplacementT = initialVol * req.WaterDensityKgM3 / 1000m;
             error = (req.TargetDisplacementT - currentDisplacementT) / req.TargetDisplacementT;
-            
+
             var initialDepth = draft * req.DOverT;
             return await Task.FromResult(new ClosureResult(
                 LppM: lpp,
@@ -127,17 +127,17 @@ public class DisplacementClosureService : IDisplacementClosureService
                     draft = req.MaxDraftM.Value;
                     if (!flags.Contains("draft_constrained"))
                         flags.Add("draft_constrained");
-                    
+
                     // Recalculate beam from constrained draft
                     beam = draft * req.BOverT;
-                    
+
                     // Re-check beam constraint after recalculating from draft
                     if (req.MaxBeamM.HasValue && beam > req.MaxBeamM.Value)
                     {
                         beam = req.MaxBeamM.Value;
                         if (!flags.Contains("beam_constrained"))
                             flags.Add("beam_constrained");
-                        
+
                         // Both beam and draft are now at max - recalculate draft to match
                         draft = beam / req.BOverT;
                     }
