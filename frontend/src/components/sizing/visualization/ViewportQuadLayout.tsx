@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Hull3DScene } from "./Hull3DScene";
 import { Hull2DPlan } from "./Hull2DPlan";
 import { Hull2DProfile } from "./Hull2DProfile";
@@ -44,6 +44,51 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
   const planRef = useRef<SVGSVGElement>(null);
   const profileRef = useRef<SVGSVGElement>(null);
   const sectionsRef = useRef<SVGSVGElement>(null);
+
+  // Keyboard shortcuts for viewport switching
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+
+      switch (e.key) {
+        case "1":
+          setMode("plan");
+          break;
+        case "2":
+          setMode("profile");
+          break;
+        case "3":
+          setMode("sections");
+          break;
+        case "4":
+          setMode("3d");
+          break;
+        case "q":
+        case "Q":
+          setMode("quad");
+          break;
+        case "e":
+        case "E":
+          if (mode !== "quad") {
+            if (e.shiftKey) {
+              handleExportPNG();
+            } else {
+              handleExportSVG();
+            }
+          }
+          break;
+        case "Escape":
+          if (mode !== "quad") {
+            setMode("quad");
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mode]);
 
   // Export handlers
   const handleExportSVG = () => {
