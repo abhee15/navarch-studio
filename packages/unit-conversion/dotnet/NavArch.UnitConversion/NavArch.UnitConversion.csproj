@@ -12,8 +12,9 @@
     <Product>NavArch Unit Conversion</Product>
     <Description>Standalone bilingual unit conversion library for naval architecture applications</Description>
     <PackageTags>units;conversion;naval-architecture;maritime;engineering</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright (c) 2025 NavArch Studio. All Rights Reserved.</Copyright>
     <RepositoryUrl>https://github.com/navarch/unit-conversion</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/navarch/unit-conversion</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,4 +26,3 @@
   </ItemGroup>
 
 </Project>
-

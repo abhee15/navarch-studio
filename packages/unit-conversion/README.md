@@ -54,4 +54,4 @@ const result = converter.convert(10, "SI", "Imperial", "Length");
 
 ## License
 
-MIT
+**Proprietary** - All rights reserved. See the main repository LICENSE file for details.

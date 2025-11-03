@@ -59,9 +59,9 @@ public class MissionCasesController : ControllerBase
             });
         }
 
-        var userId = HttpContext.Items["Claims:Sub"] != null
-            ? Guid.Parse(HttpContext.Items["Claims:Sub"]!.ToString()!)
-            : Guid.NewGuid();
+        // Try to parse userId as GUID, fallback to generated GUID if not valid (dev mode)
+        var userIdStr = HttpContext.Items["Claims:Sub"]?.ToString();
+        var userId = Guid.TryParse(userIdStr, out var parsedUserId) ? parsedUserId : Guid.NewGuid();
         var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
 
         var result = await _service.CreateAsync(dto, userId, tenantId, ct);

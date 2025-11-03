@@ -398,4 +398,4 @@ To add new unit systems or locales:
 
 ## License
 
-MIT
+**Proprietary** - All rights reserved. See the main repository LICENSE file for details.
