@@ -34,21 +34,24 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
   const [show3DCenters] = useState(true);
   const [show3DGrid] = useState(true);
 
-  // Maximized view
+  // Maximized view with smooth transition
   if (mode !== "quad") {
     return (
-      <div className="w-full h-full flex flex-col">
-        {/* Toolbar */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="w-full h-full flex flex-col animate-zoomIn">
+        {/* Enhanced Toolbar */}
+        <div className="bg-gradient-to-r from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 p-3 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setMode("quad")}
-              className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 font-medium"
             >
-              ← Back to Quad View
+              <span>←</span>
+              <span>Quad View</span>
             </button>
-            <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
-              {mode === "3d" ? "3D Isometric" : mode} View
+            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+            <span className="text-base font-bold text-gray-900 dark:text-white capitalize flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+              {mode === "3d" ? "3D Isometric" : `${mode} View`}
             </span>
           </div>
         </div>
