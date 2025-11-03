@@ -233,8 +233,9 @@ export const MissionCasesList: React.FC = observer(() => {
                     // Run solver for this mission
                     const run = await sizingStore.runSolver({
                       missionCaseId: mission.id,
-                      locks: null,
-                      options: null,
+                      mode: "first_principles",
+                      locks: undefined,
+                      options: undefined,
                     });
                     if (run?.id) {
                       navigate(`/sizing/runs/${run.id}`);

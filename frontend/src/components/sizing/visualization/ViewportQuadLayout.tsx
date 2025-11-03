@@ -45,6 +45,76 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
   const profileRef = useRef<SVGSVGElement>(null);
   const sectionsRef = useRef<SVGSVGElement>(null);
 
+  // Export handlers (defined before useEffect to avoid hoisting issues)
+  const handleExportSVG = useCallback(() => {
+    let svgElement: SVGSVGElement | null = null;
+    let viewType: "plan" | "profile" | "sections" | "3d" = "plan";
+
+    switch (mode) {
+      case "plan":
+        svgElement = planRef.current;
+        viewType = "plan";
+        break;
+      case "profile":
+        svgElement = profileRef.current;
+        viewType = "profile";
+        break;
+      case "sections":
+        svgElement = sectionsRef.current;
+        viewType = "sections";
+        break;
+      default:
+        return;
+    }
+
+    if (svgElement) {
+      const filename = generateFilename(candidate.id, viewType, candidate.hullFamily);
+      exportSVG(svgElement, filename);
+    }
+  }, [mode, candidate.id, candidate.hullFamily]);
+
+  const handleExportPNG = useCallback(async () => {
+    // For 3D view, export canvas
+    if (mode === "3d") {
+      const canvas = document.querySelector("canvas");
+      if (canvas) {
+        const filename = generateFilename(candidate.id, "3d", candidate.hullFamily);
+        exportCanvasToPNG(canvas, filename);
+      }
+      return;
+    }
+
+    // For 2D views, export SVG to PNG
+    let svgElement: SVGSVGElement | null = null;
+    let viewType: "plan" | "profile" | "sections" | "3d" = "plan";
+
+    switch (mode) {
+      case "plan":
+        svgElement = planRef.current;
+        viewType = "plan";
+        break;
+      case "profile":
+        svgElement = profileRef.current;
+        viewType = "profile";
+        break;
+      case "sections":
+        svgElement = sectionsRef.current;
+        viewType = "sections";
+        break;
+      default:
+        return;
+    }
+
+    if (svgElement) {
+      const filename = generateFilename(candidate.id, viewType, candidate.hullFamily);
+      try {
+        await exportSVGToPNG(svgElement, filename, 2);
+      } catch (error) {
+        console.error("Failed to export PNG:", error);
+      }
+    }
+  }, [mode, candidate.id, candidate.hullFamily]);
+
   // Keyboard shortcuts for viewport switching
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -89,76 +159,6 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mode, handleExportSVG, handleExportPNG]);
-
-  // Export handlers
-  const handleExportSVG = useCallback(() => {
-    let svgElement: SVGSVGElement | null = null;
-    let viewType: "plan" | "profile" | "sections" | "3d" = "plan";
-
-    switch (mode) {
-      case "plan":
-        svgElement = planRef.current;
-        viewType = "plan";
-        break;
-      case "profile":
-        svgElement = profileRef.current;
-        viewType = "profile";
-        break;
-      case "sections":
-        svgElement = sectionsRef.current;
-        viewType = "sections";
-        break;
-      default:
-        return;
-    }
-
-    if (svgElement) {
-      const filename = generateFilename(candidate.id, viewType, candidate.hullFamily);
-      exportSVG(svgElement, filename);
-    }
-  }, [mode, candidate.id, candidate.hullFamily, planRef, profileRef, sectionsRef]);
-
-  const handleExportPNG = useCallback(async () => {
-    // For 3D view, export canvas
-    if (mode === "3d") {
-      const canvas = document.querySelector("canvas");
-      if (canvas) {
-        const filename = generateFilename(candidate.id, "3d", candidate.hullFamily);
-        exportCanvasToPNG(canvas, filename);
-      }
-      return;
-    }
-
-    // For 2D views, export SVG to PNG
-    let svgElement: SVGSVGElement | null = null;
-    let viewType: "plan" | "profile" | "sections" | "3d" = "plan";
-
-    switch (mode) {
-      case "plan":
-        svgElement = planRef.current;
-        viewType = "plan";
-        break;
-      case "profile":
-        svgElement = profileRef.current;
-        viewType = "profile";
-        break;
-      case "sections":
-        svgElement = sectionsRef.current;
-        viewType = "sections";
-        break;
-      default:
-        return;
-    }
-
-    if (svgElement) {
-      const filename = generateFilename(candidate.id, viewType, candidate.hullFamily);
-      try {
-        await exportSVGToPNG(svgElement, filename, 2);
-      } catch (error) {
-        console.error("Failed to export PNG:", error);
-      }
-    }
-  }, [mode, candidate.id, candidate.hullFamily, planRef, profileRef, sectionsRef]);
 
   // Maximized view with smooth transition
   if (mode !== "quad") {
