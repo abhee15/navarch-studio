@@ -329,8 +329,11 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         var maxShp = candidates.Max(c => c.ShpKw) ?? 1.0m;
         var minShp = candidates.Min(c => c.ShpKw) ?? 0.0m;
 
-        foreach (var candidate in candidates)
+        var scoredCandidates = new List<SolverCandidate>();
+
+        for (int i = 0; i < candidates.Count; i++)
         {
+            var candidate = candidates[i];
             var score = 0.0m;
 
             // 1. Displacement accuracy (no error = 1.0, ±10% error = 0.0)
@@ -358,15 +361,13 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             // 5. Volume/TEU fit (placeholder for MVP)
             score += 0.8m * volumeWeight;
 
-            // Update candidate with score (create new record)
-            var index = candidates.IndexOf(candidate);
-            candidates[index] = candidate with { Score = score };
+            // Create new candidate with score
+            scoredCandidates.Add(candidate with { Score = score });
         }
 
         // Rank by score (descending)
-        var ranked = candidates
+        var ranked = scoredCandidates
             .OrderByDescending(c => c.Score)
-            .Select((c, i) => c) // Rank is assigned when saving to DB
             .ToList();
 
         return ranked;

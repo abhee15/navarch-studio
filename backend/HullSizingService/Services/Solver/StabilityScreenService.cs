@@ -47,9 +47,19 @@ public class StabilityScreenService : IStabilityScreenService
         // 6. Transverse metacentric height: GMt = KB + BMt - KG
         var gmt = kb + bmt - kg;
 
-        // 7. Roll period estimate: T_roll = 2π * sqrt(Ixx / (Δ * g * GMt))
-        // Simplified: T_roll ≈ 2 * B / sqrt(GMt) for typical ships
-        var tRoll = 2.0m * req.BeamM / (decimal)Math.Sqrt((double)gmt);
+        // 7. Roll period estimate: T_roll = 2π * kxx / sqrt(g * GMt)
+        // where kxx ≈ 0.35 * B for typical ships
+        decimal tRoll;
+        if (gmt <= 0.01m)
+        {
+            // Negative or near-zero GM → unstable, roll period meaningless
+            tRoll = 999m; // Sentinel value for unstable
+        }
+        else
+        {
+            var kxx = 0.35m * req.BeamM;
+            tRoll = 2.0m * (decimal)Math.PI * kxx / (decimal)Math.Sqrt((double)(G * gmt));
+        }
 
         // 8. Flag stability issues
         if (gmt < 0.5m)

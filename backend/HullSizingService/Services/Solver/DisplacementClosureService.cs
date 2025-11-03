@@ -22,16 +22,19 @@ public class DisplacementClosureService : IDisplacementClosureService
 
         var flags = new List<string>();
 
-        // Step 1: Calculate Lwl from Froude number
-        // Fn = V / sqrt(g * Lwl) → Lwl = V² / (g * Fn²)
-        // But we don't have V yet. We'll estimate Lwl from L/B and target displacement
-        // Start with an initial guess based on cube root of volume
-        var targetVolumeM3 = req.TargetDisplacementT / req.WaterDensityKgM3 * 1000m; // kg/m³ → t/m³
-        var estimatedLwl = (decimal)Math.Pow((double)(targetVolumeM3 / req.Cb), 1.0 / 3.0) * 2.5m; // Initial guess
+        // Step 1: Better initial guess using cube root scaling
+        // ∇ = Δ / ρ
+        var targetVolumeM3 = req.TargetDisplacementT / (req.WaterDensityKgM3 / 1000m);
 
-        // Apply L/B ratio to get initial beam
-        var lpp = estimatedLwl; // Lpp ≈ Lwl for initial guess
-        var beam = lpp / req.LOverB;
+        // Volume = L * B * T * Cb
+        // Assume: L = L/B * B, T = B / (B/T)
+        // Volume = (L/B * B) * B * (B / (B/T)) * Cb
+        //        = L/B * B³ / (B/T) * Cb
+        // B³ = Volume * (B/T) / (L/B * Cb)
+        // B = (Volume * (B/T) / (L/B * Cb))^(1/3)
+
+        var beam = (decimal)Math.Pow((double)(targetVolumeM3 * req.BOverT / (req.LOverB * req.Cb)), 1.0 / 3.0);
+        var lpp = beam * req.LOverB;
         var draft = beam / req.BOverT;
         var cb = req.Cb;
 
@@ -62,12 +65,13 @@ public class DisplacementClosureService : IDisplacementClosureService
                 iteration, lpp, beam, draft, cb, currentDisplacementT, error);
 
             // Adjust dimensions to reduce error
-            // Priority: Beam → Draft → Cb (keep Lpp from Fn if possible)
+            // Use aggressive adjustment factors for faster convergence
+            var adjustmentFactor = Math.Abs(error) > 0.1m ? 0.8m : 0.6m; // Larger steps for large errors
 
-            if (!req.KeepBOverT && beam < (req.MaxBeamM ?? decimal.MaxValue))
+            if (!req.KeepBOverT)
             {
-                // Adjust beam (most effective for displacement)
-                var beamAdjustment = error * beam * 0.5m; // 50% of error proportional adjustment
+                // Adjust beam (most effective for displacement, scales as B³)
+                var beamAdjustment = error * beam * adjustmentFactor / 3.0m; // Divide by 3 since volume ∝ B³
                 var newBeam = beam + beamAdjustment;
 
                 // Clamp to L/B band
@@ -75,63 +79,45 @@ public class DisplacementClosureService : IDisplacementClosureService
                 var maxBeam = lpp / req.LOverBMin;
                 newBeam = Math.Clamp(newBeam, minBeam, maxBeam);
 
-                // Check constraint
-                if (req.MaxBeamM.HasValue && newBeam > req.MaxBeamM.Value)
+                // Check constraint and clamp
+                if (req.MaxBeamM.HasValue)
                 {
-                    newBeam = req.MaxBeamM.Value;
-                    if (!flags.Contains("beam_constrained"))
-                        flags.Add("beam_constrained");
+                    if (newBeam > req.MaxBeamM.Value)
+                    {
+                        newBeam = req.MaxBeamM.Value;
+                        if (!flags.Contains("beam_constrained"))
+                            flags.Add("beam_constrained");
+                    }
                 }
 
                 beam = newBeam;
-            }
-            else if (!req.KeepBOverT)
-            {
-                // Adjust draft if beam is locked/constrained
-                var draftAdjustment = error * draft * 0.5m;
-                var newDraft = draft + draftAdjustment;
 
-                // Clamp to B/T band
-                var minDraft = beam / req.BOverTMax;
-                var maxDraft = beam / req.BOverTMin;
-                newDraft = Math.Clamp(newDraft, minDraft, maxDraft);
+                // Update draft to maintain B/T ratio
+                draft = beam / req.BOverT;
 
-                // Check constraint
-                if (req.MaxDraftM.HasValue && newDraft > req.MaxDraftM.Value)
+                // Check draft constraint
+                if (req.MaxDraftM.HasValue && draft > req.MaxDraftM.Value)
                 {
-                    newDraft = req.MaxDraftM.Value;
+                    draft = req.MaxDraftM.Value;
                     if (!flags.Contains("draft_constrained"))
                         flags.Add("draft_constrained");
-                }
 
-                draft = newDraft;
+                    // Recalculate beam from constrained draft
+                    beam = draft * req.BOverT;
+                }
             }
             else if (!req.KeepCb)
             {
-                // Last resort: adjust Cb
-                var cbAdjustment = error * cb * 0.3m; // Smaller adjustment for Cb
+                // Adjust Cb if beam/draft are locked
+                var cbAdjustment = error * cb * adjustmentFactor;
                 var newCb = cb + cbAdjustment;
-                newCb = Math.Clamp(newCb, req.CbMin, req.CbMax);
-                cb = newCb;
+                cb = Math.Clamp(newCb, req.CbMin, req.CbMax);
             }
             else
             {
                 // All parameters locked, can't converge
                 flags.Add("all_locked_cannot_converge");
                 break;
-            }
-
-            // Recalculate B/T ratio after adjustments
-            if (!req.KeepBOverT)
-            {
-                draft = beam / req.BOverT;
-
-                if (req.MaxDraftM.HasValue && draft > req.MaxDraftM.Value)
-                {
-                    draft = req.MaxDraftM.Value;
-                    if (!flags.Contains("draft_constrained"))
-                        flags.Add("draft_constrained");
-                }
             }
         }
 
