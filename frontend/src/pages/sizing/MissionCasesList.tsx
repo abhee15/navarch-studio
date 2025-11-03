@@ -43,7 +43,10 @@ export const MissionCasesList: React.FC = observer(() => {
                 Manage your mission requirements and generate preliminary hull designs
               </p>
             </div>
-            <Button onClick={() => navigate("/sizing/wizard")} className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+            <Button
+              onClick={() => navigate("/sizing/wizard")}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
               🚀 New Mission
             </Button>
           </div>
@@ -90,37 +93,46 @@ export const MissionCasesList: React.FC = observer(() => {
                   <div className="text-4xl opacity-75">📋</div>
                 </div>
               </div>
-              
+
               <div className="rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 p-4 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium opacity-90">Commercial</p>
                     <p className="text-3xl font-bold mt-1">
-                      {sizingStore.missionCases.filter(m => m.missionType === 'commercial').length}
+                      {
+                        sizingStore.missionCases.filter((m) => m.missionType === "commercial")
+                          .length
+                      }
                     </p>
                   </div>
                   <div className="text-4xl opacity-75">🚢</div>
                 </div>
               </div>
-              
+
               <div className="rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 p-4 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium opacity-90">TEU-Based</p>
                     <p className="text-3xl font-bold mt-1">
-                      {sizingStore.missionCases.filter(m => m.cargoBasis === 'teu').length}
+                      {sizingStore.missionCases.filter((m) => m.cargoBasis === "teu").length}
                     </p>
                   </div>
                   <div className="text-4xl opacity-75">📦</div>
                 </div>
               </div>
-              
+
               <div className="rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 p-4 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium opacity-90">Avg Speed</p>
                     <p className="text-3xl font-bold mt-1">
-                      {(sizingStore.missionCases.reduce((sum, m) => sum + (m.serviceSpeedKn || 0), 0) / sizingStore.missionCases.length).toFixed(0)} kn
+                      {(
+                        sizingStore.missionCases.reduce(
+                          (sum, m) => sum + (m.serviceSpeedKn || 0),
+                          0
+                        ) / sizingStore.missionCases.length
+                      ).toFixed(0)}{" "}
+                      kn
                     </p>
                   </div>
                   <div className="text-4xl opacity-75">⚡</div>

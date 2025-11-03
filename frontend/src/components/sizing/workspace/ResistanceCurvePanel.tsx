@@ -7,7 +7,7 @@ interface ResistanceCurvePanelProps {
 
 /**
  * Resistance Curve Panel
- * 
+ *
  * Shows EHP vs Speed curve based on Holtrop-Mennen calculation
  */
 export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ candidate }) => {
@@ -63,7 +63,12 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
 
       <div className="p-6">
         {/* SVG Chart */}
-        <svg width="100%" height="300" viewBox="0 0 600 300" className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-lg">
+        <svg
+          width="100%"
+          height="300"
+          viewBox="0 0 600 300"
+          className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-lg"
+        >
           <defs>
             <linearGradient id="curveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#10b981" />
@@ -93,7 +98,14 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
           <line x1="50" y1="50" x2="50" y2="250" stroke="#374151" strokeWidth="2" />
 
           {/* Y-axis label */}
-          <text x="20" y="150" fill="#6b7280" fontSize="12" textAnchor="middle" transform="rotate(-90, 20, 150)">
+          <text
+            x="20"
+            y="150"
+            fill="#6b7280"
+            fontSize="12"
+            textAnchor="middle"
+            transform="rotate(-90, 20, 150)"
+          >
             EHP (kW)
           </text>
 
@@ -107,7 +119,14 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
             const value = ((4 - i) / 4) * maxEhp;
             return (
               <g key={`ytick${i}`}>
-                <line x1="45" y1={50 + i * 50} x2="50" y2={50 + i * 50} stroke="#374151" strokeWidth="2" />
+                <line
+                  x1="45"
+                  y1={50 + i * 50}
+                  x2="50"
+                  y2={50 + i * 50}
+                  stroke="#374151"
+                  strokeWidth="2"
+                />
                 <text x="40" y={50 + i * 50 + 4} fill="#6b7280" fontSize="10" textAnchor="end">
                   {value.toFixed(0)}
                 </text>
@@ -120,7 +139,14 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
             const value = (i / 5) * maxSpeed;
             return (
               <g key={`xtick${i}`}>
-                <line x1={50 + i * 100} y1="250" x2={50 + i * 100} y2="255" stroke="#374151" strokeWidth="2" />
+                <line
+                  x1={50 + i * 100}
+                  y1="250"
+                  x2={50 + i * 100}
+                  y2="255"
+                  stroke="#374151"
+                  strokeWidth="2"
+                />
                 <text x={50 + i * 100} y="270" fill="#6b7280" fontSize="10" textAnchor="middle">
                   {value.toFixed(1)}
                 </text>
@@ -160,11 +186,38 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
                 />
                 {d.isDesign && (
                   <>
-                    <circle cx={x} cy={y} r="8" fill="none" stroke="#f59e0b" strokeWidth="1" opacity="0.5">
-                      <animate attributeName="r" from="8" to="12" dur="1.5s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="8"
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth="1"
+                      opacity="0.5"
+                    >
+                      <animate
+                        attributeName="r"
+                        from="8"
+                        to="12"
+                        dur="1.5s"
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="opacity"
+                        from="0.5"
+                        to="0"
+                        dur="1.5s"
+                        repeatCount="indefinite"
+                      />
                     </circle>
-                    <text x={x} y={y - 15} fill="#f59e0b" fontSize="10" fontWeight="bold" textAnchor="middle">
+                    <text
+                      x={x}
+                      y={y - 15}
+                      fill="#f59e0b"
+                      fontSize="10"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                    >
                       Design Point
                     </text>
                   </>
@@ -208,19 +261,20 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Froude Number</p>
-            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{candidate.fn.toFixed(3)}</p>
+            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+              {candidate.fn.toFixed(3)}
+            </p>
           </div>
         </div>
 
         <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded">
           <p className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">⚠️ Note:</p>
           <p className="text-yellow-700 dark:text-yellow-400">
-            This is a simplified approximation based on Holtrop-Mennen with EHP ∝ V³ scaling.
-            For accurate resistance analysis, push this design to the Resistance module.
+            This is a simplified approximation based on Holtrop-Mennen with EHP ∝ V³ scaling. For
+            accurate resistance analysis, push this design to the Resistance module.
           </p>
         </div>
       </div>
     </div>
   );
 };
-
