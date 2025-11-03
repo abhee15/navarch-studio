@@ -26,10 +26,11 @@ variable "security_group_ids" {
 variable "ecr_repository_urls" {
   description = "ECR repository URLs"
   type = object({
-    identity_service = string
-    api_gateway      = string
-    data_service     = string
-    frontend         = string
+    identity_service     = string
+    api_gateway          = string
+    data_service         = string
+    hull_sizing_service  = string
+    frontend             = string
   })
 }
 
