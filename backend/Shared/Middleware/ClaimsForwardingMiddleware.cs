@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Shared.Middleware;
 
