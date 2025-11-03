@@ -1,15 +1,19 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useParams, useNavigate } from "react-router-dom";
 import { useStore } from "../../stores";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
+import { Hull3DScene } from "../../components/sizing/visualization/Hull3DScene";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
   const { sizingStore } = useStore();
+  const [showWaterplane, setShowWaterplane] = useState(true);
+  const [showCenters, setShowCenters] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
 
   const candidate = sizingStore.selectedCandidate;
 
@@ -104,6 +108,52 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
         {/* Content */}
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          {/* 3D Visualization */}
+          <div className="mb-6 rounded-lg bg-white shadow dark:bg-gray-800 overflow-hidden">
+            <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                3D Hull Visualization
+              </h3>
+              <div className="flex items-center space-x-4 text-sm">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showWaterplane}
+                    onChange={(e) => setShowWaterplane(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">Waterplane</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showCenters}
+                    onChange={(e) => setShowCenters(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">Centers</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showGrid}
+                    onChange={(e) => setShowGrid(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">Grid</span>
+                </label>
+              </div>
+            </div>
+            <div className="h-[600px]">
+              <Hull3DScene
+                candidate={candidate}
+                showWaterplane={showWaterplane}
+                showCenters={showCenters}
+                showGrid={showGrid}
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left: Dimensions & Coefficients */}
             <div className="space-y-6">
@@ -346,17 +396,6 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     ⚡ Analyze Resistance
                   </Button>
                 </div>
-              </div>
-
-              <div className="rounded-lg bg-gray-100 p-6 dark:bg-gray-800">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">📐 Coming Soon</h3>
-                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <li>• 3D hull visualization (react-three-fiber)</li>
-                  <li>• 2D plan/profile/sections view</li>
-                  <li>• Interactive parameter sliders</li>
-                  <li>• Live re-solve on adjustment</li>
-                  <li>• DXF/IGES export</li>
-                </ul>
               </div>
             </div>
           </div>
