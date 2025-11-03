@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useParams, useNavigate } from "react-router-dom";
 import { useStore } from "../../stores";
-import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
 import { ViewportQuadLayout } from "../../components/sizing/visualization/ViewportQuadLayout";
@@ -10,12 +9,15 @@ import { KPIPanel } from "../../components/sizing/workspace/KPIPanel";
 import { OffsetsTable } from "../../components/sizing/workspace/OffsetsTable";
 import { ParameterSliders } from "../../components/sizing/workspace/ParameterSliders";
 import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
+import { UserProfileMenu } from "../../components/UserProfileMenu";
+import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
-  const { sizingStore } = useStore();
+  const { sizingStore, authStore } = useStore();
   const [activeTab, setActiveTab] = useState<"kpi" | "offsets">("kpi");
+  const [showSettings, setShowSettings] = useState(false);
 
   const candidate = sizingStore.selectedCandidate;
 
@@ -30,16 +32,60 @@ export const CandidateWorkspace: React.FC = observer(() => {
     }
   }, [candidateId, candidate, sizingStore]);
 
+  const handleHome = () => {
+    navigate("/dashboard");
+  };
+
+  const handleLogout = () => {
+    authStore.logout();
+    navigate("/login");
+  };
+
   if (!candidate) {
     return (
       <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-        <AppHeader />
+        {/* Main Navigation Header */}
+        <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 relative z-50">
+          <div className="px-4 py-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleHome}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
+                >
+                  <svg
+                    className="h-4 w-4 mr-1.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                    />
+                  </svg>
+                  Home
+                </button>
+                <UserProfileMenu
+                  onOpenSettings={() => setShowSettings(true)}
+                  onLogout={handleLogout}
+                />
+              </div>
+            </div>
+          </div>
+        </header>
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-400">Loading candidate...</p>
           </div>
         </main>
         <Footer />
+        <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
       </div>
     );
   }
@@ -58,7 +104,41 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-      <AppHeader />
+      {/* Main Navigation Header */}
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 relative z-50">
+        <div className="px-4 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleHome}
+                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
+              >
+                <svg
+                  className="h-4 w-4 mr-1.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                Home
+              </button>
+              <UserProfileMenu
+                onOpenSettings={() => setShowSettings(true)}
+                onLogout={handleLogout}
+              />
+            </div>
+          </div>
+        </div>
+      </header>
 
       <main className="flex-1">
         {/* Toolbar */}
@@ -341,6 +421,9 @@ export const CandidateWorkspace: React.FC = observer(() => {
       </main>
 
       <Footer />
+
+      {/* Settings Dialog */}
+      <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 });

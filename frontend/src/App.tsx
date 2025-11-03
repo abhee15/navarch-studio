@@ -196,6 +196,10 @@ export const App: React.FC = observer(() => (
                 }
               />
               <Route
+                path="/sizing/missions/:missionId"
+                element={<Navigate to="/sizing/missions" replace />}
+              />
+              <Route
                 path="/sizing/wizard"
                 element={
                   <ProtectedRoute>
