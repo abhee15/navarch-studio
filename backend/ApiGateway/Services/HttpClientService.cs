@@ -108,34 +108,61 @@ public class HttpClientService : IHttpClientService
                 _logger.LogInformation("Forwarding Authorization header to downstream service");
             }
 
-            // Forward claims from HttpContext.Items to downstream service as headers
-            // These are set by the JWT middleware in ApiGateway
-            if (httpContext.Items.TryGetValue("Claims:Sub", out var sub) && sub != null)
+            // Forward claims from JWT (context.User) to downstream service as headers
+            // Read directly from ClaimsPrincipal populated by JwtAuthenticationMiddleware
+            if (httpContext.User?.Identity?.IsAuthenticated == true)
             {
-                request.Headers.Add("X-User-Sub", sub.ToString());
-            }
-            if (httpContext.Items.TryGetValue("Claims:TenantId", out var tenantId) && tenantId != null)
-            {
-                request.Headers.Add("X-Tenant-Id", tenantId.ToString());
-            }
-            if (httpContext.Items.TryGetValue("Claims:OrgId", out var orgId) && orgId != null)
-            {
-                request.Headers.Add("X-Org-Id", orgId.ToString());
-            }
-            if (httpContext.Items.TryGetValue("Claims:Email", out var email) && email != null)
-            {
-                request.Headers.Add("X-User-Email", email.ToString());
-            }
-            if (httpContext.Items.TryGetValue("Claims:Roles", out var roles) && roles != null)
-            {
-                request.Headers.Add("X-User-Roles", roles.ToString());
-            }
-            if (httpContext.Items.TryGetValue("Claims:Scope", out var scope) && scope != null)
-            {
-                request.Headers.Add("X-User-Scope", scope.ToString());
-            }
+                var sub = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? httpContext.User.FindFirst("sub")?.Value;
+                if (!string.IsNullOrEmpty(sub))
+                {
+                    request.Headers.Add("X-User-Sub", sub);
+                }
 
-            _logger.LogInformation("Forwarded claims headers to downstream service");
+                var tenantId = httpContext.User.FindFirst("custom:tenantId")?.Value;
+                if (!string.IsNullOrEmpty(tenantId))
+                {
+                    request.Headers.Add("X-Tenant-Id", tenantId);
+                    _logger.LogInformation("Forwarding X-Tenant-Id: {TenantId}", tenantId);
+                }
+                else
+                {
+                    _logger.LogWarning("No tenantId claim found in JWT for downstream forwarding");
+                }
+
+                var orgId = httpContext.User.FindFirst("custom:orgId")?.Value;
+                if (!string.IsNullOrEmpty(orgId))
+                {
+                    request.Headers.Add("X-Org-Id", orgId);
+                }
+
+                var email = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                    ?? httpContext.User.FindFirst("email")?.Value;
+                if (!string.IsNullOrEmpty(email))
+                {
+                    request.Headers.Add("X-User-Email", email);
+                }
+
+                var roles = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
+                    ?? httpContext.User.FindFirst("cognito:groups")?.Value
+                    ?? string.Join(",", httpContext.User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value));
+                if (!string.IsNullOrEmpty(roles))
+                {
+                    request.Headers.Add("X-User-Roles", roles);
+                }
+
+                var scope = httpContext.User.FindFirst("scope")?.Value;
+                if (!string.IsNullOrEmpty(scope))
+                {
+                    request.Headers.Add("X-User-Scope", scope);
+                }
+
+                _logger.LogInformation("Forwarded claims headers to downstream service");
+            }
+            else
+            {
+                _logger.LogWarning("User not authenticated, cannot forward claims to downstream service");
+            }
         }
     }
 

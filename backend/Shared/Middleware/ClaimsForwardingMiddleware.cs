@@ -29,14 +29,16 @@ public class ClaimsForwardingMiddleware
             return;
         }
 
-        // Extract claims from HttpContext.Items (set by JwtAuthenticationMiddleware)
-        var sub = context.Items["Claims:Sub"]?.ToString();
-        var tenantId = context.Items["Claims:TenantId"]?.ToString();
-        var orgId = context.Items["Claims:OrgId"]?.ToString();
-        var roles = context.Items["Claims:Roles"]?.ToString();
-        var scope = context.Items["Claims:Scope"]?.ToString();
+        // Extract claims from HTTP headers (forwarded by API Gateway in S2S calls)
+        var sub = context.Request.Headers["X-User-Sub"].FirstOrDefault();
+        var tenantId = context.Request.Headers["X-Tenant-Id"].FirstOrDefault();
+        var orgId = context.Request.Headers["X-Org-Id"].FirstOrDefault();
+        var email = context.Request.Headers["X-User-Email"].FirstOrDefault();
+        var roles = context.Request.Headers["X-User-Roles"].FirstOrDefault();
+        var scope = context.Request.Headers["X-User-Scope"].FirstOrDefault();
 
-        _logger.LogDebug("[CLAIMS_FWD] Extracted claims: sub={Sub}, tenantId={TenantId}, orgId={OrgId}", sub, tenantId, orgId);
+        _logger.LogInformation("[CLAIMS_FWD] Received headers: X-User-Sub={Sub}, X-Tenant-Id={TenantId}, X-Org-Id={OrgId}",
+            sub ?? "null", tenantId ?? "null", orgId ?? "null");
 
         // DENY if tenantId is missing (enforce tenant isolation)
         if (string.IsNullOrEmpty(tenantId))
@@ -55,10 +57,11 @@ public class ClaimsForwardingMiddleware
             return;
         }
 
-        // Store claims in HttpContext.Items for downstream use
+        // Store claims in HttpContext.Items for controller use
         context.Items["Claims:Sub"] = sub;
         context.Items["Claims:TenantId"] = tenantId;
         context.Items["Claims:OrgId"] = orgId;
+        context.Items["Claims:Email"] = email;
         context.Items["Claims:Roles"] = roles;
         context.Items["Claims:Scope"] = scope;
 
