@@ -15,7 +15,7 @@ RUN dotnet restore "backend/HullSizingService/HullSizingService.csproj"
 COPY backend/HullSizingService/ backend/HullSizingService/
 COPY backend/Shared/ backend/Shared/
 COPY packages/unit-conversion/dotnet/NavArch.UnitConversion/ packages/unit-conversion/dotnet/NavArch.UnitConversion/
-COPY packages/unit-conversion/config/ /app/config/
+COPY packages/unit-conversion/config/ packages/unit-conversion/config/
 
 # Build
 WORKDIR /src/backend/HullSizingService
