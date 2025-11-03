@@ -1,5 +1,21 @@
 # Cursor Rules for Full Stack Template
 
+## CRITICAL: File Path Rules
+
+**ALWAYS use the actual repository path, NEVER use Cursor worktrees:**
+
+- ✅ **Correct:** `C:\Abhi\Projects\Sri\navarch-studio\`
+- ❌ **Wrong:** `c:\Users\abhee\.cursor\worktrees\navarch-studio\*`
+
+**When reading, writing, or editing files:**
+1. ALWAYS use paths starting with `C:\Abhi\Projects\Sri\navarch-studio\`
+2. NEVER use paths containing `.cursor\worktrees\`
+3. If you detect a worktree path, immediately convert it to the actual repo path
+
+**Example:**
+- Worktree path: `c:\Users\abhee\.cursor\worktrees\navarch-studio\aLQIH\backend\HullSizingService\Program.cs`
+- Correct path: `C:\Abhi\Projects\Sri\navarch-studio\backend\HullSizingService\Program.cs`
+
 ## Project Context
 
 This is a full-stack template project with:
