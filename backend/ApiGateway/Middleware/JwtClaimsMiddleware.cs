@@ -21,36 +21,36 @@ public class JwtClaimsMiddleware
         // Extract claims from authenticated user
         if (context.User?.Identity?.IsAuthenticated == true)
         {
-            var sub = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+            var sub = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                 ?? context.User.FindFirst("sub")?.Value;
-            
+
             var tenantId = context.User.FindFirst("custom:tenantId")?.Value;
             var orgId = context.User.FindFirst("custom:orgId")?.Value;
-            var email = context.User.FindFirst(ClaimTypes.Email)?.Value 
+            var email = context.User.FindFirst(ClaimTypes.Email)?.Value
                 ?? context.User.FindFirst("email")?.Value;
-            
-            var roles = context.User.FindFirst(ClaimTypes.Role)?.Value 
+
+            var roles = context.User.FindFirst(ClaimTypes.Role)?.Value
                 ?? context.User.FindFirst("cognito:groups")?.Value
                 ?? string.Join(",", context.User.FindAll(ClaimTypes.Role).Select(c => c.Value));
-            
+
             var scope = context.User.FindFirst("scope")?.Value;
 
             // Store in HttpContext.Items for HttpClientService to forward
             if (!string.IsNullOrEmpty(sub))
                 context.Items["Claims:Sub"] = sub;
-            
+
             if (!string.IsNullOrEmpty(tenantId))
                 context.Items["Claims:TenantId"] = tenantId;
-            
+
             if (!string.IsNullOrEmpty(orgId))
                 context.Items["Claims:OrgId"] = orgId;
-            
+
             if (!string.IsNullOrEmpty(email))
                 context.Items["Claims:Email"] = email;
-            
+
             if (!string.IsNullOrEmpty(roles))
                 context.Items["Claims:Roles"] = roles;
-            
+
             if (!string.IsNullOrEmpty(scope))
                 context.Items["Claims:Scope"] = scope;
 

@@ -9,7 +9,7 @@ interface OffsetsTableProps {
 
 /**
  * Offsets Table - Traditional Naval Architecture Table of Offsets
- * 
+ *
  * Shows half-breadths at each station and waterline intersection
  * Professional engineering format
  */
@@ -44,9 +44,8 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
   }, [candidate.lppM, candidate.bM, candidate.tM, stationCount, waterlineCount]);
 
   const stationLabels = Array.from({ length: stationCount }, (_, i) => i);
-  const waterlineLabels = Array.from(
-    { length: waterlineCount },
-    (_, i) => ((i / (waterlineCount - 1)) * candidate.tM).toFixed(2)
+  const waterlineLabels = Array.from({ length: waterlineCount }, (_, i) =>
+    ((i / (waterlineCount - 1)) * candidate.tM).toFixed(2)
   );
 
   return (
@@ -146,4 +145,3 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
     </div>
   );
 };
-

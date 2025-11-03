@@ -10,7 +10,7 @@ interface ParameterSlidersProps {
 
 /**
  * Interactive Parameter Sliders
- * 
+ *
  * Allows real-time adjustment of hull dimensions
  * with live preview updates
  */
@@ -133,12 +133,8 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                       parseFloat(e.target.value)
                     )
                   }
-                  onMouseUp={() =>
-                    handleSliderRelease(slider.id as keyof typeof localValues)
-                  }
-                  onTouchEnd={() =>
-                    handleSliderRelease(slider.id as keyof typeof localValues)
-                  }
+                  onMouseUp={() => handleSliderRelease(slider.id as keyof typeof localValues)}
+                  onTouchEnd={() => handleSliderRelease(slider.id as keyof typeof localValues)}
                   disabled={isUpdating}
                   className={`w-full h-2 rounded-lg appearance-none cursor-pointer
                     bg-gradient-to-r from-gray-200 via-${slider.color}-200 to-${slider.color}-400
@@ -158,7 +154,12 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>{slider.min.toFixed(1)}</span>
                 <span className="text-gray-400 dark:text-gray-500">
-                  ±{(((slider.max - slider.min) / (2 * (slider.max + slider.min) / 2)) * 100).toFixed(0)}%
+                  ±
+                  {(
+                    ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
+                    100
+                  ).toFixed(0)}
+                  %
                 </span>
                 <span>{slider.max.toFixed(1)}</span>
               </div>
@@ -226,4 +227,3 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
     </div>
   );
 };
-
