@@ -945,7 +945,6 @@ jobs:
       (
         needs.check-changed-paths.outputs.frontend == 'true' ||
         needs.check-previous-run.outputs.prev_overall_failed == 'true' ||
-        needs.build-and-push.outputs.built-frontend == 'true' ||
         (github.event_name == 'workflow_dispatch' && inputs.force_full_build == true)
       )
 
