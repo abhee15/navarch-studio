@@ -34,7 +34,9 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy published app
 COPY --from=publish /app/publish .
-COPY --from=build /app/config/ /app/config/
+
+# Copy unit conversion config to app directory  
+COPY --from=build /src/packages/unit-conversion/config/unit-systems.xml .
 
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
