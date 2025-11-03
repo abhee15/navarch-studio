@@ -87,9 +87,9 @@ public class HoltropResistanceServiceTests
     }
 
     [Theory]
-    [InlineData(10, 0.08)] // Low speed
-    [InlineData(15, 0.12)] // Medium speed
-    [InlineData(20, 0.16)] // High speed for tanker
+    [InlineData(10, 0.115)] // Low speed - Fn = 10*0.5144/√(9.81*204) = 0.115
+    [InlineData(15, 0.172)] // Medium speed - Fn = 15*0.5144/√(9.81*204) = 0.172
+    [InlineData(20, 0.230)] // High speed for tanker - Fn = 20*0.5144/√(9.81*204) = 0.230
     public async Task CalculateAsync_VariousSpeeds_PowerShouldIncreaseCubically(decimal speedKn, decimal expectedFn)
     {
         // Arrange - Same hull, different speeds
