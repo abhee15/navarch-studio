@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Hull3DScene } from "./Hull3DScene";
 import { Hull2DPlan } from "./Hull2DPlan";
 import { Hull2DProfile } from "./Hull2DProfile";
@@ -88,10 +88,10 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mode]);
+  }, [mode, handleExportSVG, handleExportPNG]);
 
   // Export handlers
-  const handleExportSVG = () => {
+  const handleExportSVG = useCallback(() => {
     let svgElement: SVGSVGElement | null = null;
     let viewType: "plan" | "profile" | "sections" | "3d" = "plan";
 
@@ -116,9 +116,9 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       const filename = generateFilename(candidate.id, viewType, candidate.hullFamily);
       exportSVG(svgElement, filename);
     }
-  };
+  }, [mode, candidate.id, candidate.hullFamily, planRef, profileRef, sectionsRef]);
 
-  const handleExportPNG = async () => {
+  const handleExportPNG = useCallback(async () => {
     // For 3D view, export canvas
     if (mode === "3d") {
       const canvas = document.querySelector("canvas");
@@ -158,7 +158,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
         console.error("Failed to export PNG:", error);
       }
     }
-  };
+  }, [mode, candidate.id, candidate.hullFamily, planRef, profileRef, sectionsRef]);
 
   // Maximized view with smooth transition
   if (mode !== "quad") {
