@@ -8,6 +8,7 @@ import { Button } from "../../components/ui/button";
 import { ViewportQuadLayout } from "../../components/sizing/visualization/ViewportQuadLayout";
 import { KPIPanel } from "../../components/sizing/workspace/KPIPanel";
 import { OffsetsTable } from "../../components/sizing/workspace/OffsetsTable";
+import { ParameterSliders } from "../../components/sizing/workspace/ParameterSliders";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
@@ -156,8 +157,20 @@ export const CandidateWorkspace: React.FC = observer(() => {
               {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
             </div>
 
-            {/* Center: Performance KPIs */}
+            {/* Center: Parameter Sliders */}
             <div className="space-y-6">
+              <ParameterSliders
+                candidate={candidate}
+                onUpdate={(updates) => {
+                  // TODO: Implement parameter update with solver re-run
+                  console.log("Parameter update:", updates);
+                }}
+                isUpdating={sizingStore.isLoading}
+              />
+            </div>
+
+            {/* Center (Old): Performance KPIs - Keeping for backward compatibility */}
+            <div className="space-y-6 hidden">
               <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Performance</h3>
                 <dl className="space-y-3 text-sm">
