@@ -46,7 +46,9 @@ export class SizingStore {
     try {
       const cases = await sizingApi.getMissionCases();
       runInAction(() => {
-        this.missionCases = cases;
+        // Clear and repopulate to maintain observable array
+        this.missionCases.length = 0;
+        this.missionCases.push(...cases);
         this.isLoading = false;
       });
     } catch (error) {
@@ -144,7 +146,9 @@ export class SizingStore {
     try {
       const candidates = await sizingApi.getRunCandidates(runId);
       runInAction(() => {
-        this.candidates = candidates;
+        // Clear and repopulate to maintain observable array
+        this.candidates.length = 0;
+        this.candidates.push(...candidates);
         // Auto-select first candidate
         if (candidates.length > 0 && !this.selectedCandidate) {
           this.selectedCandidate = candidates[0];
@@ -181,7 +185,7 @@ export class SizingStore {
   }
 
   clearComparison() {
-    this.compareCandidates = [];
+    this.compareCandidates.length = 0;
     this.compareMode = false;
   }
 
@@ -266,9 +270,9 @@ export class SizingStore {
   reset() {
     this.selectedMission = null;
     this.currentRun = null;
-    this.candidates = [];
+    this.candidates.length = 0;
     this.selectedCandidate = null;
-    this.compareCandidates = [];
+    this.compareCandidates.length = 0;
     this.compareMode = false;
     this.wizardStep = 1;
     this.locks = {};
