@@ -9,6 +9,7 @@ import { ViewportQuadLayout } from "../../components/sizing/visualization/Viewpo
 import { KPIPanel } from "../../components/sizing/workspace/KPIPanel";
 import { OffsetsTable } from "../../components/sizing/workspace/OffsetsTable";
 import { ParameterSliders } from "../../components/sizing/workspace/ParameterSliders";
+import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
@@ -255,8 +256,12 @@ export const CandidateWorkspace: React.FC = observer(() => {
               </div>
             </div>
 
-            {/* Right: Flags & Warnings */}
+            {/* Right: Resistance Curve & Flags */}
             <div className="space-y-6">
+              {/* Resistance Curve */}
+              <ResistanceCurvePanel candidate={candidate} />
+
+              {/* Flags & Warnings */}
               {flags.length > 0 && (
                 <div
                   className={`rounded-lg p-6 shadow ${
