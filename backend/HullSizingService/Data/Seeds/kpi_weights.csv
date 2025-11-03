@@ -1,0 +1,7 @@
+metric,weight,description
+delta_balance,0.35,Displacement closure accuracy (within ±1%)
+installed_power,0.25,Lower SHP is better (fuel efficiency)
+constraints_ok,0.20,No violations of draft/beam/LOA caps
+stability_screen,0.10,GM within acceptable range (1-3m)
+teu_or_volume_fit,0.10,Cargo capacity match to requirement
+

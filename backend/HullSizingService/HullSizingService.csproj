@@ -63,6 +63,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>config\unit-systems.xml</Link>
     </None>
+    
+    <!-- Seed Data CSVs -->
+    <None Include="Data\Seeds\*.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

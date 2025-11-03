@@ -312,7 +312,22 @@ try
                 Console.WriteLine("[MIGRATION] Database schema is up to date");
             }
 
-            // TODO: Seed data will be added in Phase 3
+            // Seed reference data
+            Console.WriteLine("[SEED] Starting seed data import...");
+            Log.Information("[SEED] Starting seed data import...");
+
+            try
+            {
+                var seeder = new HullSizingService.Data.Seeds.CsvDataSeeder(dbContext, scope.ServiceProvider.GetRequiredService<ILogger<HullSizingService.Data.Seeds.CsvDataSeeder>>());
+                await seeder.SeedAllAsync();
+                Console.WriteLine("[SEED] Seed data import complete");
+                Log.Information("[SEED] Seed data import complete");
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"[SEED] ERROR: {seedEx.Message}");
+                Log.Error(seedEx, "[SEED] Seed data import failed");
+            }
         }
         catch (Exception ex)
         {
