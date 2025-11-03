@@ -136,8 +136,8 @@ export class SizingStore {
         this.isLoading = false;
       });
 
-      // Load candidates - use defensive check for ID
-      const runId = run.id || (run as any).Id;
+      // Load candidates - use defensive check for ID (handle both camelCase and PascalCase)
+      const runId = run.id || (run as unknown as { Id?: string }).Id;
       if (!runId) {
         console.error('[SizingStore] Run object has no id field!', run);
         throw new Error('Run ID is missing from API response');
