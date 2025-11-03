@@ -21,6 +21,14 @@ public class ClaimsForwardingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Skip tenant validation for health check and swagger endpoints
+        var path = context.Request.Path.Value?.ToLower() ?? "";
+        if (path == "/health" || path.StartsWith("/swagger"))
+        {
+            await _next(context);
+            return;
+        }
+
         // Extract claims from HttpContext.Items (set by JwtAuthenticationMiddleware)
         var sub = context.Items["Claims:Sub"]?.ToString();
         var tenantId = context.Items["Claims:TenantId"]?.ToString();
@@ -33,7 +41,7 @@ public class ClaimsForwardingMiddleware
         // DENY if tenantId is missing (enforce tenant isolation)
         if (string.IsNullOrEmpty(tenantId))
         {
-            _logger.LogWarning("[CLAIMS_FWD] Request denied - missing tenantId");
+            _logger.LogWarning("[CLAIMS_FWD] Request denied - missing tenantId for path {Path}", context.Request.Path);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.ContentType = "application/json";
 
