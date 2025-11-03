@@ -714,8 +714,13 @@ jobs:
           fi
 
           echo ""
-          echo "⏭️  Skipping API Gateway deployment"
-          echo "   (Already deployed by update-cors job)"
+          echo "📦 Deploying API Gateway..."
+          if [ -n "$API_ARN" ] && [ "$API_ARN" != "None" ]; then
+            aws apprunner start-deployment --service-arn "$API_ARN"
+            echo "✅ API Gateway deployment initiated"
+          else
+            echo "⚠️  API Gateway not found, skipping"
+          fi
 
           echo ""
           echo "⏳ Note: Deployments take ~3-5 minutes to complete"
