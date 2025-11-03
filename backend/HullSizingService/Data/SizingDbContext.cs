@@ -268,4 +268,3 @@ public class SizingDbContext : DbContext
         });
     }
 }
-

@@ -11,11 +11,11 @@ output "dynamodb_table_name" {
 output "ecr_repository_urls" {
   description = "ECR repository URLs"
   value = {
-    identity_service    = aws_ecr_repository.identity_service.repository_url
-    api_gateway         = aws_ecr_repository.api_gateway.repository_url
-    data_service        = aws_ecr_repository.data_service.repository_url
-    hull_sizing_service = aws_ecr_repository.hull_sizing_service.repository_url
-    frontend            = aws_ecr_repository.frontend.repository_url
+    identity_service     = aws_ecr_repository.identity_service.repository_url
+    api_gateway          = aws_ecr_repository.api_gateway.repository_url
+    data_service         = aws_ecr_repository.data_service.repository_url
+    hull_sizing_service  = aws_ecr_repository.hull_sizing_service.repository_url
+    frontend             = aws_ecr_repository.frontend.repository_url
   }
 }
 
@@ -54,8 +54,3 @@ output "cognito_domain" {
   description = "Cognito domain for navarch-studio"
   value       = aws_cognito_user_pool_domain.main.domain
 }
-
-
-
-
-

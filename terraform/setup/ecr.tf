@@ -174,8 +174,3 @@ resource "aws_ecr_lifecycle_policy" "hull_sizing_service" {
     ]
   })
 }
-
-
-
-
-

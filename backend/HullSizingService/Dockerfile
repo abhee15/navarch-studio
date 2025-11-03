@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and projects
+# Copy solution file and project files
 COPY ["backend/navarch-studio.sln", "backend/"]
 COPY ["backend/HullSizingService/HullSizingService.csproj", "backend/HullSizingService/"]
 COPY ["backend/Shared/Shared.csproj", "backend/Shared/"]
@@ -35,16 +35,17 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy published app
 COPY --from=publish /app/publish .
 
-# Copy unit conversion config to app directory  
+# Copy unit conversion config to app directory
 COPY --from=build /src/packages/unit-conversion/config/unit-systems.xml .
 
+# Set environment
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:8080/health || exit 1
 
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "HullSizingService.dll"]
-

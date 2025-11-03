@@ -5,53 +5,171 @@ namespace Shared.Models.Sizing;
 /// </summary>
 public class CandidateDesign
 {
+    /// <summary>
+    /// Unique identifier
+    /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Sizing run this candidate belongs to
+    /// </summary>
     public Guid SizingRunId { get; set; }
+
+    /// <summary>
+    /// Hull family/type: container, tanker, bulk, fishing, yacht_disp, hsc_planing, etc.
+    /// </summary>
     public string HullFamily { get; set; } = null!;
+
+    /// <summary>
+    /// Ranking within sizing run (1 = best by score)
+    /// </summary>
     public int Rank { get; set; }
+
+    /// <summary>
+    /// User-selected candidate for further analysis
+    /// </summary>
     public bool IsSelected { get; set; }
 
     // Principal Dimensions
+
+    /// <summary>
+    /// Length between perpendiculars (m)
+    /// </summary>
     public decimal LppM { get; set; }
+
+    /// <summary>
+    /// Waterline length (m)
+    /// </summary>
     public decimal LwlM { get; set; }
+
+    /// <summary>
+    /// Length overall (m)
+    /// </summary>
     public decimal LoaM { get; set; }
+
+    /// <summary>
+    /// Beam (m)
+    /// </summary>
     public decimal BM { get; set; }
+
+    /// <summary>
+    /// Draft (m)
+    /// </summary>
     public decimal TM { get; set; }
+
+    /// <summary>
+    /// Depth (m)
+    /// </summary>
     public decimal DM { get; set; }
 
     // Form Coefficients
+
+    /// <summary>
+    /// Block coefficient: Δ/(L×B×T×ρ)
+    /// </summary>
     public decimal Cb { get; set; }
+
+    /// <summary>
+    /// Prismatic coefficient: Δ/(Am×L×ρ) where Am = midship area
+    /// </summary>
     public decimal Cp { get; set; }
+
+    /// <summary>
+    /// Waterplane area coefficient: Awp/(L×B)
+    /// </summary>
     public decimal Cwp { get; set; }
+
+    /// <summary>
+    /// Midship section coefficient: Am/(B×T)
+    /// </summary>
     public decimal? Cm { get; set; }
 
-    // Displacement
+    // Mass & Displacement
+
+    /// <summary>
+    /// Displacement (tonnes)
+    /// </summary>
     public decimal DisplacementT { get; set; }
 
-    // Speed
+    // Speed Characteristics
+
+    /// <summary>
+    /// Froude number: V/√(g×L)
+    /// </summary>
     public decimal Fn { get; set; }
+
+    /// <summary>
+    /// LWL/λ ratio (seakeeping screen)
+    /// </summary>
     public decimal? LwlOverLambda { get; set; }
 
     // Resistance & Power
+
+    /// <summary>
+    /// Effective horsepower (kW)
+    /// </summary>
     public decimal? EhpKw { get; set; }
+
+    /// <summary>
+    /// Shaft horsepower (kW)
+    /// </summary>
     public decimal? ShpKw { get; set; }
 
-    // Stability
+    // Stability Estimates
+
+    /// <summary>
+    /// Estimated transverse metacentric height (m)
+    /// </summary>
     public decimal? GmEstM { get; set; }
+
+    /// <summary>
+    /// Vertical center of buoyancy (m)
+    /// </summary>
     public decimal? KbM { get; set; }
+
+    /// <summary>
+    /// Longitudinal center of buoyancy (% of Lpp from AP)
+    /// </summary>
     public decimal? LcbPctLpp { get; set; }
 
-    // Scoring
+    // Scoring & Validation
+
+    /// <summary>
+    /// Individual KPI scores (JSON)
+    /// Example: {"deltaBalance": 0.98, "installedPower": 0.85, "constraintsOk": 1.0}
+    /// </summary>
     public string? ScoresJson { get; set; }
+
+    /// <summary>
+    /// Constraint violation flags (JSON)
+    /// Example: {"draftExceeded": false, "beamExceeded": false, "lowFreeboard": true}
+    /// </summary>
     public string? FlagsJson { get; set; }
+
+    /// <summary>
+    /// Weighted composite score (0-1, higher is better)
+    /// </summary>
     public decimal Score { get; set; }
 
     // Geometry
+
+    /// <summary>
+    /// Parametric hull geometry (offsets grid as JSON)
+    /// Example: {"stations": [{"x": 0, "waterlines": [{"z": 0, "y": 0}, ...]}]}
+    /// </summary>
     public string? GeometryJson { get; set; }
 
+    // Metadata
+
+    /// <summary>
+    /// Creation timestamp
+    /// </summary>
     public DateTime CreatedAt { get; set; }
 
-    // Navigation
+    // Navigation Properties
+
+    /// <summary>
+    /// Parent sizing run
+    /// </summary>
     public SizingRun SizingRun { get; set; } = null!;
 }
-

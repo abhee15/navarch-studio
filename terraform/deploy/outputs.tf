@@ -73,19 +73,13 @@ output "frontend_url" {
 output "deployment_summary" {
   description = "Summary of deployed resources"
   value = {
-    environment         = var.environment
-    region              = var.aws_region
-    identity_service    = module.app_runner.identity_service_url
-    api_gateway         = module.app_runner.api_gateway_url
-    data_service        = module.app_runner.data_service_url
-    hull_sizing_service = module.app_runner.hull_sizing_service_url
-    frontend            = var.domain_name != "" ? "https://${var.domain_name}" : "https://${module.s3_cloudfront.cloudfront_distribution_domain}"
-    database_endpoint   = module.rds.endpoint
+    environment          = var.environment
+    region               = var.aws_region
+    identity_service     = module.app_runner.identity_service_url
+    api_gateway          = module.app_runner.api_gateway_url
+    data_service         = module.app_runner.data_service_url
+    hull_sizing_service  = module.app_runner.hull_sizing_service_url
+    frontend             = var.domain_name != "" ? "https://${var.domain_name}" : "https://${module.s3_cloudfront.cloudfront_distribution_domain}"
+    database_endpoint    = module.rds.endpoint
   }
 }
-
-
-
-
-
-

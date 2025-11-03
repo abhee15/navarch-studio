@@ -247,10 +247,8 @@ resource "aws_apprunner_service" "hull_sizing_service" {
         port = "8080"
 
         runtime_environment_variables = {
-          # Use Staging for dev/staging so auto-migrations run, Production for prod
           ASPNETCORE_ENVIRONMENT               = var.environment == "prod" ? "Production" : "Staging"
           ConnectionStrings__DefaultConnection = "Host=${var.rds_endpoint};Port=${var.rds_port};Database=${var.rds_database};Username=${var.rds_username};Password=${var.rds_password}"
-          Services__DataService                = "http://${aws_apprunner_service.data_service.service_url}"
           Cognito__UserPoolId                  = var.cognito_user_pool_id
           Cognito__AppClientId                 = var.cognito_user_pool_client_id
           Cognito__Domain                      = var.cognito_domain
@@ -268,8 +266,6 @@ resource "aws_apprunner_service" "hull_sizing_service" {
     instance_role_arn = aws_iam_role.app_runner_instance.arn
   }
 
-  # Hull Sizing Service uses DEFAULT egress to access both RDS and Cognito JWKS endpoint
-  # Also needs to call DataService over HTTPS
   network_configuration {
     egress_configuration {
       egress_type = "DEFAULT"
@@ -313,14 +309,13 @@ resource "aws_apprunner_service" "api_gateway" {
 
         runtime_environment_variables = merge({
           # Use Staging for dev/staging so auto-migrations run, Production for prod
-          ASPNETCORE_ENVIRONMENT      = var.environment == "prod" ? "Production" : "Staging"
-          Services__IdentityService   = "https://${aws_apprunner_service.identity_service.service_url}"
-          Services__DataService       = "https://${aws_apprunner_service.data_service.service_url}"
-          Services__HullSizingService = "https://${aws_apprunner_service.hull_sizing_service.service_url}"
-          Cognito__UserPoolId         = var.cognito_user_pool_id
-          Cognito__AppClientId        = var.cognito_user_pool_client_id
-          Cognito__Domain             = var.cognito_domain
-          Cognito__Region             = data.aws_region.current.name
+          ASPNETCORE_ENVIRONMENT    = var.environment == "prod" ? "Production" : "Staging"
+          Services__IdentityService = "https://${aws_apprunner_service.identity_service.service_url}"
+          Services__DataService     = "https://${aws_apprunner_service.data_service.service_url}"
+          Cognito__UserPoolId       = var.cognito_user_pool_id
+          Cognito__AppClientId      = var.cognito_user_pool_client_id
+          Cognito__Domain           = var.cognito_domain
+          Cognito__Region           = data.aws_region.current.name
           },
           # CORS - Add CloudFront origin (use index 10 to ADD to appsettings origins, not replace)
           var.cloudfront_distribution_domain != "" ? {
