@@ -50,9 +50,9 @@ export class SizingStore {
         this.missionCases.length = 0;
         // Defensive: Ensure cases is an array before spreading
         if (Array.isArray(cases)) {
-          cases.forEach(c => this.missionCases.push(c));
+          cases.forEach((c) => this.missionCases.push(c));
         } else {
-          console.warn('[SizingStore] getMissionCases returned non-array:', cases);
+          console.warn("[SizingStore] getMissionCases returned non-array:", cases);
         }
         this.isLoading = false;
       });
@@ -127,10 +127,10 @@ export class SizingStore {
     this.error = null;
     try {
       const run = await sizingApi.createSizingRun(dto);
-      console.log('[SizingStore] Received run from API:', run);
-      console.log('[SizingStore] Run ID:', run.id);
-      console.log('[SizingStore] Run keys:', Object.keys(run));
-      
+      console.log("[SizingStore] Received run from API:", run);
+      console.log("[SizingStore] Run ID:", run.id);
+      console.log("[SizingStore] Run keys:", Object.keys(run));
+
       runInAction(() => {
         this.currentRun = run;
         this.isLoading = false;
@@ -139,10 +139,10 @@ export class SizingStore {
       // Load candidates - use defensive check for ID (handle both camelCase and PascalCase)
       const runId = run.id || (run as unknown as { Id?: string }).Id;
       if (!runId) {
-        console.error('[SizingStore] Run object has no id field!', run);
-        throw new Error('Run ID is missing from API response');
+        console.error("[SizingStore] Run object has no id field!", run);
+        throw new Error("Run ID is missing from API response");
       }
-      
+
       await this.loadCandidates(runId);
 
       return run;
@@ -165,13 +165,13 @@ export class SizingStore {
         this.candidates.length = 0;
         // Defensive: Use forEach instead of spread to avoid Symbol.iterator issues
         if (Array.isArray(candidates)) {
-          candidates.forEach(c => this.candidates.push(c));
+          candidates.forEach((c) => this.candidates.push(c));
           // Auto-select first candidate
           if (candidates.length > 0 && !this.selectedCandidate) {
             this.selectedCandidate = candidates[0];
           }
         } else {
-          console.warn('[SizingStore] getRunCandidates returned non-array:', candidates);
+          console.warn("[SizingStore] getRunCandidates returned non-array:", candidates);
         }
         this.isLoading = false;
       });
