@@ -1,22 +1,40 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useParams, useNavigate } from "react-router-dom";
 import { useStore } from "../../stores";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { CandidateCard } from "../../components/sizing/CandidateCard";
+import { ComparisonView } from "../../components/sizing/ComparisonView";
 import { Button } from "../../components/ui/button";
 
 export const SizingRunResults: React.FC = observer(() => {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { sizingStore } = useStore();
+  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
     if (runId) {
       sizingStore.loadCandidates(runId);
     }
   }, [runId, sizingStore]);
+
+  // Show comparison view if active
+  if (showComparison && sizingStore.compareCandidates.length >= 2) {
+    return (
+      <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
+        <AppHeader />
+        <main className="flex-1">
+          <ComparisonView
+            candidates={sizingStore.compareCandidates}
+            onClose={() => setShowComparison(false)}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
@@ -90,10 +108,8 @@ export const SizingRunResults: React.FC = observer(() => {
                 </Button>
                 <Button
                   className="bg-blue-800 hover:bg-blue-900"
-                  onClick={() => {
-                    // TODO: Navigate to comparison view
-                    console.log("Compare:", sizingStore.compareCandidates);
-                  }}
+                  onClick={() => setShowComparison(true)}
+                  disabled={sizingStore.compareCandidates.length < 2}
                 >
                   Compare ({sizingStore.compareCandidates.length})
                 </Button>
