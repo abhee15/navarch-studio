@@ -145,6 +145,15 @@ try
         new NavArch.UnitConversion.Services.UnitConverter(null));
     Log.Information("Unit conversion service registered with default config path");
 
+    // Mission Case Service
+    builder.Services.AddScoped<HullSizingService.Services.IMissionCaseService, HullSizingService.Services.MissionCaseService>();
+    Log.Information("Mission case service registered");
+
+    // FluentValidation validators
+    builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.CreateMissionCaseDto>, Shared.Validators.Sizing.CreateMissionCaseDtoValidator>();
+    builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.UpdateMissionCaseDto>, Shared.Validators.Sizing.UpdateMissionCaseDtoValidator>();
+    Log.Information("FluentValidation validators registered");
+
     // OpenTelemetry Tracing
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource => resource.AddService("HullSizingService"))
