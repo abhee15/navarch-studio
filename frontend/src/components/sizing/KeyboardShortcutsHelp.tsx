@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 /**
  * Keyboard Shortcuts Help Modal
- * 
+ *
  * Shows available keyboard shortcuts for power users
  */
 export const KeyboardShortcutsHelp: React.FC = () => {
@@ -163,7 +163,11 @@ export const KeyboardShortcutsHelp: React.FC = () => {
           {/* Footer */}
           <div className="bg-gray-50 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
-              💡 Tip: Press <kbd className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded">?</kbd> anytime to toggle this help
+              💡 Tip: Press{" "}
+              <kbd className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded">
+                ?
+              </kbd>{" "}
+              anytime to toggle this help
             </p>
           </div>
         </div>
@@ -171,4 +175,3 @@ export const KeyboardShortcutsHelp: React.FC = () => {
     </>
   );
 };
-

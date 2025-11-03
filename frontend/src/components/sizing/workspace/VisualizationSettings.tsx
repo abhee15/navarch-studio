@@ -21,7 +21,7 @@ export interface VisualizationOptions {
 
 /**
  * Visualization Settings Panel
- * 
+ *
  * Control visibility and quality of visualization elements
  */
 export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
@@ -63,9 +63,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
         <div className="p-6 space-y-6">
           {/* 3D Settings */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-              3D View
-            </h4>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">3D View</h4>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -83,7 +81,9 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                   onChange={(e) => updateSetting("show3DCenters", e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Show Centers (LCB, KB)</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Show Centers (LCB, KB)
+                </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -99,9 +99,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
 
           {/* 2D Settings */}
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-              2D Views
-            </h4>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">2D Views</h4>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -245,4 +243,3 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
     </div>
   );
 };
-

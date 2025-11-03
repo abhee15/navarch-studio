@@ -10,7 +10,7 @@ interface BatchActionsProps {
 
 /**
  * Batch Actions Toolbar
- * 
+ *
  * Appears when missions are selected for bulk operations
  */
 export const BatchActions: React.FC<BatchActionsProps> = ({
@@ -96,11 +96,11 @@ export const BatchActions: React.FC<BatchActionsProps> = ({
 
         {showConfirm && (
           <p className="text-xs text-white/80 mt-2 text-center">
-            Click Delete again to confirm deletion of {selectedCount} mission{selectedCount > 1 ? "s" : ""}
+            Click Delete again to confirm deletion of {selectedCount} mission
+            {selectedCount > 1 ? "s" : ""}
           </p>
         )}
       </div>
     </div>
   );
 };
-
