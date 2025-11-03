@@ -34,8 +34,13 @@ public class HullSizingController : ControllerBase
             var response = await _httpClientService.GetAsync("hullsizing", $"api/v1/hull-sizing/{path}", cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            // Return raw content to avoid double JSON encoding
-            return Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
+            // Return raw content with actual status code from downstream service
+            return new ContentResult
+            {
+                Content = content,
+                ContentType = response.Content.Headers.ContentType?.ToString() ?? "application/json",
+                StatusCode = (int)response.StatusCode
+            };
         }
         catch (Exception ex)
         {
@@ -67,8 +72,13 @@ public class HullSizingController : ControllerBase
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            // Return raw content to avoid double JSON encoding
-            return Content(responseContent, response.Content.Headers.ContentType?.ToString() ?? "application/json");
+            // Return raw content with actual status code from downstream service
+            return new ContentResult
+            {
+                Content = responseContent,
+                ContentType = response.Content.Headers.ContentType?.ToString() ?? "application/json",
+                StatusCode = (int)response.StatusCode
+            };
         }
         catch (Exception ex)
         {
@@ -100,8 +110,13 @@ public class HullSizingController : ControllerBase
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            // Return raw content to avoid double JSON encoding
-            return Content(responseContent, response.Content.Headers.ContentType?.ToString() ?? "application/json");
+            // Return raw content with actual status code from downstream service
+            return new ContentResult
+            {
+                Content = responseContent,
+                ContentType = response.Content.Headers.ContentType?.ToString() ?? "application/json",
+                StatusCode = (int)response.StatusCode
+            };
         }
         catch (Exception ex)
         {
