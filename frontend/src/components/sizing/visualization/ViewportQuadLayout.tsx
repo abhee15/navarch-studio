@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Hull3DScene } from "./Hull3DScene";
 import { Hull2DPlan } from "./Hull2DPlan";
+import { Hull2DProfile } from "./Hull2DProfile";
+import { Hull2DSections } from "./Hull2DSections";
 import type { CandidateDesign } from "../../../types/sizing";
 
 interface ViewportQuadLayoutProps {
@@ -54,22 +56,8 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
         {/* Maximized viewport */}
         <div className="flex-1">
           {mode === "plan" && <Hull2DPlan candidate={candidate} />}
-          {mode === "profile" && (
-            <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-              <div className="text-center text-gray-500">
-                <p className="text-lg font-semibold">Profile View</p>
-                <p className="text-sm">Coming soon: Side elevation with buttocks</p>
-              </div>
-            </div>
-          )}
-          {mode === "sections" && (
-            <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-              <div className="text-center text-gray-500">
-                <p className="text-lg font-semibold">Sections View (Body Plan)</p>
-                <p className="text-sm">Coming soon: Transverse sections</p>
-              </div>
-            </div>
-          )}
+          {mode === "profile" && <Hull2DProfile candidate={candidate} />}
+          {mode === "sections" && <Hull2DSections candidate={candidate} />}
           {mode === "3d" && (
             <Hull3DScene
               candidate={candidate}
@@ -117,11 +105,8 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize →
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-          <div className="text-center text-gray-400">
-            <p className="text-sm">Coming soon</p>
-            <p className="text-xs">Side elevation with buttocks</p>
-          </div>
+        <div className="flex-1">
+          <Hull2DProfile candidate={candidate} />
         </div>
       </div>
 
@@ -138,11 +123,8 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize →
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-          <div className="text-center text-gray-400">
-            <p className="text-sm">Coming soon</p>
-            <p className="text-xs">Transverse sections (body plan)</p>
-          </div>
+        <div className="flex-1">
+          <Hull2DSections candidate={candidate} />
         </div>
       </div>
 
