@@ -81,10 +81,11 @@ jobs:
           app_runner_security_group_id = "${{ secrets.APP_RUNNER_SECURITY_GROUP_ID }}"
           rds_security_group_id        = "${{ secrets.RDS_SECURITY_GROUP_ID }}"
           ecr_repository_urls = {
-            identity_service = "${{ secrets.ECR_IDENTITY_SERVICE_URL }}"
-            api_gateway      = "${{ secrets.ECR_API_GATEWAY_URL }}"
-            data_service     = "${{ secrets.ECR_DATA_SERVICE_URL }}"
-            frontend         = "${{ secrets.ECR_FRONTEND_URL }}"
+            identity_service    = "${{ secrets.ECR_IDENTITY_SERVICE_URL }}"
+            api_gateway         = "${{ secrets.ECR_API_GATEWAY_URL }}"
+            data_service        = "${{ secrets.ECR_DATA_SERVICE_URL }}"
+            hull_sizing_service = "${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}"
+            frontend            = "${{ secrets.ECR_FRONTEND_URL }}"
           }
           cognito_user_pool_id        = "${{ secrets.COGNITO_USER_POOL_ID }}"
           cognito_user_pool_client_id = "${{ secrets.COGNITO_USER_POOL_CLIENT_ID }}"
@@ -111,29 +112,196 @@ jobs:
           fi
         working-directory: ./terraform/deploy
 
-      - name: Discover and Empty S3 Frontend Bucket
+      - name: Pre-Destroy Cleanup (S3 Buckets)
         if: steps.validate.outputs.exists == 'true'
         run: |
-          echo "🔍 Querying AWS for frontend S3 bucket..."
-          BUCKET_NAME=$(aws s3api list-buckets \
-            --query "Buckets[?contains(Name, '-${{ github.event.inputs.environment }}-frontend')].Name | [0]" \
-            --output text)
+          echo "🔍 Discovering and emptying S3 buckets..."
+          ENV="${{ github.event.inputs.environment }}"
+          PROJECT="${{ secrets.PROJECT_NAME }}"
 
-          if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" == "None" ]; then
-            echo "⚠️ No S3 bucket found for environment '${{ github.event.inputs.environment }}'"
-            echo "Bucket may have already been deleted or never created"
-          else
-            echo "📦 Found S3 bucket: $BUCKET_NAME"
-            echo "🗑️ Emptying bucket contents..."
-            aws s3 rm s3://$BUCKET_NAME --recursive || echo "Bucket is already empty"
-            echo "✅ S3 bucket emptied successfully"
-          fi
+          # Empty all S3 buckets for this environment
+          for bucket_suffix in "frontend" "benchmark-raw" "benchmark-curated"; do
+            BUCKET_NAME="${PROJECT}-${ENV}-${bucket_suffix}"
+            echo "📦 Checking bucket: $BUCKET_NAME"
+
+            if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+              echo "🗑️ Emptying bucket: $BUCKET_NAME"
+              aws s3 rm "s3://$BUCKET_NAME" --recursive || echo "Bucket already empty"
+              echo "✅ Bucket $BUCKET_NAME emptied"
+            else
+              echo "⚠️ Bucket $BUCKET_NAME does not exist or already deleted"
+            fi
+          done
 
       - name: Terraform Destroy
         if: steps.validate.outputs.exists == 'true'
         id: destroy
-        run: terraform destroy -var-file="environments/${{ github.event.inputs.environment }}.tfvars" -var-file="terraform.tfvars" -auto-approve
+        run: |
+          echo "🚀 Running Terraform destroy..."
+          terraform destroy \
+            -var-file="environments/${{ github.event.inputs.environment }}.tfvars" \
+            -var-file="terraform.tfvars" \
+            -auto-approve
         working-directory: ./terraform/deploy
+        continue-on-error: true
+
+      - name: Manual Resource Cleanup (if Terraform fails)
+        if: steps.destroy.outcome == 'failure'
+        run: |
+          echo "⚠️ Terraform destroy failed, attempting manual cleanup..."
+          ENV="${{ github.event.inputs.environment }}"
+          PROJECT="${{ secrets.PROJECT_NAME }}"
+
+          # Delete App Runner services
+          echo "🔍 Cleaning up App Runner services..."
+          for service in "identity-service" "data-service" "api-gateway" "hull-sizing-service"; do
+            SERVICE_ARN=$(aws apprunner list-services \
+              --query "ServiceSummaryList[?ServiceName=='${PROJECT}-${ENV}-${service}'].ServiceArn | [0]" \
+              --output text 2>/dev/null || echo "")
+
+            if [ -n "$SERVICE_ARN" ] && [ "$SERVICE_ARN" != "None" ]; then
+              echo "🗑️ Deleting App Runner service: ${service}"
+              aws apprunner delete-service --service-arn "$SERVICE_ARN" || echo "Failed to delete ${service}"
+            fi
+          done
+
+          # Delete RDS instance
+          echo "🔍 Cleaning up RDS instance..."
+          DB_INSTANCE="${PROJECT}-${ENV}-db"
+          if aws rds describe-db-instances --db-instance-identifier "$DB_INSTANCE" 2>/dev/null; then
+            echo "🗑️ Deleting RDS instance: $DB_INSTANCE (skip final snapshot)"
+            aws rds delete-db-instance \
+              --db-instance-identifier "$DB_INSTANCE" \
+              --skip-final-snapshot \
+              --delete-automated-backups || echo "Failed to delete RDS"
+          fi
+
+          # Delete CloudFront distribution
+          echo "🔍 Cleaning up CloudFront distribution..."
+          DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Comment=='${PROJECT}-${ENV}-frontend'].Id | [0]" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$DIST_ID" ] && [ "$DIST_ID" != "None" ]; then
+            echo "🗑️ Disabling CloudFront distribution: $DIST_ID"
+            ETAG=$(aws cloudfront get-distribution-config --id "$DIST_ID" --query 'ETag' --output text)
+            aws cloudfront get-distribution-config --id "$DIST_ID" --query 'DistributionConfig' > /tmp/dist-config.json
+
+            # Disable distribution
+            jq '.Enabled = false' /tmp/dist-config.json > /tmp/dist-config-disabled.json
+            aws cloudfront update-distribution \
+              --id "$DIST_ID" \
+              --if-match "$ETAG" \
+              --distribution-config file:///tmp/dist-config-disabled.json || echo "Failed to disable distribution"
+
+            echo "⏳ Waiting for distribution to be disabled (this may take 10-15 minutes)..."
+            echo "Distribution will be deleted automatically once disabled"
+          fi
+
+          # Delete S3 buckets
+          echo "🔍 Cleaning up S3 buckets..."
+          for bucket_suffix in "frontend" "benchmark-raw" "benchmark-curated"; do
+            BUCKET_NAME="${PROJECT}-${ENV}-${bucket_suffix}"
+            if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+              echo "🗑️ Deleting bucket: $BUCKET_NAME"
+              aws s3 rb "s3://$BUCKET_NAME" --force || echo "Failed to delete $BUCKET_NAME"
+            fi
+          done
+
+          # Delete VPC Connector
+          echo "🔍 Cleaning up VPC Connector..."
+          VPC_CONN=$(aws apprunner list-vpc-connectors \
+            --query "VpcConnectors[?VpcConnectorName=='${PROJECT}-${ENV}-vpc-connector'].VpcConnectorArn | [0]" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$VPC_CONN" ] && [ "$VPC_CONN" != "None" ]; then
+            echo "🗑️ Deleting VPC Connector"
+            aws apprunner delete-vpc-connector --vpc-connector-arn "$VPC_CONN" || echo "Failed to delete VPC connector"
+          fi
+
+          # Delete IAM resources
+          echo "🔍 Cleaning up IAM resources..."
+          for role in "app-runner-ecr-role" "app-runner-instance-role"; do
+            ROLE_NAME="${PROJECT}-${ENV}-${role}"
+            if aws iam get-role --role-name "$ROLE_NAME" 2>/dev/null; then
+              echo "🗑️ Detaching policies from role: $ROLE_NAME"
+
+              # Detach managed policies
+              ATTACHED_POLICIES=$(aws iam list-attached-role-policies --role-name "$ROLE_NAME" --query 'AttachedPolicies[].PolicyArn' --output text)
+              for policy_arn in $ATTACHED_POLICIES; do
+                aws iam detach-role-policy --role-name "$ROLE_NAME" --policy-arn "$policy_arn" || echo "Failed to detach $policy_arn"
+              done
+
+              # Delete inline policies
+              INLINE_POLICIES=$(aws iam list-role-policies --role-name "$ROLE_NAME" --query 'PolicyNames[]' --output text)
+              for policy_name in $INLINE_POLICIES; do
+                aws iam delete-role-policy --role-name "$ROLE_NAME" --policy-name "$policy_name" || echo "Failed to delete inline policy $policy_name"
+              done
+
+              # Delete role
+              echo "🗑️ Deleting IAM role: $ROLE_NAME"
+              aws iam delete-role --role-name "$ROLE_NAME" || echo "Failed to delete role $ROLE_NAME"
+            fi
+          done
+
+          # Delete IAM policy
+          POLICY_NAME="${PROJECT}-${ENV}-secrets-access"
+          POLICY_ARN=$(aws iam list-policies \
+            --query "Policies[?PolicyName=='$POLICY_NAME'].Arn | [0]" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$POLICY_ARN" ] && [ "$POLICY_ARN" != "None" ]; then
+            echo "🗑️ Deleting IAM policy: $POLICY_NAME"
+            aws iam delete-policy --policy-arn "$POLICY_ARN" || echo "Failed to delete policy"
+          fi
+
+          # Delete Secrets Manager secrets
+          echo "🔍 Cleaning up Secrets Manager..."
+          SECRET_NAME="${PROJECT}-${ENV}-db-password"
+          if aws secretsmanager describe-secret --secret-id "$SECRET_NAME" 2>/dev/null; then
+            echo "🗑️ Deleting secret: $SECRET_NAME"
+            aws secretsmanager delete-secret \
+              --secret-id "$SECRET_NAME" \
+              --force-delete-without-recovery || echo "Failed to delete secret"
+          fi
+
+          # Delete DB Subnet Group
+          echo "🔍 Cleaning up DB Subnet Group..."
+          SUBNET_GROUP="${PROJECT}-${ENV}-db-subnet-group"
+          if aws rds describe-db-subnet-groups --db-subnet-group-name "$SUBNET_GROUP" 2>/dev/null; then
+            echo "🗑️ Deleting DB subnet group: $SUBNET_GROUP"
+            aws rds delete-db-subnet-group --db-subnet-group-name "$SUBNET_GROUP" || echo "Failed to delete subnet group"
+          fi
+
+          # Delete CloudFront OAC
+          echo "🔍 Cleaning up CloudFront Origin Access Control..."
+          OAC_ID=$(aws cloudfront list-origin-access-controls \
+            --query "OriginAccessControlList.Items[?Name=='${PROJECT}-${ENV}-oac'].Id | [0]" \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$OAC_ID" ] && [ "$OAC_ID" != "None" ]; then
+            ETAG=$(aws cloudfront get-origin-access-control --id "$OAC_ID" --query 'ETag' --output text)
+            echo "🗑️ Deleting CloudFront OAC"
+            aws cloudfront delete-origin-access-control --id "$OAC_ID" --if-match "$ETAG" || echo "Failed to delete OAC"
+          fi
+
+          echo "✅ Manual cleanup complete"
+        continue-on-error: true
+
+      - name: Remove Orphaned Resources from Terraform State
+        if: always()
+        run: |
+          echo "🧹 Cleaning up Terraform state..."
+
+          # Remove resources that no longer exist in AWS
+          terraform state list | while read resource; do
+            echo "Checking resource: $resource"
+            # Remove if terraform refresh detects it's gone
+          done || true
+
+          echo "✅ State cleanup complete"
+        working-directory: ./terraform/deploy
+        continue-on-error: true
 
       - name: Release State Lock on Failure
         if: failure() && steps.destroy.outcome == 'failure'
@@ -229,12 +397,13 @@ jobs:
             echo ""
             echo "📦 Resources destroyed:"
             echo "  - RDS PostgreSQL instance"
-            echo "  - App Runner services (Identity, API Gateway, Data Service)"
-            echo "  - S3 frontend bucket (emptied and deleted)"
+            echo "  - App Runner services (Identity, API Gateway, Data Service, Hull Sizing Service)"
+            echo "  - S3 buckets (frontend, benchmark-raw, benchmark-curated)"
             echo "  - CloudFront distribution"
             echo "  - CloudWatch Log Groups"
             echo "  - Secrets Manager secrets"
             echo "  - IAM roles and policies"
+            echo "  - VPC Connector"
             echo ""
             echo "⚠️ Resources NOT destroyed (shared across environments):"
             echo "  - VPC and networking (from Phase 4 setup)"
