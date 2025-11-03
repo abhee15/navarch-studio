@@ -10,11 +10,16 @@ namespace HullSizingService.Services;
 public class SizingRunService : ISizingRunService
 {
     private readonly SizingDbContext _context;
+    private readonly Solver.IFirstPrinciplesSolver _solver;
     private readonly ILogger<SizingRunService> _logger;
 
-    public SizingRunService(SizingDbContext context, ILogger<SizingRunService> logger)
+    public SizingRunService(
+        SizingDbContext context,
+        Solver.IFirstPrinciplesSolver solver,
+        ILogger<SizingRunService> logger)
     {
         _context = context;
+        _solver = solver;
         _logger = logger;
     }
 
@@ -96,16 +101,73 @@ public class SizingRunService : ISizingRunService
 
         try
         {
-            // TODO: Phase 2 - Implement actual solver
-            // For now, generate stub candidates
-            var candidates = await GenerateStubCandidatesAsync(run.Id, missionCase, dto, cancellationToken);
+            // Call first-principles solver
+            var solverRequest = new Solver.SolverRequest(
+                MissionCase: missionCase,
+                Locks: dto.Locks != null ? new Solver.SizingLocksDto(
+                    dto.Locks.KeepFn,
+                    dto.Locks.KeepLOverB,
+                    dto.Locks.KeepBOverT,
+                    dto.Locks.KeepDOverT,
+                    dto.Locks.KeepCbBand
+                ) : null,
+                Options: dto.Options != null ? new Solver.SizingOptionsDto(
+                    dto.Options.FamilyHints,
+                    dto.Options.MaxCandidates,
+                    dto.Options.MinFn,
+                    dto.Options.MaxFn
+                ) : null
+            );
+
+            var solverCandidates = await _solver.SolveAsync(solverRequest, cancellationToken);
+
+            // Convert solver candidates to database entities
+            var candidateEntities = new List<CandidateDesign>();
+            for (int i = 0; i < solverCandidates.Count; i++)
+            {
+                var sc = solverCandidates[i];
+                var entity = new CandidateDesign
+                {
+                    Id = Guid.NewGuid(),
+                    SizingRunId = run.Id,
+                    HullFamily = sc.HullFamily,
+                    LppM = sc.LppM,
+                    LwlM = sc.LwlM,
+                    LoaM = sc.LoaM,
+                    BM = sc.BeamM,
+                    TM = sc.DraftM,
+                    DM = sc.DepthM,
+                    Cb = sc.Cb,
+                    Cp = sc.Cp,
+                    Cwp = sc.Cwp,
+                    Cm = sc.Cm,
+                    DisplacementT = sc.DisplacementT,
+                    Fn = sc.Fn,
+                    LwlOverLambda = sc.LwlOverLambda,
+                    KbM = sc.KbM,
+                    LcbPctLpp = sc.LcbPctLpp,
+                    GmEstM = sc.GmEstM,
+                    EhpKw = sc.EhpKw,
+                    ShpKw = sc.ShpKw,
+                    FlagsJson = JsonSerializer.Serialize(sc.Flags),
+                    Score = sc.Score,
+                    Rank = i + 1,
+                    IsSelected = i == 0, // First candidate is selected by default
+                    GeometryJson = null, // Geometry generated on demand
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                candidateEntities.Add(entity);
+            }
+
+            _context.CandidateDesigns.AddRange(candidateEntities);
 
             run.Status = "completed";
             run.ComputeTimeMs = (int)sw.ElapsedMilliseconds;
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("[SIZING_RUN] Completed run {RunId} in {ElapsedMs}ms, generated {Count} candidates",
-                run.Id, sw.ElapsedMilliseconds, candidates.Count);
+                run.Id, sw.ElapsedMilliseconds, candidateEntities.Count);
         }
         catch (Exception ex)
         {
@@ -134,74 +196,6 @@ public class SizingRunService : ISizingRunService
             .ToListAsync(cancellationToken);
 
         return candidates.Select(MapCandidateToDto).ToList();
-    }
-
-    /// <summary>
-    /// Stub candidate generator for Phase 1
-    /// TODO: Replace with actual solver in Phase 2
-    /// </summary>
-    private async Task<List<CandidateDesign>> GenerateStubCandidatesAsync(
-        Guid runId,
-        MissionCase missionCase,
-        CreateSizingRunDto dto,
-        CancellationToken cancellationToken)
-    {
-        var maxCandidates = dto.Options?.MaxCandidates ?? 3;
-        var candidates = new List<CandidateDesign>();
-
-        _logger.LogInformation("[STUB_SOLVER] Generating {Count} stub candidates for cargo={Cargo}, speed={Speed}kn",
-            maxCandidates, missionCase.CargoValue, missionCase.ServiceSpeedKn);
-
-        for (int i = 0; i < maxCandidates; i++)
-        {
-            // Very simple placeholder sizing (not accurate!)
-            var lpp = 50m + (i * 10m); // 50, 60, 70m
-            var beam = lpp / 7.5m;
-            var draft = beam / 2.5m;
-            var cb = 0.70m - (i * 0.05m); // 0.70, 0.65, 0.60
-
-            var candidate = new CandidateDesign
-            {
-                Id = Guid.NewGuid(),
-                SizingRunId = runId,
-                HullFamily = i switch
-                {
-                    0 => "container",
-                    1 => "bulker",
-                    _ => "general_cargo"
-                },
-                LppM = lpp,
-                LwlM = lpp * 1.02m,
-                LoaM = lpp * 1.05m,
-                BM = beam,
-                TM = draft,
-                DM = draft * 1.4m,
-                Cb = cb,
-                Cp = cb * 1.02m,
-                Cwp = 0.85m,
-                DisplacementT = lpp * beam * draft * cb * 1.025m,
-                Fn = (decimal)(missionCase.ServiceSpeedKn * 0.5144m / (decimal)Math.Sqrt((double)lpp * 9.81)),
-                LwlOverLambda = null,
-                KbM = draft * 0.53m,
-                LcbPctLpp = -2.5m,
-                GmEstM = 1.5m,
-                EhpKw = 1000m + (i * 200m),
-                ShpKw = 1300m + (i * 250m),
-                FlagsJson = "{}",
-                Score = 0.8m - (i * 0.1m),
-                Rank = i + 1,
-                IsSelected = i == 0,
-                GeometryJson = null,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            candidates.Add(candidate);
-        }
-
-        _context.CandidateDesigns.AddRange(candidates);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return candidates;
     }
 
     private static SizingRunDto MapToDto(SizingRun entity, int candidateCount)

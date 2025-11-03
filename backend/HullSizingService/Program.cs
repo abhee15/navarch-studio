@@ -157,6 +157,17 @@ try
     builder.Services.AddScoped<HullSizingService.Services.ICandidateDesignService, HullSizingService.Services.CandidateDesignService>();
     Log.Information("Candidate design service registered");
 
+    // Hull Family Service
+    builder.Services.AddScoped<HullSizingService.Services.IHullFamilyService, HullSizingService.Services.HullFamilyService>();
+    Log.Information("Hull family service registered");
+
+    // Solver Services
+    builder.Services.AddScoped<HullSizingService.Services.Solver.IDisplacementClosureService, HullSizingService.Services.Solver.DisplacementClosureService>();
+    builder.Services.AddScoped<HullSizingService.Services.Solver.IResistanceService, HullSizingService.Services.Solver.HoltropResistanceService>();
+    builder.Services.AddScoped<HullSizingService.Services.Solver.IStabilityScreenService, HullSizingService.Services.Solver.StabilityScreenService>();
+    builder.Services.AddScoped<HullSizingService.Services.Solver.IFirstPrinciplesSolver, HullSizingService.Services.Solver.FirstPrinciplesSolver>();
+    Log.Information("Solver services registered (displacement closure, resistance, stability, first-principles)");
+
     // FluentValidation validators
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.CreateMissionCaseDto>, Shared.Validators.Sizing.CreateMissionCaseDtoValidator>();
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.UpdateMissionCaseDto>, Shared.Validators.Sizing.UpdateMissionCaseDtoValidator>();
