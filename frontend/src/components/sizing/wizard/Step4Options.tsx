@@ -15,7 +15,12 @@ interface Step4Props {
   isGenerating?: boolean;
 }
 
-export const Step4Options: React.FC<Step4Props> = ({ formData, onPrevious, onSubmit, isGenerating }) => {
+export const Step4Options: React.FC<Step4Props> = ({
+  formData,
+  onPrevious,
+  onSubmit,
+  isGenerating,
+}) => {
   const [maxCandidates, setMaxCandidates] = useState(5);
   const [minFn, setMinFn] = useState(0.15);
   const [maxFn, setMaxFn] = useState(0.35);
@@ -235,7 +240,9 @@ export const Step4Options: React.FC<Step4Props> = ({ formData, onPrevious, onSub
 
         {/* Solver Info */}
         <div className="rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 p-4 text-sm dark:from-blue-900/20 dark:to-cyan-900/20">
-          <p className="font-medium text-blue-900 dark:text-blue-300">🧮 Solver Mode: First-Principles</p>
+          <p className="font-medium text-blue-900 dark:text-blue-300">
+            🧮 Solver Mode: First-Principles
+          </p>
           <p className="mt-1 text-blue-800 dark:text-blue-400">
             Physics-based solver using displacement closure, Holtrop-Mennen resistance, and
             stability screening.

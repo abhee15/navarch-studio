@@ -4,7 +4,12 @@ import { Hull2DPlan } from "./Hull2DPlan";
 import { Hull2DProfile } from "./Hull2DProfile";
 import { Hull2DSections } from "./Hull2DSections";
 import type { CandidateDesign } from "../../../types/sizing";
-import { exportSVG, exportSVGToPNG, exportCanvasToPNG, generateFilename } from "../../../utils/exportViewport";
+import {
+  exportSVG,
+  exportSVGToPNG,
+  exportCanvasToPNG,
+  generateFilename,
+} from "../../../utils/exportViewport";
 
 interface ViewportQuadLayoutProps {
   candidate: CandidateDesign;
@@ -130,7 +135,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
               {mode === "3d" ? "3D Isometric" : `${mode} View`}
             </span>
           </div>
-          
+
           {/* Export Buttons */}
           <div className="flex items-center gap-2">
             {mode !== "3d" && (
@@ -140,7 +145,12 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
                 title="Export as SVG (vector)"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                  />
                 </svg>
                 <span>SVG</span>
               </button>
@@ -151,7 +161,12 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
               title="Export as PNG (raster, 2x resolution)"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
               <span>PNG</span>
             </button>
