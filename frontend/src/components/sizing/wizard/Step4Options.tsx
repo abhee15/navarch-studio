@@ -12,9 +12,10 @@ interface Step4Props {
   onSubmit: () => void;
   isFirstStep: boolean;
   isLastStep: boolean;
+  isGenerating?: boolean;
 }
 
-export const Step4Options: React.FC<Step4Props> = ({ formData, onPrevious, onSubmit }) => {
+export const Step4Options: React.FC<Step4Props> = ({ formData, onPrevious, onSubmit, isGenerating }) => {
   const [maxCandidates, setMaxCandidates] = useState(5);
   const [minFn, setMinFn] = useState(0.15);
   const [maxFn, setMaxFn] = useState(0.35);
@@ -247,14 +248,22 @@ export const Step4Options: React.FC<Step4Props> = ({ formData, onPrevious, onSub
 
       {/* Navigation */}
       <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
-        <Button variant="outline" onClick={onPrevious}>
+        <Button variant="outline" onClick={onPrevious} disabled={isGenerating}>
           ← Previous
         </Button>
         <Button
           onClick={onSubmit}
-          className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+          disabled={isGenerating}
+          className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          🚀 Generate Hulls
+          {isGenerating ? (
+            <>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              Generating...
+            </>
+          ) : (
+            "🚀 Generate Hulls"
+          )}
         </Button>
       </div>
     </div>

@@ -14,6 +14,7 @@ export const MissionWizard: React.FC = observer(() => {
   const navigate = useNavigate();
   const { sizingStore } = useStore();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState<Partial<CreateMissionCaseDto>>({
     missionType: "commercial",
     cargoBasis: "teu",
@@ -38,6 +39,7 @@ export const MissionWizard: React.FC = observer(() => {
   };
 
   const handleSubmit = async () => {
+    setIsGenerating(true);
     try {
       const mission = await sizingStore.createMissionCase(formData as CreateMissionCaseDto);
 
@@ -52,6 +54,7 @@ export const MissionWizard: React.FC = observer(() => {
       navigate(`/sizing/runs/${run.id}`);
     } catch (error) {
       console.error("Failed to create mission and run solver:", error);
+      setIsGenerating(false);
     }
   };
 
@@ -120,7 +123,25 @@ export const MissionWizard: React.FC = observer(() => {
           </div>
 
           {/* Step Content */}
-          <div className="rounded-lg bg-white p-8 shadow dark:bg-gray-800">
+          <div className="rounded-lg bg-white p-8 shadow dark:bg-gray-800 relative">
+            {isGenerating && (
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm dark:bg-gray-800/90 rounded-lg">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
+                  <div className="text-center">
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      🧮 Generating Hull Designs...
+                    </p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Running first-principles solver
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                      This usually takes 1-2 seconds
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <CurrentStepComponent
               formData={formData}
               updateFormData={updateFormData}
@@ -129,6 +150,7 @@ export const MissionWizard: React.FC = observer(() => {
               onSubmit={handleSubmit}
               isFirstStep={currentStep === 1}
               isLastStep={currentStep === 4}
+              isGenerating={isGenerating}
             />
           </div>
 
