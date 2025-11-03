@@ -1,6 +1,7 @@
 import React from "react";
 import type { CandidateDesign } from "../../types/sizing";
 import { Button } from "../ui/button";
+import { Hull3DThumbnail } from "./visualization/Hull3DThumbnail";
 
 interface CandidateCardProps {
   candidate: CandidateDesign;
@@ -71,8 +72,13 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         )}
       </div>
 
+      {/* 3D Thumbnail */}
+      <div className="mt-4">
+        <Hull3DThumbnail candidate={candidate} height={180} />
+      </div>
+
       {/* Principal Dimensions */}
-      <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
+      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
         <div>
           <dt className="font-medium text-gray-500 dark:text-gray-400">Lpp:</dt>
           <dd className="text-lg font-semibold text-gray-900 dark:text-white">
