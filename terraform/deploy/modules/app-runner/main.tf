@@ -309,13 +309,14 @@ resource "aws_apprunner_service" "api_gateway" {
 
         runtime_environment_variables = merge({
           # Use Staging for dev/staging so auto-migrations run, Production for prod
-          ASPNETCORE_ENVIRONMENT    = var.environment == "prod" ? "Production" : "Staging"
-          Services__IdentityService = "https://${aws_apprunner_service.identity_service.service_url}"
-          Services__DataService     = "https://${aws_apprunner_service.data_service.service_url}"
-          Cognito__UserPoolId       = var.cognito_user_pool_id
-          Cognito__AppClientId      = var.cognito_user_pool_client_id
-          Cognito__Domain           = var.cognito_domain
-          Cognito__Region           = data.aws_region.current.name
+          ASPNETCORE_ENVIRONMENT       = var.environment == "prod" ? "Production" : "Staging"
+          Services__IdentityService    = "https://${aws_apprunner_service.identity_service.service_url}"
+          Services__DataService        = "https://${aws_apprunner_service.data_service.service_url}"
+          Services__HullSizingService  = "https://${aws_apprunner_service.hull_sizing_service.service_url}"
+          Cognito__UserPoolId          = var.cognito_user_pool_id
+          Cognito__AppClientId         = var.cognito_user_pool_client_id
+          Cognito__Domain              = var.cognito_domain
+          Cognito__Region              = data.aws_region.current.name
           },
           # CORS - Add CloudFront origin (use index 10 to ADD to appsettings origins, not replace)
           var.cloudfront_distribution_domain != "" ? {
