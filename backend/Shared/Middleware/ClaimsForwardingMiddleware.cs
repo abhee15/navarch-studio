@@ -40,17 +40,25 @@ public class ClaimsForwardingMiddleware
         _logger.LogInformation("[CLAIMS_FWD] Received headers: X-User-Sub={Sub}, X-Tenant-Id={TenantId}, X-Org-Id={OrgId}",
             sub ?? "null", tenantId ?? "null", orgId ?? "null");
 
-        // DENY if tenantId is missing (enforce tenant isolation)
+        // If no explicit tenantId, derive from sub (for single-tenant development)
+        // In production, this should come from custom:tenantId claim in JWT
+        if (string.IsNullOrEmpty(tenantId) && !string.IsNullOrEmpty(sub))
+        {
+            tenantId = $"user-{sub}";
+            _logger.LogInformation("[CLAIMS_FWD] No explicit tenantId - derived from sub: {TenantId}", tenantId);
+        }
+
+        // DENY if still no tenantId (no sub either)
         if (string.IsNullOrEmpty(tenantId))
         {
-            _logger.LogWarning("[CLAIMS_FWD] Request denied - missing tenantId for path {Path}", context.Request.Path);
+            _logger.LogWarning("[CLAIMS_FWD] Request denied - missing both tenantId and sub for path {Path}", context.Request.Path);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.ContentType = "application/json";
 
             var errorJson = JsonSerializer.Serialize(new
             {
                 error = "Forbidden",
-                message = "Tenant ID is required for this operation"
+                message = "Tenant ID or User ID is required for this operation"
             });
 
             await context.Response.WriteAsync(errorJson);
