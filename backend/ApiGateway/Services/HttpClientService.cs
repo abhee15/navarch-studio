@@ -107,6 +107,35 @@ public class HttpClientService : IHttpClientService
                 request.Headers.Add("Authorization", authHeader);
                 _logger.LogInformation("Forwarding Authorization header to downstream service");
             }
+
+            // Forward claims from HttpContext.Items to downstream service as headers
+            // These are set by the JWT middleware in ApiGateway
+            if (httpContext.Items.TryGetValue("Claims:Sub", out var sub) && sub != null)
+            {
+                request.Headers.Add("X-User-Sub", sub.ToString());
+            }
+            if (httpContext.Items.TryGetValue("Claims:TenantId", out var tenantId) && tenantId != null)
+            {
+                request.Headers.Add("X-Tenant-Id", tenantId.ToString());
+            }
+            if (httpContext.Items.TryGetValue("Claims:OrgId", out var orgId) && orgId != null)
+            {
+                request.Headers.Add("X-Org-Id", orgId.ToString());
+            }
+            if (httpContext.Items.TryGetValue("Claims:Email", out var email) && email != null)
+            {
+                request.Headers.Add("X-User-Email", email.ToString());
+            }
+            if (httpContext.Items.TryGetValue("Claims:Roles", out var roles) && roles != null)
+            {
+                request.Headers.Add("X-User-Roles", roles.ToString());
+            }
+            if (httpContext.Items.TryGetValue("Claims:Scope", out var scope) && scope != null)
+            {
+                request.Headers.Add("X-User-Scope", scope.ToString());
+            }
+
+            _logger.LogInformation("Forwarded claims headers to downstream service");
         }
     }
 
