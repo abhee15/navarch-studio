@@ -43,6 +43,32 @@ public class DisplacementClosureService : IDisplacementClosureService
         decimal currentDisplacementT = 0;
         decimal error = 0;
 
+        // Check for over-constrained problem before starting
+        if (req.KeepBOverT && req.KeepCb && req.KeepLOverB)
+        {
+            flags.Add("all_locked_cannot_converge");
+            _logger.LogWarning("[CLOSURE] All parameters locked - cannot adjust to meet target displacement");
+            
+            // Return initial guess values (no convergence possible)
+            var initialVol = lpp * beam * draft * cb;
+            currentDisplacementT = initialVol * req.WaterDensityKgM3 / 1000m;
+            error = (req.TargetDisplacementT - currentDisplacementT) / req.TargetDisplacementT;
+            
+            var initialDepth = draft * req.DOverT;
+            return await Task.FromResult(new ClosureResult(
+                LppM: lpp,
+                BeamM: beam,
+                DraftM: draft,
+                DepthM: initialDepth,
+                Cb: cb,
+                DisplacementT: currentDisplacementT,
+                DisplacementError: error,
+                Converged: false,
+                Iterations: 0,
+                Flags: flags
+            ));
+        }
+
         // Newton-Raphson loop
         while (iteration < MAX_ITERATIONS && !converged)
         {
@@ -101,9 +127,20 @@ public class DisplacementClosureService : IDisplacementClosureService
                     draft = req.MaxDraftM.Value;
                     if (!flags.Contains("draft_constrained"))
                         flags.Add("draft_constrained");
-
+                    
                     // Recalculate beam from constrained draft
                     beam = draft * req.BOverT;
+                    
+                    // Re-check beam constraint after recalculating from draft
+                    if (req.MaxBeamM.HasValue && beam > req.MaxBeamM.Value)
+                    {
+                        beam = req.MaxBeamM.Value;
+                        if (!flags.Contains("beam_constrained"))
+                            flags.Add("beam_constrained");
+                        
+                        // Both beam and draft are now at max - recalculate draft to match
+                        draft = beam / req.BOverT;
+                    }
                 }
             }
             else if (!req.KeepCb)
@@ -131,6 +168,21 @@ public class DisplacementClosureService : IDisplacementClosureService
         {
             _logger.LogInformation("[CLOSURE] Converged in {Iter} iterations: Lpp={Lpp:F2}m, B={B:F2}m, T={T:F2}m, Cb={Cb:F3}, Δ={Disp:F1}t",
                 iteration, lpp, beam, draft, cb, currentDisplacementT);
+        }
+
+        // Final constraint enforcement (ensure we never exceed hard limits)
+        if (req.MaxBeamM.HasValue && beam > req.MaxBeamM.Value)
+        {
+            beam = req.MaxBeamM.Value;
+            if (!flags.Contains("beam_constrained"))
+                flags.Add("beam_constrained");
+        }
+
+        if (req.MaxDraftM.HasValue && draft > req.MaxDraftM.Value)
+        {
+            draft = req.MaxDraftM.Value;
+            if (!flags.Contains("draft_constrained"))
+                flags.Add("draft_constrained");
         }
 
         // Calculate depth from D/T ratio
