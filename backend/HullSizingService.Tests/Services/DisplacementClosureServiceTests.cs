@@ -378,7 +378,7 @@ public class DisplacementClosureServiceTests
         // Assert
         result.BeamM.Should().BeLessThanOrEqualTo(15.0m, "beam should be clamped to constraint");
         result.Flags.Should().Contain("beam_constrained", "should flag impossible beam constraint");
-        
+
         // Note: Solver is robust and may find feasible solutions by adjusting other parameters
         // (Cb, L/B within bands). If it converges with small error, that's actually good!
         // Just verify it respects the beam constraint and flags it.
