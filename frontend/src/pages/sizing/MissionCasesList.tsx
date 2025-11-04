@@ -8,7 +8,7 @@ import { Input } from "../../components/ui/input";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
-import { Rocket, Home, Trash2, FileText, Ship, Package, Zap } from "lucide-react";
+import { Ship, Home, Trash2, FileText, Package, Zap } from "lucide-react";
 
 export const MissionCasesList: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -30,13 +30,13 @@ export const MissionCasesList: React.FC = observer(() => {
     navigate("/login");
   };
 
-  // Filter missions based on search and type
-  const filteredMissions = sizingStore.missionCases.filter((mission) => {
+  // Filter briefs based on search and type
+  const filteredBriefs = sizingStore.missionCases.filter((brief) => {
     const matchesSearch =
       !searchQuery ||
-      mission.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mission.missionType?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || mission.missionType === filterType;
+      brief.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      brief.missionType?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = filterType === "all" || brief.missionType === filterType;
     return matchesSearch && matchesType;
   });
 
@@ -61,15 +61,15 @@ export const MissionCasesList: React.FC = observer(() => {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Hull Sizing - Mission Cases
+                Hull Sizing - Design Briefs
               </h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Manage your mission requirements and generate preliminary hull designs
+                Manage your design briefs and generate preliminary hull candidates
               </p>
             </div>
             <Button onClick={() => navigate("/sizing/wizard")}>
-              <Rocket className="h-4 w-4 mr-2" />
-              New Mission
+              <Ship className="h-4 w-4 mr-2" />
+              New Brief
             </Button>
           </div>
 
@@ -79,7 +79,7 @@ export const MissionCasesList: React.FC = observer(() => {
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder="🔍 Search missions by name or type..."
+                  placeholder="🔍 Search briefs by name or type..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full"
@@ -109,7 +109,7 @@ export const MissionCasesList: React.FC = observer(() => {
               <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium opacity-90">Total Missions</p>
+                    <p className="text-sm font-medium opacity-90">Total Briefs</p>
                     <p className="text-3xl font-bold mt-1">{sizingStore.missionCases.length}</p>
                   </div>
                   <FileText className="h-10 w-10 opacity-75" />
@@ -188,23 +188,24 @@ export const MissionCasesList: React.FC = observer(() => {
                 />
               </svg>
               <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-                No missions yet
+                No design briefs yet
               </h3>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Get started by creating your first mission case
+                Get started by creating your first design brief
               </p>
               <Button onClick={() => navigate("/sizing/wizard")} className="mt-6">
-                Create First Mission
+                <Ship className="h-4 w-4 mr-2" />
+                Create First Brief
               </Button>
             </div>
           )}
 
-          {/* Mission Cards */}
+          {/* Brief Cards */}
           {!sizingStore.isLoading && sizingStore.missionCases.length > 0 && (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredMissions.map((mission) => (
+              {filteredBriefs.map((brief) => (
                 <div
-                  key={mission.id}
+                  key={brief.id}
                   className="relative rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-lg dark:bg-gray-800"
                 >
                   {/* Delete Button */}
@@ -213,13 +214,13 @@ export const MissionCasesList: React.FC = observer(() => {
                     size="sm"
                     onClick={async (e) => {
                       e.stopPropagation();
-                      if (window.confirm(`Delete mission "${mission.name}"?`)) {
-                        await sizingStore.deleteMissionCase(mission.id);
+                      if (window.confirm(`Delete brief "${brief.name}"?`)) {
+                        await sizingStore.deleteMissionCase(brief.id);
                         await sizingStore.loadMissionCases();
                       }
                     }}
                     className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
-                    title="Delete mission"
+                    title="Delete brief"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -230,7 +231,7 @@ export const MissionCasesList: React.FC = observer(() => {
                     onClick={async () => {
                       // Run solver for this mission
                       const run = await sizingStore.runSolver({
-                        missionCaseId: mission.id,
+                        missionCaseId: brief.id,
                         mode: "first_principles",
                         locks: undefined,
                         options: undefined,
@@ -241,31 +242,29 @@ export const MissionCasesList: React.FC = observer(() => {
                     }}
                   >
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white pr-8">
-                      {mission.name}
+                      {brief.name}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      {mission.missionType} • {mission.cargoBasis?.toUpperCase() || "N/A"}
+                      {brief.missionType} • {brief.cargoBasis?.toUpperCase() || "N/A"}
                     </p>
 
                     <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <dt className="font-medium text-gray-500 dark:text-gray-400">Cargo:</dt>
                         <dd className="text-gray-900 dark:text-white">
-                          {mission.cargoBasis === "teu" && `${mission.teuCount} TEU`}
-                          {mission.cargoBasis === "weight" && `${mission.cargoValue.toFixed(0)}t`}
-                          {mission.cargoBasis === "volume" && `${mission.cargoVolumeM3}m³`}
+                          {brief.cargoBasis === "teu" && `${brief.teuCount} TEU`}
+                          {brief.cargoBasis === "weight" && `${brief.cargoValue.toFixed(0)}t`}
+                          {brief.cargoBasis === "volume" && `${brief.cargoVolumeM3}m³`}
                         </dd>
                       </div>
                       <div>
                         <dt className="font-medium text-gray-500 dark:text-gray-400">Speed:</dt>
-                        <dd className="text-gray-900 dark:text-white">
-                          {mission.serviceSpeedKn} kn
-                        </dd>
+                        <dd className="text-gray-900 dark:text-white">{brief.serviceSpeedKn} kn</dd>
                       </div>
                     </dl>
 
                     <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                      Created {new Date(mission.createdAt).toLocaleDateString()}
+                      Created {new Date(brief.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

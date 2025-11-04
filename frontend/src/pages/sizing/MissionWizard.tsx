@@ -84,7 +84,7 @@ export const MissionWizard: React.FC = observer(() => {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
       <AppHeader
-        left={<h1 className="text-xl font-semibold text-foreground">Hull Sizing - New Mission</h1>}
+        left={<h1 className="text-xl font-semibold text-foreground">Hull Sizing - New Brief</h1>}
         right={
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={handleHome}>
