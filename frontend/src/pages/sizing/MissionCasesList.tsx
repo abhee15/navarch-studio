@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
+import { Rocket, Home, Trash2, FileText, Ship, Package, Zap } from "lucide-react";
 
 export const MissionCasesList: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -48,25 +49,10 @@ export const MissionCasesList: React.FC = observer(() => {
               <h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>
             </div>
             <div className="flex items-center space-x-2">
-              <button
-                onClick={handleHome}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
-              >
-                <svg
-                  className="h-4 w-4 mr-1.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
+              <Button variant="ghost" size="sm" onClick={handleHome}>
+                <Home className="h-4 w-4 mr-2" />
                 Home
-              </button>
+              </Button>
               <UserProfileMenu
                 onOpenSettings={() => setShowSettings(true)}
                 onLogout={handleLogout}
@@ -88,11 +74,9 @@ export const MissionCasesList: React.FC = observer(() => {
                 Manage your mission requirements and generate preliminary hull designs
               </p>
             </div>
-            <Button
-              onClick={() => navigate("/sizing/wizard")}
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
-            >
-              🚀 New Mission
+            <Button onClick={() => navigate("/sizing/wizard")}>
+              <Rocket className="h-4 w-4 mr-2" />
+              New Mission
             </Button>
           </div>
 
@@ -135,7 +119,7 @@ export const MissionCasesList: React.FC = observer(() => {
                     <p className="text-sm font-medium opacity-90">Total Missions</p>
                     <p className="text-3xl font-bold mt-1">{sizingStore.missionCases.length}</p>
                   </div>
-                  <div className="text-4xl opacity-75">📋</div>
+                  <FileText className="h-10 w-10 opacity-75" />
                 </div>
               </div>
 
@@ -150,7 +134,7 @@ export const MissionCasesList: React.FC = observer(() => {
                       }
                     </p>
                   </div>
-                  <div className="text-4xl opacity-75">🚢</div>
+                  <Ship className="h-10 w-10 opacity-75" />
                 </div>
               </div>
 
@@ -162,7 +146,7 @@ export const MissionCasesList: React.FC = observer(() => {
                       {sizingStore.missionCases.filter((m) => m.cargoBasis === "teu").length}
                     </p>
                   </div>
-                  <div className="text-4xl opacity-75">📦</div>
+                  <Package className="h-10 w-10 opacity-75" />
                 </div>
               </div>
 
@@ -180,7 +164,7 @@ export const MissionCasesList: React.FC = observer(() => {
                       kn
                     </p>
                   </div>
-                  <div className="text-4xl opacity-75">⚡</div>
+                  <Zap className="h-10 w-10 opacity-75" />
                 </div>
               </div>
             </div>
@@ -231,7 +215,9 @@ export const MissionCasesList: React.FC = observer(() => {
                   className="relative rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-lg dark:bg-gray-800"
                 >
                   {/* Delete Button */}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={async (e) => {
                       e.stopPropagation();
                       if (window.confirm(`Delete mission "${mission.name}"?`)) {
@@ -239,18 +225,11 @@ export const MissionCasesList: React.FC = observer(() => {
                         await sizingStore.loadMissionCases();
                       }
                     }}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
                     title="Delete mission"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
 
                   {/* Card Content - Clickable */}
                   <div

@@ -24,17 +24,18 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Initialize theme from localStorage or default to light
+  // Initialize theme from localStorage or default to dark (industry standard for CAD/engineering)
   const [theme, setThemeState] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem("theme") as Theme | null;
     if (savedTheme) {
       return savedTheme;
     }
-    // Check if user prefers dark mode
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
+    // Default to dark theme (industry standard for CAD/engineering applications)
+    // Still respects system preference if explicitly set
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      return "light";
     }
-    return "light";
+    return "dark";
   });
 
   // Apply theme to document root

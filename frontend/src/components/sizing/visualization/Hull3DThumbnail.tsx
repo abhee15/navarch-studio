@@ -21,7 +21,7 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, hei
 
   return (
     <div
-      className="w-full bg-slate-50 rounded-lg overflow-hidden"
+      className="w-full bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden"
       style={{ height: `${height}px` }}
     >
       <Canvas

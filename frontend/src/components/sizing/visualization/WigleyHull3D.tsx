@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import * as THREE from "three";
 import type { CandidateDesign } from "../../../types/sizing";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 interface WigleyHull3DProps {
   candidate: CandidateDesign;
@@ -22,9 +23,15 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
   candidate,
   showWaterplane = true,
   showCenters = true,
-  color = "#3b82f6",
+  color,
   opacity = 0.8,
 }) => {
+  const { theme } = useTheme();
+  
+  // Theme-aware hull color for better contrast
+  // Light mode: darker blue (blue-800) for contrast against light gray background
+  // Dark mode: brighter blue (blue-400) for contrast against dark gray background
+  const hullColor = color || (theme === "dark" ? "#60a5fa" : "#1e40af");
   // Generate hull geometry
   const hullGeometry = useMemo(() => {
     const lpp = candidate.lppM || 50;
@@ -133,7 +140,7 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
       {/* Hull mesh */}
       <mesh geometry={hullGeometry}>
         <meshStandardMaterial
-          color={color}
+          color={hullColor}
           opacity={opacity}
           transparent={opacity < 1}
           side={THREE.DoubleSide}

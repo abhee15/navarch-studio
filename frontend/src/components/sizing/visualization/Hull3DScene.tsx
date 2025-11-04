@@ -32,7 +32,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   const cameraDistance = Math.max(candidate.lppM, candidate.beamM, candidate.draftM) * 2;
 
   return (
-    <div className="w-full h-full relative bg-slate-50">
+    <div className="w-full h-full relative bg-gray-100 dark:bg-gray-900">
       <Canvas
         camera={{
           position: [cameraDistance, cameraDistance * 0.6, cameraDistance * 0.8],
