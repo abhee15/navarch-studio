@@ -1,5 +1,6 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Hull2DSectionsProps {
   candidate: CandidateDesign;
@@ -35,6 +36,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
   ) => {
     const [hoveredSection, setHoveredSection] = useState<number | null>(null);
     const [showLegend, setShowLegend] = useState(false);
+    const [showCoefficients, setShowCoefficients] = useState(true);
 
     const sections = useMemo(() => {
       const beam = candidate.beamM;
@@ -458,37 +460,51 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
         </div>
 
         {/* Section Area Coefficient Panel */}
-        <div className="absolute bottom-6 left-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs border border-gray-200 dark:border-gray-700">
-          <div className="font-bold text-gray-900 dark:text-gray-100 mb-2 text-sm">
-            Form Coefficients
+        <div className="absolute bottom-6 left-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl text-xs border border-gray-200 dark:border-gray-700">
+          <div
+            className="font-bold text-gray-900 dark:text-gray-100 text-sm p-4 pb-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-t-xl"
+            onClick={() => setShowCoefficients(!showCoefficients)}
+          >
+            <span>Form Coefficients</span>
+            <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+              {showCoefficients ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-            <span className="text-gray-600 dark:text-gray-400">Cb:</span>
-            <span className="font-semibold text-blue-700 dark:text-blue-400">
-              {candidate.cb.toFixed(4)}
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">Cp:</span>
-            <span className="font-semibold text-blue-700 dark:text-blue-400">
-              {candidate.cp.toFixed(4)}
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">Cwp:</span>
-            <span className="font-semibold text-blue-700 dark:text-blue-400">
-              {candidate.cwp.toFixed(4)}
-            </span>
-            {candidate.cm && (
-              <>
-                <span className="text-gray-600 dark:text-gray-400">Cm:</span>
-                <span className="font-semibold text-orange-700 dark:text-orange-400">
-                  {candidate.cm.toFixed(4)}
-                </span>
-              </>
-            )}
-          </div>
-          <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
-            <div className="text-[10px] text-gray-500 dark:text-gray-400">
-              Beam: {beam.toFixed(2)}m · Draft: {draft.toFixed(2)}m
+          {showCoefficients && (
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+              <span className="text-gray-600 dark:text-gray-400">Cb:</span>
+              <span className="font-semibold text-blue-700 dark:text-blue-400">
+                {candidate.cb.toFixed(4)}
+              </span>
+              <span className="text-gray-600 dark:text-gray-400">Cp:</span>
+              <span className="font-semibold text-blue-700 dark:text-blue-400">
+                {candidate.cp.toFixed(4)}
+              </span>
+              <span className="text-gray-600 dark:text-gray-400">Cwp:</span>
+              <span className="font-semibold text-blue-700 dark:text-blue-400">
+                {candidate.cwp.toFixed(4)}
+              </span>
+              {candidate.cm && (
+                <>
+                  <span className="text-gray-600 dark:text-gray-400">Cm:</span>
+                  <span className="font-semibold text-orange-700 dark:text-orange-400">
+                    {candidate.cm.toFixed(4)}
+                  </span>
+                </>
+              )}
             </div>
-          </div>
+          )}
+          {showCoefficients && (
+            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600 px-4 pb-3">
+              <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                Beam: {beam.toFixed(2)}m · Draft: {draft.toFixed(2)}m
+              </div>
+            </div>
+          )}
         </div>
 
         <style>{`

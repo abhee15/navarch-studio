@@ -217,15 +217,15 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left: KPI Panel with Tabs */}
-            <div className="space-y-4">
+            <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
               {/* Tab Switcher */}
-              <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2 border-b border-border bg-muted/30 px-4">
                 <button
                   onClick={() => setActiveTab("kpi")}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === "kpi"
-                      ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
@@ -235,8 +235,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                   onClick={() => setActiveTab("offsets")}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === "offsets"
-                      ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Ruler className="h-4 w-4 mr-2" />
@@ -245,8 +245,10 @@ export const CandidateWorkspace: React.FC = observer(() => {
               </div>
 
               {/* Tab Content */}
-              {activeTab === "kpi" && <CompactHUD candidate={candidate} />}
-              {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
+              <div className="p-4">
+                {activeTab === "kpi" && <CompactHUD candidate={candidate} />}
+                {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
+              </div>
             </div>
 
             {/* Center: Parameter Sliders */}
@@ -344,84 +346,56 @@ export const CandidateWorkspace: React.FC = observer(() => {
               </div>
             </div>
 
-            {/* Right: Resistance Curve & Flags */}
+            {/* Right: Resistance Curve & Actions */}
             <div className="space-y-6">
               {/* Resistance Curve */}
-              <ResistanceCurvePanel candidate={candidate} />
-
-              {/* Flags & Warnings */}
-              {flags.length > 0 && (
-                <div
-                  className={`rounded-lg p-6 shadow border ${
-                    hasConstraintViolations
-                      ? "bg-destructive/5 border-destructive/20"
-                      : "bg-accent/10 border-accent/20"
-                  }`}
-                >
-                  <h3
-                    className={`font-semibold mb-4 ${
-                      hasConstraintViolations ? "text-destructive" : "text-accent-foreground"
-                    }`}
-                  >
-                    {hasConstraintViolations ? "Warnings" : "Flags"}
-                  </h3>
-                  <ul className="space-y-2 text-sm">
-                    {flags.map((flag) => (
-                      <li
-                        key={flag}
-                        className={`flex items-start space-x-2 ${
-                          hasConstraintViolations
-                            ? "text-yellow-800 dark:text-yellow-400"
-                            : "text-blue-800 dark:text-blue-400"
-                        }`}
-                      >
-                        <span>•</span>
-                        <span className="capitalize">{flag.replace(/_/g, " ")}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
+                <div className="bg-muted/30 px-4 py-3 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground">Resistance Analysis</h3>
                 </div>
-              )}
+                <div className="p-4">
+                  <ResistanceCurvePanel candidate={candidate} />
+                </div>
+              </div>
 
-              <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-                <div className="space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => sizingStore.exportCandidate(candidate.id, "json")}
-                  >
-                    Export JSON
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => sizingStore.exportCandidate(candidate.id, "csv")}
-                  >
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Export CSV
-                  </Button>
+              {/* Export & Push Actions */}
+              <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
+                <div className="bg-muted/30 px-4 py-3 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground">Actions</h3>
+                </div>
+                <div className="p-4 space-y-2">
                   <Button
                     variant="default"
+                    size="sm"
                     className="w-full"
                     onClick={async () => {
                       const vesselId = await sizingStore.pushToHydrostatics(candidate.id);
                       navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
                     }}
                   >
-                    <Ship className="h-4 w-4 mr-2" />
+                    <Ship className="h-3 w-3 mr-2" />
                     Push to Hydrostatics
                   </Button>
                   <Button
                     variant="outline"
+                    size="sm"
                     className="w-full"
                     onClick={() => {
                       // TODO: Implement push to resistance
                       console.log("Push to resistance");
                     }}
                   >
-                    <Zap className="h-4 w-4 mr-2" />
+                    <Zap className="h-3 w-3 mr-2" />
                     Analyze Resistance
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => sizingStore.exportCandidate(candidate.id, "csv")}
+                  >
+                    <BarChart3 className="h-3 w-3 mr-2" />
+                    Export CSV
                   </Button>
                 </div>
               </div>

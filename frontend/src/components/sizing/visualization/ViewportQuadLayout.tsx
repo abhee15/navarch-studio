@@ -239,7 +239,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
 
   // Quad view
   return (
-    <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-1 bg-gray-200 dark:bg-gray-700">
+    <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-3 bg-background p-3">
       {/* Top-Left: Plan View */}
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-visible flex flex-col min-h-[450px]">
         <div
