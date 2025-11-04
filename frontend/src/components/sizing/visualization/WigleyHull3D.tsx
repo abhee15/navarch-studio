@@ -27,7 +27,7 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
   opacity = 0.8,
 }) => {
   const { theme } = useTheme();
-  
+
   // Theme-aware hull color for better contrast
   // Light mode: darker blue (blue-800) for contrast against light gray background
   // Dark mode: brighter blue (blue-400) for contrast against dark gray background

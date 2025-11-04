@@ -13,6 +13,7 @@ import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { adjustParameter } from "../../services/sizingApi";
 import type { CandidateDesign } from "../../types/sizing";
+import { BarChart3, Ruler, Ship, Zap } from "lucide-react";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
@@ -269,7 +270,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                       : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                   }`}
                 >
-                  📊 KPIs & Metrics
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  KPIs & Metrics
                 </button>
                 <button
                   onClick={() => setActiveTab("offsets")}
@@ -279,7 +281,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                       : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                   }`}
                 >
-                  📐 Table of Offsets
+                  <Ruler className="h-4 w-4 mr-2" />
+                  Table of Offsets
                 </button>
               </div>
 
@@ -439,7 +442,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     className="w-full"
                     onClick={() => sizingStore.exportCandidate(candidate.id, "csv")}
                   >
-                    📊 Export CSV
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Export CSV
                   </Button>
                   <Button
                     className="w-full bg-blue-600 hover:bg-blue-700"
@@ -448,7 +452,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                       navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
                     }}
                   >
-                    🚢 Push to Hydrostatics
+                    <Ship className="h-4 w-4 mr-2" />
+                    Push to Hydrostatics
                   </Button>
                   <Button
                     variant="outline"
@@ -458,7 +463,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                       console.log("Push to resistance");
                     }}
                   >
-                    ⚡ Analyze Resistance
+                    <Zap className="h-4 w-4 mr-2" />
+                    Analyze Resistance
                   </Button>
                 </div>
               </div>
