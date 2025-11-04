@@ -3,7 +3,16 @@ import { useNavigate } from "react-router-dom";
 import type { CandidateDesign } from "../../types/sizing";
 import { Button } from "../ui/button";
 import { Hull3DThumbnail } from "./visualization/Hull3DThumbnail";
-import { Check, Lightbulb } from "lucide-react";
+import { Check, Lightbulb, Layers } from "lucide-react";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface ComparisonViewProps {
   candidates: CandidateDesign[];
@@ -281,6 +290,44 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
           </div>
         </div>
 
+        {/* Radar Chart - Multi-Attribute Visualization */}
+        <div className="mt-6 bg-card border border-border rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Layers className="h-5 w-5 text-primary" />
+            <h4 className="font-bold text-foreground">Multi-Attribute Comparison</h4>
+          </div>
+          <ResponsiveContainer width="100%" height={400}>
+            <RadarChart data={generateRadarData(compareCandidates)}>
+              <PolarGrid stroke="hsl(var(--border))" />
+              <PolarAngleAxis
+                dataKey="attribute"
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+              />
+              <PolarRadiusAxis
+                angle={90}
+                domain={[0, 100]}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              />
+              {compareCandidates.map((candidate, idx) => (
+                <Radar
+                  key={candidate.id}
+                  name={`Rank #${candidate.rank}`}
+                  dataKey={`candidate${idx}`}
+                  stroke={getRadarColor(idx)}
+                  fill={getRadarColor(idx)}
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                />
+              ))}
+              <Legend wrapperStyle={{ fontSize: "12px" }} iconType="circle" />
+            </RadarChart>
+          </ResponsiveContainer>
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            Normalized scores (0-100) across key attributes. Larger area = better overall
+            performance.
+          </p>
+        </div>
+
         {/* Summary */}
         <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
           <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-2 flex items-center gap-2">
@@ -305,3 +352,70 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
     </div>
   );
 });
+
+/**
+ * Generate radar chart data from candidates
+ * Normalizes metrics to 0-100 scale for comparison
+ */
+function generateRadarData(candidates: CandidateDesign[]) {
+  // Define attributes to compare
+  const attributes = [
+    { key: "score", label: "Overall Score", higherIsBetter: true },
+    { key: "efficiency", label: "Efficiency", higherIsBetter: true },
+    { key: "stability", label: "Stability", higherIsBetter: true },
+    { key: "speed", label: "Speed Cap.", higherIsBetter: true },
+    { key: "buildability", label: "Buildability", higherIsBetter: true },
+  ];
+
+  // Extract values and normalize
+  const radarData = attributes.map((attr) => {
+    const dataPoint: any = { attribute: attr.label };
+
+    candidates.forEach((candidate, idx) => {
+      let value = 0;
+
+      // Map attributes to candidate properties
+      switch (attr.key) {
+        case "score":
+          value = candidate.score * 100; // Already 0-1, convert to 0-100
+          break;
+        case "efficiency":
+          // Inverse of Froude number (lower Fn = more efficient)
+          value = candidate.fn ? Math.max(0, 100 - candidate.fn * 300) : 50;
+          break;
+        case "stability":
+          // GM estimate (normalize to 0-100)
+          value = candidate.gmEstM ? Math.min(100, (candidate.gmEstM / 5) * 100) : 50;
+          break;
+        case "speed":
+          // Max speed capability (hull speed)
+          const hullSpeed = Math.sqrt(candidate.lwlM) * 2.43; // knots
+          value = Math.min(100, (hullSpeed / 30) * 100);
+          break;
+        case "buildability":
+          // Simpler form = easier to build (inverse of L/B ratio complexity)
+          const lOverB = candidate.lppM / candidate.beamM;
+          value = Math.max(0, 100 - Math.abs(lOverB - 6) * 10); // Optimal L/B ≈ 6
+          break;
+      }
+
+      dataPoint[`candidate${idx}`] = Math.max(0, Math.min(100, value));
+    });
+
+    return dataPoint;
+  });
+
+  return radarData;
+}
+
+/**
+ * Get distinct color for each candidate in radar chart
+ */
+function getRadarColor(index: number): string {
+  const colors = [
+    "hsl(var(--primary))", // Blue
+    "hsl(var(--accent))", // Teal
+    "hsl(var(--secondary))", // Purple
+  ];
+  return colors[index % colors.length];
+}
