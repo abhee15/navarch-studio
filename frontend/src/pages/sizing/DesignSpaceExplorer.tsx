@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useNavigate, useParams } from "react-router-dom";
-import { useStore } from "../../stores";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
@@ -28,7 +27,6 @@ import type { CandidateDesign } from "../../types/sizing";
 export const DesignSpaceExplorer: React.FC = observer(() => {
   const { missionId } = useParams<{ missionId: string }>();
   const navigate = useNavigate();
-  const {} = useStore(); // sizingStore removed - not used yet
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [variants, setVariants] = useState<CandidateDesign[]>([]);
@@ -306,7 +304,7 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
                           borderRadius: "8px",
                           fontSize: "12px",
                         }}
-                        formatter={(value: any) => value.toFixed(2)}
+                        formatter={(value: number) => value.toFixed(2)}
                       />
                       <Scatter name="Variants" data={variants}>
                         {variants.map((variant, index) => (
@@ -361,7 +359,7 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
                           borderRadius: "8px",
                           fontSize: "12px",
                         }}
-                        formatter={(value: any) => value.toFixed(2)}
+                        formatter={(value: number) => value.toFixed(2)}
                       />
                       <Scatter name="Design Space" data={variants}>
                         {variants.map((variant, index) => (

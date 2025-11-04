@@ -369,34 +369,39 @@ function generateRadarData(candidates: CandidateDesign[]) {
 
   // Extract values and normalize
   const radarData = attributes.map((attr) => {
-    const dataPoint: any = { attribute: attr.label };
+    const dataPoint: Record<string, number | string> = { attribute: attr.label };
 
     candidates.forEach((candidate, idx) => {
       let value = 0;
 
       // Map attributes to candidate properties
       switch (attr.key) {
-        case "score":
+        case "score": {
           value = candidate.score * 100; // Already 0-1, convert to 0-100
           break;
-        case "efficiency":
+        }
+        case "efficiency": {
           // Inverse of Froude number (lower Fn = more efficient)
           value = candidate.fn ? Math.max(0, 100 - candidate.fn * 300) : 50;
           break;
-        case "stability":
+        }
+        case "stability": {
           // GM estimate (normalize to 0-100)
           value = candidate.gmEstM ? Math.min(100, (candidate.gmEstM / 5) * 100) : 50;
           break;
-        case "speed":
+        }
+        case "speed": {
           // Max speed capability (hull speed)
           const hullSpeed = Math.sqrt(candidate.lwlM) * 2.43; // knots
           value = Math.min(100, (hullSpeed / 30) * 100);
           break;
-        case "buildability":
+        }
+        case "buildability": {
           // Simpler form = easier to build (inverse of L/B ratio complexity)
           const lOverB = candidate.lppM / candidate.beamM;
           value = Math.max(0, 100 - Math.abs(lOverB - 6) * 10); // Optimal L/B ≈ 6
           break;
+        }
       }
 
       dataPoint[`candidate${idx}`] = Math.max(0, Math.min(100, value));

@@ -29,7 +29,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
 }) => {
   const [showLegend, setShowLegend] = useState(false);
   const [showHint, setShowHint] = useState(true);
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<unknown>(null);
 
   // Auto-hide hint after 3 seconds or first interaction
   useEffect(() => {

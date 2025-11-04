@@ -33,7 +33,7 @@ interface SensitivityData {
  * - Power (EHP)
  * - Stability (GM)
  */
-export const SensitivityPanel: React.FC<SensitivityPanelProps> = ({ candidate }) => {
+export const SensitivityPanel: React.FC<SensitivityPanelProps> = () => {
   // Calculate sensitivity for each parameter
   const sensitivityData = useMemo(() => {
     // Simplified sensitivity estimates (±10% variation)
@@ -80,7 +80,7 @@ export const SensitivityPanel: React.FC<SensitivityPanelProps> = ({ candidate })
 
     // Sort by absolute impact (tornado chart - largest at top)
     return data.sort((a, b) => b.impactAbs - a.impactAbs);
-  }, [candidate]);
+  }, []);
 
   // Get color based on impact direction
   const getBarColor = (direction: string) => {
