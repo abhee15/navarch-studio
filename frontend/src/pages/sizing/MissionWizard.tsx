@@ -10,6 +10,9 @@ import { Step4Options } from "../../components/sizing/wizard/Step4Options";
 import type { CreateMissionCaseDto } from "../../types/sizing";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
+import { AppHeader } from "../../components/AppHeader";
+import { Button } from "../../components/ui/button";
+import { Home } from "lucide-react";
 
 export const MissionWizard: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -80,41 +83,18 @@ export const MissionWizard: React.FC = observer(() => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Main Navigation Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 relative z-50">
-        <div className="px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleHome}
-                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
-              >
-                <svg
-                  className="h-4 w-4 mr-1.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
-                Home
-              </button>
-              <UserProfileMenu
-                onOpenSettings={() => setShowSettings(true)}
-                onLogout={handleLogout}
-              />
-            </div>
+      <AppHeader
+        left={<h1 className="text-xl font-semibold text-foreground">Hull Sizing - New Mission</h1>}
+        right={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleHome}>
+              <Home className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Home</span>
+            </Button>
+            <UserProfileMenu onOpenSettings={() => setShowSettings(true)} onLogout={handleLogout} />
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="flex-1 py-8">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">

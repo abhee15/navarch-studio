@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
+import { AppHeader } from "../../components/AppHeader";
 import { Rocket, Home, Trash2, FileText, Ship, Package, Zap } from "lucide-react";
 
 export const MissionCasesList: React.FC = observer(() => {
@@ -41,26 +42,18 @@ export const MissionCasesList: React.FC = observer(() => {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Main Navigation Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 relative z-50">
-        <div className="px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" onClick={handleHome}>
-                <Home className="h-4 w-4 mr-2" />
-                Home
-              </Button>
-              <UserProfileMenu
-                onOpenSettings={() => setShowSettings(true)}
-                onLogout={handleLogout}
-              />
-            </div>
+      <AppHeader
+        left={<h1 className="text-xl font-semibold text-foreground">Hull Sizing</h1>}
+        right={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleHome}>
+              <Home className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Home</span>
+            </Button>
+            <UserProfileMenu onOpenSettings={() => setShowSettings(true)} onLogout={handleLogout} />
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="flex-1 py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
