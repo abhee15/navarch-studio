@@ -145,7 +145,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         <Button
           variant="outline"
           onClick={onCompare}
-          className={isComparing ? "ring-2 ring-blue-500" : ""}
+          className={isComparing ? "ring-2 ring-primary" : ""}
         >
           {isComparing ? "✓" : "Compare"}
         </Button>
