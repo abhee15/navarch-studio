@@ -1,0 +1,111 @@
+name: Validate TypeScript Types
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/Shared/DTOs/**'
+      - 'backend/*/swagger.json'
+      - 'frontend/src/api/generated/**'
+      - 'scripts/generate-types.ps1'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/Shared/DTOs/**'
+      - 'backend/*/swagger.json'
+
+jobs:
+  validate-types:
+    name: Validate Generated Types
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install NSwag
+        run: dotnet tool install -g NSwag.ConsoleCore --no-cache
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Generate TypeScript types from swagger.json
+        run: |
+          pwsh scripts/generate-types.ps1 -Mode ci
+
+      - name: Check if types are in sync
+        id: check_diff
+        run: |
+          # Check if generated files differ from committed files
+          if git diff --exit-code frontend/src/api/generated/*.types.ts; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ Types are in sync"
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "❌ Types are out of sync"
+            echo ""
+            echo "Differences found:"
+            git diff frontend/src/api/generated/*.types.ts
+          fi
+
+      - name: Fail if types are out of sync
+        if: steps.check_diff.outputs.status == 'failure'
+        run: |
+          echo "::error::Generated TypeScript types are out of sync with committed files"
+          echo ""
+          echo "This means the backend DTOs have changed but the frontend types were not regenerated."
+          echo ""
+          echo "To fix this:"
+          echo "  1. Run: pwsh scripts/export-swagger.ps1"
+          echo "  2. Run: pwsh scripts/generate-types.ps1 -Mode ci"
+          echo "  3. Commit the updated files:"
+          echo "     - backend/*/swagger.json"
+          echo "     - frontend/src/api/generated/*.types.ts"
+          echo ""
+          exit 1
+
+      - name: Upload generated types as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-types
+          path: frontend/src/api/generated/*.types.ts
+          retention-days: 7
+
+  type-check:
+    name: TypeScript Type Check
+    needs: validate-types
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run TypeScript type check
+        working-directory: frontend
+        run: npm run type-check
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+

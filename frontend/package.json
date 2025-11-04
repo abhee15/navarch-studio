@@ -12,7 +12,10 @@
     "test:watch": "jest --watch",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format-check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "generate:types": "pwsh ../scripts/generate-types.ps1 -Mode local",
+    "generate:types:ci": "pwsh ../scripts/generate-types.ps1 -Mode ci",
+    "export:swagger": "pwsh ../scripts/export-swagger.ps1"
   },
   "dependencies": {
     "@navarch/unit-conversion": "file:../packages/unit-conversion/typescript",
