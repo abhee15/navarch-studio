@@ -30,10 +30,10 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
     const lpp = candidate.lppM || 50;
     const beam = candidate.bM || 10;
     const draft = candidate.tM || 5;
-    
+
     // Defensive check for NaN/undefined
     if (!lpp || !beam || !draft || isNaN(lpp) || isNaN(beam) || isNaN(draft)) {
-      console.warn('[WigleyHull3D] Invalid dimensions:', { lpp, beam, draft, candidate });
+      console.warn("[WigleyHull3D] Invalid dimensions:", { lpp, beam, draft, candidate });
       // Return empty geometry
       return new THREE.BufferGeometry();
     }

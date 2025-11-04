@@ -13,7 +13,7 @@ public class CandidateDesignService : ICandidateDesignService
     private readonly ILogger<CandidateDesignService> _logger;
 
     public CandidateDesignService(
-        SizingDbContext context, 
+        SizingDbContext context,
         ILogger<CandidateDesignService> logger)
     {
         _context = context;

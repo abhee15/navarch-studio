@@ -123,4 +123,3 @@ export function PreviewPanel({ loa, beam, draft, cb, hullFamily }: PreviewPanelP
     </div>
   );
 }
-

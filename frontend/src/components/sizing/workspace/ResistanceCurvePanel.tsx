@@ -244,9 +244,10 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Design Speed</p>
             <p className="text-lg font-bold text-gray-900 dark:text-white">
-              {(candidate.fn && candidate.lwlM) 
-                ? (candidate.fn * Math.sqrt(9.81 * candidate.lwlM) * 1.944).toFixed(1) 
-                : "N/A"} kn
+              {candidate.fn && candidate.lwlM
+                ? (candidate.fn * Math.sqrt(9.81 * candidate.lwlM) * 1.944).toFixed(1)
+                : "N/A"}{" "}
+              kn
             </p>
           </div>
           <div>

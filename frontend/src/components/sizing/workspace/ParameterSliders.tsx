@@ -227,4 +227,3 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
     </div>
   );
 };
-

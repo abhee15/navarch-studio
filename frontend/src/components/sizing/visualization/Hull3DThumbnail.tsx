@@ -57,4 +57,3 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, hei
     </div>
   );
 };
-

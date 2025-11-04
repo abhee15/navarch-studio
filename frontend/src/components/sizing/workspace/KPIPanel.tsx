@@ -27,16 +27,21 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
   );
 
   // Calculate ratios
-  const lOverB = (candidate.lppM && candidate.bM) ? candidate.lppM / candidate.bM : 0;
-  const bOverT = (candidate.bM && candidate.tM) ? candidate.bM / candidate.tM : 0;
-  const dOverT = (candidate.dM && candidate.tM) ? candidate.dM / candidate.tM : 0;
+  const lOverB = candidate.lppM && candidate.bM ? candidate.lppM / candidate.bM : 0;
+  const bOverT = candidate.bM && candidate.tM ? candidate.bM / candidate.tM : 0;
+  const dOverT = candidate.dM && candidate.tM ? candidate.dM / candidate.tM : 0;
   const lwlOverLambda = candidate.lwlOverLambda || 0;
 
   const metrics = [
     {
       category: "Principal Dimensions",
       items: [
-        { label: "Length (Lpp)", value: candidate.lppM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
+        {
+          label: "Length (Lpp)",
+          value: candidate.lppM?.toFixed(2) || "N/A",
+          unit: "m",
+          color: "blue",
+        },
         { label: "Beam", value: candidate.bM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
         { label: "Draft", value: candidate.tM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
         { label: "Depth", value: candidate.dM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
@@ -51,9 +56,24 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
     {
       category: "Form Coefficients",
       items: [
-        { label: "Block Coeff. (Cb)", value: candidate.cb?.toFixed(3) || "N/A", unit: "", color: "purple" },
-        { label: "Prismatic (Cp)", value: candidate.cp?.toFixed(3) || "N/A", unit: "", color: "purple" },
-        { label: "Waterplane (Cwp)", value: candidate.cwp?.toFixed(3) || "N/A", unit: "", color: "purple" },
+        {
+          label: "Block Coeff. (Cb)",
+          value: candidate.cb?.toFixed(3) || "N/A",
+          unit: "",
+          color: "purple",
+        },
+        {
+          label: "Prismatic (Cp)",
+          value: candidate.cp?.toFixed(3) || "N/A",
+          unit: "",
+          color: "purple",
+        },
+        {
+          label: "Waterplane (Cwp)",
+          value: candidate.cwp?.toFixed(3) || "N/A",
+          unit: "",
+          color: "purple",
+        },
         {
           label: "Midship (Cm)",
           value: candidate.cm?.toFixed(3) || "N/A",
@@ -80,7 +100,12 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
           unit: "t",
           color: "green",
         },
-        { label: "Froude Number", value: candidate.fn?.toFixed(3) || "N/A", unit: "", color: "green" },
+        {
+          label: "Froude Number",
+          value: candidate.fn?.toFixed(3) || "N/A",
+          unit: "",
+          color: "green",
+        },
         { label: "EHP", value: candidate.ehpKw?.toFixed(0) || "N/A", unit: "kW", color: "green" },
         {
           label: "SHP (est.)",
