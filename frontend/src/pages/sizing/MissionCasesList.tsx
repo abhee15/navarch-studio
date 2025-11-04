@@ -8,7 +8,7 @@ import { Input } from "../../components/ui/input";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
-import { Ship, Home, Trash2, FileText, Package, Zap } from "lucide-react";
+import { Ship, Home, Trash2, FileText, Package, Zap, Play, Grid3x3 } from "lucide-react";
 
 export const MissionCasesList: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -225,22 +225,8 @@ export const MissionCasesList: React.FC = observer(() => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
 
-                  {/* Card Content - Clickable */}
-                  <div
-                    className="cursor-pointer"
-                    onClick={async () => {
-                      // Run solver for this mission
-                      const run = await sizingStore.runSolver({
-                        missionCaseId: brief.id,
-                        mode: "first_principles",
-                        locks: undefined,
-                        options: undefined,
-                      });
-                      if (run?.id) {
-                        navigate(`/sizing/runs/${run.id}`);
-                      }
-                    }}
-                  >
+                  {/* Card Content */}
+                  <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white pr-8">
                       {brief.name}
                     </h3>
@@ -266,6 +252,42 @@ export const MissionCasesList: React.FC = observer(() => {
                     <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
                       Created {new Date(brief.createdAt).toLocaleDateString()}
                     </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-4 pt-4 border-t border-border flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="flex-1"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        // Run solver for this mission
+                        const run = await sizingStore.runSolver({
+                          missionCaseId: brief.id,
+                          mode: "first_principles",
+                          locks: undefined,
+                          options: undefined,
+                        });
+                        if (run?.id) {
+                          navigate(`/sizing/runs/${run.id}`);
+                        }
+                      }}
+                    >
+                      <Play className="h-3 w-3 mr-2" />
+                      Run Solver
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/sizing/explorer/${brief.id}`);
+                      }}
+                      title="Explore design space with parameter sweeps"
+                    >
+                      <Grid3x3 className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ))}

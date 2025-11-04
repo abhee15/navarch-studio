@@ -18,6 +18,7 @@ import { MissionCasesList } from "./pages/sizing/MissionCasesList";
 import { MissionWizard } from "./pages/sizing/MissionWizard";
 import { SizingRunResults } from "./pages/sizing/SizingRunResults";
 import { CandidateWorkspace } from "./pages/sizing/CandidateWorkspace";
+import { DesignSpaceExplorer } from "./pages/sizing/DesignSpaceExplorer";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/common/Toast";
 import { loadConfig } from "./config/runtime";
@@ -210,6 +211,14 @@ export const App: React.FC = observer(() => (
               <Route
                 path="/sizing/missions/:missionId"
                 element={<Navigate to="/sizing/missions" replace />}
+              />
+              <Route
+                path="/sizing/explorer/:missionId"
+                element={
+                  <ProtectedRoute>
+                    <DesignSpaceExplorer />
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/sizing/wizard"
