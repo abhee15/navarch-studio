@@ -110,7 +110,7 @@ export const SizingRunResults: React.FC = observer(() => {
 
           {/* Compute Time */}
           {sizingStore.currentRun && sizingStore.currentRun.computeTimeMs && (
-            <div className="mb-6 rounded-lg bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
+            <div className="mb-6 rounded-lg bg-accent/10 p-4 text-sm text-accent-foreground border border-accent/20">
               ✅ Solver completed in {sizingStore.currentRun.computeTimeMs}ms
             </div>
           )}
@@ -133,20 +133,20 @@ export const SizingRunResults: React.FC = observer(() => {
 
           {/* Compare Mode Actions */}
           {sizingStore.compareMode && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 rounded-lg bg-blue-600 p-4 shadow-lg">
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 rounded-lg bg-primary p-4 shadow-lg">
               <div className="flex items-center space-x-4">
-                <span className="text-white font-medium">
+                <span className="text-primary-foreground font-medium">
                   {sizingStore.compareCandidates.length} selected for comparison
                 </span>
                 <Button
                   variant="outline"
-                  className="bg-white text-blue-600 hover:bg-gray-100"
+                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
                   onClick={() => sizingStore.clearComparison()}
                 >
                   Clear
                 </Button>
                 <Button
-                  className="bg-blue-800 hover:bg-blue-900"
+                  variant="secondary"
                   onClick={() => setShowComparison(true)}
                   disabled={sizingStore.compareCandidates.length < 2}
                 >
@@ -158,7 +158,7 @@ export const SizingRunResults: React.FC = observer(() => {
 
           {/* Error State */}
           {sizingStore.error && (
-            <div className="rounded-lg bg-red-50 p-4 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+            <div className="rounded-lg bg-destructive/10 p-4 text-destructive border border-destructive/20">
               {sizingStore.error}
             </div>
           )}

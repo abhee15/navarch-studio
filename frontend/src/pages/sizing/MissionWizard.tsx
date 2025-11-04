@@ -116,8 +116,8 @@ export const MissionWizard: React.FC = observer(() => {
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
                         currentStep >= step.number
-                          ? "border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500"
-                          : "border-gray-300 bg-white text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted bg-card text-muted-foreground"
                       }`}
                     >
                       {step.number}
@@ -125,8 +125,8 @@ export const MissionWizard: React.FC = observer(() => {
                     <span
                       className={`mt-2 text-sm ${
                         currentStep >= step.number
-                          ? "font-medium text-blue-600 dark:text-blue-400"
-                          : "text-gray-500 dark:text-gray-400"
+                          ? "font-medium text-primary"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {step.title}
@@ -135,9 +135,7 @@ export const MissionWizard: React.FC = observer(() => {
                   {idx < steps.length - 1 && (
                     <div
                       className={`h-0.5 flex-1 ${
-                        currentStep > step.number
-                          ? "bg-blue-600 dark:bg-blue-500"
-                          : "bg-gray-300 dark:bg-gray-600"
+                        currentStep > step.number ? "bg-primary" : "bg-border"
                       }`}
                       style={{ marginTop: "-2rem" }}
                     />

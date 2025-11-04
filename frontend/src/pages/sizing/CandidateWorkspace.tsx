@@ -352,17 +352,15 @@ export const CandidateWorkspace: React.FC = observer(() => {
               {/* Flags & Warnings */}
               {flags.length > 0 && (
                 <div
-                  className={`rounded-lg p-6 shadow ${
+                  className={`rounded-lg p-6 shadow border ${
                     hasConstraintViolations
-                      ? "bg-yellow-50 dark:bg-yellow-900/20"
-                      : "bg-blue-50 dark:bg-blue-900/20"
+                      ? "bg-destructive/5 border-destructive/20"
+                      : "bg-accent/10 border-accent/20"
                   }`}
                 >
                   <h3
                     className={`font-semibold mb-4 ${
-                      hasConstraintViolations
-                        ? "text-yellow-900 dark:text-yellow-300"
-                        : "text-blue-900 dark:text-blue-300"
+                      hasConstraintViolations ? "text-destructive" : "text-accent-foreground"
                     }`}
                   >
                     {hasConstraintViolations ? "⚠️ Warnings" : "ℹ️ Flags"}
@@ -404,7 +402,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     Export CSV
                   </Button>
                   <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    variant="default"
+                    className="w-full"
                     onClick={async () => {
                       const vesselId = await sizingStore.pushToHydrostatics(candidate.id);
                       navigate(`/hydrostatics/vessels/${vesselId}/workspace`);

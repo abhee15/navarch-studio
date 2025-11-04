@@ -92,8 +92,8 @@ export const MissionCasesList: React.FC = observer(() => {
                     onClick={() => setFilterType(type)}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                       filterType === type
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-card text-foreground hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
                     {type.charAt(0).toUpperCase() + type.slice(1)}
