@@ -82,25 +82,25 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         <div>
           <dt className="font-medium text-gray-500 dark:text-gray-400">Lpp:</dt>
           <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.lppM.toFixed(1)} m
+            {candidate.lppM?.toFixed(1) || "N/A"} m
           </dd>
         </div>
         <div>
           <dt className="font-medium text-gray-500 dark:text-gray-400">Beam:</dt>
           <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.bM.toFixed(1)} m
+            {candidate.bM?.toFixed(1) || "N/A"} m
           </dd>
         </div>
         <div>
           <dt className="font-medium text-gray-500 dark:text-gray-400">Draft:</dt>
           <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.tM.toFixed(1)} m
+            {candidate.tM?.toFixed(1) || "N/A"} m
           </dd>
         </div>
         <div>
           <dt className="font-medium text-gray-500 dark:text-gray-400">Cb:</dt>
           <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.cb.toFixed(3)}
+            {candidate.cb?.toFixed(3) || "N/A"}
           </dd>
         </div>
       </div>
@@ -110,13 +110,13 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         <div className="flex justify-between">
           <span className="text-gray-600 dark:text-gray-400">Displacement:</span>
           <span className="font-medium text-gray-900 dark:text-white">
-            {candidate.displacementT.toFixed(0)} t
+            {candidate.displacementT?.toFixed(0) || "N/A"} t
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600 dark:text-gray-400">Froude Number:</span>
           <span className="font-medium text-gray-900 dark:text-white">
-            {candidate.fn.toFixed(3)}
+            {candidate.fn?.toFixed(3) || "N/A"}
           </span>
         </div>
         {candidate.ehpKw && (
