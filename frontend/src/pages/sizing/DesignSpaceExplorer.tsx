@@ -28,7 +28,7 @@ import type { CandidateDesign } from "../../types/sizing";
 export const DesignSpaceExplorer: React.FC = observer(() => {
   const { missionId } = useParams<{ missionId: string }>();
   const navigate = useNavigate();
-  const { sizingStore } = useStore();
+  const {} = useStore(); // sizingStore removed - not used yet
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [variants, setVariants] = useState<CandidateDesign[]>([]);
@@ -65,7 +65,9 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
         // For now, simulate with mock data
         const variant: CandidateDesign = {
           id: `variant-${i}-${j}`,
-          runId: "",
+          sizingRunId: missionId || "",
+          userId: "",
+          tenantId: "",
           rank: 0,
           score: 0.5 + Math.random() * 0.5,
           hullFamily: "Wigley",
@@ -85,8 +87,8 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
           kbM: (beam / 2.5) * 0.53,
           lcbPctLpp: -2 + Math.random() * 4,
           gmEstM: 1 + Math.random() * 2,
-          warnings: [],
-          flags: [],
+          flagsJson: "[]",
+          isSelected: false,
           createdAt: new Date().toISOString(),
         };
 
@@ -110,12 +112,13 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
   return (
     <>
       <AppHeader
-        title="Design Space Explorer"
-        leftAction={{
-          icon: Home,
-          label: "Back to Briefs",
-          onClick: () => navigate("/sizing/missions"),
-        }}
+        left={<h1 className="text-xl font-semibold text-foreground">Design Space Explorer</h1>}
+        right={
+          <Button variant="ghost" size="sm" onClick={() => navigate("/sizing/missions")}>
+            <Home className="h-4 w-4 mr-2" />
+            Back to Briefs
+          </Button>
+        }
       />
 
       <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">

@@ -36,11 +36,6 @@ interface SensitivityData {
 export const SensitivityPanel: React.FC<SensitivityPanelProps> = ({ candidate }) => {
   // Calculate sensitivity for each parameter
   const sensitivityData = useMemo(() => {
-    const baseScore = candidate.score;
-    const baseDisp = candidate.dispT || 0;
-    const baseEHP = candidate.ehpKw || 0;
-    const baseGM = candidate.gmEstM || 0;
-
     // Simplified sensitivity estimates (±10% variation)
     // In reality, these would come from backend re-computation
     // For now, use engineering rules of thumb

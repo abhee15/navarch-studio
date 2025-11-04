@@ -23,11 +23,13 @@ pwsh scripts/generate-types.ps1 -Mode ci
 ## Regenerating Types
 
 ### Local Development
+
 ```bash
 npm run generate:types
 ```
 
 ### CI/CD
+
 ```bash
 npm run generate:types:ci
 ```

@@ -239,7 +239,7 @@ export function downloadDXF(candidate: CandidateDesign, filename?: string): void
  * Generate IGES file (simplified - basic B-spline surfaces)
  * IGES is more complex - this is a placeholder
  */
-export function generateIGES(candidate: CandidateDesign): string {
+export function generateIGES(_candidate: CandidateDesign): string {
   // IGES format is significantly more complex
   // For MVP, we'll focus on DXF
   // Full IGES implementation would require:
@@ -255,7 +255,7 @@ For 3D surface export, consider STL format instead.`;
 /**
  * Generate STL file for 3D printing/CFD
  */
-export function generateSTL(candidate: CandidateDesign): string {
+export function generateSTL(_candidate: CandidateDesign): string {
   // STL is simpler than IGES for 3D meshes
   // Binary STL format is more efficient
   // For now, ASCII STL

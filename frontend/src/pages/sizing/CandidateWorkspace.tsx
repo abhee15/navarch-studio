@@ -125,16 +125,16 @@ export const CandidateWorkspace: React.FC = observer(() => {
   }
 
   // Parse flags
-  let flags: string[] = [];
-  try {
-    flags = JSON.parse(candidate.flagsJson);
-  } catch {
-    // Ignore
-  }
+  // let flags: string[] = [];
+  // try {
+  //   flags = JSON.parse(candidate.flagsJson);
+  // } catch {
+  //   // Ignore
+  // }
 
-  const hasConstraintViolations = flags.some(
-    (f) => f.includes("constrained") || f.includes("exceeded")
-  );
+  // const hasConstraintViolations = flags.some(
+  //   (f) => f.includes("constrained") || f.includes("exceeded")
+  // );
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
