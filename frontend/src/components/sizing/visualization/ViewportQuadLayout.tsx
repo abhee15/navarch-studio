@@ -219,7 +219,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
         </div>
 
         {/* Maximized viewport */}
-        <div className="flex-1">
+        <div className="flex-1 min-h-[600px]">
           {mode === "plan" && <Hull2DPlan candidate={candidate} ref={planRef} />}
           {mode === "profile" && <Hull2DProfile candidate={candidate} ref={profileRef} />}
           {mode === "sections" && <Hull2DSections candidate={candidate} ref={sectionsRef} />}
@@ -240,7 +240,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
   return (
     <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-1 bg-gray-200 dark:bg-gray-700">
       {/* Top-Left: Plan View */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
+      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[450px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
           onClick={() => setMode("plan")}
@@ -258,7 +258,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       </div>
 
       {/* Top-Right: Profile View */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
+      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[450px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
           onClick={() => setMode("profile")}
@@ -276,7 +276,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       </div>
 
       {/* Bottom-Left: Sections View */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
+      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[450px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
           onClick={() => setMode("sections")}
@@ -294,7 +294,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       </div>
 
       {/* Bottom-Right: 3D View */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[300px]">
+      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden flex flex-col min-h-[450px]">
         <div
           className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
           onClick={() => setMode("3d")}

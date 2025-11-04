@@ -33,6 +33,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
     ref
   ) => {
     const [hoveredButtock, setHoveredButtock] = useState<number | null>(null);
+    const [showLegend, setShowLegend] = useState(false);
 
     const buttocks = useMemo(() => {
       const lpp = candidate.lppM;
@@ -437,38 +438,48 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
           </text>
         </svg>
 
-        {/* Enhanced Legend */}
-        <div className="absolute top-6 right-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
-          <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
-            Legend
-          </div>
-          <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-            <div className="w-5 h-1 bg-gradient-to-r from-gray-800 to-gray-600 rounded"></div>
-            <span className="text-gray-700 dark:text-gray-300">Sheerline (Deck)</span>
-          </div>
-          <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-            <div className="w-5 h-0.5 bg-blue-600 shadow-sm"></div>
-            <span className="text-gray-700 dark:text-gray-300">Centerline Buttock</span>
-          </div>
-          <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-            <div className="w-5 h-0.5 bg-blue-300"></div>
-            <span className="text-gray-700 dark:text-gray-300">
-              Buttocks (0-{(candidate.beamM / 2).toFixed(1)}m)
-            </span>
-          </div>
-          <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-            <div
-              className="w-5 h-0.5 bg-cyan-600"
-              style={{
-                backgroundImage: "linear-gradient(90deg, #06b6d4 50%, transparent 50%)",
-                backgroundSize: "10px 1px",
-              }}
-            ></div>
-            <span className="text-gray-700 dark:text-gray-300">Design Waterline</span>
-          </div>
-          <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600 text-[10px] text-gray-500">
-            💡 Hover buttocks for offset details
-          </div>
+        {/* Collapsible Legend */}
+        <div className="absolute top-6 right-6">
+          <button
+            onClick={() => setShowLegend(!showLegend)}
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+          >
+            {showLegend ? "▼" : "▶"} Legend
+          </button>
+          {showLegend && (
+            <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
+              <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
+                Legend
+              </div>
+              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div className="w-5 h-1 bg-gradient-to-r from-gray-800 to-gray-600 rounded"></div>
+                <span className="text-gray-700 dark:text-gray-300">Sheerline (Deck)</span>
+              </div>
+              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div className="w-5 h-0.5 bg-blue-600 shadow-sm"></div>
+                <span className="text-gray-700 dark:text-gray-300">Centerline Buttock</span>
+              </div>
+              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div className="w-5 h-0.5 bg-blue-300"></div>
+                <span className="text-gray-700 dark:text-gray-300">
+                  Buttocks (0-{(candidate.beamM / 2).toFixed(1)}m)
+                </span>
+              </div>
+              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div
+                  className="w-5 h-0.5 bg-cyan-600"
+                  style={{
+                    backgroundImage: "linear-gradient(90deg, #06b6d4 50%, transparent 50%)",
+                    backgroundSize: "10px 1px",
+                  }}
+                ></div>
+                <span className="text-gray-700 dark:text-gray-300">Design Waterline</span>
+              </div>
+              <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600 text-[10px] text-gray-500 dark:text-gray-400">
+                💡 Hover buttocks for offset details
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Dimensions Panel */}

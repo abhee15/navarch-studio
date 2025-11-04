@@ -251,7 +251,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                 parametric Wigley hull.
               </p>
             </div>
-            <div className="h-[700px]">
+            <div className="h-[900px]">
               <ViewportQuadLayout candidate={candidate} />
             </div>
           </div>

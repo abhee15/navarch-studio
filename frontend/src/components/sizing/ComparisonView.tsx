@@ -126,7 +126,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
                 </div>
               </div>
 
-              <Hull3DThumbnail candidate={candidate} height={200} />
+              <Hull3DThumbnail candidate={candidate} height={350} />
 
               <div className="p-4">
                 <Button

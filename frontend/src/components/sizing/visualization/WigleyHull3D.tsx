@@ -95,7 +95,7 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
     geometry.computeVertexNormals(); // Smooth shading
 
     return geometry;
-  }, [candidate.lppM, candidate.beamM, candidate.draftM]);
+  }, [candidate]);
 
   // Waterplane (horizontal plane at draft)
   const waterplaneGeometry = useMemo(() => {

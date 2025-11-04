@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 
 interface ResistanceCurvePanelProps {
@@ -11,6 +11,8 @@ interface ResistanceCurvePanelProps {
  * Shows EHP vs Speed curve based on Holtrop-Mennen calculation
  */
 export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ candidate }) => {
+  const [showLegend, setShowLegend] = useState(false);
+
   // Generate resistance curve data points
   const curveData = useMemo(() => {
     if (!candidate.ehpKw) return [];
@@ -227,16 +229,26 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
           })}
         </svg>
 
-        {/* Legend */}
-        <div className="mt-4 flex items-center justify-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"></div>
-            <span className="text-gray-700 dark:text-gray-300">Resistance Curve</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500 ring-2 ring-orange-300"></div>
-            <span className="text-gray-700 dark:text-gray-300">Design Speed</span>
-          </div>
+        {/* Collapsible Legend */}
+        <div className="mt-4">
+          <button
+            onClick={() => setShowLegend(!showLegend)}
+            className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {showLegend ? "▼" : "▶"} Legend
+          </button>
+          {showLegend && (
+            <div className="mt-2 flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"></div>
+                <span className="text-gray-700 dark:text-gray-300">Resistance Curve</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-500 ring-2 ring-orange-300"></div>
+                <span className="text-gray-700 dark:text-gray-300">Design Speed</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Key Metrics */}

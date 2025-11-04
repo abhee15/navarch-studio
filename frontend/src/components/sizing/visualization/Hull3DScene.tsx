@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid, Environment } from "@react-three/drei";
 import { WigleyHull3D } from "./WigleyHull3D";
@@ -26,6 +26,8 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   showCenters = true,
   showGrid = true,
 }) => {
+  const [showLegend, setShowLegend] = useState(false);
+
   // Calculate camera distance based on hull size
   const cameraDistance = Math.max(candidate.lppM, candidate.beamM, candidate.draftM) * 2;
 
@@ -87,46 +89,70 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
         </Suspense>
       </Canvas>
 
-      {/* Legend overlay */}
-      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-2 text-sm">
-        <h3 className="font-semibold text-gray-900 mb-2">Hull Parameters</h3>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600">Lpp:</span>
-            <span className="font-medium">{candidate.lppM.toFixed(2)} m</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600">Beam:</span>
-            <span className="font-medium">{candidate.beamM.toFixed(2)} m</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600">Draft:</span>
-            <span className="font-medium">{candidate.draftM.toFixed(2)} m</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600">Cb:</span>
-            <span className="font-medium">{candidate.cb.toFixed(3)}</span>
-          </div>
-        </div>
-
-        {showCenters && (
-          <>
-            <hr className="my-2 border-gray-200" />
+      {/* Collapsible Legend */}
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={() => setShowLegend(!showLegend)}
+          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+        >
+          {showLegend ? "▼" : "▶"} Legend
+        </button>
+        {showLegend && (
+          <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Hull Parameters</h3>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span className="text-xs text-gray-600">LCB (Center of Buoyancy)</span>
+                <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {candidate.lppM.toFixed(2)} m
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-xs text-gray-600">LCG (Center of Gravity)</span>
+                <span className="text-gray-600 dark:text-gray-400">Beam:</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {candidate.beamM.toFixed(2)} m
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-xs text-gray-600">KB (Vertical CoB)</span>
+                <span className="text-gray-600 dark:text-gray-400">Draft:</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {candidate.draftM.toFixed(2)} m
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-600 dark:text-gray-400">Cb:</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {candidate.cb.toFixed(3)}
+                </span>
               </div>
             </div>
-          </>
+
+            {showCenters && (
+              <>
+                <hr className="my-2 border-gray-200 dark:border-gray-600" />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      LCB (Center of Buoyancy)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      LCG (Center of Gravity)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      KB (Vertical CoB)
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 

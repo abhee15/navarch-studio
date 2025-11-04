@@ -34,6 +34,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
     ref
   ) => {
     const [hoveredSection, setHoveredSection] = useState<number | null>(null);
+    const [showLegend, setShowLegend] = useState(false);
 
     const sections = useMemo(() => {
       const beam = candidate.beamM;
@@ -412,36 +413,48 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
           )}
         </svg>
 
-        {/* Enhanced Legend */}
-        <div className="absolute top-6 right-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
-          <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
-            Body Plan
-          </div>
-          <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-            <div className="w-5 h-1 bg-gradient-to-r from-orange-600 to-orange-400 rounded shadow-sm"></div>
-            <span className="text-gray-700 dark:text-gray-300 font-medium">Midship (⊥)</span>
-          </div>
-          <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-            <div className="w-5 h-0.5 bg-blue-600 shadow-sm"></div>
-            <span className="text-gray-700 dark:text-gray-300">AP (0) / FP (10)</span>
-          </div>
-          <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-            <div className="w-5 h-0.5 bg-blue-300"></div>
-            <span className="text-gray-700 dark:text-gray-300">Stations 1-9</span>
-          </div>
-          <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600">
-            <div className="text-[10px] text-gray-600 dark:text-gray-400 space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-red-600">←</span>
-                <span>Aft sections (0-4)</span>
+        {/* Collapsible Legend */}
+        <div className="absolute top-6 right-6">
+          <button
+            onClick={() => setShowLegend(!showLegend)}
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+          >
+            {showLegend ? "▼" : "▶"} Legend
+          </button>
+          {showLegend && (
+            <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
+              <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
+                Body Plan
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-green-600">→</span>
-                <span>Forward sections (6-10)</span>
+              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div className="w-5 h-1 bg-gradient-to-r from-orange-600 to-orange-400 rounded shadow-sm"></div>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">Midship (⊥)</span>
+              </div>
+              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div className="w-5 h-0.5 bg-blue-600 shadow-sm"></div>
+                <span className="text-gray-700 dark:text-gray-300">AP (0) / FP (10)</span>
+              </div>
+              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div className="w-5 h-0.5 bg-blue-300"></div>
+                <span className="text-gray-700 dark:text-gray-300">Stations 1-9</span>
+              </div>
+              <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-red-600">←</span>
+                    <span>Aft sections (0-4)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-green-600">→</span>
+                    <span>Forward sections (6-10)</span>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 text-[10px] text-gray-500 dark:text-gray-400">
+                💡 Hover sections for station info
               </div>
             </div>
-          </div>
-          <div className="pt-2 text-[10px] text-gray-500">💡 Hover sections for station info</div>
+          )}
         </div>
 
         {/* Section Area Coefficient Panel */}
