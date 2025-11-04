@@ -228,23 +228,44 @@ export const MissionCasesList: React.FC = observer(() => {
               {filteredMissions.map((mission) => (
                 <div
                   key={mission.id}
-                  className="cursor-pointer rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-lg dark:bg-gray-800"
-                  onClick={async () => {
-                    // Run solver for this mission
-                    const run = await sizingStore.runSolver({
-                      missionCaseId: mission.id,
-                      mode: "first_principles",
-                      locks: undefined,
-                      options: undefined,
-                    });
-                    if (run?.id) {
-                      navigate(`/sizing/runs/${run.id}`);
-                    }
-                  }}
+                  className="relative rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-lg dark:bg-gray-800"
                 >
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {mission.name}
-                  </h3>
+                  {/* Delete Button */}
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Delete mission "${mission.name}"?`)) {
+                        await sizingStore.deleteMissionCase(mission.id);
+                        await sizingStore.loadMissionCases();
+                      }
+                    }}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    title="Delete mission"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+
+                  {/* Card Content - Clickable */}
+                  <div
+                    className="cursor-pointer"
+                    onClick={async () => {
+                      // Run solver for this mission
+                      const run = await sizingStore.runSolver({
+                        missionCaseId: mission.id,
+                        mode: "first_principles",
+                        locks: undefined,
+                        options: undefined,
+                      });
+                      if (run?.id) {
+                        navigate(`/sizing/runs/${run.id}`);
+                      }
+                    }}
+                  >
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white pr-8">
+                      {mission.name}
+                    </h3>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     {mission.missionType} • {mission.cargoBasis?.toUpperCase() || "N/A"}
                   </p>
@@ -266,6 +287,7 @@ export const MissionCasesList: React.FC = observer(() => {
 
                   <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
                     Created {new Date(mission.createdAt).toLocaleDateString()}
+                  </div>
                   </div>
                 </div>
               ))}
