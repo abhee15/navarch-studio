@@ -41,4 +41,3 @@ export function Ittc57ResultsPanel({ result }: Ittc57ResultsPanelProps) {
     </div>
   );
 }
-

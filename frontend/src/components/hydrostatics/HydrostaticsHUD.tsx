@@ -122,4 +122,3 @@ export const HydrostaticsHUD = observer(function HydrostaticsHUD({
     </div>
   );
 });
-

@@ -52,4 +52,3 @@ export function PowerResultsPanel({ result }: PowerResultsPanelProps) {
     </div>
   );
 }
-

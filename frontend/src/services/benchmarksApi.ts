@@ -36,4 +36,3 @@ export const benchmarksApi = {
     return response.data;
   },
 };
-

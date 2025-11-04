@@ -685,4 +685,3 @@ export const Vessel3DViewer = observer(
     );
   })
 );
-

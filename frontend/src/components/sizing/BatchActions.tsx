@@ -104,4 +104,3 @@ export const BatchActions: React.FC<BatchActionsProps> = ({
     </div>
   );
 };
-

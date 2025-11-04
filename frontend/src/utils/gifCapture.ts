@@ -149,4 +149,3 @@ export function downloadBlob(blob: Blob, filename: string): void {
 export function captureFrame(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL("image/png");
 }
-

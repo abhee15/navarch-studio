@@ -474,4 +474,3 @@ export const CandidateWorkspace: React.FC = observer(() => {
     </div>
   );
 });
-

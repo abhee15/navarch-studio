@@ -37,4 +37,3 @@ export function HoltropMennenResultsPanel({ result }: HoltropMennenResultsPanelP
     </div>
   );
 }
-

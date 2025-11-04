@@ -277,4 +277,3 @@ export function SpeedDraftMatrixPanel({ vessel }: SpeedDraftMatrixPanelProps) {
     </>
   );
 }
-

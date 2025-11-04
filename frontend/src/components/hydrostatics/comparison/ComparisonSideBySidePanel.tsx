@@ -227,4 +227,3 @@ export const ComparisonSideBySidePanel = observer(({ report }: ComparisonSideByS
     </div>
   );
 });
-

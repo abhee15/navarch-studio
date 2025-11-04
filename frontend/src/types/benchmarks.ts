@@ -73,4 +73,3 @@ export interface ValidationRun {
   status: string;
   createdAt: string;
 }
-

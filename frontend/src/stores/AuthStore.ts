@@ -380,4 +380,3 @@ export class AuthStore {
     this.error = null;
   }
 }
-

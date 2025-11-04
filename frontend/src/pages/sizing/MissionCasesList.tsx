@@ -310,4 +310,3 @@ export const MissionCasesList: React.FC = observer(() => {
     </div>
   );
 });
-

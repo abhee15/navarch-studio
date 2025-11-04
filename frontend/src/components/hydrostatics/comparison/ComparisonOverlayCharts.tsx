@@ -217,4 +217,3 @@ export const ComparisonOverlayCharts = observer(({ report }: ComparisonOverlayCh
     </div>
   );
 });
-

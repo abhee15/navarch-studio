@@ -159,4 +159,3 @@ export interface SizingWorkspaceState {
   viewMode: "3d" | "2d" | "table";
   locksEnabled: SizingLocksDto;
 }
-

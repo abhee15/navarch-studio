@@ -19,4 +19,3 @@ export function ResistanceBreakdownPanel({ result }: ResistanceBreakdownPanelPro
 
   return <ResistanceBreakdownTable result={result} />;
 }
-

@@ -174,4 +174,3 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
     </group>
   );
 };
-

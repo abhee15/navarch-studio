@@ -14,4 +14,3 @@ export function UnitsEffectProvider({ children }: PropsWithChildren) {
 
   return <>{children}</>;
 }
-

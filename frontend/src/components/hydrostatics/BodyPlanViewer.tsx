@@ -601,4 +601,3 @@ export const BodyPlanViewer = observer(
 );
 
 export default BodyPlanViewer;
-

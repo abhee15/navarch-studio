@@ -132,4 +132,3 @@ export class LocalAuthService {
     return !!this.getToken();
   }
 }
-

@@ -301,4 +301,3 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
     </div>
   );
 });
-

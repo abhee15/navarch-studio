@@ -31,4 +31,3 @@ export const getUnitSymbol = (unitSystem: UnitSystemId, category: string): strin
 
   return symbols[unitSystem]?.[category] || "";
 };
-

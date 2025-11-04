@@ -153,4 +153,3 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
     </div>
   );
 };
-

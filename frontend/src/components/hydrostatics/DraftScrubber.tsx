@@ -255,4 +255,3 @@ export const DraftScrubber = observer(function DraftScrubber({
     </div>
   );
 });
-

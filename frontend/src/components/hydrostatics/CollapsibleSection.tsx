@@ -53,4 +53,3 @@ export function CollapsibleSection({
 }
 
 export default CollapsibleSection;
-

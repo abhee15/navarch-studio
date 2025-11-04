@@ -139,4 +139,3 @@ export const VesselWorkspace = observer(function VesselWorkspace() {
 });
 
 export default VesselWorkspace;
-

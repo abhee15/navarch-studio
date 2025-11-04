@@ -101,4 +101,3 @@ export function GeometryEditorPanel({ vessel, onEditClick }: GeometryEditorPanel
     </div>
   );
 }
-

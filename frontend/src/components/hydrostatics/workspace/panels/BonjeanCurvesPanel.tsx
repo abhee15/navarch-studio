@@ -338,4 +338,3 @@ export const BonjeanCurvesPanel = observer(
     );
   }
 );
-

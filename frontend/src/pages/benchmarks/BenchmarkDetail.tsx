@@ -370,4 +370,3 @@ export const BenchmarkDetail = observer(function BenchmarkDetail() {
     </div>
   );
 });
-

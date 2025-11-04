@@ -183,4 +183,3 @@ export const UserProfileMenu = observer(({ onOpenSettings, onLogout }: UserProfi
     </div>
   );
 });
-

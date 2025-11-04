@@ -728,4 +728,3 @@ export const RESISTANCE_LAYOUT_PRESETS: LayoutPreset[] = [
     },
   },
 ];
-

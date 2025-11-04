@@ -651,4 +651,3 @@ export const GZCurvePanel = observer(({ vesselId, vessel }: GZCurvePanelProps) =
     </div>
   );
 });
-

@@ -490,4 +490,3 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
 );
 
 Hull2DSections.displayName = "Hull2DSections";
-

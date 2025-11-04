@@ -39,4 +39,3 @@ export interface BodyPlanInteraction {
   onStationSelect?: (stationIndex: number | null) => void;
   onSync3DView?: (stationIndex: number) => void;
 }
-

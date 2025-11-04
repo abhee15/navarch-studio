@@ -164,8 +164,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             className="fill-gray-600 dark:fill-gray-400"
             style={{ fontSize: "11px" }}
           >
-            {candidate.hullFamily.replace("_", " ").toUpperCase()} · T {candidate.draftM.toFixed(2)}m ×
-            D {candidate.depthM.toFixed(2)}m
+            {candidate.hullFamily.replace("_", " ").toUpperCase()} · T {candidate.draftM.toFixed(2)}
+            m × D {candidate.depthM.toFixed(2)}m
           </text>
 
           {/* Baseline */}
@@ -390,8 +390,18 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                 markerEnd="url(#arrow-prof-r)"
               />
               <rect
-                x={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[0] - 50}
-                y={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[1] - 9}
+                x={
+                  toSVG(
+                    -lpp / 2 - 22,
+                    (candidate.depthM - candidate.draftM - candidate.draftM) / 2
+                  )[0] - 50
+                }
+                y={
+                  toSVG(
+                    -lpp / 2 - 22,
+                    (candidate.depthM - candidate.draftM - candidate.draftM) / 2
+                  )[1] - 9
+                }
                 width="70"
                 height="18"
                 rx="4"
@@ -401,8 +411,18 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                 filter="url(#shadow)"
               />
               <text
-                x={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[0] - 15}
-                y={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[1] + 3}
+                x={
+                  toSVG(
+                    -lpp / 2 - 22,
+                    (candidate.depthM - candidate.draftM - candidate.draftM) / 2
+                  )[0] - 15
+                }
+                y={
+                  toSVG(
+                    -lpp / 2 - 22,
+                    (candidate.depthM - candidate.draftM - candidate.draftM) / 2
+                  )[1] + 3
+                }
                 textAnchor="middle"
                 className="fill-purple-700 dark:fill-purple-400 font-bold"
                 style={{ fontSize: "10px" }}
@@ -494,4 +514,3 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 );
 
 Hull2DProfile.displayName = "Hull2DProfile";
-

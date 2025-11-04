@@ -719,4 +719,3 @@ function EditLoadcaseCard({ loadcase, onSave, onCancel }: EditLoadcaseCardProps)
 }
 
 export default ManageLoadcasesDialog;
-

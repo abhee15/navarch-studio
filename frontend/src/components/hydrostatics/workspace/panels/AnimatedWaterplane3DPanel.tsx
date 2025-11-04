@@ -238,4 +238,3 @@ export const AnimatedWaterplane3DPanel = observer(function AnimatedWaterplane3DP
     </div>
   );
 });
-

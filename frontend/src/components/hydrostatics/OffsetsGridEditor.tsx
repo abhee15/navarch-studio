@@ -330,4 +330,3 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
 }
 
 export default OffsetsGridEditor;
-

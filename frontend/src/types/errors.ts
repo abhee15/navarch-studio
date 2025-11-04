@@ -191,4 +191,3 @@ export function getCorrelationId(error: unknown): string | undefined {
   }
   return undefined;
 }
-

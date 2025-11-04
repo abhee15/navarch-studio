@@ -112,4 +112,3 @@ export const adjustParameter = async (
   );
   return response.data;
 };
-

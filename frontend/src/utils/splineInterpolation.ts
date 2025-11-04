@@ -197,4 +197,3 @@ export function fairHullOffsets(offsetsGrid: number[][], numInterpPoints: number
 
   return faired;
 }
-

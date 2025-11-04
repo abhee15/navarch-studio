@@ -356,4 +356,3 @@ export const ComparisonWorkspace = observer(function ComparisonWorkspace() {
 });
 
 export default ComparisonWorkspace;
-

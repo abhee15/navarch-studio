@@ -316,4 +316,3 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
     </div>
   );
 };
-

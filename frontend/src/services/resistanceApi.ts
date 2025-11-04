@@ -97,4 +97,3 @@ export const resistanceApiClient = {
 };
 
 export default resistanceApiClient;
-

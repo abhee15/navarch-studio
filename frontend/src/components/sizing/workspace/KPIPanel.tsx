@@ -284,4 +284,3 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
     </div>
   );
 };
-

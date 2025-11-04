@@ -551,4 +551,3 @@ export const HullDiagram = observer(
 );
 
 export default HullDiagram;
-

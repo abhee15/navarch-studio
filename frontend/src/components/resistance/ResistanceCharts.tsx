@@ -1330,4 +1330,3 @@ export function ResistanceCharts({
     </div>
   );
 }
-

@@ -532,4 +532,3 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 );
 
 Hull2DPlan.displayName = "Hull2DPlan";
-
