@@ -2,6 +2,7 @@ import React from "react";
 import type { CandidateDesign } from "../../types/sizing";
 import { Button } from "../ui/button";
 import { Hull3DThumbnail } from "./visualization/Hull3DThumbnail";
+import { AlertTriangle, Award, TrendingUp } from "lucide-react";
 
 interface CandidateCardProps {
   candidate: CandidateDesign;
@@ -26,129 +27,145 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
     // Ignore parse errors
   }
 
+  const hasWarnings = flags.some((f) => f.includes("constrained") || f.includes("exceeded"));
+
   return (
     <div
-      className={`rounded-lg bg-white p-6 shadow transition-all hover:shadow-xl dark:bg-gray-800 ${
-        isComparing ? "ring-2 ring-blue-500" : ""
+      className={`rounded-lg bg-card border border-border shadow-sm transition-all hover:shadow-md hover:border-primary/50 ${
+        isComparing ? "ring-2 ring-primary" : ""
       }`}
     >
-      {/* Header with Rank & Family */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+      {/* Header with Rank & Score */}
+      <div className="bg-muted/30 px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold shadow-sm">
               #{rank}
-            </span>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
-              {candidate.hullFamily.replace("_", " ")}
-            </h3>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground capitalize">
+                {candidate.hullFamily.replace("_", " ")}
+              </h3>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Award className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  Score: {(candidate.score * 100).toFixed(1)}%
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Score: {(candidate.score * 100).toFixed(1)}%
-          </p>
+
+          {/* Warning Badge */}
+          {flags.length > 0 && (
+            <div
+              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                hasWarnings
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-accent/20 text-accent-foreground"
+              }`}
+            >
+              {hasWarnings && <AlertTriangle className="h-3 w-3" />}
+              {flags.length} {flags.length === 1 ? "flag" : "flags"}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className="p-4 space-y-4">
+        {/* 3D Thumbnail */}
+        <div className="bg-muted/20 rounded-lg overflow-hidden">
+          <Hull3DThumbnail candidate={candidate} height={200} />
         </div>
 
-        {/* Flags */}
-        {flags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {flags.slice(0, 2).map((flag) => (
-              <span
-                key={flag}
-                className={`rounded px-2 py-1 text-xs font-medium ${
-                  flag.includes("constrained") || flag.includes("exceeded")
-                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                    : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                }`}
-              >
-                {flag.replace("_", " ")}
+        {/* Principal Dimensions - Compact Grid */}
+        <div className="bg-accent/5 rounded-lg p-3 border border-accent/20">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Principal Dimensions
+          </h4>
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground mb-0.5">Lpp</div>
+              <div className="text-sm font-bold text-foreground">
+                {candidate.lppM?.toFixed(1) || "—"}
+                <span className="text-xs text-muted-foreground ml-0.5">m</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground mb-0.5">B</div>
+              <div className="text-sm font-bold text-foreground">
+                {candidate.beamM?.toFixed(1) || "—"}
+                <span className="text-xs text-muted-foreground ml-0.5">m</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground mb-0.5">T</div>
+              <div className="text-sm font-bold text-foreground">
+                {candidate.draftM?.toFixed(1) || "—"}
+                <span className="text-xs text-muted-foreground ml-0.5">m</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground mb-0.5">CB</div>
+              <div className="text-sm font-bold text-foreground">
+                {candidate.cb?.toFixed(3) || "—"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Key Performance Indicators */}
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            <TrendingUp className="h-3 w-3" />
+            Performance
+          </h4>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="flex items-center justify-between px-2 py-1.5 bg-muted/30 rounded">
+              <span className="text-muted-foreground">Displacement</span>
+              <span className="font-semibold text-foreground">
+                {candidate.dispT?.toFixed(0) || "—"} t
               </span>
-            ))}
-            {flags.length > 2 && (
-              <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                +{flags.length - 2}
+            </div>
+            <div className="flex items-center justify-between px-2 py-1.5 bg-muted/30 rounded">
+              <span className="text-muted-foreground">Fn</span>
+              <span className="font-semibold text-foreground">
+                {candidate.fn?.toFixed(3) || "—"}
               </span>
+            </div>
+            {candidate.ehpKw && (
+              <div className="flex items-center justify-between px-2 py-1.5 bg-muted/30 rounded">
+                <span className="text-muted-foreground">EHP</span>
+                <span className="font-semibold text-foreground">
+                  {candidate.ehpKw.toFixed(0)} kW
+                </span>
+              </div>
+            )}
+            {candidate.gmEstM && (
+              <div className="flex items-center justify-between px-2 py-1.5 bg-muted/30 rounded">
+                <span className="text-muted-foreground">GMt (est)</span>
+                <span className="font-semibold text-foreground">
+                  {candidate.gmEstM.toFixed(2)} m
+                </span>
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* 3D Thumbnail */}
-      <div className="mt-4">
-        <Hull3DThumbnail candidate={candidate} height={180} />
-      </div>
-
-      {/* Principal Dimensions */}
-      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <dt className="font-medium text-gray-500 dark:text-gray-400">Lpp:</dt>
-          <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.lppM?.toFixed(1) || "N/A"} m
-          </dd>
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Button onClick={onSelect} className="flex-1" size="sm">
+            Open Workspace
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCompare}
+            className={isComparing ? "ring-2 ring-primary" : ""}
+          >
+            {isComparing ? "✓" : "Compare"}
+          </Button>
         </div>
-        <div>
-          <dt className="font-medium text-gray-500 dark:text-gray-400">Beam:</dt>
-          <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.beamM?.toFixed(1) || "N/A"} m
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium text-gray-500 dark:text-gray-400">Draft:</dt>
-          <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.draftM?.toFixed(1) || "N/A"} m
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium text-gray-500 dark:text-gray-400">Cb:</dt>
-          <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-            {candidate.cb?.toFixed(3) || "N/A"}
-          </dd>
-        </div>
-      </div>
-
-      {/* KPIs */}
-      <div className="mt-6 space-y-2 border-t border-gray-200 pt-4 text-sm dark:border-gray-700">
-        <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Displacement:</span>
-          <span className="font-medium text-gray-900 dark:text-white">
-            {candidate.dispT?.toFixed(0) || "N/A"} t
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Froude Number:</span>
-          <span className="font-medium text-gray-900 dark:text-white">
-            {candidate.fn?.toFixed(3) || "N/A"}
-          </span>
-        </div>
-        {candidate.ehpKw && (
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">EHP:</span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {candidate.ehpKw.toFixed(0)} kW
-            </span>
-          </div>
-        )}
-        {candidate.gmEstM && (
-          <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">GMt (est):</span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {candidate.gmEstM.toFixed(2)} m
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="mt-6 flex space-x-2">
-        <Button onClick={onSelect} className="flex-1">
-          Open Workspace
-        </Button>
-        <Button
-          variant="outline"
-          onClick={onCompare}
-          className={isComparing ? "ring-2 ring-primary" : ""}
-        >
-          {isComparing ? "✓" : "Compare"}
-        </Button>
       </div>
     </div>
   );
