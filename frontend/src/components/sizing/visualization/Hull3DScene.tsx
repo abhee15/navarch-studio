@@ -1,8 +1,9 @@
-import React, { Suspense, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { Suspense, useState, useEffect, useRef } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Grid, Environment } from "@react-three/drei";
 import { WigleyHull3D } from "./WigleyHull3D";
 import type { CandidateDesign } from "../../../types/sizing";
+import { Home, Move3D } from "lucide-react";
 
 interface Hull3DSceneProps {
   candidate: CandidateDesign;
@@ -27,6 +28,29 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   showGrid = true,
 }) => {
   const [showLegend, setShowLegend] = useState(false);
+  const [showHint, setShowHint] = useState(true);
+  const controlsRef = useRef<any>(null);
+
+  // Auto-hide hint after 3 seconds or first interaction
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHint(false), 3000);
+    const hideHint = () => setShowHint(false);
+
+    window.addEventListener("mousedown", hideHint, { once: true });
+    window.addEventListener("touchstart", hideHint, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("mousedown", hideHint);
+      window.removeEventListener("touchstart", hideHint);
+    };
+  }, []);
+
+  const resetCamera = () => {
+    if (controlsRef.current) {
+      controlsRef.current.reset();
+    }
+  };
 
   // Calculate camera distance based on hull size
   const cameraDistance = Math.max(candidate.lppM, candidate.beamM, candidate.draftM) * 2;
@@ -80,11 +104,14 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
 
           {/* Orbit controls */}
           <OrbitControls
+            ref={controlsRef}
             enableDamping
             dampingFactor={0.05}
+            rotateSpeed={0.8}
+            zoomSpeed={1.2}
             minDistance={cameraDistance * 0.5}
             maxDistance={cameraDistance * 3}
-            maxPolarAngle={Math.PI / 2} // Prevent going below ground
+            maxPolarAngle={Math.PI / 1.8} // Prevent extreme angles
           />
         </Suspense>
       </Canvas>
@@ -99,7 +126,16 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
         </button>
         {showLegend && (
           <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Hull Parameters</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Hull Parameters</h3>
+              <button
+                onClick={resetCamera}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                title="Reset View"
+              >
+                <Home className="h-3 w-3" />
+              </button>
+            </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
@@ -156,20 +192,17 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
         )}
       </div>
 
-      {/* Controls hint */}
-      <div className="absolute bottom-6 left-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg p-3 text-xs text-gray-600 dark:text-gray-400">
-        <div className="space-y-1">
-          <div>
-            <span className="font-medium">Left Click + Drag:</span> Rotate
-          </div>
-          <div>
-            <span className="font-medium">Right Click + Drag:</span> Pan
-          </div>
-          <div>
-            <span className="font-medium">Scroll:</span> Zoom
+      {/* Auto-hide Rotation Hint */}
+      {showHint && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="bg-black/70 text-white px-6 py-3 rounded-xl backdrop-blur-sm shadow-2xl animate-pulse">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Move3D className="h-5 w-5" />
+              <span>Drag to rotate • Scroll to zoom</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

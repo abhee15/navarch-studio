@@ -416,7 +416,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
         </svg>
 
         {/* Collapsible Legend */}
-        <div className="absolute top-6 right-6">
+        <div className="absolute top-6 right-6 max-w-[240px]">
           <button
             onClick={() => setShowLegend(!showLegend)}
             className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
