@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
+import { AlertTriangle } from "lucide-react";
 
 interface ResistanceCurvePanelProps {
   candidate: CandidateDesign;
@@ -283,7 +284,10 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
         </div>
 
         <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded">
-          <p className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">⚠️ Note:</p>
+          <p className="font-medium text-yellow-800 dark:text-yellow-300 mb-1 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            Note:
+          </p>
           <p className="text-yellow-700 dark:text-yellow-400">
             This is a simplified approximation based on Holtrop-Mennen with EHP ∝ V³ scaling. For
             accurate resistance analysis, push this design to the Resistance module.

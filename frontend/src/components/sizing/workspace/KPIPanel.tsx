@@ -1,4 +1,5 @@
 import type { CandidateDesign } from "../../../types/sizing";
+import { Check, AlertTriangle, Info } from "lucide-react";
 
 interface KPIPanelProps {
   candidate: CandidateDesign;
@@ -156,7 +157,7 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
         {/* Status Indicator */}
         {candidate.isSelected && (
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-green-500 px-3 py-1 text-sm font-semibold">
-            <span>✓</span>
+            <Check className="h-4 w-4" />
             <span>Selected Design</span>
           </div>
         )}
@@ -172,7 +173,11 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
           }`}
         >
           <div className="flex items-start gap-3">
-            <span className="text-2xl">{hasCritical ? "⚠️" : "ℹ️"}</span>
+            {hasCritical ? (
+              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            ) : (
+              <Info className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            )}
             <div className="flex-1">
               <p
                 className={`font-semibold ${
