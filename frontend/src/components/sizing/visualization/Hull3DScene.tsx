@@ -1,6 +1,7 @@
 import React, { Suspense, useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid, Environment } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { WigleyHull3D } from "./WigleyHull3D";
 import type { CandidateDesign } from "../../../types/sizing";
 import { Home, Move3D } from "lucide-react";
@@ -29,7 +30,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
 }) => {
   const [showLegend, setShowLegend] = useState(false);
   const [showHint, setShowHint] = useState(true);
-  const controlsRef = useRef<unknown>(null);
+  const controlsRef = useRef<OrbitControlsImpl>(null);
 
   // Auto-hide hint after 3 seconds or first interaction
   useEffect(() => {

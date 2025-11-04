@@ -259,10 +259,10 @@ export function generateSTL(_candidate: CandidateDesign): string {
   // STL is simpler than IGES for 3D meshes
   // Binary STL format is more efficient
   // For now, ASCII STL
-  
+
   // Generate triangular facets from Wigley hull
   // This would need to mesh the Wigley surface
   // Placeholder for now
-  
+
   return "STL export placeholder - requires hull meshing implementation";
 }
