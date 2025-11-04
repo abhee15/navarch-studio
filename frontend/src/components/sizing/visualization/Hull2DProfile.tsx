@@ -1,5 +1,6 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Hull2DProfileProps {
   candidate: CandidateDesign;
@@ -34,6 +35,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
   ) => {
     const [hoveredButtock, setHoveredButtock] = useState<number | null>(null);
     const [showLegend, setShowLegend] = useState(false);
+    const [showDimensionsPanel, setShowDimensionsPanel] = useState(true);
 
     const buttocks = useMemo(() => {
       const lpp = candidate.lppM;

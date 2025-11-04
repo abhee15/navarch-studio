@@ -90,7 +90,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
       </Canvas>
 
       {/* Collapsible Legend */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-6 right-6">
         <button
           onClick={() => setShowLegend(!showLegend)}
           className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
@@ -157,7 +157,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
       </div>
 
       {/* Controls hint */}
-      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-3 text-xs text-gray-600">
+      <div className="absolute bottom-6 left-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg p-3 text-xs text-gray-600 dark:text-gray-400">
         <div className="space-y-1">
           <div>
             <span className="font-medium">Left Click + Drag:</span> Rotate
