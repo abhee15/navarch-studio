@@ -168,7 +168,7 @@ try
         DebugIterations = builder.Environment.IsDevelopment() // Enable debug logging in development
     };
     builder.Services.AddSingleton(solverOptions);
-    
+
     // Use hybrid displacement closure (Newton + Brent fallback)
     builder.Services.AddScoped<HullSizingService.Services.Solver.IDisplacementClosureService, HullSizingService.Services.Solver.HybridDisplacementClosureService>();
     builder.Services.AddScoped<HullSizingService.Services.Solver.IResistanceService, HullSizingService.Services.Solver.HoltropResistanceService>();

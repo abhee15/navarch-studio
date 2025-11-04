@@ -10,7 +10,7 @@ namespace HullSizingService.Services.Solver;
 /// Algorithm: Attempt damped Newton-Raphson with backtracking line search first for speed.
 /// If Newton fails (poor derivative, residual increases, or no convergence), fall back to
 /// Brent's method which guarantees convergence given a valid bracket.
-/// 
+///
 /// References:
 /// - MathNet.Numerics Brent implementation
 /// - Burke: Backtracking line search for Newton methods
@@ -33,7 +33,7 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
     public async Task<ClosureResult> SolveAsync(ClosureRequest req, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("[HYBRID-CLOSURE] Starting displacement closure for target Δ={Target}t", req.TargetDisplacementT);
-        
+
         var flags = new List<string>();
 
         // Check for over-constrained problem before starting
@@ -50,10 +50,10 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
 
         // For this problem, we're primarily solving for draft given other parameters
         // f(draft) = computedVolume(draft) - targetVolume = 0
-        
+
         // Initial physics-based guess
         double initialDraft = PhysicsBasedInitialGuess(req, targetVolumeM3);
-        
+
         if (_options.DebugIterations)
         {
             _logger.LogDebug("[HYBRID-CLOSURE] Initial guess: draft={Draft:F3}m", initialDraft);
@@ -78,7 +78,7 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
         {
             convergedDraft = newtonResult.Draft;
             totalIterations = newtonResult.Iterations;
-            _logger.LogInformation("[HYBRID-CLOSURE] Newton converged in {Iter} iterations, draft={Draft:F3}m", 
+            _logger.LogInformation("[HYBRID-CLOSURE] Newton converged in {Iter} iterations, draft={Draft:F3}m",
                 totalIterations, convergedDraft);
         }
         else
@@ -150,7 +150,7 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
     {
         // For displacement closure, we're using prismatic approximation
         // Volume = Lpp * Beam * Draft * Cb
-        
+
         double beam = draft * (double)req.BOverT;
         double lpp = beam * (double)req.LOverB;
         double cb = (double)req.Cb;
@@ -170,9 +170,9 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
     /// Try damped Newton-Raphson with backtracking line search
     /// </summary>
     private (bool Converged, double Draft, int Iterations) TryDampedNewton(
-        Func<double, double> f, 
-        double x0, 
-        double minDraft, 
+        Func<double, double> f,
+        double x0,
+        double minDraft,
         double maxDraft,
         double targetVolume)
     {
@@ -423,4 +423,3 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
         ));
     }
 }
-
