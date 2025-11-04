@@ -10,6 +10,7 @@ import {
   exportCanvasToPNG,
   generateFilename,
 } from "../../../utils/exportViewport";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 interface ViewportQuadLayoutProps {
   candidate: CandidateDesign;
@@ -169,14 +170,14 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMode("quad")}
-              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 font-medium"
+              className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 font-medium"
             >
-              <span>←</span>
+              <Minimize2 className="h-4 w-4" />
               <span>Quad View</span>
             </button>
             <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-            <span className="text-base font-bold text-gray-900 dark:text-white capitalize flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+            <span className="text-base font-bold text-foreground capitalize flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
               {mode === "3d" ? "3D Isometric" : `${mode} View`}
             </span>
           </div>
@@ -242,14 +243,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       {/* Top-Left: Plan View */}
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-visible flex flex-col min-h-[450px]">
         <div
-          className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
+          className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("plan")}
         >
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-            Plan View (Top)
-          </span>
-          <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-            Maximize →
+          <span className="text-sm font-semibold text-foreground">Plan View (Top)</span>
+          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+            <Maximize2 className="h-3 w-3" />
+            Maximize
           </button>
         </div>
         <div className="flex-1">
@@ -260,14 +260,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       {/* Top-Right: Profile View */}
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-visible flex flex-col min-h-[450px]">
         <div
-          className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
+          className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("profile")}
         >
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-            Profile View (Side)
-          </span>
-          <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-            Maximize →
+          <span className="text-sm font-semibold text-foreground">Profile View (Side)</span>
+          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+            <Maximize2 className="h-3 w-3" />
+            Maximize
           </button>
         </div>
         <div className="flex-1">
@@ -278,14 +277,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       {/* Bottom-Left: Sections View */}
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-visible flex flex-col min-h-[450px]">
         <div
-          className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
+          className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("sections")}
         >
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-            Sections (Body Plan)
-          </span>
-          <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-            Maximize →
+          <span className="text-sm font-semibold text-foreground">Sections (Body Plan)</span>
+          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+            <Maximize2 className="h-3 w-3" />
+            Maximize
           </button>
         </div>
         <div className="flex-1">
@@ -296,12 +294,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       {/* Bottom-Right: 3D View */}
       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-visible flex flex-col min-h-[450px]">
         <div
-          className="bg-gray-100 dark:bg-gray-900 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800"
+          className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("3d")}
         >
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">3D Isometric</span>
-          <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-            Maximize →
+          <span className="text-sm font-semibold text-foreground">3D Isometric</span>
+          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+            <Maximize2 className="h-3 w-3" />
+            Maximize
           </button>
         </div>
         <div className="flex-1">
