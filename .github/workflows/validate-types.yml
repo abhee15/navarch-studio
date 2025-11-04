@@ -45,35 +45,27 @@ jobs:
       - name: Check if types are in sync
         id: check_diff
         run: |
-          # Check if generated files differ from committed files
-          if git diff --exit-code frontend/src/api/generated/*.types.ts; then
+          if git diff --exit-code frontend/src/api/generated/*.types.ts 2>/dev/null; then
             echo "status=success" >> $GITHUB_OUTPUT
             echo "✅ Types are in sync"
           else
             echo "status=failure" >> $GITHUB_OUTPUT
             echo "❌ Types are out of sync"
-            echo ""
-            echo "Differences found:"
-            git diff frontend/src/api/generated/*.types.ts
+            git diff frontend/src/api/generated/*.types.ts || true
           fi
 
       - name: Fail if types are out of sync
         if: steps.check_diff.outputs.status == 'failure'
         run: |
-          echo "::error::Generated TypeScript types are out of sync with committed files"
+          echo "::error::Generated TypeScript types are out of sync"
           echo ""
-          echo "This means the backend DTOs have changed but the frontend types were not regenerated."
-          echo ""
-          echo "To fix this:"
+          echo "To fix:"
           echo "  1. Run: pwsh scripts/export-swagger.ps1"
           echo "  2. Run: pwsh scripts/generate-types.ps1 -Mode ci"
-          echo "  3. Commit the updated files:"
-          echo "     - backend/*/swagger.json"
-          echo "     - frontend/src/api/generated/*.types.ts"
-          echo ""
+          echo "  3. Commit updated files"
           exit 1
 
-      - name: Upload generated types as artifact
+      - name: Upload generated types
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -97,15 +89,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
+      - name: Install dependencies
         working-directory: frontend
         run: npm ci
 
-      - name: Run TypeScript type check
+      - name: TypeScript type check
         working-directory: frontend
         run: npm run type-check
 
-      - name: Run ESLint
+      - name: ESLint
         working-directory: frontend
         run: npm run lint
-
