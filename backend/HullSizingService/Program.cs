@@ -162,11 +162,19 @@ try
     Log.Information("Hull family service registered");
 
     // Solver Services
-    builder.Services.AddScoped<HullSizingService.Services.Solver.IDisplacementClosureService, HullSizingService.Services.Solver.DisplacementClosureService>();
+    // Register solver options (can be configured via appsettings)
+    var solverOptions = new HullSizingService.Services.Solver.SolverOptions
+    {
+        DebugIterations = builder.Environment.IsDevelopment() // Enable debug logging in development
+    };
+    builder.Services.AddSingleton(solverOptions);
+    
+    // Use hybrid displacement closure (Newton + Brent fallback)
+    builder.Services.AddScoped<HullSizingService.Services.Solver.IDisplacementClosureService, HullSizingService.Services.Solver.HybridDisplacementClosureService>();
     builder.Services.AddScoped<HullSizingService.Services.Solver.IResistanceService, HullSizingService.Services.Solver.HoltropResistanceService>();
     builder.Services.AddScoped<HullSizingService.Services.Solver.IStabilityScreenService, HullSizingService.Services.Solver.StabilityScreenService>();
     builder.Services.AddScoped<HullSizingService.Services.Solver.IFirstPrinciplesSolver, HullSizingService.Services.Solver.FirstPrinciplesSolver>();
-    Log.Information("Solver services registered (displacement closure, resistance, stability, first-principles)");
+    Log.Information("Solver services registered (hybrid displacement closure with Brent fallback, resistance, stability, first-principles)");
 
     // FluentValidation validators
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.CreateMissionCaseDto>, Shared.Validators.Sizing.CreateMissionCaseDtoValidator>();

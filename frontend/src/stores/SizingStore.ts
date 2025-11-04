@@ -171,6 +171,11 @@ export class SizingStore {
         this.candidates.length = 0;
         // Defensive: Use forEach instead of spread to avoid Symbol.iterator issues
         if (Array.isArray(candidates)) {
+          // DEBUG: Log first candidate to see property names
+          if (candidates.length > 0) {
+            console.log("[SizingStore] Sample candidate properties:", Object.keys(candidates[0]));
+            console.log("[SizingStore] Sample candidate data:", candidates[0]);
+          }
           candidates.forEach((c) => this.candidates.push(c));
           // Auto-select first candidate
           if (candidates.length > 0 && !this.selectedCandidate) {
