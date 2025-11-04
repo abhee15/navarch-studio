@@ -9,19 +9,20 @@ import { CompactHUD } from "../../components/sizing/workspace/CompactHUD";
 import { OffsetsTable } from "../../components/sizing/workspace/OffsetsTable";
 import { ParameterSliders } from "../../components/sizing/workspace/ParameterSliders";
 import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
+import { SensitivityPanel } from "../../components/sizing/workspace/SensitivityPanel";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { adjustParameter } from "../../services/sizingApi";
 import type { CandidateDesign } from "../../types/sizing";
 import { AppHeader } from "../../components/AppHeader";
-import { BarChart3, Ruler, Ship, Zap, Home, FileDown } from "lucide-react";
+import { BarChart3, Ruler, Ship, Zap, Home, FileDown, Activity } from "lucide-react";
 import { downloadDXF } from "../../utils/dxfExporter";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
   const { sizingStore, authStore } = useStore();
-  const [activeTab, setActiveTab] = useState<"kpi" | "offsets">("kpi");
+  const [activeTab, setActiveTab] = useState<"kpi" | "offsets" | "sensitivity">("kpi");
   const [showSettings, setShowSettings] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
 
@@ -241,7 +242,18 @@ export const CandidateWorkspace: React.FC = observer(() => {
                   }`}
                 >
                   <Ruler className="h-4 w-4 mr-2" />
-                  Table of Offsets
+                  Offsets
+                </button>
+                <button
+                  onClick={() => setActiveTab("sensitivity")}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === "sensitivity"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Sensitivity
                 </button>
               </div>
 
@@ -249,6 +261,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
               <div className="p-4">
                 {activeTab === "kpi" && <CompactHUD candidate={candidate} />}
                 {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
+                {activeTab === "sensitivity" && <SensitivityPanel candidate={candidate} />}
               </div>
             </div>
 
