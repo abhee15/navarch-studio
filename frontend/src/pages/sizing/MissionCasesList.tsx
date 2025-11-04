@@ -79,7 +79,7 @@ export const MissionCasesList: React.FC = observer(() => {
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder="🔍 Search briefs by name or type..."
+                  placeholder="Search briefs by name or type..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full"

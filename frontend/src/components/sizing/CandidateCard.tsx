@@ -2,7 +2,7 @@ import React from "react";
 import type { CandidateDesign } from "../../types/sizing";
 import { Button } from "../ui/button";
 import { Hull3DThumbnail } from "./visualization/Hull3DThumbnail";
-import { AlertTriangle, Award, TrendingUp } from "lucide-react";
+import { AlertTriangle, Award, TrendingUp, Check } from "lucide-react";
 
 interface CandidateCardProps {
   candidate: CandidateDesign;
@@ -164,7 +164,14 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
               onClick={onCompare}
               className={isComparing ? "ring-2 ring-primary" : ""}
             >
-              {isComparing ? "✓" : "Compare"}
+              {isComparing ? (
+                <>
+                  <Check className="h-3 w-3 mr-1" />
+                  Selected
+                </>
+              ) : (
+                "Compare"
+              )}
             </Button>
           </div>
         </div>

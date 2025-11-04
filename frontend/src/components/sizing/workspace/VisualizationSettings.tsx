@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Label } from "../../ui/label";
+import { Lightbulb } from "lucide-react";
 
 interface VisualizationSettingsProps {
   onSettingsChange: (settings: VisualizationOptions) => void;
@@ -229,7 +230,10 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           {/* Info */}
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-xs text-blue-800 dark:text-blue-400">
-              <p className="font-medium mb-1">💡 Performance Tips:</p>
+              <p className="font-medium mb-1 flex items-center gap-1">
+                <Lightbulb className="h-3 w-3" />
+                Performance Tips:
+              </p>
               <ul className="space-y-1 ml-4">
                 <li>• Lower mesh quality for faster rendering</li>
                 <li>• Fewer curves for smoother animations</li>

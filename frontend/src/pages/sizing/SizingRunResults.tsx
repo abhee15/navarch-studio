@@ -111,7 +111,7 @@ export const SizingRunResults: React.FC = observer(() => {
           {/* Compute Time */}
           {sizingStore.currentRun && sizingStore.currentRun.computeTimeMs && (
             <div className="mb-6 rounded-lg bg-accent/10 p-4 text-sm text-accent-foreground border border-accent/20">
-              ✅ Solver completed in {sizingStore.currentRun.computeTimeMs}ms
+              Solver completed in {sizingStore.currentRun.computeTimeMs}ms
             </div>
           )}
 

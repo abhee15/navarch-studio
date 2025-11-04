@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
+import { Trash2, AlertTriangle } from "lucide-react";
 
 interface BatchActionsProps {
   selectedMissions: string[];
@@ -89,7 +90,17 @@ export const BatchActions: React.FC<BatchActionsProps> = ({
                   : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
-              {showConfirm ? "⚠️ Confirm Delete?" : "🗑️ Delete"}
+              {showConfirm ? (
+                <>
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  Confirm Delete?
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </>
+              )}
             </Button>
           </div>
         </div>

@@ -212,7 +212,7 @@ export const CompactHUD: React.FC<CompactHUDProps> = ({ candidate }) => {
                   hasCritical ? "text-destructive" : "text-accent-foreground"
                 }`}
               >
-                {hasCritical ? "⚠️ Warnings" : "ℹ️ Flags"}
+                {hasCritical ? "Warnings" : "Flags"}
               </h4>
               <ul className="space-y-1 text-xs">
                 {flags.map((flag) => (

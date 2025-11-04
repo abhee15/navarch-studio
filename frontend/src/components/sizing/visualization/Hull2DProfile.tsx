@@ -476,7 +476,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                 <span className="text-gray-700 dark:text-gray-300">Design Waterline</span>
               </div>
               <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600 text-[10px] text-gray-500 dark:text-gray-400">
-                💡 Hover buttocks for offset details
+                Hover buttocks for offset details
               </div>
             </div>
           )}

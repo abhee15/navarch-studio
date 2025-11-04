@@ -522,7 +522,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                 </div>
               )}
               <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600 text-[10px] text-gray-500 dark:text-gray-400">
-                💡 Hover over waterlines and stations for details
+                Hover over waterlines and stations for details
               </div>
             </div>
           )}

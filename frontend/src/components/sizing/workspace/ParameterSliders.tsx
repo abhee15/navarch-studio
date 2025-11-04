@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Label } from "../../ui/label";
 import type { CandidateDesign } from "../../../types/sizing";
+import { Sliders, Lightbulb } from "lucide-react";
 
 interface ParameterSlidersProps {
   candidate: CandidateDesign;
@@ -98,7 +99,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
       <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow-lg">
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <span className="text-blue-600 dark:text-blue-400">🎚️</span>
+            <Sliders className="h-4 w-4 text-primary" />
             Interactive Parameters
           </h3>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -176,7 +177,10 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
           )}
 
           <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 p-4 text-xs text-yellow-800 dark:text-yellow-400">
-            <p className="font-medium mb-1">💡 How it works:</p>
+            <p className="font-medium mb-1 flex items-center gap-1">
+              <Lightbulb className="h-3 w-3" />
+              How it works:
+            </p>
             <ul className="space-y-1 ml-4">
               <li>• Drag sliders to adjust dimensions</li>
               <li>• Hull updates in real-time (visual preview)</li>

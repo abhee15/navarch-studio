@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
+import { Table } from "lucide-react";
 
 interface OffsetsTableProps {
   candidate: CandidateDesign;
@@ -54,7 +55,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
         {/* Header */}
         <div className="border-b border-gray-300 dark:border-gray-600 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900 dark:to-gray-900 p-4">
           <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span className="text-blue-600 dark:text-blue-400">📊</span>
+            <Table className="h-4 w-4 text-primary" />
             Table of Offsets
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">

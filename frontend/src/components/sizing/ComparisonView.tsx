@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { CandidateDesign } from "../../types/sizing";
 import { Button } from "../ui/button";
 import { Hull3DThumbnail } from "./visualization/Hull3DThumbnail";
+import { Check, Lightbulb } from "lucide-react";
 
 interface ComparisonViewProps {
   candidates: CandidateDesign[];
@@ -58,7 +59,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
               }`}
             >
               {format(value)} {unit}
-              {isBest && " ✓"}
+              {isBest && <Check className="h-3 w-3 ml-1 inline" />}
             </div>
           );
         })}
@@ -146,7 +147,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
           <div className="p-4 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Detailed Comparison</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Green ✓ = Best value • Red = Worst value
+              Green with checkmark = Best value • Red = Worst value
             </p>
           </div>
 
@@ -282,7 +283,10 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
 
         {/* Summary */}
         <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
-          <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-2">💡 Comparison Tips</h4>
+          <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-2 flex items-center gap-2">
+            <Lightbulb className="h-4 w-4" />
+            Comparison Tips
+          </h4>
           <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
             <li>
               • <strong>Green values</strong> indicate the best performing candidate for that metric

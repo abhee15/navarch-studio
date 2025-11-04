@@ -363,7 +363,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                       hasConstraintViolations ? "text-destructive" : "text-accent-foreground"
                     }`}
                   >
-                    {hasConstraintViolations ? "⚠️ Warnings" : "ℹ️ Flags"}
+                    {hasConstraintViolations ? "Warnings" : "Flags"}
                   </h3>
                   <ul className="space-y-2 text-sm">
                     {flags.map((flag) => (
@@ -391,7 +391,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     className="w-full"
                     onClick={() => sizingStore.exportCandidate(candidate.id, "json")}
                   >
-                    📄 Export JSON
+                    Export JSON
                   </Button>
                   <Button
                     variant="outline"

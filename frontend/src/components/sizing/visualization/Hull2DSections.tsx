@@ -451,7 +451,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                 </div>
               </div>
               <div className="pt-2 text-[10px] text-gray-500 dark:text-gray-400">
-                💡 Hover sections for station info
+                Hover sections for station info
               </div>
             </div>
           )}
