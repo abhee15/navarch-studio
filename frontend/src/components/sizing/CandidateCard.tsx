@@ -153,18 +153,20 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          <Button onClick={onSelect} className="flex-1" size="sm">
-            Open Workspace
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onCompare}
-            className={isComparing ? "ring-2 ring-primary" : ""}
-          >
-            {isComparing ? "✓" : "Compare"}
-          </Button>
+        <div className="border-t border-border pt-3 mt-1">
+          <div className="flex gap-2">
+            <Button onClick={onSelect} className="flex-1" size="sm">
+              Open Workspace
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onCompare}
+              className={isComparing ? "ring-2 ring-primary" : ""}
+            >
+              {isComparing ? "✓" : "Compare"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
