@@ -27,19 +27,19 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
   );
 
   // Calculate ratios
-  const lOverB = candidate.lppM / candidate.bM;
-  const bOverT = candidate.bM / candidate.tM;
-  const dOverT = candidate.dM / candidate.tM;
+  const lOverB = (candidate.lppM && candidate.bM) ? candidate.lppM / candidate.bM : 0;
+  const bOverT = (candidate.bM && candidate.tM) ? candidate.bM / candidate.tM : 0;
+  const dOverT = (candidate.dM && candidate.tM) ? candidate.dM / candidate.tM : 0;
   const lwlOverLambda = candidate.lwlOverLambda || 0;
 
   const metrics = [
     {
       category: "Principal Dimensions",
       items: [
-        { label: "Length (Lpp)", value: candidate.lppM.toFixed(2), unit: "m", color: "blue" },
-        { label: "Beam", value: candidate.bM.toFixed(2), unit: "m", color: "blue" },
-        { label: "Draft", value: candidate.tM.toFixed(2), unit: "m", color: "blue" },
-        { label: "Depth", value: candidate.dM.toFixed(2), unit: "m", color: "blue" },
+        { label: "Length (Lpp)", value: candidate.lppM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
+        { label: "Beam", value: candidate.bM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
+        { label: "Draft", value: candidate.tM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
+        { label: "Depth", value: candidate.dM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
         {
           label: "LOA (est.)",
           value: candidate.loaM?.toFixed(2) || "N/A",
@@ -51,9 +51,9 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
     {
       category: "Form Coefficients",
       items: [
-        { label: "Block Coeff. (Cb)", value: candidate.cb.toFixed(3), unit: "", color: "purple" },
-        { label: "Prismatic (Cp)", value: candidate.cp.toFixed(3), unit: "", color: "purple" },
-        { label: "Waterplane (Cwp)", value: candidate.cwp.toFixed(3), unit: "", color: "purple" },
+        { label: "Block Coeff. (Cb)", value: candidate.cb?.toFixed(3) || "N/A", unit: "", color: "purple" },
+        { label: "Prismatic (Cp)", value: candidate.cp?.toFixed(3) || "N/A", unit: "", color: "purple" },
+        { label: "Waterplane (Cwp)", value: candidate.cwp?.toFixed(3) || "N/A", unit: "", color: "purple" },
         {
           label: "Midship (Cm)",
           value: candidate.cm?.toFixed(3) || "N/A",
@@ -65,10 +65,10 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
     {
       category: "Dimensional Ratios",
       items: [
-        { label: "L/B", value: lOverB.toFixed(2), unit: "", color: "cyan" },
-        { label: "B/T", value: bOverT.toFixed(2), unit: "", color: "cyan" },
-        { label: "D/T", value: dOverT.toFixed(2), unit: "", color: "cyan" },
-        { label: "Lwl/λ", value: lwlOverLambda.toFixed(2), unit: "", color: "cyan" },
+        { label: "L/B", value: lOverB?.toFixed(2) || "N/A", unit: "", color: "cyan" },
+        { label: "B/T", value: bOverT?.toFixed(2) || "N/A", unit: "", color: "cyan" },
+        { label: "D/T", value: dOverT?.toFixed(2) || "N/A", unit: "", color: "cyan" },
+        { label: "Lwl/λ", value: lwlOverLambda?.toFixed(2) || "N/A", unit: "", color: "cyan" },
       ],
     },
     {
@@ -76,11 +76,11 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
       items: [
         {
           label: "Displacement",
-          value: candidate.displacementT.toFixed(0),
+          value: candidate.displacementT?.toFixed(0) || "N/A",
           unit: "t",
           color: "green",
         },
-        { label: "Froude Number", value: candidate.fn.toFixed(3), unit: "", color: "green" },
+        { label: "Froude Number", value: candidate.fn?.toFixed(3) || "N/A", unit: "", color: "green" },
         { label: "EHP", value: candidate.ehpKw?.toFixed(0) || "N/A", unit: "kW", color: "green" },
         {
           label: "SHP (est.)",

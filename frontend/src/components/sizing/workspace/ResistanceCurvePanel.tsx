@@ -244,13 +244,15 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Design Speed</p>
             <p className="text-lg font-bold text-gray-900 dark:text-white">
-              {(candidate.fn * Math.sqrt(9.81 * candidate.lwlM) * 1.944).toFixed(1)} kn
+              {(candidate.fn && candidate.lwlM) 
+                ? (candidate.fn * Math.sqrt(9.81 * candidate.lwlM) * 1.944).toFixed(1) 
+                : "N/A"} kn
             </p>
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">EHP @ Design Speed</p>
             <p className="text-lg font-bold text-green-600 dark:text-green-400">
-              {candidate.ehpKw.toFixed(0)} kW
+              {candidate.ehpKw?.toFixed(0) || "N/A"} kW
             </p>
           </div>
           <div>
@@ -262,7 +264,7 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Froude Number</p>
             <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-              {candidate.fn.toFixed(3)}
+              {candidate.fn?.toFixed(3) || "N/A"}
             </p>
           </div>
         </div>

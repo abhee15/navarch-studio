@@ -27,9 +27,16 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
 }) => {
   // Generate hull geometry
   const hullGeometry = useMemo(() => {
-    const lpp = candidate.lppM;
-    const beam = candidate.bM;
-    const draft = candidate.tM;
+    const lpp = candidate.lppM || 50;
+    const beam = candidate.bM || 10;
+    const draft = candidate.tM || 5;
+    
+    // Defensive check for NaN/undefined
+    if (!lpp || !beam || !draft || isNaN(lpp) || isNaN(beam) || isNaN(draft)) {
+      console.warn('[WigleyHull3D] Invalid dimensions:', { lpp, beam, draft, candidate });
+      // Return empty geometry
+      return new THREE.BufferGeometry();
+    }
 
     // Mesh resolution (balance between quality and performance)
     const longitudinalSegments = 60;
