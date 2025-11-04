@@ -243,7 +243,12 @@ export const MissionCasesList: React.FC = observer(() => {
                     title="Delete mission"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
                     </svg>
                   </button>
 
@@ -266,28 +271,30 @@ export const MissionCasesList: React.FC = observer(() => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white pr-8">
                       {mission.name}
                     </h3>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {mission.missionType} • {mission.cargoBasis?.toUpperCase() || "N/A"}
-                  </p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {mission.missionType} • {mission.cargoBasis?.toUpperCase() || "N/A"}
+                    </p>
 
-                  <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <dt className="font-medium text-gray-500 dark:text-gray-400">Cargo:</dt>
-                      <dd className="text-gray-900 dark:text-white">
-                        {mission.cargoBasis === "teu" && `${mission.teuCount} TEU`}
-                        {mission.cargoBasis === "weight" && `${mission.cargoValue.toFixed(0)}t`}
-                        {mission.cargoBasis === "volume" && `${mission.cargoVolumeM3}m³`}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-gray-500 dark:text-gray-400">Speed:</dt>
-                      <dd className="text-gray-900 dark:text-white">{mission.serviceSpeedKn} kn</dd>
-                    </div>
-                  </dl>
+                    <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <dt className="font-medium text-gray-500 dark:text-gray-400">Cargo:</dt>
+                        <dd className="text-gray-900 dark:text-white">
+                          {mission.cargoBasis === "teu" && `${mission.teuCount} TEU`}
+                          {mission.cargoBasis === "weight" && `${mission.cargoValue.toFixed(0)}t`}
+                          {mission.cargoBasis === "volume" && `${mission.cargoVolumeM3}m³`}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-gray-500 dark:text-gray-400">Speed:</dt>
+                        <dd className="text-gray-900 dark:text-white">
+                          {mission.serviceSpeedKn} kn
+                        </dd>
+                      </div>
+                    </dl>
 
-                  <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                    Created {new Date(mission.createdAt).toLocaleDateString()}
-                  </div>
+                    <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                      Created {new Date(mission.createdAt).toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
               ))}
