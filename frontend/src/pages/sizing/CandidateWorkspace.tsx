@@ -5,7 +5,7 @@ import { useStore } from "../../stores";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
 import { ViewportQuadLayout } from "../../components/sizing/visualization/ViewportQuadLayout";
-import { KPIPanel } from "../../components/sizing/workspace/KPIPanel";
+import { CompactHUD } from "../../components/sizing/workspace/CompactHUD";
 import { OffsetsTable } from "../../components/sizing/workspace/OffsetsTable";
 import { ParameterSliders } from "../../components/sizing/workspace/ParameterSliders";
 import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
@@ -245,7 +245,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
               </div>
 
               {/* Tab Content */}
-              {activeTab === "kpi" && <KPIPanel candidate={candidate} />}
+              {activeTab === "kpi" && <CompactHUD candidate={candidate} />}
               {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
             </div>
 
