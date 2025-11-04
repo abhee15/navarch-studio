@@ -14,7 +14,8 @@ import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { adjustParameter } from "../../services/sizingApi";
 import type { CandidateDesign } from "../../types/sizing";
 import { AppHeader } from "../../components/AppHeader";
-import { BarChart3, Ruler, Ship, Zap, Home } from "lucide-react";
+import { BarChart3, Ruler, Ship, Zap, Home, FileDown } from "lucide-react";
+import { downloadDXF } from "../../utils/dxfExporter";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
@@ -392,10 +393,19 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     variant="outline"
                     size="sm"
                     className="w-full"
+                    onClick={() => downloadDXF(candidate)}
+                  >
+                    <FileDown className="h-3 w-3 mr-2" />
+                    Export DXF (CAD)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
                     onClick={() => sizingStore.exportCandidate(candidate.id, "csv")}
                   >
                     <BarChart3 className="h-3 w-3 mr-2" />
-                    Export CSV
+                    Export CSV (Data)
                   </Button>
                 </div>
               </div>
