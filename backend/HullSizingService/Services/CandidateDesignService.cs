@@ -12,7 +12,9 @@ public class CandidateDesignService : ICandidateDesignService
     private readonly SizingDbContext _context;
     private readonly ILogger<CandidateDesignService> _logger;
 
-    public CandidateDesignService(SizingDbContext context, ILogger<CandidateDesignService> logger)
+    public CandidateDesignService(
+        SizingDbContext context, 
+        ILogger<CandidateDesignService> logger)
     {
         _context = context;
         _logger = logger;
@@ -154,6 +156,81 @@ public class CandidateDesignService : ICandidateDesignService
         sb.AppendLine($"Rank,{candidate.Rank},-");
 
         return sb.ToString();
+    }
+
+    public async Task<CandidateDesignDto?> AdjustParameterAsync(
+        Guid id,
+        AdjustParameterDto dto,
+        string tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var candidate = await _context.CandidateDesigns
+            .Include(cd => cd.SizingRun)
+                .ThenInclude(sr => sr.MissionCase)
+            .Where(cd => cd.Id == id && cd.SizingRun.MissionCase.TenantId == tenantId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (candidate == null) return null;
+
+        var mission = candidate.SizingRun.MissionCase;
+
+        // Apply the parameter adjustment
+        var adjustedValue = dto.Value;
+        switch (dto.Parameter.ToLower())
+        {
+            case "lppm":
+                candidate.LppM = adjustedValue;
+                candidate.LwlM = adjustedValue * 1.02m; // Approximate Lwl = Lpp * 1.02
+                candidate.LoaM = adjustedValue * 1.05m; // Approximate LOA = Lpp * 1.05
+                break;
+            case "bm":
+                candidate.BM = adjustedValue;
+                break;
+            case "tm":
+                candidate.TM = adjustedValue;
+                break;
+            case "dm":
+                candidate.DM = adjustedValue;
+                break;
+            case "cb":
+                candidate.Cb = adjustedValue;
+                break;
+            case "cp":
+                candidate.Cp = adjustedValue;
+                break;
+            case "cwp":
+                candidate.Cwp = adjustedValue;
+                break;
+            default:
+                throw new ArgumentException($"Parameter '{dto.Parameter}' is not adjustable");
+        }
+
+        // Recompute derived values (fast approximation)
+        // Recalculate displacement
+        var volDisp = candidate.LppM * candidate.BM * candidate.TM * candidate.Cb;
+        candidate.DisplacementT = volDisp * 1.025m; // Seawater density
+
+        // Recalculate Froude number
+        var speedMs = mission.ServiceSpeedKn * 0.5144m;
+        candidate.Fn = speedMs / (decimal)Math.Sqrt((double)(candidate.LwlM * 9.81m));
+
+        // Recalculate lwlOverLambda
+        var wavelength = 1.56m * (speedMs * speedMs) / 9.81m;
+        candidate.LwlOverLambda = candidate.LwlM / wavelength;
+
+        // NOTE: For full physics recomputation (resistance, stability), would need to:
+        // - Re-run Holtrop method for EHP/SHP
+        // - Re-run stability estimates for KB/LCB/GM
+        // Currently preserving original values to maintain fast response time (<300ms target)
+
+        _logger.LogInformation(
+            "Parameter adjusted for candidate {Id}: {Parameter}={Value}, New Δ={Disp}t, Fn={Fn}",
+            candidate.Id, dto.Parameter, dto.Value, candidate.DisplacementT, candidate.Fn);
+
+        // Save changes
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return MapToDto(candidate);
     }
 
     private static CandidateDesignDto MapToDto(CandidateDesign entity)

@@ -143,3 +143,4 @@ echo "  cd terraform/deploy"
 echo "  terraform init -reconfigure"
 echo "  terraform apply -var-file=\"environments/$ENV.tfvars\""
 
+

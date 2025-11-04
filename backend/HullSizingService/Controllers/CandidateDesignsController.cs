@@ -78,5 +78,29 @@ public class CandidateDesignsController : ControllerBase
 
         return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", $"candidate_{id}.csv");
     }
+
+    [HttpPost("{id}/adjust")]
+    public async Task<ActionResult<CandidateDesignDto>> AdjustParameter(
+        Guid id,
+        [FromBody] AdjustParameterDto dto,
+        CancellationToken ct)
+    {
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+
+        try
+        {
+            var result = await _service.AdjustParameterAsync(id, dto, tenantId, ct);
+
+            if (result == null)
+                return NotFound(new { error = "Candidate design not found" });
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }
+
 

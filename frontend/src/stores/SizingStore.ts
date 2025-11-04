@@ -196,6 +196,27 @@ export class SizingStore {
     }
   }
 
+  updateCandidate(updatedCandidate: CandidateDesign) {
+    runInAction(() => {
+      // Update in candidates array
+      const index = this.candidates.findIndex((c) => c.id === updatedCandidate.id);
+      if (index >= 0) {
+        this.candidates[index] = updatedCandidate;
+      }
+
+      // Update selected candidate if it's the same one
+      if (this.selectedCandidate?.id === updatedCandidate.id) {
+        this.selectedCandidate = updatedCandidate;
+      }
+
+      // Update in compare candidates if present
+      const compareIndex = this.compareCandidates.findIndex((c) => c.id === updatedCandidate.id);
+      if (compareIndex >= 0) {
+        this.compareCandidates[compareIndex] = updatedCandidate;
+      }
+    });
+  }
+
   toggleCompareCandidate(id: string) {
     const candidate = this.candidates.find((c) => c.id === id);
     if (!candidate) return;

@@ -147,3 +147,4 @@ public class MissionCase
     /// </summary>
     public ICollection<SizingRun> SizingRuns { get; set; } = new List<SizingRun>();
 }
+

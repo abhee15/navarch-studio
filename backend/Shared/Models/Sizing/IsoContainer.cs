@@ -35,3 +35,4 @@ public class IsoContainer
     /// </summary>
     public int MaxGrossKg { get; set; }
 }
+

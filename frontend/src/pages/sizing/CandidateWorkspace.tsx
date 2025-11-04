@@ -11,6 +11,8 @@ import { ParameterSliders } from "../../components/sizing/workspace/ParameterSli
 import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
+import { adjustParameter } from "../../services/sizingApi";
+import type { CandidateDesign } from "../../types/sizing";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
@@ -18,6 +20,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
   const { sizingStore, authStore } = useStore();
   const [activeTab, setActiveTab] = useState<"kpi" | "offsets">("kpi");
   const [showSettings, setShowSettings] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
 
   const candidate = sizingStore.selectedCandidate;
 
@@ -39,6 +42,53 @@ export const CandidateWorkspace: React.FC = observer(() => {
   const handleLogout = () => {
     authStore.logout();
     navigate("/login");
+  };
+
+  const handleParameterAdjust = async (updates: Partial<CandidateDesign>) => {
+    if (!candidate) return;
+
+    setIsAdjusting(true);
+    try {
+      // Determine which parameter was updated
+      let parameter = "";
+      let value = 0;
+
+      if (updates.lppM !== undefined) {
+        parameter = "lppM";
+        value = updates.lppM;
+      } else if (updates.bM !== undefined) {
+        parameter = "bM";
+        value = updates.bM;
+      } else if (updates.tM !== undefined) {
+        parameter = "tM";
+        value = updates.tM;
+      } else if (updates.cb !== undefined) {
+        parameter = "cb";
+        value = updates.cb;
+      }
+
+      if (!parameter) {
+        console.warn("No recognized parameter in updates:", updates);
+        return;
+      }
+
+      console.log(`[Adjusting] ${parameter} = ${value} for candidate ${candidate.id}`);
+
+      const updatedCandidate = await adjustParameter(candidate.id, {
+        parameter,
+        value,
+        recomputeMode: "fast",
+      });
+
+      // Update the candidate in the store
+      sizingStore.updateCandidate(updatedCandidate);
+
+      console.log("[Adjusted] New displacement:", updatedCandidate.displacementT);
+    } catch (error) {
+      console.error("Failed to adjust parameter:", error);
+    } finally {
+      setIsAdjusting(false);
+    }
   };
 
   if (!candidate) {
@@ -242,11 +292,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
             <div className="space-y-6">
               <ParameterSliders
                 candidate={candidate}
-                onUpdate={(updates) => {
-                  // TODO: Implement parameter update with solver re-run
-                  console.log("Parameter update:", updates);
-                }}
-                isUpdating={sizingStore.isLoading}
+                onUpdate={handleParameterAdjust}
+                isUpdating={isAdjusting}
               />
             </div>
 

@@ -58,3 +58,14 @@ public record UpdateCandidateDesignDto
     public bool? IsSelected { get; init; }
 }
 
+/// <summary>
+/// DTO for adjusting a parameter and recomputing candidate
+/// </summary>
+public record AdjustParameterDto
+{
+    public string Parameter { get; init; } = string.Empty;
+    public decimal Value { get; init; }
+    public string RecomputeMode { get; init; } = "fast"; // "fast" or "full"
+}
+
+

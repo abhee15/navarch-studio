@@ -10,3 +10,4 @@ public interface ISizingRunService
     Task<List<CandidateDesignDto>> GetCandidatesAsync(Guid runId, string tenantId, CancellationToken cancellationToken = default);
 }
 
+

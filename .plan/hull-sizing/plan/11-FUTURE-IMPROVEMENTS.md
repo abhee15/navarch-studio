@@ -646,3 +646,4 @@ ALTER TABLE sizing.candidate_designs
 **Owner:** Development Team
 **Stakeholders:** Product, DevOps, QA
 
+

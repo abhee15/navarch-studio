@@ -145,3 +145,4 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
     </div>
   );
 };
+

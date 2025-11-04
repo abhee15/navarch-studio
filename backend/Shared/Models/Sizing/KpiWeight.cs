@@ -25,3 +25,4 @@ public class KpiWeight
     /// </summary>
     public decimal Weight { get; set; }
 }
+

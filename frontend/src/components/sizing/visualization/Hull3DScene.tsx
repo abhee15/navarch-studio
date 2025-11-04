@@ -147,3 +147,4 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
     </div>
   );
 };
+

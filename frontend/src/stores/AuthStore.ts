@@ -23,6 +23,7 @@ type AuthMode = "cognito" | "local";
 export class AuthStore {
   user: User | null = null;
   isAuthenticated = false;
+  initializing = true; // Track if auth is being initialized
   loading = false;
   error: string | null = null;
   private currentSession: CognitoUserSession | null = null;
@@ -49,18 +50,31 @@ export class AuthStore {
         runInAction(() => {
           this.user = user;
           this.isAuthenticated = true;
+          this.initializing = false;
+        });
+      } else {
+        runInAction(() => {
+          this.initializing = false;
         });
       }
     } else {
       // Cognito auth - check for existing session
       const userPool = getUserPool();
-      if (!userPool) return;
+      if (!userPool) {
+        runInAction(() => {
+          this.initializing = false;
+        });
+        return;
+      }
 
       const cognitoUser = userPool.getCurrentUser();
       if (cognitoUser) {
         cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
           if (err || !session?.isValid()) {
             console.log("No valid session found");
+            runInAction(() => {
+              this.initializing = false;
+            });
             return;
           }
 
@@ -68,6 +82,9 @@ export class AuthStore {
             (err: Error | undefined, attributes: CognitoUserAttribute[] | undefined) => {
               if (err || !attributes) {
                 console.log("Failed to get user attributes");
+                runInAction(() => {
+                  this.initializing = false;
+                });
                 return;
               }
 
@@ -85,9 +102,14 @@ export class AuthStore {
                 };
                 this.isAuthenticated = true;
                 this.currentSession = session;
+                this.initializing = false;
               });
             }
           );
+        });
+      } else {
+        runInAction(() => {
+          this.initializing = false;
         });
       }
     }

@@ -95,3 +95,20 @@ export const pushToResistance = async (candidateId: string): Promise<{ calculati
   );
   return response.data;
 };
+
+export interface AdjustParameterDto {
+  parameter: string;
+  value: number;
+  recomputeMode?: "fast" | "full";
+}
+
+export const adjustParameter = async (
+  candidateId: string,
+  dto: AdjustParameterDto
+): Promise<CandidateDesign> => {
+  const response = await api.post<CandidateDesign>(
+    `${BASE_PATH}/candidates/${candidateId}/adjust`,
+    dto
+  );
+  return response.data;
+};

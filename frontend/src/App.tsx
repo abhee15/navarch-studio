@@ -32,10 +32,22 @@ declare global {
   }
 }
 
-const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactElement }> = observer(({ children }) => {
   const { authStore } = useStore();
+
+  // Show loading while checking authentication status
+  if (authStore.initializing) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-lg">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   return authStore.isAuthenticated ? children : <Navigate to="/login" />;
-};
+});
 
 /**
  * ConfigLoader component

@@ -64,3 +64,4 @@ public class SizingRun
     /// </summary>
     public ICollection<CandidateDesign> Candidates { get; set; } = new List<CandidateDesign>();
 }
+

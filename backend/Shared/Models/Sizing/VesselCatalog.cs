@@ -103,3 +103,4 @@ public class VesselCatalog
     /// </summary>
     public string? LicenseInfo { get; set; }
 }
+
