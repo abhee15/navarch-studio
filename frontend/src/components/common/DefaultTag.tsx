@@ -52,3 +52,4 @@ export function DefaultTag({ provenance, onClear }: DefaultTagProps) {
     </div>
   );
 }
+

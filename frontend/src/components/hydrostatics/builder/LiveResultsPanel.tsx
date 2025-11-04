@@ -73,3 +73,4 @@ export function LiveResultsPanel({ loa, beam, draft, cb }: LiveResultsPanelProps
     </div>
   );
 }
+

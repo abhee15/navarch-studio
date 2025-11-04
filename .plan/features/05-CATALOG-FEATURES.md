@@ -673,3 +673,4 @@ y(x,z) = (B/2) × (1 - (2x/L)²) × (1 - (z/T)²)
 **Last Updated**: November 4, 2025  
 **Module Owner**: Catalog Team  
 **Next Review**: After external data files obtained
+

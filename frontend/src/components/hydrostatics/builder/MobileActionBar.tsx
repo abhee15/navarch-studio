@@ -26,3 +26,5 @@ export function MobileActionBar({ onCancel, onSave, loading }: MobileActionBarPr
     </div>
   );
 }
+
+

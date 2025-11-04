@@ -609,3 +609,4 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
     </div>
   );
 }
+

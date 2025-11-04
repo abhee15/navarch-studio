@@ -246,3 +246,4 @@ export function CreateVesselDialog({ isOpen, onClose, onVesselCreated }: CreateV
 }
 
 export default CreateVesselDialog;
+

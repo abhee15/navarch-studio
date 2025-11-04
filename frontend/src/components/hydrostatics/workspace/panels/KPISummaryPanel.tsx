@@ -83,3 +83,4 @@ export const KPISummaryPanel = observer(({ result }: KPISummaryPanelProps) => {
     </div>
   );
 });
+

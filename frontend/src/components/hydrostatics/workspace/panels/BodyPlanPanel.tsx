@@ -122,3 +122,4 @@ export const BodyPlanPanel = observer(({ vesselId, lpp, onSync3DView }: BodyPlan
 });
 
 export default BodyPlanPanel;
+

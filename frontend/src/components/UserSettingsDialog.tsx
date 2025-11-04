@@ -160,3 +160,4 @@ export const UserSettingsDialog = observer(({ isOpen, onClose }: UserSettingsDia
     </div>
   );
 });
+

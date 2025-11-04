@@ -528,3 +528,4 @@ export const HullDetailPage: React.FC = observer(() => {
     </div>
   );
 });
+

@@ -247,3 +247,4 @@ export interface SpeedDraftMatrixResult {
   totalPoints: number;
   calculationMethod: string;
 }
+

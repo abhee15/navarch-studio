@@ -21,8 +21,8 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
   // Generate offsets using Wigley hull form
   const offsets = useMemo(() => {
     const lpp = candidate.lppM;
-    const beam = candidate.bM;
-    const draft = candidate.tM;
+    const beam = candidate.beamM;
+    const draft = candidate.draftM;
 
     const stations = Array.from({ length: stationCount }, (_, i) => i / (stationCount - 1));
     const waterlines = Array.from({ length: waterlineCount }, (_, i) => i / (waterlineCount - 1));
@@ -41,11 +41,11 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
         return halfBreadth;
       });
     });
-  }, [candidate.lppM, candidate.bM, candidate.tM, stationCount, waterlineCount]);
+  }, [candidate.lppM, candidate.beamM, candidate.draftM, stationCount, waterlineCount]);
 
   const stationLabels = Array.from({ length: stationCount }, (_, i) => i);
   const waterlineLabels = Array.from({ length: waterlineCount }, (_, i) =>
-    ((i / (waterlineCount - 1)) * candidate.tM).toFixed(2)
+    ((i / (waterlineCount - 1)) * candidate.draftM).toFixed(2)
   );
 
   return (
@@ -145,3 +145,5 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
     </div>
   );
 };
+
+

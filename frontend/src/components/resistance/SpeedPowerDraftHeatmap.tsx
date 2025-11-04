@@ -475,3 +475,4 @@ export function SpeedPowerDraftHeatmap({ matrixResult, onClose }: SpeedPowerDraf
     </div>
   );
 }
+

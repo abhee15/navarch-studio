@@ -29,3 +29,4 @@ export function getAuthMode(): "cognito" | "local" {
 export function getApiUrl(): string {
   return getEnv("VITE_API_URL", "http://localhost:5002") as string;
 }
+

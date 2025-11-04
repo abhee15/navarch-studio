@@ -130,3 +130,4 @@ export const BenchmarksList = observer(function BenchmarksList() {
     </div>
   );
 });
+

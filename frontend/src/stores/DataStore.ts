@@ -14,3 +14,4 @@ export class DataStore {
 
   // Add data-related methods as needed for your application
 }
+

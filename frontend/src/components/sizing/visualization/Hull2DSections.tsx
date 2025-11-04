@@ -36,8 +36,8 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
     const [hoveredSection, setHoveredSection] = useState<number | null>(null);
 
     const sections = useMemo(() => {
-      const beam = candidate.bM;
-      const draft = candidate.tM;
+      const beam = candidate.beamM;
+      const draft = candidate.draftM;
       const sectionCurves = [];
 
       for (let i = 0; i <= stationCount; i++) {
@@ -72,14 +72,14 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
       }
 
       return sectionCurves;
-    }, [candidate.bM, candidate.tM, stationCount]);
+    }, [candidate.beamM, candidate.draftM, stationCount]);
 
     const padding = 60;
     const svgWidth = 600;
     const svgHeight = 500;
-    const beam = candidate.bM;
-    const draft = candidate.tM;
-    const depth = candidate.dM;
+    const beam = candidate.beamM;
+    const draft = candidate.draftM;
+    const depth = candidate.depthM;
     const scaleY = (svgWidth / 2 - padding) / (beam / 2);
     const scaleZ = (svgHeight - 2 * padding) / depth;
     const scale = Math.min(scaleY, scaleZ);
@@ -490,3 +490,4 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
 );
 
 Hull2DSections.displayName = "Hull2DSections";
+

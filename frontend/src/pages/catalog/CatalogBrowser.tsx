@@ -399,3 +399,4 @@ export const CatalogBrowser: React.FC = observer(() => {
     </div>
   );
 });
+

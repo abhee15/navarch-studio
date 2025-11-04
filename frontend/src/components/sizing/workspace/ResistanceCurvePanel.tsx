@@ -281,3 +281,4 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
     </div>
   );
 };
+

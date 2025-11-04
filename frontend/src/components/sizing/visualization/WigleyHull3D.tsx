@@ -28,8 +28,8 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
   // Generate hull geometry
   const hullGeometry = useMemo(() => {
     const lpp = candidate.lppM || 50;
-    const beam = candidate.bM || 10;
-    const draft = candidate.tM || 5;
+    const beam = candidate.beamM || 10;
+    const draft = candidate.draftM || 5;
 
     // Defensive check for NaN/undefined
     if (!lpp || !beam || !draft || isNaN(lpp) || isNaN(beam) || isNaN(draft)) {
@@ -95,26 +95,26 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
     geometry.computeVertexNormals(); // Smooth shading
 
     return geometry;
-  }, [candidate.lppM, candidate.bM, candidate.tM]);
+  }, [candidate.lppM, candidate.beamM, candidate.draftM]);
 
   // Waterplane (horizontal plane at draft)
   const waterplaneGeometry = useMemo(() => {
     if (!showWaterplane) return null;
 
     const lpp = candidate.lppM;
-    const beam = candidate.bM;
+    const beam = candidate.beamM;
 
     const geometry = new THREE.PlaneGeometry(lpp, beam);
     geometry.rotateX(-Math.PI / 2); // Rotate to horizontal
     return geometry;
-  }, [candidate.lppM, candidate.bM, showWaterplane]);
+  }, [candidate.lppM, candidate.beamM, showWaterplane]);
 
   // Center markers (LCB, LCG, KB)
   const centerMarkers = useMemo(() => {
     if (!showCenters) return null;
 
     const lpp = candidate.lppM;
-    const draft = candidate.tM;
+    const draft = candidate.draftM;
     const lcbPct = candidate.lcbPctLpp || 0;
     const kb = candidate.kbM || draft / 2; // Approximate if not provided
 
@@ -126,7 +126,7 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
       lcg: { x: 0, y: 0, z: -draft / 2, color: "#10b981" }, // Green - CG (approximate)
       kb: { x: 0, y: 0, z: -kb, color: "#3b82f6" }, // Blue - KB
     };
-  }, [candidate.lppM, candidate.tM, candidate.lcbPctLpp, candidate.kbM, showCenters]);
+  }, [candidate.lppM, candidate.draftM, candidate.lcbPctLpp, candidate.kbM, showCenters]);
 
   return (
     <group>
@@ -174,3 +174,4 @@ export const WigleyHull3D: React.FC<WigleyHull3DProps> = ({
     </group>
   );
 };
+

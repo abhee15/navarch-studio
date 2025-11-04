@@ -21,8 +21,8 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
 }) => {
   const [localValues, setLocalValues] = useState({
     lpp: candidate.lppM,
-    beam: candidate.bM,
-    draft: candidate.tM,
+    beam: candidate.beamM,
+    draft: candidate.draftM,
     cb: candidate.cb,
   });
 
@@ -38,10 +38,10 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
         updates.lppM = localValues.lpp;
         break;
       case "beam":
-        updates.bM = localValues.beam;
+        updates.beamM = localValues.beam;
         break;
       case "draft":
-        updates.tM = localValues.draft;
+        updates.draftM = localValues.draft;
         break;
       case "cb":
         updates.cb = localValues.cb;
@@ -65,8 +65,8 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
       id: "beam",
       label: "Beam",
       value: localValues.beam,
-      min: candidate.bM * 0.7,
-      max: candidate.bM * 1.3,
+      min: candidate.beamM * 0.7,
+      max: candidate.beamM * 1.3,
       step: 0.1,
       unit: "m",
       color: "cyan",
@@ -75,8 +75,8 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
       id: "draft",
       label: "Draft",
       value: localValues.draft,
-      min: candidate.tM * 0.7,
-      max: candidate.tM * 1.3,
+      min: candidate.draftM * 0.7,
+      max: candidate.draftM * 1.3,
       step: 0.1,
       unit: "m",
       color: "green",
@@ -227,3 +227,5 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
     </div>
   );
 };
+
+

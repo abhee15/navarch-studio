@@ -17,7 +17,7 @@ interface Hull3DThumbnailProps {
  * - Fixed camera angle for consistency
  */
 export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, height = 200 }) => {
-  const cameraDistance = Math.max(candidate.lppM, candidate.bM, candidate.tM) * 2;
+  const cameraDistance = Math.max(candidate.lppM, candidate.beamM, candidate.draftM) * 2;
 
   return (
     <div
@@ -57,3 +57,5 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, hei
     </div>
   );
 };
+
+

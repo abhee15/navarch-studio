@@ -56,12 +56,12 @@ export const CandidateWorkspace: React.FC = observer(() => {
       if (updates.lppM !== undefined) {
         parameter = "lppM";
         value = updates.lppM;
-      } else if (updates.bM !== undefined) {
+      } else if (updates.beamM !== undefined) {
         parameter = "bM";
-        value = updates.bM;
-      } else if (updates.tM !== undefined) {
+        value = updates.beamM;
+      } else if (updates.draftM !== undefined) {
         parameter = "tM";
-        value = updates.tM;
+        value = updates.draftM;
       } else if (updates.cb !== undefined) {
         parameter = "cb";
         value = updates.cb;
@@ -83,7 +83,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
       // Update the candidate in the store
       sizingStore.updateCandidate(updatedCandidate);
 
-      console.log("[Adjusted] New displacement:", updatedCandidate.displacementT);
+      console.log("[Adjusted] New displacement:", updatedCandidate.dispT);
     } catch (error) {
       console.error("Failed to adjust parameter:", error);
     } finally {
@@ -305,7 +305,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                   <div className="flex justify-between">
                     <dt className="text-gray-600 dark:text-gray-400">Displacement:</dt>
                     <dd className="font-medium text-gray-900 dark:text-white">
-                      {candidate.displacementT.toFixed(0)} tonnes
+                      {candidate.dispT.toFixed(0)} tonnes
                     </dd>
                   </div>
                   <div className="flex justify-between">
@@ -474,3 +474,4 @@ export const CandidateWorkspace: React.FC = observer(() => {
     </div>
   );
 });
+

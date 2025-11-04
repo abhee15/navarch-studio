@@ -32,3 +32,4 @@ describe("AuthStore", () => {
     expect(authStore.isAuthenticated).toBe(false);
   });
 });
+

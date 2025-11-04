@@ -369,3 +369,4 @@ export function ResistanceBreakdownTable({ result }: ResistanceBreakdownTablePro
     </div>
   );
 }
+

@@ -69,3 +69,4 @@ export interface CompareRunsRequest {
   baselineSnapshotId: string;
   candidateSnapshotId: string;
 }
+

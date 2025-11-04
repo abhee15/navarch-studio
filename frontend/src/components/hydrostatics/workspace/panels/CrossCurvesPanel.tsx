@@ -328,3 +328,4 @@ export const CrossCurvesPanel = observer(({ vesselId, vessel }: CrossCurvesPanel
     </div>
   );
 });
+

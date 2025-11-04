@@ -36,8 +36,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 
     const buttocks = useMemo(() => {
       const lpp = candidate.lppM;
-      const beam = candidate.bM;
-      const draft = candidate.tM;
+      const beam = candidate.beamM;
+      const draft = candidate.draftM;
       const lines = [];
 
       for (let i = 0; i <= buttockCount; i++) {
@@ -75,12 +75,12 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
       }
 
       return lines;
-    }, [candidate.lppM, candidate.bM, candidate.tM, buttockCount]);
+    }, [candidate.lppM, candidate.beamM, candidate.draftM, buttockCount]);
 
     const sheerline = useMemo(() => {
       const lpp = candidate.lppM;
-      const depth = candidate.dM;
-      const draft = candidate.tM;
+      const depth = candidate.depthM;
+      const draft = candidate.draftM;
       const freeboard = depth - draft;
       const points: [number, number][] = [];
       const numPoints = 60;
@@ -95,20 +95,20 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
       }
 
       return points;
-    }, [candidate.lppM, candidate.dM, candidate.tM]);
+    }, [candidate.lppM, candidate.depthM, candidate.draftM]);
 
     const padding = 80;
     const svgWidth = 900;
     const svgHeight = 400;
     const lpp = candidate.lppM;
-    const depth = candidate.dM;
+    const depth = candidate.depthM;
     const scaleX = (svgWidth - 2 * padding) / lpp;
     const scaleY = (svgHeight - 2 * padding) / depth;
     const scale = Math.min(scaleX, scaleY);
 
     const toSVG = (x: number, y: number): [number, number] => [
       svgWidth / 2 + x * scale,
-      svgHeight - padding - (y + candidate.tM) * scale,
+      svgHeight - padding - (y + candidate.draftM) * scale,
     ];
 
     const generatePath = (points: [number, number][]) =>
@@ -164,17 +164,17 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             className="fill-gray-600 dark:fill-gray-400"
             style={{ fontSize: "11px" }}
           >
-            {candidate.hullFamily.replace("_", " ").toUpperCase()} · T {candidate.tM.toFixed(2)}m ×
-            D {candidate.dM.toFixed(2)}m
+            {candidate.hullFamily.replace("_", " ").toUpperCase()} · T {candidate.draftM.toFixed(2)}m ×
+            D {candidate.depthM.toFixed(2)}m
           </text>
 
           {/* Baseline */}
           {showBaseline && (
             <line
-              x1={toSVG(-lpp / 2, -candidate.tM)[0]}
-              y1={toSVG(-lpp / 2, -candidate.tM)[1]}
-              x2={toSVG(lpp / 2, -candidate.tM)[0]}
-              y2={toSVG(lpp / 2, -candidate.tM)[1]}
+              x1={toSVG(-lpp / 2, -candidate.draftM)[0]}
+              y1={toSVG(-lpp / 2, -candidate.draftM)[1]}
+              x2={toSVG(lpp / 2, -candidate.draftM)[0]}
+              y2={toSVG(lpp / 2, -candidate.draftM)[1]}
               stroke="#6b7280"
               strokeWidth="2"
               strokeDasharray="10,5"
@@ -183,19 +183,19 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 
           {/* Perpendiculars */}
           <line
-            x1={toSVG(-lpp / 2, -candidate.tM)[0]}
-            y1={toSVG(-lpp / 2, -candidate.tM)[1]}
-            x2={toSVG(-lpp / 2, candidate.dM - candidate.tM)[0]}
-            y2={toSVG(-lpp / 2, candidate.dM - candidate.tM)[1]}
+            x1={toSVG(-lpp / 2, -candidate.draftM)[0]}
+            y1={toSVG(-lpp / 2, -candidate.draftM)[1]}
+            x2={toSVG(-lpp / 2, candidate.depthM - candidate.draftM)[0]}
+            y2={toSVG(-lpp / 2, candidate.depthM - candidate.draftM)[1]}
             stroke="#ef4444"
             strokeWidth="3"
             filter="url(#shadow)"
           />
           <line
-            x1={toSVG(lpp / 2, -candidate.tM)[0]}
-            y1={toSVG(lpp / 2, -candidate.tM)[1]}
-            x2={toSVG(lpp / 2, candidate.dM - candidate.tM)[0]}
-            y2={toSVG(lpp / 2, candidate.dM - candidate.tM)[1]}
+            x1={toSVG(lpp / 2, -candidate.draftM)[0]}
+            y1={toSVG(lpp / 2, -candidate.draftM)[1]}
+            x2={toSVG(lpp / 2, candidate.depthM - candidate.draftM)[0]}
+            y2={toSVG(lpp / 2, candidate.depthM - candidate.draftM)[1]}
             stroke="#10b981"
             strokeWidth="3"
             filter="url(#shadow)"
@@ -316,10 +316,10 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 
               {/* Lpp */}
               <line
-                x1={toSVG(-lpp / 2, -candidate.tM - 5)[0]}
-                y1={toSVG(-lpp / 2, -candidate.tM - 5)[1]}
-                x2={toSVG(lpp / 2, -candidate.tM - 5)[0]}
-                y2={toSVG(lpp / 2, -candidate.tM - 5)[1]}
+                x1={toSVG(-lpp / 2, -candidate.draftM - 5)[0]}
+                y1={toSVG(-lpp / 2, -candidate.draftM - 5)[1]}
+                x2={toSVG(lpp / 2, -candidate.draftM - 5)[0]}
+                y2={toSVG(lpp / 2, -candidate.draftM - 5)[1]}
                 stroke="#374151"
                 strokeWidth="1.2"
                 markerStart="url(#arrow-prof-l)"
@@ -327,7 +327,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               />
               <rect
                 x={svgWidth / 2 - 50}
-                y={toSVG(0, -candidate.tM - 5)[1] + 8}
+                y={toSVG(0, -candidate.draftM - 5)[1] + 8}
                 width="100"
                 height="18"
                 rx="4"
@@ -338,7 +338,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               />
               <text
                 x={svgWidth / 2}
-                y={toSVG(0, -candidate.tM - 5)[1] + 20}
+                y={toSVG(0, -candidate.draftM - 5)[1] + 20}
                 textAnchor="middle"
                 className="fill-gray-900 font-bold"
                 style={{ fontSize: "11px" }}
@@ -348,8 +348,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 
               {/* Draft */}
               <line
-                x1={toSVG(-lpp / 2 - 10, -candidate.tM)[0]}
-                y1={toSVG(-lpp / 2 - 10, -candidate.tM)[1]}
+                x1={toSVG(-lpp / 2 - 10, -candidate.draftM)[0]}
+                y1={toSVG(-lpp / 2 - 10, -candidate.draftM)[1]}
                 x2={toSVG(-lpp / 2 - 10, 0)[0]}
                 y2={toSVG(-lpp / 2 - 10, 0)[1]}
                 stroke="#374151"
@@ -358,8 +358,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                 markerEnd="url(#arrow-prof-r)"
               />
               <rect
-                x={toSVG(-lpp / 2 - 10, -candidate.tM / 2)[0] - 50}
-                y={toSVG(-lpp / 2 - 10, -candidate.tM / 2)[1] - 9}
+                x={toSVG(-lpp / 2 - 10, -candidate.draftM / 2)[0] - 50}
+                y={toSVG(-lpp / 2 - 10, -candidate.draftM / 2)[1] - 9}
                 width="70"
                 height="18"
                 rx="4"
@@ -369,29 +369,29 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                 filter="url(#shadow)"
               />
               <text
-                x={toSVG(-lpp / 2 - 10, -candidate.tM / 2)[0] - 15}
-                y={toSVG(-lpp / 2 - 10, -candidate.tM / 2)[1] + 3}
+                x={toSVG(-lpp / 2 - 10, -candidate.draftM / 2)[0] - 15}
+                y={toSVG(-lpp / 2 - 10, -candidate.draftM / 2)[1] + 3}
                 textAnchor="middle"
                 className="fill-cyan-700 dark:fill-cyan-400 font-bold"
                 style={{ fontSize: "10px" }}
               >
-                T = {candidate.tM.toFixed(2)}m
+                T = {candidate.draftM.toFixed(2)}m
               </text>
 
               {/* Depth */}
               <line
-                x1={toSVG(-lpp / 2 - 22, -candidate.tM)[0]}
-                y1={toSVG(-lpp / 2 - 22, -candidate.tM)[1]}
-                x2={toSVG(-lpp / 2 - 22, candidate.dM - candidate.tM)[0]}
-                y2={toSVG(-lpp / 2 - 22, candidate.dM - candidate.tM)[1]}
+                x1={toSVG(-lpp / 2 - 22, -candidate.draftM)[0]}
+                y1={toSVG(-lpp / 2 - 22, -candidate.draftM)[1]}
+                x2={toSVG(-lpp / 2 - 22, candidate.depthM - candidate.draftM)[0]}
+                y2={toSVG(-lpp / 2 - 22, candidate.depthM - candidate.draftM)[1]}
                 stroke="#374151"
                 strokeWidth="1.2"
                 markerStart="url(#arrow-prof-l)"
                 markerEnd="url(#arrow-prof-r)"
               />
               <rect
-                x={toSVG(-lpp / 2 - 22, (candidate.dM - candidate.tM - candidate.tM) / 2)[0] - 50}
-                y={toSVG(-lpp / 2 - 22, (candidate.dM - candidate.tM - candidate.tM) / 2)[1] - 9}
+                x={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[0] - 50}
+                y={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[1] - 9}
                 width="70"
                 height="18"
                 rx="4"
@@ -401,13 +401,13 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                 filter="url(#shadow)"
               />
               <text
-                x={toSVG(-lpp / 2 - 22, (candidate.dM - candidate.tM - candidate.tM) / 2)[0] - 15}
-                y={toSVG(-lpp / 2 - 22, (candidate.dM - candidate.tM - candidate.tM) / 2)[1] + 3}
+                x={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[0] - 15}
+                y={toSVG(-lpp / 2 - 22, (candidate.depthM - candidate.draftM - candidate.draftM) / 2)[1] + 3}
                 textAnchor="middle"
                 className="fill-purple-700 dark:fill-purple-400 font-bold"
                 style={{ fontSize: "10px" }}
               >
-                D = {candidate.dM.toFixed(2)}m
+                D = {candidate.depthM.toFixed(2)}m
               </text>
             </>
           )}
@@ -433,7 +433,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
           <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
             <div className="w-5 h-0.5 bg-blue-300"></div>
             <span className="text-gray-700 dark:text-gray-300">
-              Buttocks (0-{(candidate.bM / 2).toFixed(1)}m)
+              Buttocks (0-{(candidate.beamM / 2).toFixed(1)}m)
             </span>
           </div>
           <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
@@ -469,15 +469,15 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             </span>
             <span className="text-gray-600 dark:text-gray-400">Draft:</span>
             <span className="font-semibold text-cyan-700 dark:text-cyan-400">
-              {candidate.tM.toFixed(2)} m
+              {candidate.draftM.toFixed(2)} m
             </span>
             <span className="text-gray-600 dark:text-gray-400">Depth:</span>
             <span className="font-semibold text-purple-700 dark:text-purple-400">
-              {candidate.dM.toFixed(2)} m
+              {candidate.depthM.toFixed(2)} m
             </span>
             <span className="text-gray-600 dark:text-gray-400">Freeboard:</span>
             <span className="font-semibold text-green-700 dark:text-green-400">
-              {(candidate.dM - candidate.tM).toFixed(2)} m
+              {(candidate.depthM - candidate.draftM).toFixed(2)} m
             </span>
           </div>
         </div>
@@ -494,3 +494,4 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 );
 
 Hull2DProfile.displayName = "Hull2DProfile";
+

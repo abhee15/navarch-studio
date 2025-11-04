@@ -38,8 +38,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     // Calculate waterline curves
     const waterlines = useMemo(() => {
       const lpp = candidate.lppM;
-      const beam = candidate.bM;
-      const draft = candidate.tM;
+      const beam = candidate.beamM;
+      const draft = candidate.draftM;
       const lines = [];
 
       for (let i = 0; i <= waterlineCount; i++) {
@@ -63,7 +63,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       }
 
       return lines;
-    }, [candidate.lppM, candidate.bM, candidate.tM, waterlineCount]);
+    }, [candidate.lppM, candidate.beamM, candidate.draftM, waterlineCount]);
 
     const stations = useMemo(() => {
       const lpp = candidate.lppM;
@@ -78,7 +78,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     const svgWidth = 800;
     const svgHeight = 400;
     const lpp = candidate.lppM;
-    const beam = candidate.bM;
+    const beam = candidate.beamM;
     const scaleX = (svgWidth - 2 * padding) / lpp;
     const scaleY = (svgHeight - 2 * padding) / beam;
     const scale = Math.min(scaleX, scaleY);
@@ -487,7 +487,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
           <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
             <div className="w-5 h-0.5 bg-gradient-to-r from-blue-600 to-blue-400 shadow-sm"></div>
             <span className="text-gray-700 dark:text-gray-300">
-              Design Waterline (T={candidate.tM.toFixed(1)}m)
+              Design Waterline (T={candidate.draftM.toFixed(1)}m)
             </span>
           </div>
           <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
@@ -532,3 +532,4 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 );
 
 Hull2DPlan.displayName = "Hull2DPlan";
+

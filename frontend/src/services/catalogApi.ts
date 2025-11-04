@@ -123,3 +123,4 @@ export const getPropellerSeriesPoints = async (
   const response = await api.get(`/catalog/propellers/${id}/points`);
   return response.data;
 };
+

@@ -27,7 +27,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   showGrid = true,
 }) => {
   // Calculate camera distance based on hull size
-  const cameraDistance = Math.max(candidate.lppM, candidate.bM, candidate.tM) * 2;
+  const cameraDistance = Math.max(candidate.lppM, candidate.beamM, candidate.draftM) * 2;
 
   return (
     <div className="w-full h-full relative bg-slate-50">
@@ -97,11 +97,11 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-600">Beam:</span>
-            <span className="font-medium">{candidate.bM.toFixed(2)} m</span>
+            <span className="font-medium">{candidate.beamM.toFixed(2)} m</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-600">Draft:</span>
-            <span className="font-medium">{candidate.tM.toFixed(2)} m</span>
+            <span className="font-medium">{candidate.draftM.toFixed(2)} m</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-600">Cb:</span>
@@ -147,3 +147,5 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
     </div>
   );
 };
+
+

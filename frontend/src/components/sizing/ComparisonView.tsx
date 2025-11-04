@@ -164,19 +164,19 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
               )}
               {renderMetric(
                 "Beam",
-                compareCandidates.map((c) => c.bM),
+                compareCandidates.map((c) => c.beamM),
                 "m"
               )}
               {renderMetric(
                 "Draft",
-                compareCandidates.map((c) => c.tM),
+                compareCandidates.map((c) => c.draftM),
                 "m",
                 (v) => v.toFixed(2),
                 true
               )}
               {renderMetric(
                 "Depth",
-                compareCandidates.map((c) => c.dM),
+                compareCandidates.map((c) => c.depthM),
                 "m"
               )}
               {renderMetric(
@@ -226,7 +226,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
               </h4>
               {renderMetric(
                 "Displacement",
-                compareCandidates.map((c) => c.displacementT),
+                compareCandidates.map((c) => c.dispT),
                 "tonnes",
                 (v) => v.toFixed(0)
               )}
@@ -301,3 +301,4 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
     </div>
   );
 });
+

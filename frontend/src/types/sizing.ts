@@ -94,9 +94,9 @@ export interface CandidateDesign {
   lppM: number;
   lwlM: number;
   loaM: number;
-  bM: number;
-  tM: number;
-  dM: number;
+  beamM: number;
+  draftM: number;
+  depthM: number;
 
   // Form coefficients
   cb: number;
@@ -105,7 +105,7 @@ export interface CandidateDesign {
   cm?: number;
 
   // Derived values
-  displacementT: number;
+  dispT: number;
   fn: number;
   lwlOverLambda?: number;
 
@@ -159,3 +159,4 @@ export interface SizingWorkspaceState {
   viewMode: "3d" | "2d" | "table";
   locksEnabled: SizingLocksDto;
 }
+

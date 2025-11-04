@@ -192,3 +192,4 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
     </div>
   );
 });
+

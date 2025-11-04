@@ -150,3 +150,4 @@ Write-Host "  terraform init -reconfigure" -ForegroundColor White
 Write-Host "  terraform apply -var-file=`"environments/$Environment.tfvars`"" -ForegroundColor White
 
 
+

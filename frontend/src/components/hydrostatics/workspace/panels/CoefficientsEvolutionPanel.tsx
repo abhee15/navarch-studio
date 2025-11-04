@@ -324,3 +324,4 @@ export const CoefficientsEvolutionPanel = observer(
     );
   }
 );
+

@@ -784,3 +784,4 @@ The Hull Sizing module provides automated preliminary hull design using first-pr
 **Last Updated**: November 4, 2025  
 **Module Owner**: Hull Sizing Team  
 **Next Review**: November 11, 2025 (post-solver fixes)
+

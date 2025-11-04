@@ -53,3 +53,4 @@ export const getCognitoConfig = () => {
     region: (getEnv("VITE_AWS_REGION", "us-east-1") as string) || "us-east-1",
   };
 };
+

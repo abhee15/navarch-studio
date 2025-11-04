@@ -99,3 +99,4 @@ export function TemplateGallery({ onSelectTemplate, showHeader = true }: Templat
     </div>
   );
 }
+

@@ -27,9 +27,9 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
   );
 
   // Calculate ratios
-  const lOverB = candidate.lppM && candidate.bM ? candidate.lppM / candidate.bM : 0;
-  const bOverT = candidate.bM && candidate.tM ? candidate.bM / candidate.tM : 0;
-  const dOverT = candidate.dM && candidate.tM ? candidate.dM / candidate.tM : 0;
+  const lOverB = candidate.lppM && candidate.beamM ? candidate.lppM / candidate.beamM : 0;
+  const bOverT = candidate.beamM && candidate.draftM ? candidate.beamM / candidate.draftM : 0;
+  const dOverT = candidate.depthM && candidate.draftM ? candidate.depthM / candidate.draftM : 0;
   const lwlOverLambda = candidate.lwlOverLambda || 0;
 
   const metrics = [
@@ -42,9 +42,9 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
           unit: "m",
           color: "blue",
         },
-        { label: "Beam", value: candidate.bM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
-        { label: "Draft", value: candidate.tM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
-        { label: "Depth", value: candidate.dM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
+        { label: "Beam", value: candidate.beamM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
+        { label: "Draft", value: candidate.draftM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
+        { label: "Depth", value: candidate.depthM?.toFixed(2) || "N/A", unit: "m", color: "blue" },
         {
           label: "LOA (est.)",
           value: candidate.loaM?.toFixed(2) || "N/A",
@@ -96,7 +96,7 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
       items: [
         {
           label: "Displacement",
-          value: candidate.displacementT?.toFixed(0) || "N/A",
+          value: candidate.dispT?.toFixed(0) || "N/A",
           unit: "t",
           color: "green",
         },
@@ -284,3 +284,4 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
     </div>
   );
 };
+

@@ -635,3 +635,4 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
     </div>
   );
 }
+
