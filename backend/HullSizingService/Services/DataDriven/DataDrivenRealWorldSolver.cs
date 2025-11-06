@@ -1,8 +1,8 @@
 using HullSizingService.Services.Integration;
 using HullSizingService.Services.Solver;
 using Microsoft.Extensions.Logging;
-using Shared.Models.Sizing;
 using Shared.DTOs.Catalog;
+using Shared.Models.Sizing;
 
 namespace HullSizingService.Services.DataDriven;
 
