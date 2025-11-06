@@ -135,6 +135,15 @@ try
     // Memory Cache for JWT key caching
     builder.Services.AddMemoryCache();
 
+    // Redis Distributed Cache for ML catalog caching
+    var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnection;
+        options.InstanceName = "NavArchML_";  // Prefix for all cache keys
+    });
+    Log.Information("Redis distributed cache registered: {RedisConnection}", redisConnection);
+
     // HttpClient for Cognito JWKS requests
     builder.Services.AddHttpClient();
 
@@ -197,6 +206,10 @@ try
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogSeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricKnnService>();
+    
+    // Background services for catalog management
+    builder.Services.AddHostedService<DataService.Services.Catalog.ParametricImportBackgroundService>();
+    Log.Information("Parametric import background service registered");
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed

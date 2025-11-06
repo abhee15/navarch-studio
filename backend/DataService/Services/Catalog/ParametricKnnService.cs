@@ -1,18 +1,22 @@
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Shared.DTOs.Catalog;
 using Shared.Models;
+using System.Text.Json;
 
 namespace DataService.Services.Catalog;
 
 /// <summary>
 /// K-Nearest Neighbors search for parametric hull catalog
 /// Uses weighted Euclidean distance on normalized geometric features
+/// Includes Redis distributed caching for performance
 /// </summary>
 public class ParametricKnnService
 {
     private readonly DataDbContext _context;
+    private readonly IDistributedCache _cache;
     private readonly ILogger<ParametricKnnService> _logger;
 
     // Feature weights for distance calculation
@@ -28,14 +32,19 @@ public class ParametricKnnService
         ["AreaWpNorm"] = 0.05        // Redundant with Cw but useful
     };
 
-    public ParametricKnnService(DataDbContext context, ILogger<ParametricKnnService> logger)
+    public ParametricKnnService(
+        DataDbContext context,
+        IDistributedCache cache,
+        ILogger<ParametricKnnService> logger)
     {
         _context = context;
+        _cache = cache;
         _logger = logger;
     }
 
     /// <summary>
     /// Find K most similar parametric hulls based on geometric features
+    /// Uses Redis cache for sub-millisecond repeat queries
     /// </summary>
     public async Task<List<SimilarParametricHull>> FindSimilarHullsAsync(
         ParametricSearchCriteria criteria,
@@ -46,7 +55,28 @@ public class ParametricKnnService
 
         try
         {
-            // Step 1: Load all active parametric hulls (for Phase 2A: 5K hulls, fast enough for in-memory)
+            // Step 1: Try Redis cache
+            var cacheKey = GenerateCacheKey(criteria, K);
+            var cached = await _cache.GetStringAsync(cacheKey, cancellationToken);
+            
+            if (cached != null)
+            {
+                _logger.LogDebug("Cache HIT for parametric KNN query: {CacheKey}", cacheKey);
+                var cachedResults = JsonSerializer.Deserialize<List<SimilarParametricHull>>(cached);
+                
+                if (cachedResults != null)
+                {
+                    var cacheElapsedMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                    _logger.LogInformation(
+                        "Parametric KNN from cache in {ElapsedMs}ms. Returned {Count} hulls",
+                        cacheElapsedMs, cachedResults.Count);
+                    return cachedResults;
+                }
+            }
+
+            _logger.LogDebug("Cache MISS for parametric KNN query: {CacheKey}", cacheKey);
+
+            // Step 2: Load all active parametric hulls (for Phase 2A: 5K hulls, fast enough for in-memory)
             // Phase 2B will use ANN index instead
             var catalog = await _context.ParametricHulls
                 .Where(h => h.IsActive && h.HasValidCoefficients)
@@ -122,7 +152,20 @@ public class ParametricKnnService
             var elapsedMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
             _logger.LogInformation(
                 "KNN search completed in {ElapsedMs}ms. Found {Count} similar hulls. Avg similarity: {AvgSim:P0}",
-                elapsedMs, results.Count, results.Average(r => r.SimilarityScore));
+                elapsedMs, results.Count, results.Any() ? results.Average(r => r.SimilarityScore) : 0);
+
+            // Step 7: Cache results for 1 hour
+            var serialized = JsonSerializer.Serialize(results);
+            await _cache.SetStringAsync(
+                cacheKey,
+                serialized,
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+                },
+                cancellationToken);
+
+            _logger.LogDebug("Cached parametric KNN results: {CacheKey}", cacheKey);
 
             return results;
         }
@@ -295,6 +338,26 @@ public class ParametricKnnService
         var similarity = Math.Exp(-2.0 * normalizedDistance);
 
         return Math.Clamp(similarity, 0.0, 1.0);
+    }
+
+    /// <summary>
+    /// Generate deterministic cache key from search criteria
+    /// </summary>
+    private string GenerateCacheKey(ParametricSearchCriteria criteria, int K)
+    {
+        // Create fingerprint of search parameters
+        var parts = new[]
+        {
+            $"LOA:{criteria.TargetLOA:F2}",
+            $"Vol:{criteria.TargetVolume:F2}",
+            $"LCB:{criteria.TargetLCB?.ToString("F3") ?? "null"}",
+            $"BeamR:{criteria.TargetBeamRatio?.ToString("F3") ?? "null"}",
+            $"DraftR:{criteria.TargetDraftRatio?.ToString("F3") ?? "null"}",
+            $"Cb:{criteria.TargetCb?.ToString("F3") ?? "null"}",
+            $"K:{K}"
+        };
+
+        return $"ml_knn:{string.Join(":", parts)}";
     }
 }
 
