@@ -30,7 +30,7 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="name">Mission Name *</Label>
+        <Label htmlFor="name">Vessel Name *</Label>
         <Input
           id="name"
           placeholder="e.g., 5000 TEU Feeder Container"
