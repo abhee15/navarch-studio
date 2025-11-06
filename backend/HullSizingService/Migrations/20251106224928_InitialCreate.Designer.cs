@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HullSizingService.Migrations
 {
     [DbContext(typeof(SizingDbContext))]
-    [Migration("20251106222218_FreshInitial")]
-    partial class FreshInitial
+    [Migration("20251106224928_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
