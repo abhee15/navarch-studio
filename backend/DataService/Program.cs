@@ -196,6 +196,7 @@ try
     builder.Services.AddScoped<DataService.Services.Catalog.RealWorldKnnService>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogSeeder>();
+    builder.Services.AddScoped<DataService.Services.Catalog.ParametricKnnService>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed

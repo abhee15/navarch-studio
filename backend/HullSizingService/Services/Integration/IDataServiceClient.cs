@@ -21,6 +21,11 @@ public interface IDataServiceClient
     /// Search for similar vessels in the real-world catalog using KNN
     /// </summary>
     Task<KnnSearchResponse> SearchSimilarVesselsAsync(KnnSearchRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Search for similar parametric hulls in the ML catalog using KNN
+    /// </summary>
+    Task<ParametricSearchResponse> SearchSimilarParametricHullsAsync(ParametricSearchRequest request, CancellationToken cancellationToken = default);
 }
 
 public record WaterPropertiesResponse(

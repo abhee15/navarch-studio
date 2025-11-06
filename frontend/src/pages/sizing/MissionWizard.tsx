@@ -26,7 +26,7 @@ export const MissionWizard: React.FC = observer(() => {
     serviceSpeedKn: 20,
     seaMarginPct: 15,
   });
-  const [solverMode, setSolverMode] = useState<"first_principles" | "data_driven_real">("first_principles");
+  const [solverMode, setSolverMode] = useState<"first_principles" | "data_driven_real" | "data_driven_ml">("first_principles");
 
   const updateFormData = (data: Partial<CreateMissionCaseDto>) => {
     setFormData((prev) => ({ ...prev, ...data }));

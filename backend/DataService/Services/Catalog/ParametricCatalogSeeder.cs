@@ -53,7 +53,7 @@ public class ParametricCatalogSeeder
 
             // Phase 2A: Import 5K from Constrained_Set_1 (every 2nd row)
             var dataset1Path = Path.Combine(shipDPath, "Constrained_Randomized_Set_1");
-            
+
             if (!Directory.Exists(dataset1Path))
             {
                 _logger.LogWarning(
@@ -130,4 +130,3 @@ public class CatalogStats
     public double AvgCb { get; set; }
     public object? CbRange { get; set; }
 }
-

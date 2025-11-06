@@ -49,13 +49,13 @@ public class ParametricCatalogImporter
             // Step 1: Read Input_Vectors.csv (45 parameters)
             var inputVectorsPath = Path.Combine(folderPath, "Input_Vectors.csv");
             var parametricVectors = ReadInputVectors(inputVectorsPath);
-            
+
             _logger.LogInformation("Read {Count} parametric vectors from Input_Vectors.csv", parametricVectors.Count);
 
             // Step 2: Read Geometric Measures (8 CSVs)
             var measuresPath = Path.Combine(folderPath, "GeometricMeasures");
             var geometricMeasures = ReadGeometricMeasures(measuresPath, parametricVectors.Count);
-            
+
             _logger.LogInformation("Read geometric measures for {Count} hulls", geometricMeasures.Count);
 
             // Step 3: Process and convert
@@ -90,17 +90,17 @@ public class ParametricCatalogImporter
                         HullId = $"{GetDatasetPrefix(datasetName)}_{i + 1:D5}",
                         DatasetSource = datasetName,
                         RowIndex = i,
-                        
+
                         // Parametric vector (JSONB)
                         ParametricVector = JsonSerializer.Serialize(params45.ToDictionary()),
-                        
+
                         // Key parameters
                         LbRatio = params45.Lb,
                         LsRatio = params45.Ls,
                         BdRatio = params45.Bd,
                         DdRatio = params45.Dd,
                         BsRatio = params45.Bs,
-                        
+
                         // Geometric measures @ design draft
                         VolumeNorm = measures.Volume[4],
                         LcbNorm = measures.LCB[4],
@@ -110,26 +110,26 @@ public class ParametricCatalogImporter
                         AreaWsNorm = measures.AreaWS?[4],
                         IxxNorm = measures.Ixx?[4],
                         IyyNorm = measures.Iyy?[4],
-                        
+
                         // All measures (JSONB)
                         GeometricMeasures = JsonSerializer.Serialize(measures.ToDictionary()),
-                        
+
                         // Derived dimensions
                         LppMDerived = principal.Lpp,
                         BeamMDerived = principal.Beam,
                         DraftMDerived = principal.Draft,
                         DepthMDerived = principal.Depth,
-                        
+
                         // Derived coefficients
                         CbDerived = principal.Cb,
                         CpDerived = principal.Cp,
                         CmDerived = principal.Cm,
-                        
+
                         // Quality
                         ConversionQuality = quality.Level,
                         HasValidCoefficients = quality.IsValid,
                         DistortionScore = quality.DistortionScore,
-                        
+
                         ImportedAt = DateTime.UtcNow,
                         DataVersion = 1,
                         IsActive = true
@@ -156,10 +156,10 @@ public class ParametricCatalogImporter
             if (hulls.Any())
             {
                 _logger.LogInformation("Bulk inserting {Count} parametric hulls...", hulls.Count);
-                
+
                 await _context.ParametricHulls.AddRangeAsync(hulls, cancellationToken);
                 await _context.SaveChangesAsync(cancellationToken);
-                
+
                 result.ImportedRows = hulls.Count;
                 result.Success = true;
             }
@@ -249,19 +249,19 @@ public class ParametricCatalogImporter
         // Read each CSV (each has 10 columns for 10 draft ratios)
         var volume = ReadMeasureCsv(Path.Combine(measuresPath, "Volume.csv"));
         var lcb = ReadMeasureCsv(Path.Combine(measuresPath, "LCB.csv"));
-        var vcb = File.Exists(Path.Combine(measuresPath, "VCB.csv")) 
-            ? ReadMeasureCsv(Path.Combine(measuresPath, "VCB.csv")) 
+        var vcb = File.Exists(Path.Combine(measuresPath, "VCB.csv"))
+            ? ReadMeasureCsv(Path.Combine(measuresPath, "VCB.csv"))
             : null;
         var areaWP = ReadMeasureCsv(Path.Combine(measuresPath, "Area_WP.csv"));
-        var areaWS = File.Exists(Path.Combine(measuresPath, "Area_WS.csv")) 
-            ? ReadMeasureCsv(Path.Combine(measuresPath, "Area_WS.csv")) 
+        var areaWS = File.Exists(Path.Combine(measuresPath, "Area_WS.csv"))
+            ? ReadMeasureCsv(Path.Combine(measuresPath, "Area_WS.csv"))
             : null;
         var cw = ReadMeasureCsv(Path.Combine(measuresPath, "Cw.csv"));
-        var ixx = File.Exists(Path.Combine(measuresPath, "Ixx.csv")) 
-            ? ReadMeasureCsv(Path.Combine(measuresPath, "Ixx.csv")) 
+        var ixx = File.Exists(Path.Combine(measuresPath, "Ixx.csv"))
+            ? ReadMeasureCsv(Path.Combine(measuresPath, "Ixx.csv"))
             : null;
-        var iyy = File.Exists(Path.Combine(measuresPath, "Iyy.csv")) 
-            ? ReadMeasureCsv(Path.Combine(measuresPath, "Iyy.csv")) 
+        var iyy = File.Exists(Path.Combine(measuresPath, "Iyy.csv"))
+            ? ReadMeasureCsv(Path.Combine(measuresPath, "Iyy.csv"))
             : null;
 
         // Join all measures by row index
@@ -290,10 +290,10 @@ public class ParametricCatalogImporter
     private List<decimal[]> ReadMeasureCsv(string filePath)
     {
         using var reader = new StreamReader(filePath);
-        
+
         // Skip header
         reader.ReadLine();
-        
+
         var rows = new List<decimal[]>();
         string? line;
         while ((line = reader.ReadLine()) != null)
@@ -301,10 +301,10 @@ public class ParametricCatalogImporter
             var values = line.Split(',')
                 .Select(v => decimal.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out var d) ? d : 0)
                 .ToArray();
-            
+
             rows.Add(values);
         }
-        
+
         return rows;
     }
 
@@ -367,8 +367,8 @@ public class ParametricCatalogImporter
         // Typical relationship: Cp = Cb + 0.05 to 0.10
         // For fuller forms (Cb > 0.7), Cp closer to Cb
         // For finer forms (Cb < 0.6), Cp larger relative to Cb
-        var Cp = Cb < 0.6m 
-            ? Math.Min(Cb + 0.10m, 1.0m) 
+        var Cp = Cb < 0.6m
+            ? Math.Min(Cb + 0.10m, 1.0m)
             : Math.Min(Cb + 0.05m, 1.0m);
 
         // Compute Cm (midship coefficient)
@@ -413,7 +413,7 @@ public class ParametricCatalogImporter
         // Check 2: Displacement balance
         var volume_from_dimensions = principal.Lpp * principal.Beam * principal.Draft * principal.Cb;
         var volume_error = Math.Abs(volume_from_dimensions - principal.Volume) / principal.Volume;
-        
+
         quality.DistortionScore = volume_error;
 
         if (volume_error > 0.10m)  // >10% error
@@ -675,4 +675,3 @@ public class ParametricImportResult
     public List<string> Errors { get; set; } = new();
     public Dictionary<string, int> QualityDistribution { get; set; } = new();
 }
-

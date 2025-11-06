@@ -179,7 +179,9 @@ try
     // Data-Driven Mode Services
     builder.Services.AddScoped<HullSizingService.Services.DataDriven.VesselScalingService>();
     builder.Services.AddScoped<HullSizingService.Services.DataDriven.DataDrivenRealWorldSolver>();
-    Log.Information("Data-Driven services registered (vessel scaling, real-world solver)");
+    builder.Services.AddScoped<HullSizingService.Services.DataDriven.ParametricConverter>();
+    builder.Services.AddScoped<HullSizingService.Services.DataDriven.DataDrivenParametricSolver>();
+    Log.Information("Data-Driven services registered (vessel scaling, parametric converter, real-world solver, ML/parametric solver)");
 
     // FluentValidation validators
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.CreateMissionCaseDto>, Shared.Validators.Sizing.CreateMissionCaseDtoValidator>();

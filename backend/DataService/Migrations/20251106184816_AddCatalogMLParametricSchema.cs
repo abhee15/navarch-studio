@@ -21,10 +21,10 @@ namespace DataService.Migrations
                     hull_id TEXT UNIQUE NOT NULL,
                     dataset_source TEXT NOT NULL,
                     row_index INTEGER NOT NULL,
-                    
+
                     -- 45 Parametric Vector (JSONB)
                     parametric_vector JSONB NOT NULL,
-                    
+
                     -- Key Parameters (Extracted)
                     loa_m DECIMAL(10,3) NOT NULL DEFAULT 10.0,
                     lb_ratio DECIMAL(6,4) NOT NULL,
@@ -32,7 +32,7 @@ namespace DataService.Migrations
                     bd_ratio DECIMAL(8,6) NOT NULL,
                     dd_ratio DECIMAL(8,6) NOT NULL,
                     bs_ratio DECIMAL(6,4) NOT NULL,
-                    
+
                     -- Geometric Measures @ Design Draft (T/Dd = 0.5)
                     volume_norm DECIMAL(12,8) NOT NULL CHECK (volume_norm > 0),
                     lcb_norm DECIMAL(6,4) NOT NULL,
@@ -42,26 +42,26 @@ namespace DataService.Migrations
                     area_ws_norm DECIMAL(10,8),
                     ixx_norm DECIMAL(12,8),
                     iyy_norm DECIMAL(12,8),
-                    
+
                     -- All Geometric Measures (JSONB - 10 draft ratios)
                     geometric_measures JSONB NOT NULL,
-                    
+
                     -- Derived Principal Dimensions
                     lpp_m_derived DECIMAL(10,3) NOT NULL CHECK (lpp_m_derived > 0),
                     beam_m_derived DECIMAL(10,3) NOT NULL CHECK (beam_m_derived > 0),
                     draft_m_derived DECIMAL(10,3) NOT NULL CHECK (draft_m_derived > 0),
                     depth_m_derived DECIMAL(10,3) NOT NULL CHECK (depth_m_derived > 0),
-                    
+
                     -- Derived Form Coefficients
                     cb_derived DECIMAL(5,4) NOT NULL CHECK (cb_derived BETWEEN 0.25 AND 0.98),
                     cp_derived DECIMAL(5,4) CHECK (cp_derived BETWEEN 0.50 AND 1.0),
                     cm_derived DECIMAL(5,4) CHECK (cm_derived BETWEEN 0.70 AND 1.0),
-                    
+
                     -- Quality Metrics
                     conversion_quality TEXT,
                     has_valid_coefficients BOOLEAN DEFAULT TRUE,
                     distortion_score DECIMAL(5,4),
-                    
+
                     -- Metadata
                     imported_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                     data_version INTEGER DEFAULT 1,
@@ -94,7 +94,7 @@ namespace DataService.Migrations
         {
             // Drop table (will cascade drop indexes)
             migrationBuilder.Sql("DROP TABLE IF EXISTS catalog_ml.parametric_hulls CASCADE;");
-            
+
             // Drop schema
             migrationBuilder.Sql("DROP SCHEMA IF EXISTS catalog_ml CASCADE;");
         }

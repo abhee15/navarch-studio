@@ -118,4 +118,50 @@ public class DataServiceClient : IDataServiceClient
             return new KnnSearchResponse { SimilarVessels = new List<SimilarVesselDto>() };
         }
     }
+
+    public async Task<ParametricSearchResponse> SearchSimilarParametricHullsAsync(
+        ParametricSearchRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "[DATA_CLIENT] Searching parametric hulls: LOA={LOA}m, Volume={Vol}m³, K={K}",
+                request.TargetLOA, request.TargetVolume, request.K);
+
+            var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(
+                "/api/v1/catalog/parametric/search-similar",
+                content,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[DATA_CLIENT] Parametric KNN search failed: {StatusCode}", response.StatusCode);
+                return new ParametricSearchResponse { SimilarHulls = new List<SimilarParametricHullDto>() };
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<ParametricSearchResponse>(responseJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            _logger.LogInformation(
+                "[DATA_CLIENT] Parametric KNN search returned {Count} similar hulls",
+                result?.SimilarHulls?.Count ?? 0);
+
+            return result ?? new ParametricSearchResponse { SimilarHulls = new List<SimilarParametricHullDto>() };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[DATA_CLIENT] Failed to search parametric hulls");
+            return new ParametricSearchResponse { SimilarHulls = new List<SimilarParametricHullDto>() };
+        }
+    }
 }

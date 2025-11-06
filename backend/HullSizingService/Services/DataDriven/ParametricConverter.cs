@@ -23,7 +23,7 @@ public class ParametricConverter
     public ConvertedParametricHull ConvertToTargetDisplacement(
         SimilarParametricHullDto sourceHull,
         decimal targetDisplacement,
-        ScalingConstraints? constraints = null)
+        ParametricScalingConstraints? constraints = null)
     {
         try
         {
@@ -47,23 +47,23 @@ public class ParametricConverter
                 SourceHullId = sourceHull.HullIdString,
                 SourceDataset = sourceHull.DatasetSource,
                 ScaleFactor = scaleFactor,
-                
+
                 // Scale dimensions
                 Lpp = sourceHull.LppM * scaleFactor,
                 Beam = sourceHull.BeamM * scaleFactor,
                 Draft = sourceHull.DraftM * scaleFactor,
                 Depth = sourceHull.DepthM * scaleFactor,
-                
+
                 // Form coefficients preserved (dimensionless ratios)
                 Cb = sourceHull.Cb,
                 Cp = sourceHull.Cp,
                 Cm = sourceHull.Cm,
                 Cw = sourceHull.Cw,
-                
+
                 // Geometric features scaled
                 Volume = sourceVolume * (decimal)Math.Pow((double)scaleFactor, 3),
                 LCB = (decimal)sourceHull.LcbNorm * sourceHull.LppM * scaleFactor,
-                
+
                 // Provenance
                 SimilarityScore = sourceHull.SimilarityScore,
                 ConversionQuality = sourceHull.ConversionQuality
@@ -96,7 +96,7 @@ public class ParametricConverter
     /// </summary>
     private void ApplyConstraintsAndCompensate(
         ConvertedParametricHull hull,
-        ScalingConstraints constraints)
+        ParametricScalingConstraints constraints)
     {
         var originalVolume = hull.Volume;
         var wasConstrained = false;
@@ -203,9 +203,9 @@ public class ParametricConverter
 }
 
 /// <summary>
-/// Scaling constraints (beam/draft limits)
+/// Scaling constraints for parametric conversion (beam/draft limits)
 /// </summary>
-public class ScalingConstraints
+public class ParametricScalingConstraints
 {
     public decimal? MaxBeam { get; set; }
     public decimal? MaxDraft { get; set; }
@@ -220,33 +220,32 @@ public class ConvertedParametricHull
     public string SourceHullId { get; set; } = string.Empty;
     public string SourceDataset { get; set; } = string.Empty;
     public decimal ScaleFactor { get; set; }
-    
+
     // Scaled dimensions
     public decimal Lpp { get; set; }
     public decimal Beam { get; set; }
     public decimal Draft { get; set; }
     public decimal Depth { get; set; }
-    
+
     // Form coefficients (preserved)
     public decimal Cb { get; set; }
     public decimal? Cp { get; set; }
     public decimal? Cm { get; set; }
     public decimal Cw { get; set; }
-    
+
     // Geometric features
     public decimal Volume { get; set; }
     public decimal LCB { get; set; }
-    
+
     // Similarity
     public double SimilarityScore { get; set; }
-    
+
     // Quality
     public string ConversionQuality { get; set; } = string.Empty;
-    
+
     // Validation
     public bool IsValid { get; set; } = true;
     public decimal DisplacementError { get; set; }
     public List<string> ValidationErrors { get; set; } = new();
     public List<string> ValidationWarnings { get; set; } = new();
 }
-

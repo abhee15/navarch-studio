@@ -68,7 +68,12 @@ public record SolverCandidate(
     decimal? EhpKw,
     decimal? ShpKw,
     decimal Score,
-    List<string> Flags
+    List<string> Flags,
+    // Data-Driven provenance (optional)
+    string? ReferenceVesselId = null,
+    string? ReferenceVesselName = null,
+    decimal? SimilarityScore = null,
+    string? SolverMode = null
 );
 
 

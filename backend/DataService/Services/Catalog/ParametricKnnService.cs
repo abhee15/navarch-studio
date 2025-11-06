@@ -14,7 +14,7 @@ public class ParametricKnnService
 {
     private readonly DataDbContext _context;
     private readonly ILogger<ParametricKnnService> _logger;
-    
+
     // Feature weights for distance calculation
     private readonly Dictionary<string, double> _featureWeights = new()
     {
@@ -94,27 +94,27 @@ public class ParametricKnnService
                 HullId = d.Hull.Id,
                 HullIdString = d.Hull.HullId,
                 DatasetSource = d.Hull.DatasetSource,
-                
+
                 // Principal dimensions
                 LppM = d.Hull.LppMDerived,
                 BeamM = d.Hull.BeamMDerived,
                 DraftM = d.Hull.DraftMDerived,
                 DepthM = d.Hull.DepthMDerived,
-                
+
                 // Form coefficients
                 Cb = d.Hull.CbDerived,
                 Cp = d.Hull.CpDerived,
                 Cm = d.Hull.CmDerived,
                 Cw = d.Hull.CwCoeff,
-                
+
                 // Geometric features
                 VolumeNorm = d.Hull.VolumeNorm,
                 LcbNorm = d.Hull.LcbNorm,
-                
+
                 // Similarity (convert distance to similarity: 1 = identical, 0 = very different)
                 GeometricDistance = d.Distance,
                 SimilarityScore = CalculateSimilarityScore(d.Distance, stats),
-                
+
                 // Provenance
                 ConversionQuality = d.Hull.ConversionQuality ?? "Good"
             }).ToList();
@@ -145,8 +145,8 @@ public class ParametricKnnService
         var Volume_norm = Volume_target / Math.Pow(LOA_target, 3) * Math.Pow(10.0, 3);
 
         // LCB as fraction of LOA (default: 0.5 for symmetric, adjust by vessel type)
-        var LCB_norm = criteria.TargetLCB.HasValue 
-            ? (double)criteria.TargetLCB.Value 
+        var LCB_norm = criteria.TargetLCB.HasValue
+            ? (double)criteria.TargetLCB.Value
             : 0.50;  // Default midship
 
         // Estimate Bd_ratio (half-beam / LOA) from typical L/B ratios
@@ -319,28 +319,27 @@ public class SimilarParametricHull
     public int HullId { get; set; }
     public string HullIdString { get; set; } = string.Empty;
     public string DatasetSource { get; set; } = string.Empty;
-    
+
     // Principal dimensions (derived, at LOA=10m baseline)
     public decimal LppM { get; set; }
     public decimal BeamM { get; set; }
     public decimal DraftM { get; set; }
     public decimal DepthM { get; set; }
-    
+
     // Form coefficients
     public decimal Cb { get; set; }
     public decimal? Cp { get; set; }
     public decimal? Cm { get; set; }
     public decimal Cw { get; set; }
-    
+
     // Geometric features (normalized)
     public decimal VolumeNorm { get; set; }
     public decimal LcbNorm { get; set; }
-    
+
     // Similarity
     public double GeometricDistance { get; set; }
     public double SimilarityScore { get; set; }  // 0-1, higher = more similar
-    
+
     // Quality
     public string ConversionQuality { get; set; } = string.Empty;
 }
-

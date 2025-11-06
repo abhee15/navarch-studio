@@ -12,6 +12,7 @@ public class SizingRunService : ISizingRunService
     private readonly SizingDbContext _context;
     private readonly Solver.IFirstPrinciplesSolver _firstPrinciplesSolver;
     private readonly DataDriven.DataDrivenRealWorldSolver? _dataDrivenSolver;
+    private readonly DataDriven.DataDrivenParametricSolver? _parametricSolver;
     private readonly ILogger<SizingRunService> _logger;
     private readonly IConfiguration _configuration;
 
@@ -20,13 +21,15 @@ public class SizingRunService : ISizingRunService
         Solver.IFirstPrinciplesSolver firstPrinciplesSolver,
         ILogger<SizingRunService> logger,
         IConfiguration configuration,
-        DataDriven.DataDrivenRealWorldSolver? dataDrivenSolver = null)
+        DataDriven.DataDrivenRealWorldSolver? dataDrivenSolver = null,
+        DataDriven.DataDrivenParametricSolver? parametricSolver = null)
     {
         _context = context;
         _firstPrinciplesSolver = firstPrinciplesSolver;
         _logger = logger;
         _configuration = configuration;
         _dataDrivenSolver = dataDrivenSolver;
+        _parametricSolver = parametricSolver;
     }
 
     public async Task<List<SizingRunDto>> GetByMissionCaseIdAsync(Guid missionCaseId, string tenantId, CancellationToken cancellationToken = default)
@@ -141,6 +144,21 @@ public class SizingRunService : ISizingRunService
                 {
                     _logger.LogInformation("Using Data-Driven Real-World solver");
                     solverCandidates = await _dataDrivenSolver.SolveAsync(solverRequest, cancellationToken);
+                }
+            }
+            else if (dto.Mode == "data_driven_ml" && _parametricSolver != null)
+            {
+                // Check feature flag
+                var featureEnabled = _configuration.GetValue<bool>("FeatureFlags:DataDrivenML", false);
+                if (!featureEnabled)
+                {
+                    _logger.LogWarning("Data-Driven ML mode requested but feature flag disabled. Falling back to First-Principles.");
+                    solverCandidates = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
+                }
+                else
+                {
+                    _logger.LogInformation("Using Data-Driven ML/Parametric solver (ShipD dataset)");
+                    solverCandidates = await _parametricSolver.SolveAsync(solverRequest, cancellationToken);
                 }
             }
             else

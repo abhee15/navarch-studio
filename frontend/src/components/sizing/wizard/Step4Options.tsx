@@ -7,8 +7,8 @@ import { Input } from "../../ui/input";
 interface Step4Props {
   formData: Partial<CreateMissionCaseDto>;
   updateFormData: (data: Partial<CreateMissionCaseDto>) => void;
-  solverMode?: "first_principles" | "data_driven_real";
-  setSolverMode?: (mode: "first_principles" | "data_driven_real") => void;
+  solverMode?: "first_principles" | "data_driven_real" | "data_driven_ml";
+  setSolverMode?: (mode: "first_principles" | "data_driven_real" | "data_driven_ml") => void;
   onNext: () => void;
   onPrevious: () => void;
   onSubmit: () => void;
@@ -112,7 +112,7 @@ export const Step4Options: React.FC<Step4Props> = ({
       {/* Solver Mode Selection */}
       <div className="space-y-3">
         <Label>Solver Mode</Label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <button
             type="button"
             onClick={() => setSolverMode("first_principles")}
@@ -176,9 +176,41 @@ export const Step4Options: React.FC<Step4Props> = ({
               </div>
             )}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setSolverMode("data_driven_ml")}
+            className={`
+              relative rounded-lg border-2 p-4 text-left transition-all
+              ${
+                solverMode === "data_driven_ml"
+                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/30"
+                  : "border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800"
+              }
+            `}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="text-2xl">🤖</div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900 dark:text-white">
+                  ML/Parametric <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">BETA</span>
+                </h4>
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  82K synthetic hulls from MIT ShipD
+                </p>
+              </div>
+            </div>
+            {solverMode === "data_driven_ml" && (
+              <div className="absolute top-2 right-2">
+                <div className="h-5 w-5 rounded-full bg-purple-500 flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-white"></div>
+                </div>
+              </div>
+            )}
+          </button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          💡 <strong>First-Principles</strong>: Pure physics-based design from scratch. <strong>Data-Driven</strong>: Starts from similar real vessels for faster, proven designs.
+          💡 <strong>First-Principles</strong>: Pure physics. <strong>Data-Driven</strong>: Real vessels (600). <strong>ML/Parametric</strong>: Massive design space (82K hulls).
         </p>
       </div>
 
@@ -329,7 +361,7 @@ export const Step4Options: React.FC<Step4Props> = ({
               ⚡ Expected compute time: ~1-2 seconds for {maxCandidates} candidates
             </p>
           </div>
-        ) : (
+        ) : solverMode === "data_driven_real" ? (
           <div className="rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 p-4 text-sm dark:from-green-900/20 dark:to-emerald-900/20">
             <p className="font-medium text-green-900 dark:text-green-300">
               📊 Solver Mode: Data-Driven (Real-World Catalog)
@@ -344,6 +376,23 @@ export const Step4Options: React.FC<Step4Props> = ({
             </ul>
             <p className="mt-2 text-xs text-green-700 dark:text-green-500">
               ⚡ Expected compute time: {'<'}1 second for {maxCandidates} candidates
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-gradient-to-r from-purple-50 to-violet-50 p-4 text-sm dark:from-purple-900/20 dark:to-violet-900/20">
+            <p className="font-medium text-purple-900 dark:text-purple-300">
+              🤖 Solver Mode: ML/Parametric (ShipD Dataset - BETA)
+            </p>
+            <p className="mt-1 text-purple-800 dark:text-purple-400">
+              KNN on 82K parametric hulls → Convert & scale → Physics refinement
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-purple-700 dark:text-purple-500">
+              <li>✓ Massive design space (82K unique forms)</li>
+              <li>✓ Explore unconventional geometries</li>
+              <li>✓ Shows parametric hull ID & similarity</li>
+            </ul>
+            <p className="mt-2 text-xs text-purple-700 dark:text-purple-500">
+              ⚡ Expected compute time: ~1 second for {maxCandidates} candidates
             </p>
           </div>
         )}
