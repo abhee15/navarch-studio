@@ -1,59 +1,22 @@
-using CsvHelper;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
+using Shared.Constants;
 
 namespace DataService.Services.Catalog;
 
 /// <summary>
 /// Wageningen B-Series propeller performance calculator
-/// Uses 33-term polynomial regression from MARIN systematic series
-/// Source: .plan/app-docs/templates/MLData/wageningen_coefficients.txt
+/// Uses 33-term polynomial regression from MARIN systematic series (Oosterveld & van Oossanen, 1975)
+/// Coefficients are hardcoded constants (published reference data that never changes)
 /// </summary>
 public class WageningenBSeriesService
 {
-    private List<WageningenCoefficient>? _coefficients;
     private readonly ILogger<WageningenBSeriesService> _logger;
-    private readonly string _dataPath;
 
-    public WageningenBSeriesService(
-        IConfiguration configuration,
-        ILogger<WageningenBSeriesService> logger)
+    public WageningenBSeriesService(ILogger<WageningenBSeriesService> logger)
     {
         _logger = logger;
-        _dataPath = configuration["DataPath"] ?? "Data";
-    }
-
-    /// <summary>
-    /// Load coefficients from CSV (call once at startup)
-    /// </summary>
-    public async Task LoadCoefficientsAsync(CancellationToken cancellationToken = default)
-    {
-        // DataPath points to hull-sizing/data, go up to app-docs then to templates
-        var csvPath = Path.Combine(_dataPath, "..", "..", "templates", "MLData", "wageningen_coefficients.txt");
-
-        if (!File.Exists(csvPath))
-        {
-            _logger.LogWarning("[WAGENINGEN] Coefficients file not found: {Path}", csvPath);
-            return;
-        }
-
-        _logger.LogInformation("[WAGENINGEN] Loading B-series coefficients from {Path}", csvPath);
-
-        try
-        {
-            using var reader = new StreamReader(csvPath);
-            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-
-            _coefficients = csv.GetRecords<WageningenCoefficient>().ToList();
-
-            _logger.LogInformation("[WAGENINGEN] ✅ Loaded {Count} coefficient terms", _coefficients.Count);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[WAGENINGEN] Error loading coefficients");
-            throw;
-        }
+        _logger.LogInformation("[WAGENINGEN] Service initialized with {Count} hardcoded coefficients",
+            WageningenConstants.Coefficients.Length);
     }
 
     /// <summary>
@@ -65,33 +28,30 @@ public class WageningenBSeriesService
     /// <param name="PD">Pitch/diameter ratio (0.5-1.4)</param>
     /// <returns>Thrust coefficient, torque coefficient, efficiency</returns>
     public PropellerPerformance CalculatePerformance(
-        double J,
-        int Z,
-        double AeA0,
+        double J, 
+        int Z, 
+        double AeA0, 
         double PD)
     {
-        if (_coefficients == null || !_coefficients.Any())
-            throw new InvalidOperationException("Wageningen coefficients not loaded. Call LoadCoefficientsAsync() first.");
-
         // Validate inputs
-        if (J < 0 || J > 1.5)
-            throw new ArgumentOutOfRangeException(nameof(J), "Advance coefficient must be 0-1.5");
-
-        if (Z < 2 || Z > 7)
-            throw new ArgumentOutOfRangeException(nameof(Z), "Number of blades must be 2-7");
-
-        if (AeA0 < 0.3 || AeA0 > 1.05)
-            throw new ArgumentOutOfRangeException(nameof(AeA0), "Blade area ratio must be 0.3-1.05");
-
-        if (PD < 0.5 || PD > 1.4)
-            throw new ArgumentOutOfRangeException(nameof(PD), "Pitch/diameter ratio must be 0.5-1.4");
+        if (J < WageningenConstants.ParameterRanges.J_Min || J > WageningenConstants.ParameterRanges.J_Max)
+            throw new ArgumentOutOfRangeException(nameof(J), $"Advance coefficient must be {WageningenConstants.ParameterRanges.J_Min}-{WageningenConstants.ParameterRanges.J_Max}");
+        
+        if (Z < WageningenConstants.ParameterRanges.Z_Min || Z > WageningenConstants.ParameterRanges.Z_Max)
+            throw new ArgumentOutOfRangeException(nameof(Z), $"Number of blades must be {WageningenConstants.ParameterRanges.Z_Min}-{WageningenConstants.ParameterRanges.Z_Max}");
+        
+        if (AeA0 < WageningenConstants.ParameterRanges.AeA0_Min || AeA0 > WageningenConstants.ParameterRanges.AeA0_Max)
+            throw new ArgumentOutOfRangeException(nameof(AeA0), $"Blade area ratio must be {WageningenConstants.ParameterRanges.AeA0_Min}-{WageningenConstants.ParameterRanges.AeA0_Max}");
+        
+        if (PD < WageningenConstants.ParameterRanges.PD_Min || PD > WageningenConstants.ParameterRanges.PD_Max)
+            throw new ArgumentOutOfRangeException(nameof(PD), $"Pitch/diameter ratio must be {WageningenConstants.ParameterRanges.PD_Min}-{WageningenConstants.ParameterRanges.PD_Max}");
 
         double KT = 0, KQ = 0;
 
         // Calculate using polynomial regression
         // KT = Σ C_KT * J^s * (AE/A0)^t * (P/D)^u * Z^v
         // KQ = Σ C_KQ * J^s * (AE/A0)^t * (P/D)^u * Z^v
-        foreach (var coeff in _coefficients)
+        foreach (var coeff in WageningenConstants.Coefficients)
         {
             var term_KT = coeff.C_KT * Math.Pow(J, coeff.s) * Math.Pow(AeA0, coeff.t)
                          * Math.Pow(PD, coeff.u) * Math.Pow(Z, coeff.v);
@@ -191,20 +151,6 @@ public class WageningenBSeriesService
 
         return bestPoint;
     }
-}
-
-/// <summary>
-/// Wageningen polynomial coefficient (one term)
-/// </summary>
-public class WageningenCoefficient
-{
-    public int Term { get; set; }
-    public int s { get; set; } // J exponent
-    public int t { get; set; } // AE/A0 exponent
-    public int u { get; set; } // P/D exponent
-    public int v { get; set; } // Z exponent
-    public double C_KT { get; set; } // KT coefficient
-    public double C_KQ { get; set; } // KQ coefficient
 }
 
 /// <summary>

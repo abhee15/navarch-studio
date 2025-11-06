@@ -16,20 +16,17 @@ public class CatalogSeeder
     private readonly ILogger<CatalogSeeder> _logger;
     private readonly Services.Catalog.BenchmarkHullImporter _benchmarkHullImporter;
     private readonly Services.Catalog.BenchmarkTestImporter _benchmarkTestImporter;
-    private readonly Services.Catalog.WageningenBSeriesService _wageningenService;
 
     public CatalogSeeder(
         DataDbContext context,
         ILogger<CatalogSeeder> logger,
         Services.Catalog.BenchmarkHullImporter benchmarkHullImporter,
-        Services.Catalog.BenchmarkTestImporter benchmarkTestImporter,
-        Services.Catalog.WageningenBSeriesService wageningenService)
+        Services.Catalog.BenchmarkTestImporter benchmarkTestImporter)
     {
         _context = context;
         _logger = logger;
         _benchmarkHullImporter = benchmarkHullImporter;
         _benchmarkTestImporter = benchmarkTestImporter;
-        _wageningenService = wageningenService;
     }
 
     /// <summary>
@@ -67,9 +64,9 @@ public class CatalogSeeder
             var testCount = await _benchmarkTestImporter.ImportAsync(cancellationToken);
             _logger.LogInformation("[SEED] ✅ Test conditions: {Count} imported", testCount);
 
-            // Load Wageningen coefficients (33 terms)
-            await _wageningenService.LoadCoefficientsAsync(cancellationToken);
-            _logger.LogInformation("[SEED] ✅ Wageningen B-series coefficients loaded");
+            // Wageningen coefficients are now hardcoded constants (no loading needed)
+            _logger.LogInformation("[SEED] ✅ Wageningen B-series: Using {Count} hardcoded coefficients",
+                Shared.Constants.WageningenConstants.Coefficients.Length);
         }
         catch (Exception ex)
         {
