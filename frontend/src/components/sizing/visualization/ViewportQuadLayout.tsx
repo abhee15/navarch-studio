@@ -275,7 +275,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       </div>
 
       {/* Bottom-Left: Sections View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[500px] relative">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[500px] relative mb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("sections")}
@@ -286,13 +286,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize
           </button>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 pb-4">
           <Hull2DSections candidate={candidate} />
         </div>
       </div>
 
       {/* Bottom-Right: 3D View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[480px] relative">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[480px] relative mb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("3d")}
@@ -303,7 +303,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize
           </button>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 pb-4">
           <Hull3DScene
             candidate={candidate}
             showWaterplane={show3DWaterplane}
