@@ -95,7 +95,6 @@ public class VesselCatalogImporter
                     }
 
                     vesselsToImport.Add(vessel);
-                    result.ImportedRows++;
                 }
                 catch (Exception ex)
                 {
@@ -128,6 +127,9 @@ public class VesselCatalogImporter
 
                     result.SkippedRows += existingIds.Count;
                 }
+
+                // Only count vessels that actually get imported (after duplicate check)
+                result.ImportedRows = vesselsToImport.Count;
 
                 await _context.CatalogVesselsReal.AddRangeAsync(vesselsToImport, cancellationToken);
                 await _context.SaveChangesAsync(cancellationToken);
