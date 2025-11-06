@@ -83,15 +83,15 @@ public class DataServiceClient : IDataServiceClient
                 "[DATA_CLIENT] Searching similar vessels: Type={Type}, Displacement={Disp}t, K={K}",
                 request.VesselType, request.TargetDisplacement, request.K);
 
-            var json = JsonSerializer.Serialize(request, new JsonSerializerOptions 
-            { 
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
+            var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync(
-                "/api/v1/catalog/vessels/search-similar", 
-                content, 
+                "/api/v1/catalog/vessels/search-similar",
+                content,
                 cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -101,9 +101,9 @@ public class DataServiceClient : IDataServiceClient
             }
 
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
-            var result = JsonSerializer.Deserialize<KnnSearchResponse>(responseJson, new JsonSerializerOptions 
-            { 
-                PropertyNameCaseInsensitive = true 
+            var result = JsonSerializer.Deserialize<KnnSearchResponse>(responseJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
             });
 
             _logger.LogInformation(

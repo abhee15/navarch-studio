@@ -65,7 +65,7 @@ export interface SizingOptionsDto {
 
 export interface CreateSizingRunDto {
   missionCaseId: string;
-  mode: "first_principles" | "data_driven";
+  mode: "first_principles" | "data_driven_real" | "data_driven_ml";
   locks?: SizingLocksDto;
   options?: SizingOptionsDto;
 }
@@ -75,7 +75,7 @@ export interface SizingRun {
   missionCaseId: string;
   userId: string;
   tenantId: string;
-  mode: "first_principles" | "data_driven";
+  mode: "first_principles" | "data_driven_real" | "data_driven_ml";
   status: "pending" | "running" | "completed" | "failed";
   computeTimeMs?: number;
   errorMessage?: string;
@@ -128,6 +128,12 @@ export interface CandidateDesign {
   isSelected: boolean;
 
   createdAt: string;
+
+  // Provenance (Data-Driven Mode)
+  referenceVesselId?: string;
+  referenceVesselName?: string;
+  similarityScore?: number;
+  solverMode?: string;
 }
 
 // Parsed flags from JSON

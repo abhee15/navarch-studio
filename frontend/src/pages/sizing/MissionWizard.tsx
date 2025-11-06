@@ -26,6 +26,7 @@ export const MissionWizard: React.FC = observer(() => {
     serviceSpeedKn: 20,
     seaMarginPct: 15,
   });
+  const [solverMode, setSolverMode] = useState<"first_principles" | "data_driven_real">("first_principles");
 
   const updateFormData = (data: Partial<CreateMissionCaseDto>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -57,10 +58,10 @@ export const MissionWizard: React.FC = observer(() => {
     try {
       const mission = await sizingStore.createMissionCase(formData as CreateMissionCaseDto);
 
-      // Automatically run solver with default options
+      // Automatically run solver with selected mode
       const run = await sizingStore.runSolver({
         missionCaseId: mission.id,
-        mode: "first_principles",
+        mode: solverMode,
         options: { maxCandidates: 5 },
       });
 
@@ -102,7 +103,7 @@ export const MissionWizard: React.FC = observer(() => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hull Sizing Wizard</h1>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Define your mission requirements and let our first-principles solver generate optimal
+              Define your mission requirements and choose your solver mode for optimal
               hull designs
             </p>
           </div>
@@ -168,6 +169,8 @@ export const MissionWizard: React.FC = observer(() => {
             <CurrentStepComponent
               formData={formData}
               updateFormData={updateFormData}
+              solverMode={solverMode}
+              setSolverMode={setSolverMode}
               onNext={nextStep}
               onPrevious={previousStep}
               onSubmit={handleSubmit}

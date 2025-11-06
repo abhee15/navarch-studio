@@ -42,8 +42,8 @@ namespace HullSizingService.Migrations
 
             // Create index on solver_mode for filtering
             migrationBuilder.Sql(@"
-                CREATE INDEX idx_candidate_solver_mode 
-                ON sizing.candidate_designs(solver_mode) 
+                CREATE INDEX idx_candidate_solver_mode
+                ON sizing.candidate_designs(solver_mode)
                 WHERE solver_mode IS NOT NULL;
             ");
         }

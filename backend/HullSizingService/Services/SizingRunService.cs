@@ -275,7 +275,13 @@ public class SizingRunService : ISizingRunService
             Rank = entity.Rank,
             IsSelected = entity.IsSelected,
             GeomParamsJson = entity.GeometryJson,
-            CreatedAt = entity.CreatedAt
+            CreatedAt = entity.CreatedAt,
+            
+            // Provenance (Data-Driven Mode)
+            ReferenceVesselId = entity.ReferenceVesselId,
+            ReferenceVesselName = entity.ReferenceVesselName,
+            SimilarityScore = entity.SimilarityScore,
+            SolverMode = entity.SolverMode
         };
     }
 }

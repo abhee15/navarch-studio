@@ -7,6 +7,8 @@ import { Input } from "../../ui/input";
 interface Step4Props {
   formData: Partial<CreateMissionCaseDto>;
   updateFormData: (data: Partial<CreateMissionCaseDto>) => void;
+  solverMode?: "first_principles" | "data_driven_real";
+  setSolverMode?: (mode: "first_principles" | "data_driven_real") => void;
   onNext: () => void;
   onPrevious: () => void;
   onSubmit: () => void;
@@ -17,6 +19,8 @@ interface Step4Props {
 
 export const Step4Options: React.FC<Step4Props> = ({
   formData,
+  solverMode = "first_principles",
+  setSolverMode = () => {},
   onPrevious,
   onSubmit,
   isGenerating,
@@ -103,6 +107,79 @@ export const Step4Options: React.FC<Step4Props> = ({
             </div>
           )}
         </dl>
+      </div>
+
+      {/* Solver Mode Selection */}
+      <div className="space-y-3">
+        <Label>Solver Mode</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setSolverMode("first_principles")}
+            className={`
+              relative rounded-lg border-2 p-4 text-left transition-all
+              ${
+                solverMode === "first_principles"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
+                  : "border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800"
+              }
+            `}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="text-2xl">🧮</div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900 dark:text-white">
+                  First-Principles
+                </h4>
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  Physics-based solver from mission requirements
+                </p>
+              </div>
+            </div>
+            {solverMode === "first_principles" && (
+              <div className="absolute top-2 right-2">
+                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-white"></div>
+                </div>
+              </div>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSolverMode("data_driven_real")}
+            className={`
+              relative rounded-lg border-2 p-4 text-left transition-all
+              ${
+                solverMode === "data_driven_real"
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/30"
+                  : "border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800"
+              }
+            `}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="text-2xl">📊</div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900 dark:text-white">
+                  Data-Driven <span className="text-xs text-green-600 dark:text-green-400 font-bold">NEW</span>
+                </h4>
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  KNN search on 600 real-world vessels
+                </p>
+              </div>
+            </div>
+            {solverMode === "data_driven_real" && (
+              <div className="absolute top-2 right-2">
+                <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-white"></div>
+                </div>
+              </div>
+            )}
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          💡 <strong>First-Principles</strong>: Pure physics-based design from scratch. <strong>Data-Driven</strong>: Starts from similar real vessels for faster, proven designs.
+        </p>
       </div>
 
       {/* Solver Options */}
@@ -239,18 +316,37 @@ export const Step4Options: React.FC<Step4Props> = ({
         </div>
 
         {/* Solver Info */}
-        <div className="rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 p-4 text-sm dark:from-blue-900/20 dark:to-cyan-900/20">
-          <p className="font-medium text-blue-900 dark:text-blue-300">
-            🧮 Solver Mode: First-Principles
-          </p>
-          <p className="mt-1 text-blue-800 dark:text-blue-400">
-            Physics-based solver using displacement closure, Holtrop-Mennen resistance, and
-            stability screening.
-          </p>
-          <p className="mt-2 text-xs text-blue-700 dark:text-blue-500">
-            ⚡ Expected compute time: ~1-2 seconds for {maxCandidates} candidates
-          </p>
-        </div>
+        {solverMode === "first_principles" ? (
+          <div className="rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 p-4 text-sm dark:from-blue-900/20 dark:to-cyan-900/20">
+            <p className="font-medium text-blue-900 dark:text-blue-300">
+              🧮 Solver Mode: First-Principles
+            </p>
+            <p className="mt-1 text-blue-800 dark:text-blue-400">
+              Physics-based solver using displacement closure, Holtrop-Mennen resistance, and
+              stability screening.
+            </p>
+            <p className="mt-2 text-xs text-blue-700 dark:text-blue-500">
+              ⚡ Expected compute time: ~1-2 seconds for {maxCandidates} candidates
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 p-4 text-sm dark:from-green-900/20 dark:to-emerald-900/20">
+            <p className="font-medium text-green-900 dark:text-green-300">
+              📊 Solver Mode: Data-Driven (Real-World Catalog)
+            </p>
+            <p className="mt-1 text-green-800 dark:text-green-400">
+              KNN search on 600 real-world vessels → Scaling → Physics refinement
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-green-700 dark:text-green-500">
+              <li>✓ Faster convergence (~50% faster)</li>
+              <li>✓ Proven hull forms (KCS, KVLCC2, etc.)</li>
+              <li>✓ Shows reference vessel & similarity score</li>
+            </ul>
+            <p className="mt-2 text-xs text-green-700 dark:text-green-500">
+              ⚡ Expected compute time: {'<'}1 second for {maxCandidates} candidates
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}

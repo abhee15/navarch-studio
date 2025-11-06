@@ -48,6 +48,12 @@ public record CandidateDesignDto
     public string? GeomParamsJson { get; init; }
 
     public DateTime CreatedAt { get; init; }
+
+    // Provenance (Data-Driven Mode)
+    public string? ReferenceVesselId { get; init; }
+    public string? ReferenceVesselName { get; init; }
+    public decimal? SimilarityScore { get; init; }
+    public string? SolverMode { get; init; }
 }
 
 /// <summary>

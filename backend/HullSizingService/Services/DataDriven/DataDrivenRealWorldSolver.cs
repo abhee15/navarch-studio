@@ -44,7 +44,7 @@ public class DataDrivenRealWorldSolver
         {
             // Step 1: KNN Search via DataService
             _logger.LogDebug("Step 1/4: Performing KNN search on real-world vessel catalog...");
-            
+
             var similarVessels = await FindSimilarVesselsAsync(mission, K: 5, cancellationToken);
 
             if (!similarVessels.Any())
@@ -52,7 +52,7 @@ public class DataDrivenRealWorldSolver
                 _logger.LogWarning(
                     "No similar vessels found for type '{Type}'. Falling back to First-Principles solver.",
                     mission.MissionType);
-                
+
                 return await FallbackToFirstPrinciplesAsync(request, cancellationToken);
             }
 
@@ -61,9 +61,9 @@ public class DataDrivenRealWorldSolver
                 similarVessels.Count, similarVessels.Average(v => v.SimilarityScore));
 
             // Step 2: Scale each vessel to target displacement
-            _logger.LogDebug("Step 2/4: Scaling {Count} reference vessels to target displacement...", 
+            _logger.LogDebug("Step 2/4: Scaling {Count} reference vessels to target displacement...",
                 similarVessels.Count);
-            
+
             var scaledCandidates = ScaleVessels(similarVessels, mission, cancellationToken);
 
             if (!scaledCandidates.Any())
@@ -71,7 +71,7 @@ public class DataDrivenRealWorldSolver
                 _logger.LogWarning(
                     "All scaled vessels invalid (constraint violations or excessive distortion). " +
                     "Falling back to First-Principles solver.");
-                
+
                 return await FallbackToFirstPrinciplesAsync(request, cancellationToken);
             }
 
@@ -81,7 +81,7 @@ public class DataDrivenRealWorldSolver
 
             // Step 3: Refine with First-Principles solver (displacement closure)
             _logger.LogDebug("Step 3/4: Refining candidates with First-Principles solver...");
-            
+
             var refinedCandidates = await RefineWithPhysicsAsync(
                 scaledCandidates, mission, request, cancellationToken);
 
@@ -93,7 +93,7 @@ public class DataDrivenRealWorldSolver
 
             // Step 4: Rank and return top 5
             _logger.LogDebug("Step 4/4: Ranking candidates by score...");
-            
+
             var ranked = refinedCandidates
                 .OrderByDescending(c => c.Score)
                 .Take(5)
@@ -143,7 +143,7 @@ public class DataDrivenRealWorldSolver
 
         // Call DataService KNN endpoint
         var response = await _dataServiceClient.SearchSimilarVesselsAsync(criteria, cancellationToken);
-        
+
         return response.SimilarVessels ?? new List<SimilarVesselDto>();
     }
 
@@ -259,9 +259,9 @@ public class DataDrivenRealWorldSolver
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing First-Principles fallback...");
-        
+
         var solverCandidates = await _firstPrinciplesSolver.SolveAsync(request, cancellationToken);
-        
+
         // Mark as fallback in flags
         var marked = solverCandidates.Select(c =>
         {
@@ -269,7 +269,7 @@ public class DataDrivenRealWorldSolver
             flags.Add("FirstPrinciples_Fallback");
             return c with { Flags = flags };
         }).ToList();
-        
+
         return marked;
     }
 
@@ -280,7 +280,7 @@ public class DataDrivenRealWorldSolver
     {
         // Convert cargo to displacement
         // This logic should match FirstPrinciplesSolver's approach
-        
+
         decimal cargoMass = mission.CargoBasis switch
         {
             "Volume" => (mission.CargoVolumeM3 ?? mission.CargoValue ?? 0) * (mission.CargoDensityTPerM3 ?? 1.0m),
@@ -327,4 +327,3 @@ public class DataDrivenRealWorldSolver
         };
     }
 }
-
