@@ -73,7 +73,7 @@ export const MissionWizard: React.FC = observer(() => {
   };
 
   const steps = [
-    { number: 1, title: "Mission & Cargo", component: Step1MissionCargo },
+    { number: 1, title: "Vessel Requirements", component: Step1MissionCargo },
     { number: 2, title: "Speed & Environment", component: Step2SpeedEnvironment },
     { number: 3, title: "Constraints", component: Step3Constraints },
     { number: 4, title: "Options & Review", component: Step4Options },

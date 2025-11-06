@@ -23,9 +23,7 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Mission & Cargo Definition
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Vessel Requirements</h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Define your mission name and cargo requirements
         </p>
