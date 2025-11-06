@@ -14,19 +14,13 @@ public class CatalogSeeder
 {
     private readonly DataDbContext _context;
     private readonly ILogger<CatalogSeeder> _logger;
-    private readonly Services.Catalog.BenchmarkHullImporter _benchmarkHullImporter;
-    private readonly Services.Catalog.BenchmarkTestImporter _benchmarkTestImporter;
 
     public CatalogSeeder(
         DataDbContext context,
-        ILogger<CatalogSeeder> logger,
-        Services.Catalog.BenchmarkHullImporter benchmarkHullImporter,
-        Services.Catalog.BenchmarkTestImporter benchmarkTestImporter)
+        ILogger<CatalogSeeder> logger)
     {
         _context = context;
         _logger = logger;
-        _benchmarkHullImporter = benchmarkHullImporter;
-        _benchmarkTestImporter = benchmarkTestImporter;
     }
 
     /// <summary>
@@ -48,30 +42,31 @@ public class CatalogSeeder
     }
 
     /// <summary>
-    /// Seed benchmark data: hulls, test conditions, and Wageningen propeller data
+    /// Verify benchmark data seeded via migration
     /// </summary>
     private async Task SeedBenchmarkDataAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[SEED] Seeding benchmark data from MLData folder...");
+        _logger.LogInformation("[SEED] Verifying benchmark data (seeded via migration 20251106211500)...");
 
         try
         {
-            // Import benchmark hulls (9 vessels: KVLCC2, KCS, DTMB5415, etc.)
-            var hullCount = await _benchmarkHullImporter.ImportAsync(cancellationToken);
-            _logger.LogInformation("[SEED] ✅ Benchmark hulls: {Count} imported", hullCount);
+            // Count benchmark hulls (should be 9 from migration)
+            var hullCount = await _context.CatalogVesselsReal
+                .CountAsync(v => v.IsSystemData && v.DataQuality == "Reference", cancellationToken);
+            _logger.LogInformation("[SEED] ✅ Benchmark hulls: {Count} found (seeded via migration)", hullCount);
 
-            // Import test conditions (19 validation scenarios)
-            var testCount = await _benchmarkTestImporter.ImportAsync(cancellationToken);
-            _logger.LogInformation("[SEED] ✅ Test conditions: {Count} imported", testCount);
+            // Count test conditions (should be 19 from migration)
+            var testCount = await _context.BenchmarkTestConditions.CountAsync(cancellationToken);
+            _logger.LogInformation("[SEED] ✅ Test conditions: {Count} found (seeded via migration)", testCount);
 
-            // Wageningen coefficients are now hardcoded constants (no loading needed)
+            // Wageningen coefficients are hardcoded constants
             _logger.LogInformation("[SEED] ✅ Wageningen B-series: Using {Count} hardcoded coefficients",
                 Shared.Constants.WageningenConstants.Coefficients.Length);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[SEED] Error seeding benchmark data");
-            // Don't throw - allow app to start even if benchmark data fails
+            _logger.LogError(ex, "[SEED] Error verifying benchmark data");
+            // Don't throw - not critical
         }
     }
 
