@@ -23,6 +23,24 @@ services:
           cpus: '0.5'
           memory: 256M
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
   pgadmin:
     image: dpage/pgadmin4:8.0
     environment:
@@ -69,11 +87,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=sri_template_dev;Username=postgres;Password=postgres
+      - ConnectionStrings__Redis=redis:6379
       - Jwt__SecretKey=navarch-studio-local-development-secret-key-min-32-chars
       - Jwt__Issuer=navarch-studio-local
       - Jwt__Audience=navarch-studio-api
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -152,3 +173,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
