@@ -15,6 +15,7 @@ import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
 import { CatalogBrowser } from "./pages/catalog/CatalogBrowser";
 import { HullDetailPage } from "./pages/catalog/HullDetailPage";
 import { MLHullBrowser } from "./pages/catalog/MLHullBrowser";
+import { UnifiedCatalogBrowser } from "./pages/catalog/UnifiedCatalogBrowser";
 import { MissionCasesList } from "./pages/sizing/MissionCasesList";
 import { MissionWizard } from "./pages/sizing/MissionWizard";
 import { SizingRunResults } from "./pages/sizing/SizingRunResults";
@@ -187,6 +188,14 @@ export const App: React.FC = observer(() => (
               />
               <Route
                 path="/catalog"
+                element={
+                  <ProtectedRoute>
+                    <UnifiedCatalogBrowser />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/catalog/legacy"
                 element={
                   <ProtectedRoute>
                     <CatalogBrowser />
