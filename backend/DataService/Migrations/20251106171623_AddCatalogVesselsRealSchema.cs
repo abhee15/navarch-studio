@@ -19,40 +19,40 @@ namespace DataService.Migrations
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     vessel_id TEXT UNIQUE NOT NULL,
                     vessel_type TEXT NOT NULL,
-                    
+
                     -- Principal Dimensions
                     lpp_m DECIMAL(10,3) NOT NULL CHECK (lpp_m > 0),
                     beam_m DECIMAL(10,3) NOT NULL CHECK (beam_m > 0),
                     draft_m DECIMAL(10,3) NOT NULL CHECK (draft_m > 0),
                     depth_m DECIMAL(10,3) CHECK (depth_m > 0),
                     displacement_t DECIMAL(12,2) NOT NULL CHECK (displacement_t > 0),
-                    
+
                     -- Form Coefficients
                     cb DECIMAL(5,4) NOT NULL CHECK (cb BETWEEN 0.3 AND 0.95),
                     cp DECIMAL(5,4) CHECK (cp BETWEEN 0.5 AND 1.0),
                     cm DECIMAL(5,4) CHECK (cm BETWEEN 0.7 AND 1.0),
                     cw DECIMAL(5,4) CHECK (cw BETWEEN 0.5 AND 1.0),
-                    
+
                     -- Performance
                     service_speed_ms DECIMAL(6,3) CHECK (service_speed_ms > 0),
                     dwt_t DECIMAL(12,2) CHECK (dwt_t >= 0),
-                    
+
                     -- Additional Data
                     engine_type TEXT,
                     year_built INTEGER CHECK (year_built BETWEEN 1900 AND 2100),
                     source TEXT,
                     data_quality TEXT,
-                    
+
                     -- Geometry & Performance Data (JSONB)
                     resistance_curve JSONB,
                     hull_geometry_file TEXT,
-                    
+
                     -- Permissions & Tracking
                     is_system_data BOOLEAN DEFAULT TRUE NOT NULL,
                     created_by UUID,
                     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-                    
+
                     CONSTRAINT chk_system_or_user CHECK (
                         (is_system_data = TRUE AND created_by IS NULL) OR
                         (is_system_data = FALSE AND created_by IS NOT NULL)
@@ -72,7 +72,7 @@ namespace DataService.Migrations
 
             // Create GIN index for JSONB resistance curves
             migrationBuilder.Sql(@"
-                CREATE INDEX idx_vessels_real_resistance_gin 
+                CREATE INDEX idx_vessels_real_resistance_gin
                 ON catalog_user.vessels_real USING GIN(resistance_curve);
             ");
         }
@@ -82,7 +82,7 @@ namespace DataService.Migrations
         {
             // Drop table (will cascade drop indexes)
             migrationBuilder.Sql("DROP TABLE IF EXISTS catalog_user.vessels_real CASCADE;");
-            
+
             // Drop schema
             migrationBuilder.Sql("DROP SCHEMA IF EXISTS catalog_user CASCADE;");
         }

@@ -73,8 +73,8 @@ public class VesselCatalogImporter
                         YearBuilt = record.YearBuilt,
                         Source = record.Source,
                         DataQuality = record.DataQuality,
-                        HullGeometryFile = string.IsNullOrWhiteSpace(record.HullGeometryFile) || 
-                                          record.HullGeometryFile == "None" 
+                        HullGeometryFile = string.IsNullOrWhiteSpace(record.HullGeometryFile) ||
+                                          record.HullGeometryFile == "None"
                                           ? null : record.HullGeometryFile,
                         ResistanceCurve = record.ResistanceCurve,  // Already JSON string
                         IsSystemData = true,  // These are system-seeded vessels
@@ -265,4 +265,3 @@ public class ImportResult
                $"Errors: {Errors.Count}, Warnings: {Warnings.Count}";
     }
 }
-

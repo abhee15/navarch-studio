@@ -176,6 +176,10 @@ try
     builder.Services.AddScoped<HullSizingService.Services.Solver.IFirstPrinciplesSolver, HullSizingService.Services.Solver.FirstPrinciplesSolver>();
     Log.Information("Solver services registered (hybrid displacement closure with Brent fallback, resistance, stability, first-principles)");
 
+    // Data-Driven Mode Services
+    builder.Services.AddScoped<HullSizingService.Services.DataDriven.VesselScalingService>();
+    Log.Information("Data-Driven services registered (vessel scaling)");
+
     // FluentValidation validators
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.CreateMissionCaseDto>, Shared.Validators.Sizing.CreateMissionCaseDtoValidator>();
     builder.Services.AddScoped<FluentValidation.IValidator<Shared.DTOs.Sizing.UpdateMissionCaseDto>, Shared.Validators.Sizing.UpdateMissionCaseDtoValidator>();

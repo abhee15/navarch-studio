@@ -193,6 +193,7 @@ try
     builder.Services.AddScoped<DataService.Services.Catalog.CatalogWaterService>();
     builder.Services.AddScoped<DataService.Services.Catalog.VesselCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.CatalogVesselSeeder>();
+    builder.Services.AddScoped<DataService.Services.Catalog.RealWorldKnnService>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
