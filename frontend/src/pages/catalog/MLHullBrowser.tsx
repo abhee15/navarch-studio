@@ -104,7 +104,7 @@ export const MLHullBrowser: React.FC = observer(() => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
-      
+
       <main className="flex-1 container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
@@ -174,7 +174,7 @@ export const MLHullBrowser: React.FC = observer(() => {
             <Filter className="h-4 w-4 text-gray-600" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="dataset">Dataset</Label>
@@ -246,7 +246,7 @@ export const MLHullBrowser: React.FC = observer(() => {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Showing {((page - 1) * 20) + 1}-{Math.min(page * 20, totalCount)} of {totalCount.toLocaleString()} hulls
           </p>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -377,7 +377,7 @@ export const MLHullBrowser: React.FC = observer(() => {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            
+
             <div className="flex items-center gap-2">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const pageNum = page - 2 + i;
@@ -417,4 +417,3 @@ export const MLHullBrowser: React.FC = observer(() => {
     </div>
   );
 });
-
