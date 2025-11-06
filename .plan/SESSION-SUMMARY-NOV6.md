@@ -458,4 +458,3 @@ cd frontend && npm run dev  # Start UI
 ---
 
 **Time to deploy and celebrate!** 🎉
-

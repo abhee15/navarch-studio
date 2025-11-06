@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataService.Migrations
 {
     [DbContext(typeof(DataDbContext))]
-    [Migration("20251106193103_DataServiceInitial")]
-    partial class DataServiceInitial
+    [Migration("20251106222230_FreshInitial")]
+    partial class FreshInitial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -275,6 +275,70 @@ namespace DataService.Migrations
                         .HasDatabaseName("ix_benchmark_metric_ref_case_id");
 
                     b.ToTable("benchmark_metric_ref", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.BenchmarkTestCondition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<decimal>("FroudeNumber")
+                        .HasColumnType("numeric")
+                        .HasColumnName("froude_number");
+
+                    b.Property<decimal>("HeadingDeg")
+                        .HasColumnType("numeric")
+                        .HasColumnName("heading_deg");
+
+                    b.Property<string>("HullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("hull_name");
+
+                    b.Property<decimal>("ReynoldsNumber")
+                        .HasColumnType("numeric")
+                        .HasColumnName("reynolds_number");
+
+                    b.Property<decimal>("SpeedKnots")
+                        .HasColumnType("numeric")
+                        .HasColumnName("speed_knots");
+
+                    b.Property<string>("Standard")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("standard");
+
+                    b.Property<string>("TestType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("test_type");
+
+                    b.Property<decimal>("WaveHeightM")
+                        .HasColumnType("numeric")
+                        .HasColumnName("wave_height_m");
+
+                    b.Property<decimal>("WavePeriodS")
+                        .HasColumnType("numeric")
+                        .HasColumnName("wave_period_s");
+
+                    b.HasKey("Id")
+                        .HasName("pk_benchmark_test_conditions");
+
+                    b.ToTable("benchmark_test_conditions", "catalog_real");
                 });
 
             modelBuilder.Entity("Shared.Models.BenchmarkTestPoint", b =>

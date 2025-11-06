@@ -36,7 +36,7 @@ echo ""
 echo -e "${BLUE}[2/7] Database Migrations${NC}"
 if docker exec navarch-studio-postgres-1 psql -U postgres -d sri_template_dev -c "SELECT 1" > /dev/null 2>&1; then
   echo -e "${GREEN}   ✅ Database: sri_template_dev exists${NC}"
-  
+
   # Check schemas
   SCHEMAS=$(docker exec navarch-studio-postgres-1 psql -U postgres -d sri_template_dev -t -c "SELECT nspname FROM pg_namespace WHERE nspname IN ('data', 'sizing', 'catalog_user', 'catalog_real', 'catalog_ml');" 2>/dev/null | wc -l)
   if [ "$SCHEMAS" -eq "5" ]; then
@@ -67,7 +67,7 @@ fi
 REAL_COUNT=$(docker exec navarch-studio-postgres-1 psql -U postgres -d sri_template_dev -t -c "SELECT COUNT(*) FROM catalog_user.vessels_real;" 2>/dev/null | tr -d ' ')
 if [ ! -z "$REAL_COUNT" ] && [ "$REAL_COUNT" -gt "0" ]; then
   echo -e "${GREEN}   ✅ Real Catalog: $REAL_COUNT vessels${NC}"
-  
+
   # Check benchmark
   BENCHMARK_COUNT=$(docker exec navarch-studio-postgres-1 psql -U postgres -d sri_template_dev -t -c "SELECT COUNT(*) FROM catalog_user.vessels_real WHERE data_quality = 'Reference';" 2>/dev/null | tr -d ' ')
   if [ ! -z "$BENCHMARK_COUNT" ] && [ "$BENCHMARK_COUNT" -eq "9" ]; then
@@ -97,7 +97,7 @@ check_service() {
   local name=$1
   local port=$2
   local service=$3
-  
+
   if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
     echo -e "${GREEN}   ✅ $name: Healthy${NC}"
   else
@@ -171,4 +171,3 @@ echo "   • If frontend not running: cd frontend && npm run dev"
 echo "   • View logs: ./scripts/dev-logs.sh"
 echo "   • Check status: ./scripts/dev-status.sh"
 echo ""
-

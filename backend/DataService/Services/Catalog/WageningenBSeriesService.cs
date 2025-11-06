@@ -28,21 +28,21 @@ public class WageningenBSeriesService
     /// <param name="PD">Pitch/diameter ratio (0.5-1.4)</param>
     /// <returns>Thrust coefficient, torque coefficient, efficiency</returns>
     public PropellerPerformance CalculatePerformance(
-        double J, 
-        int Z, 
-        double AeA0, 
+        double J,
+        int Z,
+        double AeA0,
         double PD)
     {
         // Validate inputs
         if (J < WageningenConstants.ParameterRanges.J_Min || J > WageningenConstants.ParameterRanges.J_Max)
             throw new ArgumentOutOfRangeException(nameof(J), $"Advance coefficient must be {WageningenConstants.ParameterRanges.J_Min}-{WageningenConstants.ParameterRanges.J_Max}");
-        
+
         if (Z < WageningenConstants.ParameterRanges.Z_Min || Z > WageningenConstants.ParameterRanges.Z_Max)
             throw new ArgumentOutOfRangeException(nameof(Z), $"Number of blades must be {WageningenConstants.ParameterRanges.Z_Min}-{WageningenConstants.ParameterRanges.Z_Max}");
-        
+
         if (AeA0 < WageningenConstants.ParameterRanges.AeA0_Min || AeA0 > WageningenConstants.ParameterRanges.AeA0_Max)
             throw new ArgumentOutOfRangeException(nameof(AeA0), $"Blade area ratio must be {WageningenConstants.ParameterRanges.AeA0_Min}-{WageningenConstants.ParameterRanges.AeA0_Max}");
-        
+
         if (PD < WageningenConstants.ParameterRanges.PD_Min || PD > WageningenConstants.ParameterRanges.PD_Max)
             throw new ArgumentOutOfRangeException(nameof(PD), $"Pitch/diameter ratio must be {WageningenConstants.ParameterRanges.PD_Min}-{WageningenConstants.ParameterRanges.PD_Max}");
 
