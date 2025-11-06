@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataService.Migrations
 {
     [DbContext(typeof(DataDbContext))]
-    [Migration("20251106171623_AddCatalogVesselsRealSchema")]
-    partial class AddCatalogVesselsRealSchema
+    [Migration("20251106193103_DataServiceInitial")]
+    partial class DataServiceInitial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -519,6 +519,119 @@ namespace DataService.Migrations
                         .HasName("pk_catalog_propeller_series");
 
                     b.ToTable("catalog_propeller_series", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.CatalogVesselReal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("BeamM")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("beam_m");
+
+                    b.Property<decimal>("Cb")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cb");
+
+                    b.Property<decimal?>("Cm")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cm");
+
+                    b.Property<decimal?>("Cp")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cp");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<decimal?>("Cw")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cw");
+
+                    b.Property<string>("DataQuality")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("data_quality");
+
+                    b.Property<decimal?>("DepthM")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("depth_m");
+
+                    b.Property<decimal>("DisplacementT")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("displacement_t");
+
+                    b.Property<decimal>("DraftM")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("draft_m");
+
+                    b.Property<decimal?>("DwtT")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("dwt_t");
+
+                    b.Property<string>("EngineType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("engine_type");
+
+                    b.Property<string>("HullGeometryFile")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("hull_geometry_file");
+
+                    b.Property<bool>("IsSystemData")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system_data");
+
+                    b.Property<decimal>("LppM")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("lpp_m");
+
+                    b.Property<string>("ResistanceCurve")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("resistance_curve");
+
+                    b.Property<decimal?>("ServiceSpeedMs")
+                        .HasColumnType("decimal(6,3)")
+                        .HasColumnName("service_speed_ms");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("source");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("VesselId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("vessel_id");
+
+                    b.Property<string>("VesselType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("vessel_type");
+
+                    b.Property<int?>("YearBuilt")
+                        .HasColumnType("integer")
+                        .HasColumnName("year_built");
+
+                    b.HasKey("Id")
+                        .HasName("pk_vessels_real");
+
+                    b.ToTable("vessels_real", "catalog_user");
                 });
 
             modelBuilder.Entity("Shared.Models.CatalogWaterProperty", b =>
@@ -1088,6 +1201,156 @@ namespace DataService.Migrations
                         .HasDatabaseName("ix_offsets_vessel_id_station_index_waterline_index");
 
                     b.ToTable("offsets", "data");
+                });
+
+            modelBuilder.Entity("Shared.Models.ParametricHull", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AreaWpNorm")
+                        .HasColumnType("decimal(10,8)")
+                        .HasColumnName("area_wp_norm");
+
+                    b.Property<decimal?>("AreaWsNorm")
+                        .HasColumnType("decimal(10,8)")
+                        .HasColumnName("area_ws_norm");
+
+                    b.Property<decimal>("BdRatio")
+                        .HasColumnType("decimal(8,6)")
+                        .HasColumnName("bd_ratio");
+
+                    b.Property<decimal>("BeamMDerived")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("beam_m_derived");
+
+                    b.Property<decimal>("BsRatio")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("bs_ratio");
+
+                    b.Property<decimal>("CbDerived")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cb_derived");
+
+                    b.Property<decimal?>("CmDerived")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cm_derived");
+
+                    b.Property<string>("ConversionQuality")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("conversion_quality");
+
+                    b.Property<decimal?>("CpDerived")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cp_derived");
+
+                    b.Property<decimal>("CwCoeff")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("cw_coeff");
+
+                    b.Property<int>("DataVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("data_version");
+
+                    b.Property<string>("DatasetSource")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("dataset_source");
+
+                    b.Property<decimal>("DdRatio")
+                        .HasColumnType("decimal(8,6)")
+                        .HasColumnName("dd_ratio");
+
+                    b.Property<decimal>("DepthMDerived")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("depth_m_derived");
+
+                    b.Property<decimal?>("DistortionScore")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("distortion_score");
+
+                    b.Property<decimal>("DraftMDerived")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("draft_m_derived");
+
+                    b.Property<string>("GeometricMeasures")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("geometric_measures");
+
+                    b.Property<bool>("HasValidCoefficients")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_valid_coefficients");
+
+                    b.Property<string>("HullId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("hull_id");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_at");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<decimal?>("IxxNorm")
+                        .HasColumnType("decimal(12,8)")
+                        .HasColumnName("ixx_norm");
+
+                    b.Property<decimal?>("IyyNorm")
+                        .HasColumnType("decimal(12,8)")
+                        .HasColumnName("iyy_norm");
+
+                    b.Property<decimal>("LbRatio")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("lb_ratio");
+
+                    b.Property<decimal>("LcbNorm")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("lcb_norm");
+
+                    b.Property<decimal>("LoaM")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("loa_m");
+
+                    b.Property<decimal>("LppMDerived")
+                        .HasColumnType("decimal(10,3)")
+                        .HasColumnName("lpp_m_derived");
+
+                    b.Property<decimal>("LsRatio")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("ls_ratio");
+
+                    b.Property<string>("ParametricVector")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("parametric_vector");
+
+                    b.Property<int>("RowIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("row_index");
+
+                    b.Property<decimal?>("VcbNorm")
+                        .HasColumnType("decimal(6,4)")
+                        .HasColumnName("vcb_norm");
+
+                    b.Property<decimal>("VolumeNorm")
+                        .HasColumnType("decimal(12,8)")
+                        .HasColumnName("volume_norm");
+
+                    b.HasKey("Id")
+                        .HasName("pk_parametric_hulls");
+
+                    b.ToTable("parametric_hulls", "catalog_ml");
                 });
 
             modelBuilder.Entity("Shared.Models.ProjectBoard", b =>

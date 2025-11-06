@@ -233,7 +233,7 @@ public class DataDrivenParametricSolver
     {
         // Find the best-matching converted hull (by Lpp, B, T similarity)
         var bestMatch = convertedHulls
-            .OrderBy(h => Math.Abs(h.Lpp - candidate.LppM) + 
+            .OrderBy(h => Math.Abs(h.Lpp - candidate.LppM) +
                          Math.Abs(h.Beam - candidate.BeamM) +
                          Math.Abs(h.Draft - candidate.DraftM))
             .FirstOrDefault();
@@ -267,16 +267,16 @@ public class DataDrivenParametricSolver
         CancellationToken cancellationToken)
     {
         _logger.LogInformation("Using First-Principles fallback");
-        
+
         var candidates = await _firstPrinciplesSolver.SolveAsync(request, cancellationToken);
-        
+
         // Mark as fallback
         return candidates.Select(c =>
         {
             var flags = c.Flags.ToList();
             flags.Add("ML_Fallback");
-            return c with 
-            { 
+            return c with
+            {
                 Flags = flags,
                 SolverMode = "FirstPrinciples_Fallback"
             };
@@ -309,4 +309,3 @@ public class DataDrivenParametricSolver
         return targetDisplacement;
     }
 }
-

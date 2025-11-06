@@ -549,7 +549,7 @@ public class ParametricVector45
 }
 
 /// <summary>
-/// CSV row mapping for Input_Vectors.csv
+/// CSV row mapping for Input_Vectors.csv (with space-containing headers)
 /// </summary>
 public class ParametricVector45CsvRow
 {
@@ -568,8 +568,13 @@ public class ParametricVector45CsvRow
     public decimal Bbow { get; set; }
     public decimal BK_z { get; set; }
     public decimal Kappa_bow { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Adel bow")]
     public decimal Adel_bow { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Bdel bow")]
     public decimal Bdel_bow { get; set; }
+    
     public decimal Adrft { get; set; }
     public decimal Bdrft { get; set; }
     public decimal Cdrft { get; set; }
@@ -578,12 +583,25 @@ public class ParametricVector45CsvRow
     public decimal Atrans { get; set; }
     public decimal SK_z { get; set; }
     public decimal Kappa_stern { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Adel stern")]
     public decimal Adel_stern { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Bdel stern")]
     public decimal Bdel_stern { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Beta trans")]
     public decimal Beta_trans { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Bc trans")]
     public decimal Bc_trans { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Rc Trans")]
     public decimal Rc_Trans { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Name("Rk trans")]
     public decimal Rk_trans { get; set; }
+    
     public decimal bit_BB { get; set; }
     public decimal bit_SB { get; set; }
     public decimal Lbb { get; set; }

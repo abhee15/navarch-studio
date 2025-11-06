@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HullSizingService.Migrations
 {
     [DbContext(typeof(SizingDbContext))]
-    [Migration("20251106173006_AddProvenanceFieldsToCandidates")]
-    partial class AddProvenanceFieldsToCandidates
+    [Migration("20251106193503_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -123,6 +123,14 @@ namespace HullSizingService.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rank");
 
+                    b.Property<string>("ReferenceVesselId")
+                        .HasColumnType("text")
+                        .HasColumnName("reference_vessel_id");
+
+                    b.Property<string>("ReferenceVesselName")
+                        .HasColumnType("text")
+                        .HasColumnName("reference_vessel_name");
+
                     b.Property<decimal>("Score")
                         .HasColumnType("numeric(8,4)")
                         .HasColumnName("score");
@@ -135,9 +143,17 @@ namespace HullSizingService.Migrations
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("shp_kw");
 
+                    b.Property<decimal?>("SimilarityScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("similarity_score");
+
                     b.Property<Guid>("SizingRunId")
                         .HasColumnType("uuid")
                         .HasColumnName("sizing_run_id");
+
+                    b.Property<string>("SolverMode")
+                        .HasColumnType("text")
+                        .HasColumnName("solver_mode");
 
                     b.Property<decimal>("TM")
                         .HasColumnType("numeric(12,4)")

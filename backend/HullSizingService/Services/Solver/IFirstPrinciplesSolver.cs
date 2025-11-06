@@ -75,7 +75,3 @@ public record SolverCandidate(
     decimal? SimilarityScore = null,
     string? SolverMode = null
 );
-
-
-
-

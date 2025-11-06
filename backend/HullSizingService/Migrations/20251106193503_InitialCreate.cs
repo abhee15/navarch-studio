@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HullSizingService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialSizingSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -201,7 +201,11 @@ namespace HullSizingService.Migrations
                     flags_json = table.Column<string>(type: "jsonb", nullable: true),
                     score = table.Column<decimal>(type: "numeric(8,4)", nullable: false),
                     geometry_json = table.Column<string>(type: "jsonb", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    reference_vessel_id = table.Column<string>(type: "text", nullable: true),
+                    reference_vessel_name = table.Column<string>(type: "text", nullable: true),
+                    similarity_score = table.Column<decimal>(type: "numeric", nullable: true),
+                    solver_mode = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
