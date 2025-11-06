@@ -1,3 +1,5 @@
+using Shared.DTOs.Catalog;
+
 namespace HullSizingService.Services.Integration;
 
 /// <summary>
@@ -14,6 +16,11 @@ public interface IDataServiceClient
     /// Calculate resistance using Holtrop-Mennen method (Phase 2 - integration with DataService)
     /// </summary>
     Task<HoltropResponse?> CalculateResistanceAsync(HoltropRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Search for similar vessels in the real-world catalog using KNN
+    /// </summary>
+    Task<KnnSearchResponse> SearchSimilarVesselsAsync(KnnSearchRequest request, CancellationToken cancellationToken = default);
 }
 
 public record WaterPropertiesResponse(

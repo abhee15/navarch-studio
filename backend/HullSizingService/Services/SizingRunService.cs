@@ -10,17 +10,23 @@ namespace HullSizingService.Services;
 public class SizingRunService : ISizingRunService
 {
     private readonly SizingDbContext _context;
-    private readonly Solver.IFirstPrinciplesSolver _solver;
+    private readonly Solver.IFirstPrinciplesSolver _firstPrinciplesSolver;
+    private readonly DataDriven.DataDrivenRealWorldSolver? _dataDrivenSolver;
     private readonly ILogger<SizingRunService> _logger;
+    private readonly IConfiguration _configuration;
 
     public SizingRunService(
         SizingDbContext context,
-        Solver.IFirstPrinciplesSolver solver,
-        ILogger<SizingRunService> logger)
+        Solver.IFirstPrinciplesSolver firstPrinciplesSolver,
+        ILogger<SizingRunService> logger,
+        IConfiguration configuration,
+        DataDriven.DataDrivenRealWorldSolver? dataDrivenSolver = null)
     {
         _context = context;
-        _solver = solver;
+        _firstPrinciplesSolver = firstPrinciplesSolver;
         _logger = logger;
+        _configuration = configuration;
+        _dataDrivenSolver = dataDrivenSolver;
     }
 
     public async Task<List<SizingRunDto>> GetByMissionCaseIdAsync(Guid missionCaseId, string tenantId, CancellationToken cancellationToken = default)
@@ -101,7 +107,7 @@ public class SizingRunService : ISizingRunService
 
         try
         {
-            // Call first-principles solver
+            // Build solver request
             var solverRequest = new Solver.SolverRequest(
                 MissionCase: missionCase,
                 Locks: dto.Locks != null ? new Solver.SizingLocksDto(
@@ -119,7 +125,30 @@ public class SizingRunService : ISizingRunService
                 ) : null
             );
 
-            var solverCandidates = await _solver.SolveAsync(solverRequest, cancellationToken);
+            // Route to appropriate solver based on mode
+            List<Solver.SolverCandidate> solverCandidates;
+
+            if (dto.Mode == "data_driven_real" && _dataDrivenSolver != null)
+            {
+                // Check feature flag
+                var featureEnabled = _configuration.GetValue<bool>("FeatureFlags:DataDrivenReal", false);
+                if (!featureEnabled)
+                {
+                    _logger.LogWarning("Data-Driven Real mode requested but feature flag disabled. Falling back to First-Principles.");
+                    solverCandidates = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
+                }
+                else
+                {
+                    _logger.LogInformation("Using Data-Driven Real-World solver");
+                    solverCandidates = await _dataDrivenSolver.SolveAsync(solverRequest, cancellationToken);
+                }
+            }
+            else
+            {
+                // Default: First-Principles mode
+                _logger.LogInformation("Using First-Principles solver");
+                solverCandidates = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
+            }
 
             // Convert solver candidates to database entities
             var candidateEntities = new List<CandidateDesign>();

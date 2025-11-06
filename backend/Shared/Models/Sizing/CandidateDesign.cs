@@ -166,6 +166,29 @@ public class CandidateDesign
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
+    // Provenance (Data-Driven Mode)
+
+    /// <summary>
+    /// Reference vessel ID from catalog (if Data-Driven mode)
+    /// </summary>
+    public string? ReferenceVesselId { get; set; }
+
+    /// <summary>
+    /// Reference vessel name (e.g., "KCS", "KVLCC2")
+    /// </summary>
+    public string? ReferenceVesselName { get; set; }
+
+    /// <summary>
+    /// Similarity score from KNN search (0-1, higher is better)
+    /// Null for First-Principles mode
+    /// </summary>
+    public decimal? SimilarityScore { get; set; }
+
+    /// <summary>
+    /// Solver mode used: FirstPrinciples, DataDrivenRealWorld, DataDrivenParametric
+    /// </summary>
+    public string? SolverMode { get; set; }
+
     // Navigation Properties
 
     /// <summary>

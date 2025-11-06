@@ -118,7 +118,7 @@ public class VesselScalingService
             // Δ ∝ L × B × T × Cb
             // If we reduce B, we need to increase L or T proportionally
             var beamReduction = scaled.Beam / originalBeam;
-            
+
             // Split the compensation between L and T
             var compensationFactor = (decimal)Math.Pow((double)(1.0m / beamReduction), 0.5);
             scaled.Lpp *= compensationFactor;
@@ -149,7 +149,7 @@ public class VesselScalingService
             _logger.LogWarning(
                 "Target displacement {Target}t exceeds max {Max}t. Cannot scale this reference.",
                 scaled.TargetDisplacement, constraints.MaxDisplacement.Value);
-            
+
             scaled.IsValid = false;
         }
 
@@ -267,4 +267,3 @@ public class ScaledCandidate
     // From KNN (set by caller)
     public double SimilarityScore { get; set; }
 }
-

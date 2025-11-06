@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Shared.DTOs.Catalog;
 
 namespace HullSizingService.Services.Integration;
 
@@ -69,6 +70,52 @@ public class DataServiceClient : IDataServiceClient
         {
             _logger.LogError(ex, "[DATA_CLIENT] Failed to calculate resistance");
             return null;
+        }
+    }
+
+    public async Task<KnnSearchResponse> SearchSimilarVesselsAsync(
+        KnnSearchRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "[DATA_CLIENT] Searching similar vessels: Type={Type}, Displacement={Disp}t, K={K}",
+                request.VesselType, request.TargetDisplacement, request.K);
+
+            var json = JsonSerializer.Serialize(request, new JsonSerializerOptions 
+            { 
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
+            });
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(
+                "/api/v1/catalog/vessels/search-similar", 
+                content, 
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[DATA_CLIENT] KNN search failed: {StatusCode}", response.StatusCode);
+                return new KnnSearchResponse { SimilarVessels = new List<SimilarVesselDto>() };
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<KnnSearchResponse>(responseJson, new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true 
+            });
+
+            _logger.LogInformation(
+                "[DATA_CLIENT] KNN search returned {Count} similar vessels",
+                result?.SimilarVessels?.Count ?? 0);
+
+            return result ?? new KnnSearchResponse { SimilarVessels = new List<SimilarVesselDto>() };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[DATA_CLIENT] Failed to search similar vessels");
+            return new KnnSearchResponse { SimilarVessels = new List<SimilarVesselDto>() };
         }
     }
 }

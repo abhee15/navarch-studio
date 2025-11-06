@@ -195,7 +195,7 @@ public class RealWorldKnnServiceTests : IDisposable
 
         // Act - First call loads from DB
         var results1 = await _service.FindSimilarVesselsAsync(criteria, K: 5);
-        
+
         // Act - Second call should use cache
         var results2 = await _service.FindSimilarVesselsAsync(criteria, K: 5);
 
@@ -251,4 +251,3 @@ public class RealWorldKnnServiceTests : IDisposable
         _cache.Dispose();
     }
 }
-

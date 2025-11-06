@@ -68,7 +68,7 @@ public class VesselScalingServiceTests
         result.Cp.Should().NotBeNull();
         result.Cp.Should().BeGreaterThan(0.5m);
         result.Cp.Should().BeLessThanOrEqualTo(1.0m);
-        
+
         result.Cm.Should().NotBeNull();
         result.Cm.Should().BeGreaterThan(0.7m);
         result.Cm.Should().BeLessThanOrEqualTo(1.0m);
@@ -191,4 +191,3 @@ public class VesselScalingServiceTests
         };
     }
 }
-
