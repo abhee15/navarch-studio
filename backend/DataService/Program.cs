@@ -194,6 +194,8 @@ try
     builder.Services.AddScoped<DataService.Services.Catalog.VesselCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.CatalogVesselSeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.RealWorldKnnService>();
+    builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogImporter>();
+    builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogSeeder>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
@@ -397,6 +399,23 @@ try
             {
                 Console.WriteLine($"[SEED] WARNING: Failed to seed vessel catalog: {seedEx.Message}");
                 Log.Warning(seedEx, "[SEED] Failed to seed vessel catalog: {Message}", seedEx.Message);
+                // Don't throw - seeding is optional
+            }
+
+            // Seed parametric hull catalog (5K from MIT ShipD for ML/Parametric mode - Phase 2A)
+            Console.WriteLine("[SEED] Checking for ML/Parametric hull catalog...");
+            Log.Information("[SEED] Checking for ML/Parametric hull catalog...");
+            try
+            {
+                var parametricSeeder = scope.ServiceProvider.GetRequiredService<DataService.Services.Catalog.ParametricCatalogSeeder>();
+                await parametricSeeder.SeedParametricCatalogAsync();
+                Console.WriteLine("[SEED] ML/Parametric catalog seeding completed.");
+                Log.Information("[SEED] ML/Parametric catalog seeding completed.");
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"[SEED] WARNING: Failed to seed parametric catalog: {seedEx.Message}");
+                Log.Warning(seedEx, "[SEED] Failed to seed parametric catalog: {Message}", seedEx.Message);
                 // Don't throw - seeding is optional
             }
 

@@ -41,6 +41,7 @@ public class DataDbContext : DbContext
     public DbSet<CatalogPropellerPoint> CatalogPropellerPoints => Set<CatalogPropellerPoint>();
     public DbSet<CatalogWaterProperty> CatalogWaterProperties => Set<CatalogWaterProperty>();
     public DbSet<CatalogVesselReal> CatalogVesselsReal => Set<CatalogVesselReal>();
+    public DbSet<ParametricHull> ParametricHulls => Set<ParametricHull>();
 
     // Project board entities
     public DbSet<ProjectBoard> ProjectBoards => Set<ProjectBoard>();
