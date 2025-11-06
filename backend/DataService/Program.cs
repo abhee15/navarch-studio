@@ -206,6 +206,10 @@ try
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogSeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricKnnService>();
+    builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkHullImporter>();
+    builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkTestImporter>();
+    builder.Services.AddSingleton<DataService.Services.Catalog.WageningenBSeriesService>();
+    Log.Information("Benchmark and propeller services registered");
 
     // Background services for catalog management
     builder.Services.AddHostedService<DataService.Services.Catalog.ParametricImportBackgroundService>();

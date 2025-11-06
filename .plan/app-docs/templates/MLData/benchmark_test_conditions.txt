@@ -1,0 +1,19 @@
+Test_Type,Hull,Speed_knots,Froude_Number,Reynolds_Number,Wave_Height_m,Wave_Period_s,Heading_deg,Description,Standard
+Resistance,KVLCC2,15.5,0.142,2.5e9,0,0,0,Calm water resistance,ITTC
+Resistance,KCS,24.0,0.260,1.4e9,0,0,0,Calm water resistance,ITTC
+Resistance,DTMB5415,18.0,0.248,1.2e9,0,0,0,Calm water resistance,ITTC
+Self_Propulsion,KVLCC2,15.5,0.142,2.5e9,0,0,0,Propeller open water + behind hull,ITTC
+Self_Propulsion,KCS,24.0,0.260,1.4e9,0,0,0,Propeller open water + behind hull,ITTC
+Turning_Circle,KVLCC2,15.5,0.142,2.5e9,0,0,0,35deg rudder angle,SIMMAN
+Turning_Circle,KCS,24.0,0.260,1.4e9,0,0,0,35deg rudder angle,SIMMAN
+Zigzag_10-10,KVLCC2,15.5,0.142,2.5e9,0,0,0,10deg rudder zigzag,SIMMAN
+Zigzag_20-20,KVLCC2,15.5,0.142,2.5e9,0,0,0,20deg rudder zigzag,SIMMAN
+Zigzag_10-10,KCS,24.0,0.260,1.4e9,0,0,0,10deg rudder zigzag,SIMMAN
+Seakeeping_Head,KVLCC2,15.5,0.142,2.5e9,2.0,12.0,180,Head seas regular wave,ITTC
+Seakeeping_Head,KCS,24.0,0.260,1.4e9,1.5,10.0,180,Head seas regular wave,ITTC
+Seakeeping_Beam,KVLCC2,15.5,0.142,2.5e9,2.0,12.0,90,Beam seas regular wave,ITTC
+Seakeeping_Quartering,DTMB5415,18.0,0.248,1.2e9,1.2,8.5,135,Quartering seas,ITTC
+Added_Resistance,KCS,24.0,0.260,1.4e9,1.0,6.0,180,Head waves added resistance,ITTC
+PMM_Pure_Sway,KVLCC2,15.5,0.142,2.5e9,0,0,0,Planar motion mechanism,SIMMAN
+PMM_Pure_Yaw,KVLCC2,15.5,0.142,2.5e9,0,0,0,Planar motion mechanism,SIMMAN
+Static_Drift,KCS,24.0,0.260,1.4e9,0,0,0,Oblique towing 0-30deg,SIMMAN

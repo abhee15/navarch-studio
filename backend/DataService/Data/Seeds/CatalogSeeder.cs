@@ -14,11 +14,22 @@ public class CatalogSeeder
 {
     private readonly DataDbContext _context;
     private readonly ILogger<CatalogSeeder> _logger;
+    private readonly Services.Catalog.BenchmarkHullImporter _benchmarkHullImporter;
+    private readonly Services.Catalog.BenchmarkTestImporter _benchmarkTestImporter;
+    private readonly Services.Catalog.WageningenBSeriesService _wageningenService;
 
-    public CatalogSeeder(DataDbContext context, ILogger<CatalogSeeder> logger)
+    public CatalogSeeder(
+        DataDbContext context,
+        ILogger<CatalogSeeder> logger,
+        Services.Catalog.BenchmarkHullImporter benchmarkHullImporter,
+        Services.Catalog.BenchmarkTestImporter benchmarkTestImporter,
+        Services.Catalog.WageningenBSeriesService wageningenService)
     {
         _context = context;
         _logger = logger;
+        _benchmarkHullImporter = benchmarkHullImporter;
+        _benchmarkTestImporter = benchmarkTestImporter;
+        _wageningenService = wageningenService;
     }
 
     /// <summary>
@@ -33,7 +44,38 @@ public class CatalogSeeder
         await SeedTemplateHullsAsync(cancellationToken);
         await SeedBenchmarkParticularsAsync(cancellationToken);
 
+        // NEW: Benchmark data from MLData folder
+        await SeedBenchmarkDataAsync(cancellationToken);
+
         _logger.LogInformation("Catalog seed complete.");
+    }
+
+    /// <summary>
+    /// Seed benchmark data: hulls, test conditions, and Wageningen propeller data
+    /// </summary>
+    private async Task SeedBenchmarkDataAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("[SEED] Seeding benchmark data from MLData folder...");
+
+        try
+        {
+            // Import benchmark hulls (9 vessels: KVLCC2, KCS, DTMB5415, etc.)
+            var hullCount = await _benchmarkHullImporter.ImportAsync(cancellationToken);
+            _logger.LogInformation("[SEED] ✅ Benchmark hulls: {Count} imported", hullCount);
+
+            // Import test conditions (19 validation scenarios)
+            var testCount = await _benchmarkTestImporter.ImportAsync(cancellationToken);
+            _logger.LogInformation("[SEED] ✅ Test conditions: {Count} imported", testCount);
+
+            // Load Wageningen coefficients (33 terms)
+            await _wageningenService.LoadCoefficientsAsync(cancellationToken);
+            _logger.LogInformation("[SEED] ✅ Wageningen B-series coefficients loaded");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[SEED] Error seeding benchmark data");
+            // Don't throw - allow app to start even if benchmark data fails
+        }
     }
 
     /// <summary>

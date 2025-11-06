@@ -577,4 +577,3 @@ curl -X POST http://localhost:5003/api/v1/propellers/wageningen/calculate \
 **Value delivered:** Production-ready propeller calculations + benchmark validation framework
 
 **Let's get this data into the system!** 🚀
-

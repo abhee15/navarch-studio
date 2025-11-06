@@ -371,4 +371,3 @@ cd frontend && npm run dev
 
 Everything is automated, documented, and tested.  
 Just run the scripts and start building features! 🚀
-

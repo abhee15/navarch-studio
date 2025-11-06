@@ -417,4 +417,3 @@ cd frontend && npm run dev
 ```
 
 **Need help?** Check `.plan/DEV-DEPLOYMENT-PLAN.md` for detailed troubleshooting.
-

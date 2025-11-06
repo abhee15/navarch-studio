@@ -42,6 +42,7 @@ public class DataDbContext : DbContext
     public DbSet<CatalogWaterProperty> CatalogWaterProperties => Set<CatalogWaterProperty>();
     public DbSet<CatalogVesselReal> CatalogVesselsReal => Set<CatalogVesselReal>();
     public DbSet<ParametricHull> ParametricHulls => Set<ParametricHull>();
+    public DbSet<BenchmarkTestCondition> BenchmarkTestConditions => Set<BenchmarkTestCondition>();
 
     // Project board entities
     public DbSet<ProjectBoard> ProjectBoards => Set<ProjectBoard>();

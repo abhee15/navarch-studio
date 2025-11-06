@@ -117,4 +117,3 @@ echo "   3. Open browser to http://localhost:5173"
 echo ""
 
 echo -e "${GREEN}🎊 Setup complete! Happy coding!${NC}"
-

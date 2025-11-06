@@ -901,4 +901,3 @@ docker-compose up -d
 ```
 
 **Let's get the dev environment ready to ship! 🎊**
-

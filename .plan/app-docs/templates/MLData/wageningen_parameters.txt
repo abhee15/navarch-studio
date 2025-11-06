@@ -1,0 +1,9 @@
+Parameter,Symbol,Min_Value,Max_Value,Typical_Value,Unit,Description
+Number_of_Blades,Z,2,7,4,-,Number of propeller blades
+Blade_Area_Ratio,AE/A0,0.30,1.05,0.55,-,Expanded blade area ratio
+Pitch_Diameter_Ratio,P/D,0.50,1.40,1.00,-,Pitch to diameter ratio
+Advance_Coefficient,J,0.00,1.50,0.70,-,J = V_a / (n * D)
+Thrust_Coefficient,KT,-0.50,1.00,0.30,-,KT = T / (ρ * n^2 * D^4)
+Torque_Coefficient,10KQ,-1.00,1.00,0.50,-,KQ = Q / (ρ * n^2 * D^5)
+Efficiency,η,0.00,0.80,0.65,-,η = (J / 2π) * (KT / KQ)
+Reynolds_Number,Rn,2000000,2000000,2000000,-,Based on 0.75R chord

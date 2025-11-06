@@ -57,4 +57,3 @@ echo -e "${BLUE}📝 Next steps:${NC}"
 echo "   1. Run './scripts/dev-setup.sh' to reinitialize"
 echo "   2. Or manually start with 'docker-compose up -d'"
 echo ""
-

@@ -24,20 +24,20 @@ if docker ps | grep -q "navarch-studio-postgres"; then
   # Check connection
   if docker exec navarch-studio-postgres-1 pg_isready -U postgres > /dev/null 2>&1; then
     echo -e "${GREEN}   ✅ PostgreSQL: Running${NC}"
-    
+
     # Check database exists
     DB_EXISTS=$(docker exec navarch-studio-postgres-1 psql -U postgres -lqt | cut -d \| -f 1 | grep -w sri_template_dev | wc -l)
     if [ "$DB_EXISTS" -eq "1" ]; then
       echo -e "${GREEN}      Database: sri_template_dev exists${NC}"
-      
+
       # Count records
       PARAM_COUNT=$(docker exec navarch-studio-postgres-1 psql -U postgres -d sri_template_dev -t -c "SELECT COUNT(*) FROM catalog_ml.parametric_hulls;" 2>/dev/null | tr -d ' ')
       REAL_COUNT=$(docker exec navarch-studio-postgres-1 psql -U postgres -d sri_template_dev -t -c "SELECT COUNT(*) FROM catalog_real.vessels;" 2>/dev/null | tr -d ' ')
-      
+
       if [ ! -z "$PARAM_COUNT" ]; then
         echo -e "${GREEN}      ML Catalog: $PARAM_COUNT hulls${NC}"
       fi
-      
+
       if [ ! -z "$REAL_COUNT" ]; then
         echo -e "${GREEN}      Real Catalog: $REAL_COUNT vessels${NC}"
       fi
@@ -70,7 +70,7 @@ echo -e "${BLUE}🏥 Service Health:${NC}"
 check_service() {
   local name=$1
   local port=$2
-  
+
   if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
     echo -e "${GREEN}   ✅ $name (port $port): Healthy${NC}"
   else
@@ -124,4 +124,3 @@ echo "   Run './scripts/dev-setup.sh' if services are not initialized"
 echo "   Run 'docker-compose up -d' to start backend services"
 echo "   Run 'cd frontend && npm run dev' to start frontend"
 echo ""
-

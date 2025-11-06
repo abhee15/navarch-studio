@@ -1,0 +1,31 @@
+Entity_Type_Number,Entity_Name,Category,Description,Common_Use_in_Ships
+100,Circular_Arc,2D_Geometry,Circular arc in plane,Bulkhead profiles
+102,Composite_Curve,2D_Geometry,Joined curve segments,Waterlines and buttock lines
+104,Conic_Arc,2D_Geometry,Conic section arc,Hull sections
+106,Copious_Data,2D_Geometry,Point cloud data,Digitized hull measurements
+108,Plane,Surface,Infinite plane,Reference planes
+110,Line,2D_Geometry,Straight line segment,Frame lines
+112,Parametric_Spline_Curve,2D_Geometry,Parametric spline,Smooth hull curves
+114,Parametric_Spline_Surface,Surface,Parametric spline surface,Hull surfaces
+116,Point,2D_Geometry,Single point,Control points
+118,Ruled_Surface,Surface,Surface between two curves,Simple hull sections
+120,Surface_of_Revolution,Surface,Revolved curve,Symmetric hulls (submarines)
+122,Tabulated_Cylinder,Surface,Extruded curve,Parallel middle body
+124,Transformation_Matrix,Utility,4x4 transformation,Positioning and scaling
+126,Rational_B-Spline_Curve,2D_Geometry,NURBS curve,Complex hull curves
+128,Rational_B-Spline_Surface,Surface,NURBS surface,Modern hull design
+130,Offset_Curve,2D_Geometry,Parallel curve,Shell plating offset
+132,Connect_Point,Topology,Point on curve/surface,Curve connections
+142,Curve_on_Parametric_Surface,Hybrid,Trimming curve,Deck edge curves
+144,Trimmed_Parametric_Surface,Surface,Bounded surface,Hull panels
+186,Manifold_Solid_BREP,Solid,Boundary representation solid,Complete hull solid model
+314,Color_Definition,Appearance,RGB color,Part visualization
+402,Associativity_Instance,Structure,Group of entities,Hull assembly structure
+406,Property,Attributes,Entity properties,Material and mass properties
+408,Singular_Subfigure_Instance,Structure,Instance of definition,Repeated structure (frames)
+410,View,Presentation,Viewing parameters,Different view angles
+502,Vertex,Topology,Topological vertex,Corner points
+504,Edge,Topology,Topological edge,Panel edges
+508,Loop,Topology,Closed edge loop,Panel boundaries
+510,Face,Topology,Bounded surface,Hull surface panel
+514,Shell,Topology,Connected faces,Complete hull shell
