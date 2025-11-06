@@ -5,12 +5,12 @@ import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { 
-  Database, 
-  Filter, 
-  TrendingUp, 
-  Sparkles, 
-  ChevronLeft, 
+import {
+  Database,
+  Filter,
+  TrendingUp,
+  Sparkles,
+  ChevronLeft,
   ChevronRight,
   Ship,
   Cpu,
@@ -57,7 +57,7 @@ interface CatalogStats {
 export const UnifiedCatalogBrowser: React.FC = observer(() => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<CatalogMode>("real");
-  
+
   // ML state
   const [mlHulls, setMlHulls] = useState<ParametricHull[]>([]);
   const [mlStats, setMlStats] = useState<CatalogStats | null>(null);
@@ -65,7 +65,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
   const [mlPage, setMlPage] = useState(1);
   const [mlTotalPages, setMlTotalPages] = useState(1);
   const [mlTotalCount, setMlTotalCount] = useState(0);
-  
+
   // Real state
   const [realVessels, setRealVessels] = useState<RealVessel[]>([]);
   const [realLoading, setRealLoading] = useState(false);
@@ -151,7 +151,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
-      
+
       <main className="flex-1 container mx-auto px-4 py-6">
         {/* Header with Mode Toggle */}
         <div className="mb-6">
@@ -171,7 +171,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                   Vessel Catalog
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {mode === "real" 
+                  {mode === "real"
                     ? "Real-world vessels - Editable & expandable"
                     : "ML/Parametric hulls - Read-only reference data"
                   }
@@ -400,7 +400,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 <Filter className="h-4 w-4 text-gray-600" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="dataset">Dataset</Label>
@@ -482,7 +482,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Showing {((mlPage - 1) * 20) + 1}-{Math.min(mlPage * 20, mlTotalCount)} of {mlTotalCount.toLocaleString()} hulls
                   </p>
-                  
+
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -583,7 +583,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    
+
                     <div className="flex items-center gap-2">
                       {Array.from({ length: Math.min(5, mlTotalPages) }, (_, i) => {
                         const pageNum = mlPage - 2 + i;
@@ -627,4 +627,3 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
     </div>
   );
 });
-
