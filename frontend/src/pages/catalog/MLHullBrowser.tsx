@@ -93,11 +93,16 @@ export const MLHullBrowser: React.FC = observer(() => {
 
   const getQualityColor = (quality: string) => {
     switch (quality) {
-      case "Excellent": return "text-green-600 bg-green-50";
-      case "Good": return "text-blue-600 bg-blue-50";
-      case "Fair": return "text-yellow-600 bg-yellow-50";
-      case "Poor": return "text-red-600 bg-red-50";
-      default: return "text-gray-600 bg-gray-50";
+      case "Excellent":
+        return "text-green-600 bg-green-50";
+      case "Good":
+        return "text-blue-600 bg-blue-50";
+      case "Fair":
+        return "text-yellow-600 bg-yellow-50";
+      case "Poor":
+        return "text-red-600 bg-red-50";
+      default:
+        return "text-gray-600 bg-gray-50";
     }
   };
 
@@ -129,7 +134,9 @@ export const MLHullBrowser: React.FC = observer(() => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 mb-1">
                 <Database className="h-4 w-4 text-purple-600" />
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Hulls</span>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Total Hulls
+                </span>
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats.totalHulls.toLocaleString()}
@@ -149,7 +156,9 @@ export const MLHullBrowser: React.FC = observer(() => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Cb Range</span>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Cb Range
+                </span>
               </div>
               <p className="text-lg font-bold text-gray-900 dark:text-white">
                 {stats.cbRange.min.toFixed(2)} - {stats.cbRange.max.toFixed(2)}
@@ -159,7 +168,9 @@ export const MLHullBrowser: React.FC = observer(() => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 mb-1">
                 <Filter className="h-4 w-4 text-orange-600" />
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Datasets</span>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Datasets
+                </span>
               </div>
               <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {Object.keys(stats.byDataset).length}
@@ -181,7 +192,10 @@ export const MLHullBrowser: React.FC = observer(() => {
               <select
                 id="dataset"
                 value={datasetFilter}
-                onChange={(e) => { setDatasetFilter(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setDatasetFilter(e.target.value);
+                  setPage(1);
+                }}
                 className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm"
               >
                 <option value="">All Datasets</option>
@@ -198,7 +212,10 @@ export const MLHullBrowser: React.FC = observer(() => {
                 step="0.05"
                 placeholder="0.30"
                 value={minCb}
-                onChange={(e) => { setMinCb(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setMinCb(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
 
@@ -210,7 +227,10 @@ export const MLHullBrowser: React.FC = observer(() => {
                 step="0.05"
                 placeholder="0.90"
                 value={maxCb}
-                onChange={(e) => { setMaxCb(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setMaxCb(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
 
@@ -244,14 +264,15 @@ export const MLHullBrowser: React.FC = observer(() => {
         {/* Results Header */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {((page - 1) * 20) + 1}-{Math.min(page * 20, totalCount)} of {totalCount.toLocaleString()} hulls
+            Showing {(page - 1) * 20 + 1}-{Math.min(page * 20, totalCount)} of{" "}
+            {totalCount.toLocaleString()} hulls
           </p>
 
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -263,7 +284,7 @@ export const MLHullBrowser: React.FC = observer(() => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
               Next
@@ -297,7 +318,9 @@ export const MLHullBrowser: React.FC = observer(() => {
                       {hull.datasetSource}
                     </p>
                   </div>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded ${getQualityColor(hull.conversionQuality)}`}>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded ${getQualityColor(hull.conversionQuality)}`}
+                  >
                     {hull.conversionQuality}
                   </span>
                 </div>
@@ -306,23 +329,33 @@ export const MLHullBrowser: React.FC = observer(() => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{hull.lppM.toFixed(2)} m</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {hull.lppM.toFixed(2)} m
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">Beam:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{hull.beamM.toFixed(2)} m</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {hull.beamM.toFixed(2)} m
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">Draft:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{hull.draftM.toFixed(2)} m</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {hull.draftM.toFixed(2)} m
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs border-t border-gray-200 dark:border-gray-700 pt-2">
                     <span className="text-gray-600 dark:text-gray-400">Cb:</span>
-                    <span className="font-bold text-purple-600 dark:text-purple-400">{hull.cb.toFixed(3)}</span>
+                    <span className="font-bold text-purple-600 dark:text-purple-400">
+                      {hull.cb.toFixed(3)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">LCB/Lpp:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{hull.lcbNorm.toFixed(3)}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {hull.lcbNorm.toFixed(3)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">Volume:</span>
@@ -363,16 +396,12 @@ export const MLHullBrowser: React.FC = observer(() => {
         {/* Pagination */}
         {!loading && hulls.length > 0 && (
           <div className="mt-6 flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setPage(1)}
-              disabled={page === 1}
-            >
+            <Button variant="outline" onClick={() => setPage(1)} disabled={page === 1}>
               First
             </Button>
             <Button
               variant="outline"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -397,7 +426,7 @@ export const MLHullBrowser: React.FC = observer(() => {
 
             <Button
               variant="outline"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
               <ChevronRight className="h-4 w-4" />

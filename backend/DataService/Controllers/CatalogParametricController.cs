@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Asp.Versioning;
 using DataService.Data;
 using DataService.Services.Catalog;
@@ -6,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs.Catalog;
 using Shared.Models;
-using System.Diagnostics;
 
 namespace DataService.Controllers;
 

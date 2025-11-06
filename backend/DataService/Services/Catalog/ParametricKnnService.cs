@@ -1,10 +1,10 @@
+using System.Text.Json;
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Shared.DTOs.Catalog;
 using Shared.Models;
-using System.Text.Json;
 
 namespace DataService.Services.Catalog;
 

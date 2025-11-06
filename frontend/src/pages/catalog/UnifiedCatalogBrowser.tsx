@@ -17,7 +17,7 @@ import {
   Plus,
   Lock,
   Edit,
-  Eye
+  Eye,
 } from "lucide-react";
 import { api } from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -140,11 +140,16 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
 
   const getQualityColor = (quality: string) => {
     switch (quality) {
-      case "Excellent": return "text-green-600 bg-green-50";
-      case "Good": return "text-blue-600 bg-blue-50";
-      case "Fair": return "text-yellow-600 bg-yellow-50";
-      case "Poor": return "text-red-600 bg-red-50";
-      default: return "text-gray-600 bg-gray-50";
+      case "Excellent":
+        return "text-green-600 bg-green-50";
+      case "Good":
+        return "text-blue-600 bg-blue-50";
+      case "Fair":
+        return "text-yellow-600 bg-yellow-50";
+      case "Poor":
+        return "text-red-600 bg-red-50";
+      default:
+        return "text-gray-600 bg-gray-50";
     }
   };
 
@@ -157,9 +162,11 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                mode === "real" ? "bg-green-500/10" : "bg-purple-500/10"
-              }`}>
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+                  mode === "real" ? "bg-green-500/10" : "bg-purple-500/10"
+                }`}
+              >
                 {mode === "real" ? (
                   <Ship className="h-6 w-6 text-green-600" />
                 ) : (
@@ -167,14 +174,11 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 )}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Vessel Catalog
-                </h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Vessel Catalog</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {mode === "real"
                     ? "Real-world vessels - Editable & expandable"
-                    : "ML/Parametric hulls - Read-only reference data"
-                  }
+                    : "ML/Parametric hulls - Read-only reference data"}
                 </p>
               </div>
             </div>
@@ -220,7 +224,8 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
             <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
               <Lock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               <p className="text-sm text-purple-800 dark:text-purple-300">
-                <strong>Read-Only:</strong> ML/Parametric hulls are reference data from MIT ShipD Dataset (82,000+ hulls)
+                <strong>Read-Only:</strong> ML/Parametric hulls are reference data from MIT ShipD
+                Dataset (82,000+ hulls)
               </p>
             </div>
           )}
@@ -234,7 +239,9 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 mb-1">
                   <Ship className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Vessels</span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Total Vessels
+                  </span>
                 </div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {realVessels.length}
@@ -244,17 +251,19 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 mb-1">
                   <Edit className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Editable</span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Editable
+                  </span>
                 </div>
-                <p className="text-lg font-bold text-green-600">
-                  ✓ Full Access
-                </p>
+                <p className="text-lg font-bold text-green-600">✓ Full Access</p>
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 mb-1">
                   <Database className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Data Source</span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Data Source
+                  </span>
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   Curated Vessels
@@ -262,7 +271,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => navigate("/catalog/vessels/new")}>
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => navigate("/catalog/vessels/new")}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add New Vessel
                 </Button>
@@ -305,19 +317,25 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                       {vessel.lpp && (
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{vessel.lpp.toFixed(2)} m</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {vessel.lpp.toFixed(2)} m
+                          </span>
                         </div>
                       )}
                       {vessel.beam && (
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Beam:</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{vessel.beam.toFixed(2)} m</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {vessel.beam.toFixed(2)} m
+                          </span>
                         </div>
                       )}
                       {vessel.draft && (
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Draft:</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{vessel.draft.toFixed(2)} m</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {vessel.draft.toFixed(2)} m
+                          </span>
                         </div>
                       )}
                       {vessel.blockCoefficient && (
@@ -355,7 +373,9 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 mb-1">
                     <Database className="h-4 w-4 text-purple-600" />
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Hulls</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Total Hulls
+                    </span>
                   </div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {mlStats.totalHulls.toLocaleString()}
@@ -365,7 +385,9 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Cb</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Avg Cb
+                    </span>
                   </div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {mlStats.avgCb.toFixed(3)}
@@ -375,7 +397,9 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 mb-1">
                     <Sparkles className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Cb Range</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Cb Range
+                    </span>
                   </div>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
                     {mlStats.cbRange.min.toFixed(2)} - {mlStats.cbRange.max.toFixed(2)}
@@ -385,11 +409,11 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 mb-1">
                     <Lock className="h-4 w-4 text-purple-600" />
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Access</span>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Access
+                    </span>
                   </div>
-                  <p className="text-lg font-bold text-purple-600">
-                    Read-Only
-                  </p>
+                  <p className="text-lg font-bold text-purple-600">Read-Only</p>
                 </div>
               </div>
             )}
@@ -407,7 +431,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                   <select
                     id="dataset"
                     value={datasetFilter}
-                    onChange={(e) => { setDatasetFilter(e.target.value); setMlPage(1); }}
+                    onChange={(e) => {
+                      setDatasetFilter(e.target.value);
+                      setMlPage(1);
+                    }}
                     className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm"
                   >
                     <option value="">All Datasets</option>
@@ -424,7 +451,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                     step="0.05"
                     placeholder="0.30"
                     value={minCb}
-                    onChange={(e) => { setMinCb(e.target.value); setMlPage(1); }}
+                    onChange={(e) => {
+                      setMinCb(e.target.value);
+                      setMlPage(1);
+                    }}
                   />
                 </div>
 
@@ -436,7 +466,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                     step="0.05"
                     placeholder="0.90"
                     value={maxCb}
-                    onChange={(e) => { setMaxCb(e.target.value); setMlPage(1); }}
+                    onChange={(e) => {
+                      setMaxCb(e.target.value);
+                      setMlPage(1);
+                    }}
                   />
                 </div>
 
@@ -480,14 +513,15 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 {/* Results Header */}
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Showing {((mlPage - 1) * 20) + 1}-{Math.min(mlPage * 20, mlTotalCount)} of {mlTotalCount.toLocaleString()} hulls
+                    Showing {(mlPage - 1) * 20 + 1}-{Math.min(mlPage * 20, mlTotalCount)} of{" "}
+                    {mlTotalCount.toLocaleString()} hulls
                   </p>
 
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setMlPage(p => Math.max(1, p - 1))}
+                      onClick={() => setMlPage((p) => Math.max(1, p - 1))}
                       disabled={mlPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -499,7 +533,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setMlPage(p => Math.min(mlTotalPages, p + 1))}
+                      onClick={() => setMlPage((p) => Math.min(mlTotalPages, p + 1))}
                       disabled={mlPage === mlTotalPages}
                     >
                       Next
@@ -524,7 +558,9 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                           </p>
                         </div>
                         <div className="flex flex-col gap-1 items-end">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded ${getQualityColor(hull.conversionQuality)}`}>
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded ${getQualityColor(hull.conversionQuality)}`}
+                          >
                             {hull.conversionQuality}
                           </span>
                           <span className="px-2 py-1 text-xs font-semibold rounded bg-purple-50 text-purple-700 flex items-center gap-1">
@@ -537,19 +573,27 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{hull.lppM.toFixed(2)} m</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {hull.lppM.toFixed(2)} m
+                          </span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Beam:</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{hull.beamM.toFixed(2)} m</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {hull.beamM.toFixed(2)} m
+                          </span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">Draft:</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{hull.draftM.toFixed(2)} m</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {hull.draftM.toFixed(2)} m
+                          </span>
                         </div>
                         <div className="flex justify-between text-xs border-t border-gray-200 dark:border-gray-700 pt-2">
                           <span className="text-gray-600 dark:text-gray-400">Cb:</span>
-                          <span className="font-bold text-purple-600 dark:text-purple-400">{hull.cb.toFixed(3)}</span>
+                          <span className="font-bold text-purple-600 dark:text-purple-400">
+                            {hull.cb.toFixed(3)}
+                          </span>
                         </div>
                       </div>
 
@@ -558,7 +602,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                           <Eye className="h-3 w-3 mr-1" />
                           View Only
                         </Button>
-                        <Button size="sm" className="flex-1 text-xs bg-purple-600 hover:bg-purple-700">
+                        <Button
+                          size="sm"
+                          className="flex-1 text-xs bg-purple-600 hover:bg-purple-700"
+                        >
                           Use in Mission
                         </Button>
                       </div>
@@ -569,16 +616,12 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 {/* Pagination */}
                 {mlHulls.length > 0 && (
                   <div className="mt-6 flex items-center justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setMlPage(1)}
-                      disabled={mlPage === 1}
-                    >
+                    <Button variant="outline" onClick={() => setMlPage(1)} disabled={mlPage === 1}>
                       First
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => setMlPage(p => Math.max(1, p - 1))}
+                      onClick={() => setMlPage((p) => Math.max(1, p - 1))}
                       disabled={mlPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -603,7 +646,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
 
                     <Button
                       variant="outline"
-                      onClick={() => setMlPage(p => Math.min(mlTotalPages, p + 1))}
+                      onClick={() => setMlPage((p) => Math.min(mlTotalPages, p + 1))}
                       disabled={mlPage === mlTotalPages}
                     >
                       <ChevronRight className="h-4 w-4" />

@@ -128,9 +128,7 @@ export const Step4Options: React.FC<Step4Props> = ({
             <div className="flex items-start space-x-3">
               <div className="text-2xl">🧮</div>
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-900 dark:text-white">
-                  First-Principles
-                </h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white">First-Principles</h4>
                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   Physics-based solver from mission requirements
                 </p>
@@ -161,7 +159,8 @@ export const Step4Options: React.FC<Step4Props> = ({
               <div className="text-2xl">📊</div>
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 dark:text-white">
-                  Data-Driven <span className="text-xs text-green-600 dark:text-green-400 font-bold">NEW</span>
+                  Data-Driven{" "}
+                  <span className="text-xs text-green-600 dark:text-green-400 font-bold">NEW</span>
                 </h4>
                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   KNN search on 600 real-world vessels
@@ -193,7 +192,10 @@ export const Step4Options: React.FC<Step4Props> = ({
               <div className="text-2xl">🤖</div>
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 dark:text-white">
-                  ML/Parametric <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">BETA</span>
+                  ML/Parametric{" "}
+                  <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">
+                    BETA
+                  </span>
                 </h4>
                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   82K synthetic hulls from MIT ShipD
@@ -210,7 +212,8 @@ export const Step4Options: React.FC<Step4Props> = ({
           </button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          💡 <strong>First-Principles</strong>: Pure physics. <strong>Data-Driven</strong>: Real vessels (600). <strong>ML/Parametric</strong>: Massive design space (82K hulls).
+          💡 <strong>First-Principles</strong>: Pure physics. <strong>Data-Driven</strong>: Real
+          vessels (600). <strong>ML/Parametric</strong>: Massive design space (82K hulls).
         </p>
       </div>
 
@@ -375,7 +378,7 @@ export const Step4Options: React.FC<Step4Props> = ({
               <li>✓ Shows reference vessel & similarity score</li>
             </ul>
             <p className="mt-2 text-xs text-green-700 dark:text-green-500">
-              ⚡ Expected compute time: {'<'}1 second for {maxCandidates} candidates
+              ⚡ Expected compute time: {"<"}1 second for {maxCandidates} candidates
             </p>
           </div>
         ) : (

@@ -26,7 +26,9 @@ export const MissionWizard: React.FC = observer(() => {
     serviceSpeedKn: 20,
     seaMarginPct: 15,
   });
-  const [solverMode, setSolverMode] = useState<"first_principles" | "data_driven_real" | "data_driven_ml">("first_principles");
+  const [solverMode, setSolverMode] = useState<
+    "first_principles" | "data_driven_real" | "data_driven_ml"
+  >("first_principles");
 
   const updateFormData = (data: Partial<CreateMissionCaseDto>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -103,8 +105,7 @@ export const MissionWizard: React.FC = observer(() => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hull Sizing Wizard</h1>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Define your mission requirements and choose your solver mode for optimal
-              hull designs
+              Define your mission requirements and choose your solver mode for optimal hull designs
             </p>
           </div>
 

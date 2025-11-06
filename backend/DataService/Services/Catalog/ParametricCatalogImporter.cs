@@ -1,10 +1,10 @@
+using System.Globalization;
+using System.Text.Json;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DataService.Data;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
-using System.Globalization;
-using System.Text.Json;
 
 namespace DataService.Services.Catalog;
 
@@ -531,19 +531,51 @@ public class ParametricVector45
     {
         return new Dictionary<string, decimal>
         {
-            ["LOA"] = LOA, ["Lb"] = Lb, ["Ls"] = Ls, ["Bd"] = Bd, ["Dd"] = Dd,
-            ["Bs"] = Bs, ["WL"] = WL, ["Bc"] = Bc, ["Beta"] = Beta, ["Rc"] = Rc,
-            ["Rk"] = Rk, ["Abow"] = Abow, ["Bbow"] = Bbow, ["BK_z"] = BK_z,
-            ["Kappa_bow"] = Kappa_bow, ["Adel_bow"] = Adel_bow, ["Bdel_bow"] = Bdel_bow,
-            ["Adrft"] = Adrft, ["Bdrft"] = Bdrft, ["Cdrft"] = Cdrft,
-            ["bit_EP_S"] = bit_EP_S, ["bit_EP_T"] = bit_EP_T, ["Atrans"] = Atrans,
-            ["SK_z"] = SK_z, ["Kappa_stern"] = Kappa_stern, ["Adel_stern"] = Adel_stern,
-            ["Bdel_stern"] = Bdel_stern, ["Beta_trans"] = Beta_trans, ["Bc_trans"] = Bc_trans,
-            ["Rc_Trans"] = Rc_Trans, ["Rk_trans"] = Rk_trans, ["bit_BB"] = bit_BB,
-            ["bit_SB"] = bit_SB, ["Lbb"] = Lbb, ["Hbb"] = Hbb, ["Bbb"] = Bbb,
-            ["Lbbm"] = Lbbm, ["Rbb"] = Rbb, ["Kappa_SB"] = Kappa_SB,
-            ["Lsb"] = Lsb, ["HSBOA"] = HSBOA, ["Hsb"] = Hsb, ["Bsb"] = Bsb,
-            ["Lsbm"] = Lsbm, ["Rsb"] = Rsb
+            ["LOA"] = LOA,
+            ["Lb"] = Lb,
+            ["Ls"] = Ls,
+            ["Bd"] = Bd,
+            ["Dd"] = Dd,
+            ["Bs"] = Bs,
+            ["WL"] = WL,
+            ["Bc"] = Bc,
+            ["Beta"] = Beta,
+            ["Rc"] = Rc,
+            ["Rk"] = Rk,
+            ["Abow"] = Abow,
+            ["Bbow"] = Bbow,
+            ["BK_z"] = BK_z,
+            ["Kappa_bow"] = Kappa_bow,
+            ["Adel_bow"] = Adel_bow,
+            ["Bdel_bow"] = Bdel_bow,
+            ["Adrft"] = Adrft,
+            ["Bdrft"] = Bdrft,
+            ["Cdrft"] = Cdrft,
+            ["bit_EP_S"] = bit_EP_S,
+            ["bit_EP_T"] = bit_EP_T,
+            ["Atrans"] = Atrans,
+            ["SK_z"] = SK_z,
+            ["Kappa_stern"] = Kappa_stern,
+            ["Adel_stern"] = Adel_stern,
+            ["Bdel_stern"] = Bdel_stern,
+            ["Beta_trans"] = Beta_trans,
+            ["Bc_trans"] = Bc_trans,
+            ["Rc_Trans"] = Rc_Trans,
+            ["Rk_trans"] = Rk_trans,
+            ["bit_BB"] = bit_BB,
+            ["bit_SB"] = bit_SB,
+            ["Lbb"] = Lbb,
+            ["Hbb"] = Hbb,
+            ["Bbb"] = Bbb,
+            ["Lbbm"] = Lbbm,
+            ["Rbb"] = Rbb,
+            ["Kappa_SB"] = Kappa_SB,
+            ["Lsb"] = Lsb,
+            ["HSBOA"] = HSBOA,
+            ["Hsb"] = Hsb,
+            ["Bsb"] = Bsb,
+            ["Lsbm"] = Lsbm,
+            ["Rsb"] = Rsb
         };
     }
 }

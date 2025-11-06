@@ -1,10 +1,10 @@
+using System.Globalization;
 using CsvHelper;
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
-using System.Globalization;
 
 namespace DataService.Services.Catalog;
 
