@@ -14,6 +14,7 @@ import { BenchmarksList } from "./pages/benchmarks/BenchmarksList";
 import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
 import { CatalogBrowser } from "./pages/catalog/CatalogBrowser";
 import { HullDetailPage } from "./pages/catalog/HullDetailPage";
+import { MLHullBrowser } from "./pages/catalog/MLHullBrowser";
 import { MissionCasesList } from "./pages/sizing/MissionCasesList";
 import { MissionWizard } from "./pages/sizing/MissionWizard";
 import { SizingRunResults } from "./pages/sizing/SizingRunResults";
@@ -241,6 +242,14 @@ export const App: React.FC = observer(() => (
                 element={
                   <ProtectedRoute>
                     <CandidateWorkspace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/catalog/ml-hulls"
+                element={
+                  <ProtectedRoute>
+                    <MLHullBrowser />
                   </ProtectedRoute>
                 }
               />

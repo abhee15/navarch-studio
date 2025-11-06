@@ -58,12 +58,12 @@ public class ParametricKnnService
             // Step 1: Try Redis cache
             var cacheKey = GenerateCacheKey(criteria, K);
             var cached = await _cache.GetStringAsync(cacheKey, cancellationToken);
-            
+
             if (cached != null)
             {
                 _logger.LogDebug("Cache HIT for parametric KNN query: {CacheKey}", cacheKey);
                 var cachedResults = JsonSerializer.Deserialize<List<SimilarParametricHull>>(cached);
-                
+
                 if (cachedResults != null)
                 {
                     var cacheElapsedMs = (DateTime.UtcNow - startTime).TotalMilliseconds;

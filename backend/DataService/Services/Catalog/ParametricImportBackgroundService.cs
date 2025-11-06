@@ -35,7 +35,7 @@ public class ParametricImportBackgroundService : BackgroundService
 
             // Check if background import is enabled
             var enabledPhase = _configuration.GetValue<string>("CatalogSettings:BackgroundImportPhase", "none");
-            
+
             if (enabledPhase == "none")
             {
                 _logger.LogInformation("[BG_IMPORT] Background import disabled. Skipping.");
@@ -218,4 +218,3 @@ public class ParametricImportBackgroundService : BackgroundService
             totalImported, existingCount + totalImported);
     }
 }
-

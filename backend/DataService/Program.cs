@@ -206,7 +206,7 @@ try
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogSeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricKnnService>();
-    
+
     // Background services for catalog management
     builder.Services.AddHostedService<DataService.Services.Catalog.ParametricImportBackgroundService>();
     Log.Information("Parametric import background service registered");
