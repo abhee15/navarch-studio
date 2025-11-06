@@ -174,3 +174,5 @@ public class CandidateDesign
     public SizingRun SizingRun { get; set; } = null!;
 }
 
+
+

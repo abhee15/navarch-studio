@@ -102,3 +102,4 @@ export const generateFilename = (
   const family = hullFamily ? `_${hullFamily}` : "";
   return `hull_${viewType}${family}_${candidateId.slice(0, 8)}_${timestamp}`;
 };
+

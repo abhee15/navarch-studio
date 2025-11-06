@@ -26,3 +26,5 @@ public class KpiWeight
     public decimal Weight { get; set; }
 }
 
+
+

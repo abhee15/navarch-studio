@@ -38,3 +38,5 @@ public class PushOperation
     public CandidateDesign Candidate { get; set; } = null!;
 }
 
+
+

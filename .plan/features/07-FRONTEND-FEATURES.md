@@ -839,3 +839,5 @@ The frontend is a modern React 18 + TypeScript + Vite application with MobX stat
 **Module Owner**: Frontend Team  
 **Next Review**: November 11, 2025
 
+
+

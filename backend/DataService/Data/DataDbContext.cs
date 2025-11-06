@@ -40,6 +40,7 @@ public class DataDbContext : DbContext
     public DbSet<CatalogPropellerSeries> CatalogPropellerSeries => Set<CatalogPropellerSeries>();
     public DbSet<CatalogPropellerPoint> CatalogPropellerPoints => Set<CatalogPropellerPoint>();
     public DbSet<CatalogWaterProperty> CatalogWaterProperties => Set<CatalogWaterProperty>();
+    public DbSet<CatalogVesselReal> CatalogVesselsReal => Set<CatalogVesselReal>();
 
     // Project board entities
     public DbSet<ProjectBoard> ProjectBoards => Set<ProjectBoard>();

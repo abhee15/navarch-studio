@@ -191,6 +191,8 @@ try
     // Catalog services
     builder.Services.AddScoped<DataService.Data.Seeds.CatalogSeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.CatalogWaterService>();
+    builder.Services.AddScoped<DataService.Services.Catalog.VesselCatalogImporter>();
+    builder.Services.AddScoped<DataService.Services.Catalog.CatalogVesselSeeder>();
 
     // FluentValidation - Register all validators from Shared assembly
     // Note: Add validators from Shared assembly as needed
@@ -378,6 +380,23 @@ try
                 Console.WriteLine($"[SEED] WARNING: Failed to seed catalog: {seedEx.Message}");
                 Log.Warning(seedEx, "[SEED] Failed to seed catalog: {Message}", seedEx.Message);
                 // Don't throw - seeding is optional, but log warning for monitoring
+            }
+
+            // Seed real-world vessel catalog (600 vessels for Data-Driven mode)
+            Console.WriteLine("[SEED] Checking for real-world vessel catalog...");
+            Log.Information("[SEED] Checking for real-world vessel catalog...");
+            try
+            {
+                var vesselSeeder = scope.ServiceProvider.GetRequiredService<DataService.Services.Catalog.CatalogVesselSeeder>();
+                await vesselSeeder.SeedRealWorldCatalogAsync();
+                Console.WriteLine("[SEED] Real-world vessel catalog seeding completed.");
+                Log.Information("[SEED] Real-world vessel catalog seeding completed.");
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"[SEED] WARNING: Failed to seed vessel catalog: {seedEx.Message}");
+                Log.Warning(seedEx, "[SEED] Failed to seed vessel catalog: {Message}", seedEx.Message);
+                // Don't throw - seeding is optional
             }
 
             // Auto-seed template vessel in ALL environments (required for proper functioning)
