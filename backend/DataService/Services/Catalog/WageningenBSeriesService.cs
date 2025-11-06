@@ -29,8 +29,9 @@ public class WageningenBSeriesService
     /// </summary>
     public async Task LoadCoefficientsAsync(CancellationToken cancellationToken = default)
     {
-        var csvPath = Path.Combine(_dataPath, "templates/MLData/wageningen_coefficients.txt");
-        
+        // DataPath points to hull-sizing/data, go up to app-docs then to templates
+        var csvPath = Path.Combine(_dataPath, "..", "..", "templates", "MLData", "wageningen_coefficients.txt");
+
         if (!File.Exists(csvPath))
         {
             _logger.LogWarning("[WAGENINGEN] Coefficients file not found: {Path}", csvPath);
@@ -43,7 +44,7 @@ public class WageningenBSeriesService
         {
             using var reader = new StreamReader(csvPath);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            
+
             _coefficients = csv.GetRecords<WageningenCoefficient>().ToList();
 
             _logger.LogInformation("[WAGENINGEN] ✅ Loaded {Count} coefficient terms", _coefficients.Count);
@@ -64,9 +65,9 @@ public class WageningenBSeriesService
     /// <param name="PD">Pitch/diameter ratio (0.5-1.4)</param>
     /// <returns>Thrust coefficient, torque coefficient, efficiency</returns>
     public PropellerPerformance CalculatePerformance(
-        double J, 
-        int Z, 
-        double AeA0, 
+        double J,
+        int Z,
+        double AeA0,
         double PD)
     {
         if (_coefficients == null || !_coefficients.Any())
@@ -75,13 +76,13 @@ public class WageningenBSeriesService
         // Validate inputs
         if (J < 0 || J > 1.5)
             throw new ArgumentOutOfRangeException(nameof(J), "Advance coefficient must be 0-1.5");
-        
+
         if (Z < 2 || Z > 7)
             throw new ArgumentOutOfRangeException(nameof(Z), "Number of blades must be 2-7");
-        
+
         if (AeA0 < 0.3 || AeA0 > 1.05)
             throw new ArgumentOutOfRangeException(nameof(AeA0), "Blade area ratio must be 0.3-1.05");
-        
+
         if (PD < 0.5 || PD > 1.4)
             throw new ArgumentOutOfRangeException(nameof(PD), "Pitch/diameter ratio must be 0.5-1.4");
 
@@ -154,21 +155,21 @@ public class WageningenBSeriesService
         {
             var rpm = rpmRange.min + (rpmRange.max - rpmRange.min) * i / searchSteps;
             var n = rpm / 60.0; // rev/s
-            
+
             // Calculate advance coefficient: J = V_a / (n * D)
             var J = speedMs / (n * diameterM);
-            
+
             if (J < 0 || J > 1.5) continue; // Out of valid range
-            
+
             // Calculate performance
             var perf = CalculatePerformance(J, Z, AeA0, PD);
-            
+
             // Calculate actual thrust: T = KT * ρ * n² * D⁴
             var thrustN = perf.ThrustCoefficient * seawaterDensity * Math.Pow(n, 2) * Math.Pow(diameterM, 4);
-            
+
             // Check if this meets thrust requirement (within 5%)
             var thrustError = Math.Abs(thrustN - requiredThrustN) / requiredThrustN;
-            
+
             if (thrustError < 0.05 && perf.Efficiency > bestEfficiency)
             {
                 bestEfficiency = perf.Efficiency;
@@ -230,4 +231,3 @@ public class PropellerOperatingPoint
     public double DiameterM { get; set; }
     public PropellerPerformance Performance { get; set; } = new();
 }
-

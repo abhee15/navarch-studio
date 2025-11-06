@@ -39,9 +39,9 @@ public class PropellerController : ControllerBase
         try
         {
             var result = _wageningen.CalculatePerformance(
-                request.J, 
-                request.Z, 
-                request.AeA0, 
+                request.J,
+                request.Z,
+                request.AeA0,
                 request.PD
             );
 
@@ -172,4 +172,3 @@ public class ParameterRange
     public string Symbol { get; set; } = string.Empty;
     public string Unit { get; set; } = string.Empty;
 }
-

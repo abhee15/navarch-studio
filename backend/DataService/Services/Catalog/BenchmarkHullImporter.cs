@@ -35,8 +35,9 @@ public class BenchmarkHullImporter
     /// </summary>
     public async Task<int> ImportAsync(CancellationToken cancellationToken = default)
     {
-        var csvPath = Path.Combine(_dataPath, "templates/MLData/benchmark_hulls.txt");
-        
+        // DataPath points to hull-sizing/data, go up to app-docs then to templates
+        var csvPath = Path.Combine(_dataPath, "..", "..", "templates", "MLData", "benchmark_hulls.txt");
+
         if (!File.Exists(csvPath))
         {
             _logger.LogWarning("[BENCHMARK] Benchmark hulls file not found: {Path}", csvPath);
@@ -51,7 +52,7 @@ public class BenchmarkHullImporter
         {
             using var reader = new StreamReader(csvPath);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            
+
             var records = csv.GetRecords<BenchmarkHullCsvRow>().ToList();
             var imported = 0;
             var skipped = 0;
@@ -102,7 +103,7 @@ public class BenchmarkHullImporter
                 await _context.CatalogVesselsReal.AddAsync(vessel, cancellationToken);
                 imported++;
 
-                _logger.LogDebug("[BENCHMARK] Queued import: {Name} ({Type}, Cb={Cb:F3})", 
+                _logger.LogDebug("[BENCHMARK] Queued import: {Name} ({Type}, Cb={Cb:F3})",
                     vessel.VesselId, vessel.VesselType, vessel.Cb);
             }
 
@@ -177,4 +178,3 @@ public class BenchmarkHullCsvRow
     public decimal Full_Scale_Length_m { get; set; }
     public string Data_Source { get; set; } = string.Empty;
 }
-

@@ -34,8 +34,9 @@ public class BenchmarkTestImporter
     /// </summary>
     public async Task<int> ImportAsync(CancellationToken cancellationToken = default)
     {
-        var csvPath = Path.Combine(_dataPath, "templates/MLData/benchmark_test_conditions.txt");
-        
+        // DataPath points to hull-sizing/data, go up to app-docs then to templates
+        var csvPath = Path.Combine(_dataPath, "..", "..", "templates", "MLData", "benchmark_test_conditions.txt");
+
         if (!File.Exists(csvPath))
         {
             _logger.LogWarning("[BENCHMARK_TEST] Test conditions file not found: {Path}", csvPath);
@@ -50,7 +51,7 @@ public class BenchmarkTestImporter
         {
             using var reader = new StreamReader(csvPath);
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            
+
             var records = csv.GetRecords<BenchmarkTestCsvRow>().ToList();
             var imported = 0;
 
@@ -85,7 +86,7 @@ public class BenchmarkTestImporter
                 await _context.BenchmarkTestConditions.AddAsync(test, cancellationToken);
                 imported++;
 
-                _logger.LogDebug("[BENCHMARK_TEST] Queued: {Type} - {Hull} @ Fn={Fn:F3}", 
+                _logger.LogDebug("[BENCHMARK_TEST] Queued: {Type} - {Hull} @ Fn={Fn:F3}",
                     test.TestType, test.HullName, test.FroudeNumber);
             }
 
@@ -126,4 +127,3 @@ public class BenchmarkTestCsvRow
     public string Description { get; set; } = string.Empty;
     public string Standard { get; set; } = string.Empty;
 }
-
