@@ -40,7 +40,7 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="missionType">Mission Type *</Label>
+        <Label htmlFor="missionType">Type of Vessel *</Label>
         <Select
           id="missionType"
           value={formData.missionType || "commercial"}
