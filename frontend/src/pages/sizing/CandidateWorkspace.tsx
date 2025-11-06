@@ -15,7 +15,17 @@ import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { adjustParameter } from "../../services/sizingApi";
 import type { CandidateDesign } from "../../types/sizing";
 import { AppHeader } from "../../components/AppHeader";
-import { BarChart3, Ruler, Ship, Zap, Home, FileDown, Activity } from "lucide-react";
+import {
+  BarChart3,
+  Ruler,
+  Ship,
+  Zap,
+  Home,
+  FileDown,
+  Activity,
+  FileJson,
+  FileText,
+} from "lucide-react";
 import { downloadDXF } from "../../utils/dxfExporter";
 
 export const CandidateWorkspace: React.FC = observer(() => {
@@ -175,15 +185,19 @@ export const CandidateWorkspace: React.FC = observer(() => {
                   variant="outline"
                   size="sm"
                   onClick={() => sizingStore.exportCandidate(candidate.id, "json")}
+                  title="Export JSON"
                 >
-                  Export JSON
+                  <FileJson className="h-4 w-4" />
+                  <span className="hidden md:inline ml-2">Export JSON</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => sizingStore.exportCandidate(candidate.id, "csv")}
+                  title="Export CSV"
                 >
-                  Export CSV
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden md:inline ml-2">Export CSV</span>
                 </Button>
                 <Button
                   size="sm"
@@ -191,8 +205,10 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     const vesselId = await sizingStore.pushToHydrostatics(candidate.id);
                     navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
                   }}
+                  title="Push to Hydrostatics"
                 >
-                  Push to Hydrostatics
+                  <Ship className="h-4 w-4" />
+                  <span className="hidden md:inline ml-2">Push to Hydrostatics</span>
                 </Button>
               </div>
             </div>
