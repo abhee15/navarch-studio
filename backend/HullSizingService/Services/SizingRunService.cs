@@ -276,7 +276,7 @@ public class SizingRunService : ISizingRunService
             IsSelected = entity.IsSelected,
             GeomParamsJson = entity.GeometryJson,
             CreatedAt = entity.CreatedAt,
-            
+
             // Provenance (Data-Driven Mode)
             ReferenceVesselId = entity.ReferenceVesselId,
             ReferenceVesselName = entity.ReferenceVesselName,
@@ -285,4 +285,3 @@ public class SizingRunService : ISizingRunService
         };
     }
 }
-
