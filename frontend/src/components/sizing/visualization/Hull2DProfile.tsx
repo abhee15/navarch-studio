@@ -34,6 +34,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
   ) => {
     const [hoveredButtock, setHoveredButtock] = useState<number | null>(null);
     const [showLegend, setShowLegend] = useState(false);
+    const [showDimensionsPanel, setShowDimensionsPanel] = useState(true);
 
     const buttocks = useMemo(() => {
       const lpp = candidate.lppM;
@@ -482,35 +483,47 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
           )}
         </div>
 
-        {/* Dimensions Panel */}
-        <div className="absolute bottom-6 left-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs border border-gray-200 dark:border-gray-700">
-          <div className="font-bold text-gray-900 dark:text-gray-100 mb-2 text-sm">Dimensions</div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-            <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
-              {lpp.toFixed(2)} m
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">Lwl:</span>
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
-              {candidate.lwlM.toFixed(2)} m
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">LOA:</span>
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
-              {candidate.loaM.toFixed(2)} m
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">Draft:</span>
-            <span className="font-semibold text-cyan-700 dark:text-cyan-400">
-              {candidate.draftM.toFixed(2)} m
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">Depth:</span>
-            <span className="font-semibold text-purple-700 dark:text-purple-400">
-              {candidate.depthM.toFixed(2)} m
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">Freeboard:</span>
-            <span className="font-semibold text-green-700 dark:text-green-400">
-              {(candidate.depthM - candidate.draftM).toFixed(2)} m
-            </span>
-          </div>
+        {/* Collapsible Dimensions Panel */}
+        <div className="absolute bottom-6 left-6">
+          <button
+            onClick={() => setShowDimensionsPanel(!showDimensionsPanel)}
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+          >
+            {showDimensionsPanel ? "▼" : "▶"} Dimensions
+          </button>
+          {showDimensionsPanel && (
+            <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs border border-gray-200 dark:border-gray-700">
+              <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
+                Dimensions
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {lpp.toFixed(2)} m
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">Lwl:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {candidate.lwlM.toFixed(2)} m
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">LOA:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {candidate.loaM.toFixed(2)} m
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">Draft:</span>
+                <span className="font-semibold text-cyan-700 dark:text-cyan-400">
+                  {candidate.draftM.toFixed(2)} m
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">Depth:</span>
+                <span className="font-semibold text-purple-700 dark:text-purple-400">
+                  {candidate.depthM.toFixed(2)} m
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">Freeboard:</span>
+                <span className="font-semibold text-green-700 dark:text-green-400">
+                  {(candidate.depthM - candidate.draftM).toFixed(2)} m
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <style>{`
