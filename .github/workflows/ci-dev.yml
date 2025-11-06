@@ -315,6 +315,14 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Run dotnet format check
         run: dotnet format --verify-no-changes --verbosity diagnostic
 
@@ -868,7 +876,39 @@ jobs:
             exit 1
           fi
 
-          # Check template vessel seeding (Data Service only)
+          # Check catalog seeding (Data Service only)
+          echo ""
+          echo "Checking catalog seeding (Real, ML, Benchmark)..."
+          
+          # Check parametric catalog (ML)
+          ML_SEED_SUCCESS=$(aws logs filter-log-events \
+            --log-group-name "$DATA_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "[SEED] Parametric catalog seeded successfully" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$ML_SEED_SUCCESS" ]; then
+            echo "✅ ML Catalog (5K parametric hulls) seeded"
+          else
+            echo "⚠️  ML Catalog seeding status inconclusive (check logs)"
+          fi
+          
+          # Check benchmark data
+          BENCHMARK_SEED=$(aws logs filter-log-events \
+            --log-group-name "$DATA_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "[SEED] Benchmark hulls" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$BENCHMARK_SEED" ]; then
+            echo "✅ Benchmark data (9 hulls + 19 tests) seeded"
+          else
+            echo "⚠️  Benchmark data status inconclusive (check logs)"
+          fi
+          
+          # Check template vessels (legacy)
           echo ""
           echo "Checking template vessel seeding..."
           TEMPLATE_SEED_SUCCESS=$(aws logs filter-log-events \
