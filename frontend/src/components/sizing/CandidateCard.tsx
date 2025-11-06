@@ -73,8 +73,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
       {/* Card Body */}
       <div className="p-4 space-y-4">
-        {/* Provenance Panel (Data-Driven Mode) */}
-        {candidate.solverMode?.includes("DataDriven") && candidate.referenceVesselName && (
+        {/* Provenance Panel (Data-Driven Real-World Mode) */}
+        {candidate.solverMode === "DataDrivenReal" && candidate.referenceVesselName && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
             <div className="flex items-start gap-2">
               <Database className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
@@ -111,6 +111,58 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
                 </div>
                 <p className="mt-1.5 text-xs text-green-700/80 dark:text-green-500/80">
                   Scaled from proven vessel, refined with physics
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Provenance Panel (ML/Parametric Mode) */}
+        {candidate.solverMode === "DataDrivenML" && candidate.referenceVesselName && (
+          <div className="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+            <div className="flex items-start gap-2">
+              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-xs font-semibold text-purple-900 dark:text-purple-300">
+                    ML-Generated Design
+                  </h4>
+                  <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-700 dark:text-purple-300 rounded">
+                    BETA
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-purple-700 dark:text-purple-500">Parametric Hull:</span>
+                    <span className="font-mono font-semibold text-purple-900 dark:text-purple-200 truncate ml-2">
+                      {candidate.referenceVesselName}
+                    </span>
+                  </div>
+                  {candidate.similarityScore !== undefined && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-purple-700 dark:text-purple-500">Similarity:</span>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-24 bg-purple-200 dark:bg-purple-900/50 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-purple-500 dark:bg-purple-400 rounded-full"
+                            style={{ width: `${(candidate.similarityScore * 100).toFixed(0)}%` }}
+                          />
+                        </div>
+                        <span className="font-bold text-purple-900 dark:text-purple-200 min-w-[3rem]">
+                          {(candidate.similarityScore * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-purple-700 dark:text-purple-500">Source:</span>
+                    <span className="font-mono text-purple-800 dark:text-purple-300 text-[10px]">
+                      MIT ShipD Dataset
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-1.5 text-xs text-purple-700/80 dark:text-purple-500/80">
+                  Parametric hull converted & scaled, refined with physics
                 </p>
               </div>
             </div>
