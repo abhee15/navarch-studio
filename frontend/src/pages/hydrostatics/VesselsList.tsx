@@ -32,9 +32,10 @@ export const VesselsList = observer(function VesselsList() {
       setLoading(true);
       setError(null);
       const data = await vesselsApi.list();
-      setVessels(data.vessels);
+      setVessels(data.vessels || []); // Ensure we always set an array
     } catch (err) {
       setError(getErrorMessage(err));
+      setVessels([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
