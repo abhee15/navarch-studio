@@ -36,6 +36,11 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
+      backend_shared: ${{ steps.filter.outputs.backend_shared }}
+      backend_identity: ${{ steps.filter.outputs.backend_identity }}
+      backend_gateway: ${{ steps.filter.outputs.backend_gateway }}
+      backend_data: ${{ steps.filter.outputs.backend_data }}
+      backend_hullsizing: ${{ steps.filter.outputs.backend_hullsizing }}
       infrastructure: ${{ steps.filter.outputs.infrastructure }}
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +57,19 @@ jobs:
               - 'packages/**'
               - 'Dockerfile.*'
               - '.github/workflows/ci-dev.yml'
+            backend_shared:
+              - 'backend/Shared/**'
+            backend_identity:
+              - 'backend/IdentityService/**'
+              - 'backend/IdentityService.Tests/**'
+            backend_gateway:
+              - 'backend/ApiGateway/**'
+            backend_data:
+              - 'backend/DataService/**'
+              - 'backend/DataService.Tests/**'
+            backend_hullsizing:
+              - 'backend/HullSizingService/**'
+              - 'backend/HullSizingService.Tests/**'
             infrastructure:
               - 'terraform/deploy/**'
               - '.github/workflows/ci-dev.yml'
@@ -330,7 +348,7 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Run tests
-        run: dotnet test --no-build --verbosity normal --filter "FullyQualifiedName!~HullSizingService.Tests"
+        run: dotnet test --no-build --verbosity normal
 
   check-infrastructure:
     runs-on: ubuntu-latest
@@ -367,8 +385,9 @@ jobs:
       identity-image: ${{ steps.build-identity.outputs.image || '' }}
       gateway-image: ${{ steps.build-gateway.outputs.image || '' }}
       data-image: ${{ steps.build-data.outputs.image || '' }}
+      hullsizing-image: ${{ steps.build-hullsizing.outputs.image || '' }}
       frontend-image: ${{ steps.build-frontend.outputs.image || '' }}
-      built-backend: ${{ steps.build-identity.outcome == 'success' || steps.build-gateway.outcome == 'success' || steps.build-data.outcome == 'success' }}
+      built-backend: ${{ steps.build-identity.outcome == 'success' || steps.build-gateway.outcome == 'success' || steps.build-data.outcome == 'success' || steps.build-hullsizing.outcome == 'success' }}
       built-frontend: ${{ steps.build-frontend.outcome == 'success' }}
 
     steps:
@@ -436,43 +455,71 @@ jobs:
 
       - name: Build and push Identity Service
         id: build-identity
-        if: steps.build-plan.outputs.build_backend == 'true'
+        if: |
+          steps.build-plan.outputs.build_backend == 'true' && (
+            needs.check-changed-paths.outputs.backend_shared == 'true' ||
+            needs.check-changed-paths.outputs.backend_identity == 'true' ||
+            needs.check-last-complete-build.outputs.needs_complete_build == 'true'
+          )
         run: |
           IMAGE_TAG="${GITHUB_SHA:0:7}"
+          echo "🔨 Building Identity Service..."
           docker build -f backend/IdentityService/Dockerfile -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:latest .
           docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_IDENTITY_SERVICE_URL }}:latest
           echo "image=${{ secrets.ECR_IDENTITY_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Identity Service built and pushed"
 
       - name: Build and push API Gateway
         id: build-gateway
-        if: steps.build-plan.outputs.build_backend == 'true'
+        if: |
+          steps.build-plan.outputs.build_backend == 'true' && (
+            needs.check-changed-paths.outputs.backend_shared == 'true' ||
+            needs.check-changed-paths.outputs.backend_gateway == 'true' ||
+            needs.check-last-complete-build.outputs.needs_complete_build == 'true'
+          )
         run: |
           IMAGE_TAG="${GITHUB_SHA:0:7}"
+          echo "🔨 Building API Gateway..."
           docker build -f backend/ApiGateway/Dockerfile -t ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_API_GATEWAY_URL }}:latest .
           docker push ${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_API_GATEWAY_URL }}:latest
           echo "image=${{ secrets.ECR_API_GATEWAY_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ API Gateway built and pushed"
 
       - name: Build and push Data Service
         id: build-data
-        if: steps.build-plan.outputs.build_backend == 'true'
+        if: |
+          steps.build-plan.outputs.build_backend == 'true' && (
+            needs.check-changed-paths.outputs.backend_shared == 'true' ||
+            needs.check-changed-paths.outputs.backend_data == 'true' ||
+            needs.check-last-complete-build.outputs.needs_complete_build == 'true'
+          )
         run: |
           IMAGE_TAG="${GITHUB_SHA:0:7}"
+          echo "🔨 Building Data Service..."
           docker build -f backend/DataService/Dockerfile -t ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_DATA_SERVICE_URL }}:latest .
           docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_DATA_SERVICE_URL }}:latest
           echo "image=${{ secrets.ECR_DATA_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Data Service built and pushed"
 
       - name: Build and push Hull Sizing Service
         id: build-hullsizing
-        if: steps.build-plan.outputs.build_backend == 'true'
+        if: |
+          steps.build-plan.outputs.build_backend == 'true' && (
+            needs.check-changed-paths.outputs.backend_shared == 'true' ||
+            needs.check-changed-paths.outputs.backend_hullsizing == 'true' ||
+            needs.check-last-complete-build.outputs.needs_complete_build == 'true'
+          )
         run: |
           IMAGE_TAG="${GITHUB_SHA:0:7}"
+          echo "🔨 Building Hull Sizing Service..."
           docker build -f backend/HullSizingService/Dockerfile -t ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:latest .
           docker push ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:latest
           echo "image=${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Hull Sizing Service built and pushed"
 
       - name: Build and push Frontend
         id: build-frontend
@@ -673,67 +720,124 @@ jobs:
 
       - name: Trigger App Runner service deployments
         run: |
-          echo "🚀 Triggering App Runner service deployments..."
+          echo "🚀 Triggering App Runner service deployments (selective)..."
           echo "This will pull the latest :latest tagged images from ECR"
           echo ""
+          
+          # Determine which services need deployment
+          DEPLOY_IDENTITY=false
+          DEPLOY_GATEWAY=false
+          DEPLOY_DATA=false
+          DEPLOY_HULLSIZING=false
+          
+          # Deploy if service was built OR if Shared code changed (affects all services)
+          if [ "${{ needs.build-and-push.outputs.identity-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
+            DEPLOY_IDENTITY=true
+          fi
+          
+          if [ "${{ needs.build-and-push.outputs.gateway-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
+            DEPLOY_GATEWAY=true
+          fi
+          
+          if [ "${{ needs.build-and-push.outputs.data-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
+            DEPLOY_DATA=true
+          fi
+          
+          if [ "${{ needs.build-and-push.outputs.hullsizing-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
+            DEPLOY_HULLSIZING=true
+          fi
+          
+          echo "📋 Deployment Plan:"
+          echo "  Identity Service:     $DEPLOY_IDENTITY"
+          echo "  API Gateway:          $DEPLOY_GATEWAY"
+          echo "  Data Service:         $DEPLOY_DATA"
+          echo "  Hull Sizing Service:  $DEPLOY_HULLSIZING"
+          echo ""
 
-          # Get service ARNs
-          IDENTITY_ARN=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-identity-service')].ServiceArn | [0]" \
-            --output text)
-
-          DATA_ARN=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-data-service')].ServiceArn | [0]" \
-            --output text)
-
-          HULLSIZING_ARN=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-hull-sizing-service')].ServiceArn | [0]" \
-            --output text)
-
-          API_ARN=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceArn | [0]" \
-            --output text)
-
-          # Trigger deployments
-          echo "📦 Deploying Identity Service..."
-          if [ -n "$IDENTITY_ARN" ] && [ "$IDENTITY_ARN" != "None" ]; then
-            aws apprunner start-deployment --service-arn "$IDENTITY_ARN"
-            echo "✅ Identity Service deployment initiated"
-          else
-            echo "⚠️  Identity Service not found, skipping"
+          # Get service ARNs (only for services we need to deploy)
+          if [ "$DEPLOY_IDENTITY" == "true" ]; then
+            IDENTITY_ARN=$(aws apprunner list-services \
+              --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-identity-service')].ServiceArn | [0]" \
+              --output text)
           fi
 
-          echo ""
-          echo "📦 Deploying Data Service..."
-          if [ -n "$DATA_ARN" ] && [ "$DATA_ARN" != "None" ]; then
-            aws apprunner start-deployment --service-arn "$DATA_ARN"
-            echo "✅ Data Service deployment initiated"
-          else
-            echo "⚠️  Data Service not found, skipping"
+          if [ "$DEPLOY_DATA" == "true" ]; then
+            DATA_ARN=$(aws apprunner list-services \
+              --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-data-service')].ServiceArn | [0]" \
+              --output text)
           fi
 
-          echo ""
-          echo "📦 Deploying Hull Sizing Service..."
-          if [ -n "$HULLSIZING_ARN" ] && [ "$HULLSIZING_ARN" != "None" ]; then
-            aws apprunner start-deployment --service-arn "$HULLSIZING_ARN"
-            echo "✅ Hull Sizing Service deployment initiated"
-          else
-            echo "⚠️  Hull Sizing Service not found, skipping"
+          if [ "$DEPLOY_HULLSIZING" == "true" ]; then
+            HULLSIZING_ARN=$(aws apprunner list-services \
+              --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-hull-sizing-service')].ServiceArn | [0]" \
+              --output text)
           fi
 
-          echo ""
-          echo "📦 Deploying API Gateway..."
-          if [ -n "$API_ARN" ] && [ "$API_ARN" != "None" ]; then
-            aws apprunner start-deployment --service-arn "$API_ARN"
-            echo "✅ API Gateway deployment initiated"
-          else
-            echo "⚠️  API Gateway not found, skipping"
+          if [ "$DEPLOY_GATEWAY" == "true" ]; then
+            API_ARN=$(aws apprunner list-services \
+              --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceArn | [0]" \
+              --output text)
           fi
 
-          echo ""
+          # Trigger deployments (only for services that changed)
+          if [ "$DEPLOY_IDENTITY" == "true" ]; then
+            echo "📦 Deploying Identity Service..."
+            if [ -n "$IDENTITY_ARN" ] && [ "$IDENTITY_ARN" != "None" ]; then
+              aws apprunner start-deployment --service-arn "$IDENTITY_ARN"
+              echo "✅ Identity Service deployment initiated"
+            else
+              echo "⚠️  Identity Service not found, skipping"
+            fi
+            echo ""
+          else
+            echo "⏭️  Skipping Identity Service (no changes)"
+            echo ""
+          fi
+
+          if [ "$DEPLOY_DATA" == "true" ]; then
+            echo "📦 Deploying Data Service..."
+            if [ -n "$DATA_ARN" ] && [ "$DATA_ARN" != "None" ]; then
+              aws apprunner start-deployment --service-arn "$DATA_ARN"
+              echo "✅ Data Service deployment initiated"
+            else
+              echo "⚠️  Data Service not found, skipping"
+            fi
+            echo ""
+          else
+            echo "⏭️  Skipping Data Service (no changes)"
+            echo ""
+          fi
+
+          if [ "$DEPLOY_HULLSIZING" == "true" ]; then
+            echo "📦 Deploying Hull Sizing Service..."
+            if [ -n "$HULLSIZING_ARN" ] && [ "$HULLSIZING_ARN" != "None" ]; then
+              aws apprunner start-deployment --service-arn "$HULLSIZING_ARN"
+              echo "✅ Hull Sizing Service deployment initiated"
+            else
+              echo "⚠️  Hull Sizing Service not found, skipping"
+            fi
+            echo ""
+          else
+            echo "⏭️  Skipping Hull Sizing Service (no changes)"
+            echo ""
+          fi
+
+          if [ "$DEPLOY_GATEWAY" == "true" ]; then
+            echo "📦 Deploying API Gateway..."
+            if [ -n "$API_ARN" ] && [ "$API_ARN" != "None" ]; then
+              aws apprunner start-deployment --service-arn "$API_ARN"
+              echo "✅ API Gateway deployment initiated"
+            else
+              echo "⚠️  API Gateway not found, skipping"
+            fi
+            echo ""
+          else
+            echo "⏭️  Skipping API Gateway (no changes)"
+            echo ""
+          fi
+
           echo "⏳ Note: Deployments take ~3-5 minutes to complete"
           echo "   Services will automatically apply database migrations on startup"
-          echo "   Monitor logs: aws logs tail /aws/apprunner/navarch-studio-${{ env.ENVIRONMENT }}-data-service --since 5m --region ${{ env.AWS_REGION }}"
 
       - name: Wait for services to start
         run: |
@@ -970,25 +1074,19 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    # For frontend-only changes: run immediately after quality checks
-    # For backend/infra changes: wait for those deployments to complete
+    # Frontend deployment runs independently - doesn't wait for backend
+    # This enables fast frontend-only deployments
     needs:
       - check-infrastructure
       - check-changed-paths
       - check-previous-run
       - frontend-quality
-      - build-and-push
-      - deploy-infrastructure
-      - deploy-services
-    # Run when infra is configured and frontend changed, or via manual overrides
-    # OR if previous run had any failures (to ensure everything runs after a failed run)
-    # Note: deploy-infrastructure and deploy-services may be skipped - that's OK, we'll discover existing resources
+    # Run when infra is configured and frontend changed
+    # Note: We don't depend on build-and-push, deploy-infrastructure, or deploy-services
+    # This allows frontend to deploy while backend builds/deploys in parallel
     if: |
       needs.check-infrastructure.outputs.has-secrets == 'true' &&
       needs.frontend-quality.result == 'success' &&
-      (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') &&
-      (needs.deploy-infrastructure.result == 'success' || needs.deploy-infrastructure.result == 'skipped') &&
-      (needs.deploy-services.result == 'success' || needs.deploy-services.result == 'skipped') &&
       (
         needs.check-changed-paths.outputs.frontend == 'true' ||
         needs.check-previous-run.outputs.prev_overall_failed == 'true' ||
@@ -1139,9 +1237,12 @@ jobs:
 
   smoke-tests:
     runs-on: ubuntu-latest
-    needs: [deploy-infrastructure, deploy-frontend]
-    # Run even if frontend deployment was skipped
-    if: always() && needs.deploy-infrastructure.result == 'success'
+    needs: [deploy-infrastructure, deploy-frontend, deploy-services]
+    # Run even if frontend or services deployment was skipped
+    # But only if infrastructure deployment succeeded (we need the services to be running)
+    if: |
+      always() &&
+      (needs.deploy-infrastructure.result == 'success' || needs.deploy-services.result == 'success')
 
     steps:
       - name: Checkout code
