@@ -16,11 +16,11 @@ namespace DataService.Controllers;
 public class BenchmarksController : ControllerBase
 {
     private readonly DataDbContext _db;
-    private readonly IBenchmarkIngestionService _ingest;
+    private readonly IBenchmarkIngestionService? _ingest;  // Optional - only in production
     private readonly BenchmarkSeedService _seed;
     private readonly BenchmarkValidationService _validator;
 
-    public BenchmarksController(DataDbContext db, IBenchmarkIngestionService ingest, BenchmarkSeedService seed, BenchmarkValidationService validator)
+    public BenchmarksController(DataDbContext db, BenchmarkSeedService seed, BenchmarkValidationService validator, IBenchmarkIngestionService? ingest = null)
     {
         _db = db;
         _ingest = ingest;
