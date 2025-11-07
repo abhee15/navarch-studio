@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
@@ -111,22 +112,12 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
   const loadRealVessels = useCallback(async () => {
     setRealLoading(true);
     try {
-      // Show benchmark hulls (Wigley, KCS, KVLCC2, etc.) in Real mode
-      const response = await api.get<Array<{ slug: string; title: string; description: string }>>("/benchmarks/cases");
-      // Transform benchmark cases to match RealVessel interface
-      const benchmarks = response.data.map((hull) => ({
-        id: hull.slug,
-        name: hull.title,
-        vesselType: "Benchmark" as const,
-        lpp: undefined,
-        beam: undefined,
-        draft: undefined,
-        displacement: undefined,
-        blockCoefficient: undefined,
-      }));
-      setRealVessels(benchmarks);
+      // Load real-world vessel catalog (600+ vessels)
+      const response = await api.get<RealVessel[]>("/catalog/hulls");
+      setRealVessels(response.data);
     } catch (error) {
-      console.error("Failed to load benchmark hulls:", error);
+      console.error("Failed to load real-world vessels:", error);
+      toast.error("Failed to load vessel catalog");
     } finally {
       setRealLoading(false);
     }
