@@ -382,8 +382,12 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     needs: [frontend-quality, backend-quality, check-infrastructure, check-previous-run, check-last-complete-build, check-changed-paths]
-    # Only run if AWS infrastructure is configured
-    if: needs.check-infrastructure.outputs.has-secrets == 'true' || github.event_name == 'workflow_dispatch'
+    # Run if infrastructure is configured AND quality checks passed or were skipped
+    # Allow frontend-quality or backend-quality to be skipped (backend-only or frontend-only changes)
+    if: |
+      (needs.check-infrastructure.outputs.has-secrets == 'true' || github.event_name == 'workflow_dispatch') &&
+      (needs.frontend-quality.result == 'success' || needs.frontend-quality.result == 'skipped') &&
+      (needs.backend-quality.result == 'success' || needs.backend-quality.result == 'skipped')
     outputs:
       identity-image: ${{ steps.build-identity.outputs.image || '' }}
       gateway-image: ${{ steps.build-gateway.outputs.image || '' }}
