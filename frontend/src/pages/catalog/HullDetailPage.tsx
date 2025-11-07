@@ -50,7 +50,9 @@ export const HullDetailPage: React.FC = observer(() => {
     setError(null);
     try {
       // Check if it's a benchmark hull (slug format) or real vessel (GUID format)
-      const isBenchmark = hullId.includes("-") && !hullId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+      const isBenchmark =
+        hullId.includes("-") &&
+        !hullId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 
       if (isBenchmark) {
         // Load benchmark hull details

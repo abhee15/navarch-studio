@@ -51,3 +51,4 @@ Write-Host "1. Check the output above for '[SEED] Real-world vessel catalog seed
 Write-Host "2. If successful, refresh your browser to see the vessels" -ForegroundColor White
 Write-Host "3. If it shows 'already seeded', the data is there - check API connectivity" -ForegroundColor White
 Write-Host ""
+

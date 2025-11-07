@@ -37,3 +37,4 @@ public class CostTrackingService
         return promptCost + completionCost;
     }
 }
+

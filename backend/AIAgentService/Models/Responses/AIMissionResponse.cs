@@ -20,3 +20,4 @@ public class AIMissionResponse
     public string Reasoning { get; set; } = string.Empty;
     public double Confidence { get; set; }
 }
+

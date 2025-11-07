@@ -7,3 +7,4 @@ public interface ICachingService
     Task<MissionResult?> GetCachedMissionAsync(string input);
     Task CacheMissionAsync(string input, MissionResult result);
 }
+

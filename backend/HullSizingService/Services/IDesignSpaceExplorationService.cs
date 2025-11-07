@@ -25,3 +25,4 @@ public interface IDesignSpaceExplorationService
         string tenantId,
         CancellationToken cancellationToken = default);
 }
+

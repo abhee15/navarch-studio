@@ -8,3 +8,4 @@ public class OpenAISettings
     public double Temperature { get; set; } = 0.3;
     public int TimeoutSeconds { get; set; } = 30;
 }
+
