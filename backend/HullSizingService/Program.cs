@@ -326,15 +326,25 @@ try
 
             if (pendingMigrations.Any())
             {
-                if (app.Environment.EnvironmentName != "Development")
+                // Check if auto-migration is enabled via environment variable
+                var autoMigrate = app.Configuration.GetValue<bool>("AutoMigrate", false);
+                
+                // Auto-migrate in:
+                // 1. Staging/Production environments (always)
+                // 2. Development with AutoMigrate=true (local Docker)
+                if (app.Environment.EnvironmentName != "Development" || autoMigrate)
                 {
-                    Console.WriteLine($"[MIGRATION] Auto-applying {pendingMigrations.Count()} pending migrations...");
+                    Console.WriteLine($"[MIGRATION] Auto-applying {pendingMigrations.Count()} pending migrations in {app.Environment.EnvironmentName} environment...");
+                    Log.Information("[MIGRATION] Auto-applying {Count} pending migrations in {Environment} environment...",
+                        pendingMigrations.Count(), app.Environment.EnvironmentName);
                     await dbContext.Database.MigrateAsync();
                     Console.WriteLine("[MIGRATION] Migrations applied successfully!");
+                    Log.Information("[MIGRATION] Migrations applied successfully!");
                 }
                 else
                 {
-                    Console.WriteLine("[MIGRATION] Development mode: Run 'dotnet ef database update' manually.");
+                    Console.WriteLine("[MIGRATION] Development mode: Run 'dotnet ef database update' manually or set AutoMigrate=true.");
+                    Log.Warning("[MIGRATION] Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually or set AutoMigrate=true.");
                 }
             }
             else
