@@ -99,10 +99,10 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
 
         var allCandidates = await Task.WhenAll(candidateTasks);
         var nullCount = allCandidates.Count(c => c == null);
-        
+
         if (nullCount > 0)
         {
-            _logger.LogWarning("[SOLVER] {NullCount} of {TotalCount} candidates failed to generate (displacement closure failed)", 
+            _logger.LogWarning("[SOLVER] {NullCount} of {TotalCount} candidates failed to generate (displacement closure failed)",
                 nullCount, allCandidates.Length);
         }
 
@@ -114,7 +114,7 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         // Step 5: Score and rank candidates
         var scoredCandidates = await ScoreAndRankCandidatesAsync(candidates, mission, cancellationToken);
 
-        _logger.LogInformation("[SOLVER] Generated {Count} valid candidates out of {TotalFamilies} families", 
+        _logger.LogInformation("[SOLVER] Generated {Count} valid candidates out of {TotalFamilies} families",
             scoredCandidates.Count, families.Count);
 
         return scoredCandidates;
@@ -169,7 +169,7 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
 
             if (!closure.Converged)
             {
-                _logger.LogWarning("[SOLVER] Family '{Family}' failed to converge. Target disp={TargetDisp:F1}t, Fn={Fn:F3}, L/B={LOverB:F2}, B/T={BOverT:F2}, Cb={Cb:F3}", 
+                _logger.LogWarning("[SOLVER] Family '{Family}' failed to converge. Target disp={TargetDisp:F1}t, Fn={Fn:F3}, L/B={LOverB:F2}, B/T={BOverT:F2}, Cb={Cb:F3}",
                     family.Family, targetDisplacementT, fnTarget, lOverB, bOverT, cb);
                 return null; // Skip this family
             }
