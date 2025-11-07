@@ -561,6 +561,50 @@ public class DataDbContext : DbContext
                 .HasForeignKey(e => e.LoadcaseId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
+
+        // ParametricHull configuration - ML catalog in catalog_ml schema
+        modelBuilder.Entity<ParametricHull>(entity =>
+        {
+            entity.ToTable("parametric_hulls", schema: "catalog_ml");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.HullId).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.DatasetSource).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ParametricVector).IsRequired().HasColumnType("jsonb");
+            entity.Property(e => e.GeometricMeasures).IsRequired().HasColumnType("jsonb");
+            entity.Property(e => e.ConversionQuality).HasMaxLength(20);
+
+            entity.HasIndex(e => e.HullId).IsUnique();
+            entity.HasIndex(e => e.DatasetSource);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => new { e.VolumeNorm, e.LcbNorm });
+        });
+
+        // CatalogVesselReal configuration - Real vessel catalog in catalog_user schema
+        modelBuilder.Entity<CatalogVesselReal>(entity =>
+        {
+            entity.ToTable("vessels_real", schema: "catalog_user");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.VesselId).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.VesselType).IsRequired().HasMaxLength(100);
+
+            entity.HasIndex(e => e.VesselType);
+            entity.HasIndex(e => e.VesselId);
+            entity.HasIndex(e => new { e.LppM, e.BeamM, e.Cb });
+        });
+
+        // BenchmarkTestCondition configuration - Test conditions in catalog_real schema
+        modelBuilder.Entity<BenchmarkTestCondition>(entity =>
+        {
+            entity.ToTable("benchmark_test_conditions", schema: "catalog_real");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TestType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.HullName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Standard).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+
+            entity.HasIndex(e => e.HullName);
+            entity.HasIndex(e => e.TestType);
+        });
     }
 
     public override int SaveChanges()
