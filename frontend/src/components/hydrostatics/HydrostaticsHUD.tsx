@@ -114,7 +114,9 @@ export const HydrostaticsHUD = observer(function HydrostaticsHUD({
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Cb</span>
-                <span className="font-mono text-foreground">{formatCoefficient(currentResult.cb)}</span>
+                <span className="font-mono text-foreground">
+                  {formatCoefficient(currentResult.cb)}
+                </span>
               </div>
             </div>
           </>
