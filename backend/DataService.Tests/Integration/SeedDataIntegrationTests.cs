@@ -296,4 +296,3 @@ public class SeedDataIntegrationTests : IAsyncLifetime
         _output.WriteLine($"  - Wigley Geometry: Present");
     }
 }
-

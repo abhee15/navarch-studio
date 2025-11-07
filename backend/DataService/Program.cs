@@ -98,9 +98,17 @@ try
         options.ApiVersionReader = new Asp.Versioning.UrlSegmentApiVersionReader();
     }).AddMvc();
 
-    // AWS S3 + HTTP client for ingestion
+    // AWS S3 + HTTP client for ingestion (S3 only in production)
     builder.Services.AddHttpClient();
-    builder.Services.AddSingleton<Amazon.S3.IAmazonS3>(_ => new Amazon.S3.AmazonS3Client());
+    if (!builder.Environment.IsDevelopment())
+    {
+        builder.Services.AddSingleton<Amazon.S3.IAmazonS3>(_ => new Amazon.S3.AmazonS3Client());
+        Log.Information("AWS S3 client registered (production mode)");
+    }
+    else
+    {
+        Log.Information("Skipping AWS S3 client registration (development mode)");
+    }
     builder.Services.AddScoped<DataService.Services.IBenchmarkIngestionService, DataService.Services.BenchmarkIngestionService>();
     builder.Services.AddScoped<DataService.Services.BenchmarkSeedService>();
     builder.Services.AddScoped<DataService.Services.BenchmarkValidationService>();

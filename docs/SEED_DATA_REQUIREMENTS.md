@@ -268,4 +268,3 @@ terraform apply
 - `backend/HullSizingService/Program.cs` (lines 346-360)
 - `backend/DataService.Tests/Integration/SeedDataIntegrationTests.cs`
 - `backend/HullSizingService.Tests/Integration/SeedDataIntegrationTests.cs`
-
