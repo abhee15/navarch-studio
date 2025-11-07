@@ -1096,19 +1096,19 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    # Frontend deployment runs independently - doesn't wait for backend
-    # This enables fast frontend-only deployments
+    # Frontend deployment must wait for infrastructure to ensure S3 bucket exists
     needs:
       - check-infrastructure
       - check-changed-paths
       - check-previous-run
       - frontend-quality
-    # Run when infra is configured and frontend changed
-    # Note: We don't depend on build-and-push, deploy-infrastructure, or deploy-services
-    # This allows frontend to deploy while backend builds/deploys in parallel
+      - build-and-push
+      - deploy-infrastructure
+    # Run when infra deployment succeeded and frontend changed
     if: |
       needs.check-infrastructure.outputs.has-secrets == 'true' &&
       needs.frontend-quality.result == 'success' &&
+      needs.deploy-infrastructure.result == 'success' &&
       (
         needs.check-changed-paths.outputs.frontend == 'true' ||
         needs.check-previous-run.outputs.prev_overall_failed == 'true' ||
