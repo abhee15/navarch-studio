@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
+import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
+import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Database, Filter, TrendingUp, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "../../services/api";
+import { useStore } from "../../stores";
 
 interface ParametricHull {
   hullId: string;
@@ -28,6 +31,8 @@ interface CatalogStats {
 }
 
 export const MLHullBrowser: React.FC = observer(() => {
+  const navigate = useNavigate();
+  const { authStore } = useStore();
   const [hulls, setHulls] = useState<ParametricHull[]>([]);
   const [stats, setStats] = useState<CatalogStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -106,9 +111,39 @@ export const MLHullBrowser: React.FC = observer(() => {
     }
   };
 
+  const handleHome = () => {
+    navigate("/dashboard");
+  };
+
+  const handleLogout = () => {
+    authStore.logout();
+    navigate("/login");
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader />
+      <AppHeader
+        left={<h1 className="text-lg font-bold text-foreground">NavArch Studio</h1>}
+        right={
+          <>
+            <button
+              onClick={handleHome}
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-foreground hover:text-foreground/80 border border-border rounded hover:bg-accent/10"
+            >
+              <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+              Home
+            </button>
+            <UserProfileMenu onOpenSettings={() => {}} onLogout={handleLogout} />
+          </>
+        }
+      />
 
       <main className="flex-1 container mx-auto px-4 py-6">
         {/* Header */}

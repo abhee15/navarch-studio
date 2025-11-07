@@ -31,10 +31,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       return savedTheme;
     }
     // Default to dark theme (industry standard for CAD/engineering applications)
-    // Still respects system preference if explicitly set
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
-      return "light";
-    }
     return "dark";
   });
 
