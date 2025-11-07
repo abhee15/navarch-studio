@@ -29,7 +29,7 @@ public class MissionCasesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<MissionCaseDto>>> GetAll(CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var cases = await _service.GetAllAsync(tenantId, ct);
         return Ok(cases);
     }
@@ -37,7 +37,7 @@ public class MissionCasesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<MissionCaseDto>> GetById(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var missionCase = await _service.GetByIdAsync(id, tenantId, ct);
 
         if (missionCase == null)
@@ -62,7 +62,7 @@ public class MissionCasesController : ControllerBase
         // Try to parse userId as GUID, fallback to generated GUID if not valid (dev mode)
         var userIdStr = HttpContext.Items["Claims:Sub"]?.ToString();
         var userId = Guid.TryParse(userIdStr, out var parsedUserId) ? parsedUserId : Guid.NewGuid();
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
 
         var result = await _service.CreateAsync(dto, userId, tenantId, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
@@ -81,7 +81,7 @@ public class MissionCasesController : ControllerBase
             });
         }
 
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var result = await _service.UpdateAsync(id, dto, tenantId, ct);
 
         if (result == null)
@@ -93,7 +93,7 @@ public class MissionCasesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var success = await _service.DeleteAsync(id, tenantId, ct);
 
         if (!success)

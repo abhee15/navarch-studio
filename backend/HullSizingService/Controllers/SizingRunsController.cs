@@ -26,7 +26,7 @@ public class SizingRunsController : ControllerBase
     [HttpGet("mission-case/{missionCaseId}")]
     public async Task<ActionResult<List<SizingRunDto>>> GetByMissionCase(Guid missionCaseId, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var runs = await _service.GetByMissionCaseIdAsync(missionCaseId, tenantId, ct);
         return Ok(runs);
     }
@@ -34,7 +34,7 @@ public class SizingRunsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<SizingRunDto>> GetById(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var run = await _service.GetByIdAsync(id, tenantId, ct);
 
         if (run == null)
@@ -59,7 +59,7 @@ public class SizingRunsController : ControllerBase
         // Try to parse userId as GUID, fallback to generated GUID if not valid (dev mode)
         var userIdStr = HttpContext.Items["Claims:Sub"]?.ToString();
         var userId = Guid.TryParse(userIdStr, out var parsedUserId) ? parsedUserId : Guid.NewGuid();
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
 
         try
         {
@@ -75,7 +75,7 @@ public class SizingRunsController : ControllerBase
     [HttpGet("{id}/candidates")]
     public async Task<ActionResult<List<CandidateDesignDto>>> GetCandidates(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var candidates = await _service.GetCandidatesAsync(id, tenantId, ct);
         return Ok(candidates);
     }

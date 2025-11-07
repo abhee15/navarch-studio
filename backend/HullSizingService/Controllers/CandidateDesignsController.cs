@@ -22,7 +22,7 @@ public class CandidateDesignsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<CandidateDesignDto>> GetById(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var candidate = await _service.GetByIdAsync(id, tenantId, ct);
 
         if (candidate == null)
@@ -34,7 +34,7 @@ public class CandidateDesignsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<CandidateDesignDto>> Update(Guid id, [FromBody] UpdateCandidateDesignDto dto, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var result = await _service.UpdateAsync(id, dto, tenantId, ct);
 
         if (result == null)
@@ -46,7 +46,7 @@ public class CandidateDesignsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var success = await _service.DeleteAsync(id, tenantId, ct);
 
         if (!success)
@@ -58,7 +58,7 @@ public class CandidateDesignsController : ControllerBase
     [HttpPost("{id}/export/json")]
     public async Task<ActionResult> ExportJson(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var json = await _service.ExportJsonAsync(id, tenantId, ct);
 
         if (json == null)
@@ -70,7 +70,7 @@ public class CandidateDesignsController : ControllerBase
     [HttpPost("{id}/export/csv")]
     public async Task<ActionResult> ExportCsv(Guid id, CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
         var csv = await _service.ExportCsvAsync(id, tenantId, ct);
 
         if (csv == null)
@@ -85,7 +85,7 @@ public class CandidateDesignsController : ControllerBase
         [FromBody] AdjustParameterDto dto,
         CancellationToken ct)
     {
-        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-tenant";
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
 
         try
         {
