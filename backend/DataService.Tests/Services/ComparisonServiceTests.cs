@@ -58,7 +58,7 @@ public class ComparisonServiceTests
         // Act & Assert - Constructor should require non-null DataDbContext
         // Service uses dependency injection, will throw if null is passed
         Action act = () => new ComparisonService(null!, mockUnitConversionService.Object);
-        
+
         act.Should().Throw<Exception>("null context should cause failure");
     }
 
@@ -74,7 +74,7 @@ public class ComparisonServiceTests
 
         // Act & Assert - Constructor should require non-null unit conversion service
         Action act = () => new ComparisonService(context, null!);
-        
+
         act.Should().Throw<Exception>("null service should cause failure");
     }
 
