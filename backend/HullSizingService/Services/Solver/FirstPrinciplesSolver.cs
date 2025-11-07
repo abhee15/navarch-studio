@@ -80,6 +80,12 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
 
         _logger.LogInformation("[SOLVER] Generating candidates for {Count} families", families.Count);
 
+        if (families.Count == 0)
+        {
+            _logger.LogError("[SOLVER] ⚠️ NO HULL FAMILIES AVAILABLE! Check database seeding.");
+            return new List<SolverCandidate>();
+        }
+
         // Step 4: Generate candidates for each family (in parallel)
         var candidateTasks = families.Select(family => GenerateCandidateAsync(
             family,
@@ -91,7 +97,16 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             cancellationToken
         ));
 
-        var candidates = (await Task.WhenAll(candidateTasks))
+        var allCandidates = await Task.WhenAll(candidateTasks);
+        var nullCount = allCandidates.Count(c => c == null);
+        
+        if (nullCount > 0)
+        {
+            _logger.LogWarning("[SOLVER] {NullCount} of {TotalCount} candidates failed to generate (displacement closure failed)", 
+                nullCount, allCandidates.Length);
+        }
+
+        var candidates = allCandidates
             .Where(c => c != null)
             .Cast<SolverCandidate>()
             .ToList();
@@ -99,7 +114,8 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         // Step 5: Score and rank candidates
         var scoredCandidates = await ScoreAndRankCandidatesAsync(candidates, mission, cancellationToken);
 
-        _logger.LogInformation("[SOLVER] Generated {Count} valid candidates", scoredCandidates.Count);
+        _logger.LogInformation("[SOLVER] Generated {Count} valid candidates out of {TotalFamilies} families", 
+            scoredCandidates.Count, families.Count);
 
         return scoredCandidates;
     }
@@ -153,7 +169,8 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
 
             if (!closure.Converged)
             {
-                _logger.LogWarning("[SOLVER] Family '{Family}' failed to converge", family.Family);
+                _logger.LogWarning("[SOLVER] Family '{Family}' failed to converge. Target disp={TargetDisp:F1}t, Fn={Fn:F3}, L/B={LOverB:F2}, B/T={BOverT:F2}, Cb={Cb:F3}", 
+                    family.Family, targetDisplacementT, fnTarget, lOverB, bOverT, cb);
                 return null; // Skip this family
             }
 
