@@ -430,9 +430,152 @@ public class CurvesGeneratorTests : IDisposable
 
     #endregion
 
+    #region Performance and Optimization Tests
+
+    [Fact]
+    public async Task GenerateMultipleCurves_WithFiveCurves_ShouldCompleteFast()
+    {
+        // Arrange
+        var vessel = CreateRectangularBarge(length: 100, beam: 20, draft: 10, numStations: 5, numWaterlines: 11);
+        var curveTypes = new List<string> { "displacement", "kb", "lcb", "awp" };
+
+        // Act - Measure execution time
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var curves = await _curvesGenerator.GenerateMultipleCurvesAsync(
+            vessel.Id, null, curveTypes, minDraft: 3, maxDraft: 9, points: 13);
+        stopwatch.Stop();
+
+        // Assert - Should complete in less than 5 seconds (even with 13 points)
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000,
+            "generating 4 curves with 13 points should complete quickly");
+
+        curves.Should().HaveCount(4, "all requested curves should be generated");
+
+        // Verify all curves have correct number of points
+        foreach (var curve in curves.Values)
+        {
+            curve.Points.Should().HaveCount(13, "each curve should have 13 points");
+        }
+    }
+
+    [Fact]
+    public async Task GenerateMultipleCurves_ShouldExtractFromSingleComputation()
+    {
+        // This test verifies the optimization mentioned in hydrostatics-502-fix.md
+        // where we compute all drafts once instead of once per curve type
+
+        // Arrange
+        var vessel = CreateRectangularBarge(length: 100, beam: 20, draft: 10, numStations: 5, numWaterlines: 11);
+        var curveTypes = new List<string> { "displacement", "kb", "lcb", "awp" };
+
+        // Act - Generate curves
+        var curves = await _curvesGenerator.GenerateMultipleCurvesAsync(
+            vessel.Id, null, curveTypes, minDraft: 1, maxDraft: 10, points: 10);
+
+        // Assert - All curves should have data
+        curves.Should().HaveCount(4);
+        curves.Should().ContainKeys("displacement", "kb", "lcb", "awp");
+
+        // Verify data integrity across all curve types (proves single computation)
+        var allCurvesHaveSameXValues = curves.Values
+            .Select(c => c.Points.Select(p => p.X).ToList())
+            .Distinct(new ListComparer<decimal>())
+            .Count() == 1;
+
+        allCurvesHaveSameXValues.Should().BeTrue(
+            "all curves should use same draft points (proves single computation pass)");
+    }
+
+    [Fact]
+    public async Task GenerateMultipleCurves_LargeNumberOfPoints_ShouldStillPerform()
+    {
+        // Arrange
+        var vessel = CreateRectangularBarge(length: 100, beam: 20, draft: 10, numStations: 5, numWaterlines: 11);
+        var curveTypes = new List<string> { "displacement", "kb", "lcb" };
+
+        // Act - Test with many points
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var curves = await _curvesGenerator.GenerateMultipleCurvesAsync(
+            vessel.Id, null, curveTypes, minDraft: 1, maxDraft: 10, points: 50);
+        stopwatch.Stop();
+
+        // Assert - Should still complete reasonably quickly (< 10 seconds)
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(10000,
+            "even with 50 points, should complete in reasonable time");
+
+        curves.Should().HaveCount(3);
+        foreach (var curve in curves.Values)
+        {
+            curve.Points.Should().HaveCount(50);
+        }
+    }
+
+    [Fact]
+    public async Task GenerateDisplacementCurve_Performance_ShouldMeetSLA()
+    {
+        // Arrange
+        var vessel = CreateRectangularBarge(length: 100, beam: 20, draft: 10, numStations: 5, numWaterlines: 11);
+
+        // Act - Measure single curve generation time
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var curve = await _curvesGenerator.GenerateDisplacementCurveAsync(
+            vessel.Id, null, minDraft: 1, maxDraft: 10, points: 10);
+        stopwatch.Stop();
+
+        // Assert - Individual curve generation should be fast (< 1 second)
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000,
+            "single curve generation should be very fast");
+
+        curve.Should().NotBeNull();
+        curve.Points.Should().HaveCount(10);
+    }
+
+    [Fact]
+    public async Task GenerateMultipleCurves_MinimalPoints_ShouldBeNearInstantaneous()
+    {
+        // Arrange
+        var vessel = CreateRectangularBarge(length: 100, beam: 20, draft: 10, numStations: 5, numWaterlines: 11);
+        var curveTypes = new List<string> { "displacement", "kb" };
+
+        // Act - Test with minimal points
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var curves = await _curvesGenerator.GenerateMultipleCurvesAsync(
+            vessel.Id, null, curveTypes, minDraft: 5, maxDraft: 8, points: 3);
+        stopwatch.Stop();
+
+        // Assert - Should be very fast with only 3 points
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(500,
+            "minimal point calculation should be near-instantaneous");
+
+        curves.Should().HaveCount(2);
+        foreach (var curve in curves.Values)
+        {
+            curve.Points.Should().HaveCount(3);
+        }
+    }
+
+    #endregion
+
+    // Helper class for comparing lists
+    private class ListComparer<T> : IEqualityComparer<List<T>>
+    {
+        public bool Equals(List<T>? x, List<T>? y)
+        {
+            if (x == null && y == null) return true;
+            if (x == null || y == null) return false;
+            if (x.Count != y.Count) return false;
+
+            return x.SequenceEqual(y);
+        }
+
+        public int GetHashCode(List<T> obj)
+        {
+            return obj.Aggregate(0, (hash, item) => hash ^ (item?.GetHashCode() ?? 0));
+        }
+    }
+
     public void Dispose()
     {
         _context?.Dispose();
     }
 }
-

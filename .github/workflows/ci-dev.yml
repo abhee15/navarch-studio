@@ -723,30 +723,30 @@ jobs:
           echo "🚀 Triggering App Runner service deployments (selective)..."
           echo "This will pull the latest :latest tagged images from ECR"
           echo ""
-          
+
           # Determine which services need deployment
           DEPLOY_IDENTITY=false
           DEPLOY_GATEWAY=false
           DEPLOY_DATA=false
           DEPLOY_HULLSIZING=false
-          
+
           # Deploy if service was built OR if Shared code changed (affects all services)
           if [ "${{ needs.build-and-push.outputs.identity-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
             DEPLOY_IDENTITY=true
           fi
-          
+
           if [ "${{ needs.build-and-push.outputs.gateway-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
             DEPLOY_GATEWAY=true
           fi
-          
+
           if [ "${{ needs.build-and-push.outputs.data-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
             DEPLOY_DATA=true
           fi
-          
+
           if [ "${{ needs.build-and-push.outputs.hullsizing-image }}" != "" ] || [ "${{ needs.check-changed-paths.outputs.backend_shared }}" == "true" ]; then
             DEPLOY_HULLSIZING=true
           fi
-          
+
           echo "📋 Deployment Plan:"
           echo "  Identity Service:     $DEPLOY_IDENTITY"
           echo "  API Gateway:          $DEPLOY_GATEWAY"
