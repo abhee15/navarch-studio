@@ -33,12 +33,19 @@ export const HydrostaticsHUD = observer(function HydrostaticsHUD({
     return value * 0.984207; // tonnes to long tons
   };
 
-  const formatLength = (value: number): string => {
+  const formatLength = (value: number | undefined | null): string => {
+    if (value === null || value === undefined) return "—";
     return convertLength(value).toFixed(3);
   };
 
-  const formatWeight = (value: number): string => {
+  const formatWeight = (value: number | undefined | null): string => {
+    if (value === null || value === undefined) return "—";
     return convertWeight(value).toFixed(1);
+  };
+
+  const formatCoefficient = (value: number | undefined | null): string => {
+    if (value === null || value === undefined) return "—";
+    return value.toFixed(3);
   };
 
   return (
@@ -107,7 +114,7 @@ export const HydrostaticsHUD = observer(function HydrostaticsHUD({
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Cb</span>
-                <span className="font-mono text-foreground">{currentResult.cb.toFixed(3)}</span>
+                <span className="font-mono text-foreground">{formatCoefficient(currentResult.cb)}</span>
               </div>
             </div>
           </>
