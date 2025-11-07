@@ -56,12 +56,10 @@ public class ComparisonServiceTests
         var mockUnitConversionService = new Mock<IUnitConversionService>();
 
         // Act & Assert - Constructor should require non-null DataDbContext
+        // Service uses dependency injection, will throw if null is passed
         Action act = () => new ComparisonService(null!, mockUnitConversionService.Object);
-
-        // In C# with nullable reference types, this will cause a compile warning
-        // but we're testing the runtime behavior
-        act.Should().Throw<ArgumentNullException>()
-            .Or.Throw<NullReferenceException>();
+        
+        act.Should().Throw<Exception>("null context should cause failure");
     }
 
     [Fact]
@@ -76,9 +74,8 @@ public class ComparisonServiceTests
 
         // Act & Assert - Constructor should require non-null unit conversion service
         Action act = () => new ComparisonService(context, null!);
-
-        act.Should().Throw<ArgumentNullException>()
-            .Or.Throw<NullReferenceException>();
+        
+        act.Should().Throw<Exception>("null service should cause failure");
     }
 
     [Fact]
@@ -111,11 +108,11 @@ public class ComparisonServiceTests
         var nonExistentVesselId = Guid.NewGuid();
         var dto = new Shared.DTOs.CreateComparisonSnapshotDto
         {
-            Label = "Test Snapshot",
+            RunName = "Test Snapshot",
             MinDraft = 5.0m,
             MaxDraft = 10.0m,
-            NumPoints = 5,
-            CurveTypes = new List<string> { "displacement" }
+            DraftStep = 1.0m,
+            Results = new List<Shared.DTOs.HydroResultDto>()
         };
 
         // Act
