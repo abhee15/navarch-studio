@@ -36,95 +36,85 @@ public class CatalogHullsController : ControllerBase
     }
 
     /// <summary>
-    /// Lists all catalog hulls, optionally filtered by hull type
+    /// Lists all catalog hulls from the real-world vessel catalog (600+ vessels)
     /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(List<CatalogHullListItemDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<CatalogHullListItemDto>>> ListHulls(
-        [FromQuery] string? hullType = null,
+    [ProducesResponseType(typeof(List<RealVesselDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<RealVesselDto>>> ListHulls(
+        [FromQuery] string? vesselType = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.BenchmarkCases.AsQueryable();
+        var query = _context.CatalogVesselsReal.AsQueryable();
 
-        if (!string.IsNullOrEmpty(hullType))
+        if (!string.IsNullOrEmpty(vesselType))
         {
-            query = query.Where(h => h.HullType == hullType);
+            query = query.Where(v => v.VesselType == vesselType);
         }
 
-        var hulls = await query
-            .Include(h => h.Geometries)
-            .OrderBy(h => h.HullType)
-            .ThenBy(h => h.Title)
+        var vessels = await query
+            .OrderBy(v => v.VesselType)
+            .ThenBy(v => v.VesselId)
             .ToListAsync(cancellationToken);
 
-        var result = hulls.Select(h => new CatalogHullListItemDto
+        var result = vessels.Select(v => new RealVesselDto
         {
-            Id = h.Id,
-            Slug = h.Slug,
-            Title = h.Title,
-            Description = h.Description,
-            HullType = h.HullType,
-            Lpp = h.Lpp_m,
-            Beam = h.B_m,
-            Draft = h.T_m,
-            Cb = h.Cb,
-            GeometryMissing = h.GeometryMissing,
-            Units = "SI"
+            Id = v.Id.ToString(),
+            Name = v.VesselId,
+            VesselType = v.VesselType,
+            Lpp = v.LppM,
+            Beam = v.BeamM,
+            Draft = v.DraftM,
+            Displacement = v.DisplacementT,
+            BlockCoefficient = v.Cb
         }).ToList();
+
+        _logger.LogInformation("Returning {Count} vessels from real-world catalog", result.Count);
 
         return Ok(result);
     }
 
     /// <summary>
-    /// Gets a specific catalog hull by ID with detailed information
+    /// Gets a specific real-world vessel by ID with detailed information
     /// </summary>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(CatalogHullDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(RealVesselDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CatalogHullDto>> GetHull(
+    public async Task<ActionResult<RealVesselDetailsDto>> GetHull(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var hull = await _context.BenchmarkCases
-            .Include(h => h.Geometries)
-            .Include(h => h.TestPoints)
-            .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
+        var vessel = await _context.CatalogVesselsReal
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
-        if (hull == null)
+        if (vessel == null)
         {
-            return NotFound(new { error = $"Catalog hull with ID {id} not found" });
+            return NotFound(new { error = $"Catalog vessel with ID {id} not found" });
         }
 
-        // Calculate LCB/LCF from % to meters
-        decimal? lcb_m = hull.Lpp_m.HasValue && hull.LCB_pctLpp.HasValue
-            ? hull.Lpp_m.Value * hull.LCB_pctLpp.Value / 100m
-            : null;
-
-        decimal? lcf_m = hull.Lpp_m.HasValue && hull.LCF_pctLpp.HasValue
-            ? hull.Lpp_m.Value * hull.LCF_pctLpp.Value / 100m
-            : null;
-
-        var result = new CatalogHullDto
+        var result = new RealVesselDetailsDto
         {
-            Id = hull.Id,
-            Slug = hull.Slug,
-            Title = hull.Title,
-            Description = hull.Description,
-            CanonicalRefs = hull.CanonicalRefs,
-            HullType = hull.HullType,
-            Lpp = hull.Lpp_m,
-            Beam = hull.B_m,
-            Draft = hull.T_m,
-            Cb = hull.Cb,
-            Cp = hull.Cp,
-            LCB = lcb_m,
-            LCF = lcf_m,
-            GeometryMissing = hull.GeometryMissing,
-            StationsCount = hull.Geometries.Count,
-            WaterlinesCount = hull.Geometries.Count,
-            OffsetsCount = hull.Geometries.Count,
-            CreatedAt = hull.CreatedAt,
-            Units = "SI"
+            Id = vessel.Id.ToString(),
+            Name = vessel.VesselId,
+            VesselType = vessel.VesselType,
+            Lpp = vessel.LppM,
+            Beam = vessel.BeamM,
+            Draft = vessel.DraftM,
+            Depth = vessel.DepthM,
+            Displacement = vessel.DisplacementT,
+            Cb = vessel.Cb,
+            Cp = vessel.Cp,
+            Cm = vessel.Cm,
+            Cw = vessel.Cw,
+            ServiceSpeed = vessel.ServiceSpeedMs,
+            Dwt = vessel.DwtT,
+            EngineType = vessel.EngineType,
+            YearBuilt = vessel.YearBuilt,
+            Source = vessel.Source,
+            DataQuality = vessel.DataQuality,
+            HullGeometryFile = vessel.HullGeometryFile,
+            IsSystemData = vessel.IsSystemData,
+            CreatedAt = vessel.CreatedAt,
+            UpdatedAt = vessel.UpdatedAt
         };
 
         return Ok(result);
@@ -259,5 +249,49 @@ public class CatalogHullsController : ControllerBase
         public required string? OffsetsJson { get; set; }
         public required string? Type { get; set; }
         public required string? SourceUrl { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for real-world vessel catalog listing
+    /// </summary>
+    public class RealVesselDto
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+        public string? VesselType { get; set; }
+        public decimal? Lpp { get; set; }
+        public decimal? Beam { get; set; }
+        public decimal? Draft { get; set; }
+        public decimal? Displacement { get; set; }
+        public decimal? BlockCoefficient { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for real-world vessel detailed information
+    /// </summary>
+    public class RealVesselDetailsDto
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+        public required string VesselType { get; set; }
+        public decimal Lpp { get; set; }
+        public decimal Beam { get; set; }
+        public decimal Draft { get; set; }
+        public decimal? Depth { get; set; }
+        public decimal Displacement { get; set; }
+        public decimal Cb { get; set; }
+        public decimal? Cp { get; set; }
+        public decimal? Cm { get; set; }
+        public decimal? Cw { get; set; }
+        public decimal? ServiceSpeed { get; set; }
+        public decimal? Dwt { get; set; }
+        public string? EngineType { get; set; }
+        public int? YearBuilt { get; set; }
+        public string? Source { get; set; }
+        public string? DataQuality { get; set; }
+        public string? HullGeometryFile { get; set; }
+        public bool IsSystemData { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

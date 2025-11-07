@@ -19,7 +19,7 @@ public class CatalogHullsControllerTests : IDisposable
     private readonly Mock<ILogger<CatalogHullsController>> _loggerMock;
     private readonly Mock<IVesselService> _vesselServiceMock;
     private readonly Mock<IGeometryService> _geometryServiceMock;
-    private BenchmarkCase _testHull = null!;
+    private CatalogVesselReal _testVessel = null!;
 
     public CatalogHullsControllerTests()
     {
@@ -44,110 +44,96 @@ public class CatalogHullsControllerTests : IDisposable
 
     private void SeedTestData()
     {
-        _testHull = new BenchmarkCase
+        _testVessel = new CatalogVesselReal
         {
             Id = Guid.NewGuid(),
-            Slug = "test-hull",
-            Title = "Test Hull",
-            Description = "A test hull for unit tests",
-            HullType = "Template",
-            Lpp_m = 100m,
-            B_m = 20m,
-            T_m = 10m,
+            VesselId = "test-hull",
+            VesselType = "Template",
+            LppM = 100m,
+            BeamM = 20m,
+            DraftM = 10m,
+            DisplacementT = 5000m,
             Cb = 0.7m,
             Cp = 0.75m,
-            LCB_pctLpp = 2m,
-            LCF_pctLpp = -1.5m,
-            GeometryMissing = false,
-            CanonicalRefs = "Test Reference",
-            CreatedAt = DateTime.UtcNow
+            Cm = 0.93m,
+            DataQuality = "Good",
+            Source = "Test Data",
+            IsSystemData = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        var geometry = new BenchmarkGeometry
+        _context.CatalogVesselsReal.Add(_testVessel);
+
+        // Add another vessel with different type
+        var vesselContainer = new CatalogVesselReal
         {
             Id = Guid.NewGuid(),
-            CaseId = _testHull.Id,
-            StationsJson = "[{\"index\":0,\"xPosition\":0}]",
-            WaterlinesJson = "[{\"index\":0,\"zPosition\":0}]",
-            OffsetsJson = "[{\"stationIndex\":0,\"waterlineIndex\":0,\"halfBreadth\":10}]",
-            Type = "Offsets",
-            SourceUrl = "https://test.com/geometry"
-        };
-
-        _testHull.Geometries = new List<BenchmarkGeometry> { geometry };
-
-        _context.BenchmarkCases.Add(_testHull);
-
-        // Add another hull without geometry
-        var hullWithoutGeometry = new BenchmarkCase
-        {
-            Id = Guid.NewGuid(),
-            Slug = "hull-no-geometry",
-            Title = "Hull Without Geometry",
-            Description = "Test hull without geometry",
-            HullType = "Container",
-            Lpp_m = 200m,
-            B_m = 30m,
-            T_m = 15m,
+            VesselId = "container-vessel",
+            VesselType = "Container",
+            LppM = 200m,
+            BeamM = 30m,
+            DraftM = 15m,
+            DisplacementT = 20000m,
             Cb = 0.65m,
-            GeometryMissing = true,
-            CreatedAt = DateTime.UtcNow
+            DataQuality = "Fair",
+            Source = "Test Data",
+            IsSystemData = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        _context.BenchmarkCases.Add(hullWithoutGeometry);
+        _context.CatalogVesselsReal.Add(vesselContainer);
         _context.SaveChanges();
     }
 
     [Fact]
-    public async Task ListHulls_NoFilter_ReturnsAllHulls()
+    public async Task ListHulls_NoFilter_ReturnsAllVessels()
     {
         // Act
         var result = await _controller.ListHulls();
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var hulls = okResult.Value.Should().BeAssignableTo<List<CatalogHullListItemDto>>().Subject;
-        hulls.Should().HaveCount(2);
-        hulls.Should().Contain(h => h.Slug == "test-hull");
-        hulls.Should().Contain(h => h.Slug == "hull-no-geometry");
+        var vessels = okResult.Value.Should().BeAssignableTo<List<CatalogHullsController.RealVesselDto>>().Subject;
+        vessels.Should().HaveCount(2);
+        vessels.Should().Contain(v => v.Name == "test-hull");
+        vessels.Should().Contain(v => v.Name == "container-vessel");
     }
 
     [Fact]
     public async Task ListHulls_FilterByType_ReturnsFilteredHulls()
     {
         // Act
-        var result = await _controller.ListHulls(hullType: "Template");
+        var result = await _controller.ListHulls(vesselType: "Template");
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var hulls = okResult.Value.Should().BeAssignableTo<List<CatalogHullListItemDto>>().Subject;
+        var hulls = okResult.Value.Should().BeAssignableTo<List<CatalogHullsController.RealVesselDto>>().Subject;
         hulls.Should().HaveCount(1);
-        hulls.First().Slug.Should().Be("test-hull");
-        hulls.First().HullType.Should().Be("Template");
+        hulls.First().Name.Should().Be("test-hull");
+        hulls.First().VesselType.Should().Be("Template");
     }
 
     [Fact]
-    public async Task GetHull_ValidId_ReturnsHullDetails()
+    public async Task GetHull_ValidId_ReturnsVesselDetails()
     {
         // Act
-        var result = await _controller.GetHull(_testHull.Id);
+        var result = await _controller.GetHull(_testVessel.Id);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var hull = okResult.Value.Should().BeAssignableTo<CatalogHullDto>().Subject;
+        var vessel = okResult.Value.Should().BeAssignableTo<CatalogHullsController.RealVesselDetailsDto>().Subject;
 
-        hull.Id.Should().Be(_testHull.Id);
-        hull.Slug.Should().Be("test-hull");
-        hull.Title.Should().Be("Test Hull");
-        hull.Lpp.Should().Be(100m);
-        hull.Beam.Should().Be(20m);
-        hull.Draft.Should().Be(10m);
-        hull.Cb.Should().Be(0.7m);
-        hull.GeometryMissing.Should().BeFalse();
-
-        // Check LCB/LCF calculation (percentage to meters)
-        hull.LCB.Should().Be(2m); // 100m * 2% / 100 = 2m
-        hull.LCF.Should().Be(-1.5m); // 100m * -1.5% / 100 = -1.5m
+        vessel.Id.Should().Be(_testVessel.Id.ToString());
+        vessel.Name.Should().Be("test-hull");
+        vessel.VesselType.Should().Be("Template");
+        vessel.Lpp.Should().Be(100m);
+        vessel.Beam.Should().Be(20m);
+        vessel.Draft.Should().Be(10m);
+        vessel.Cb.Should().Be(0.7m);
+        vessel.Cp.Should().Be(0.75m);
+        vessel.Cm.Should().Be(0.93m);
     }
 
     [Fact]
@@ -197,7 +183,7 @@ public class CatalogHullsControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CloneHull(_testHull.Id, request);
+        var result = await _controller.CloneHull(_testVessel.Id, request);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -220,35 +206,16 @@ public class CatalogHullsControllerTests : IDisposable
         // Verify the vessel was updated with catalog reference
         var updatedVessel = await _context.Vessels.FindAsync(expectedVessel.Id);
         updatedVessel.Should().NotBeNull();
-        updatedVessel!.SourceCatalogHullId.Should().Be(_testHull.Id);
+        updatedVessel!.SourceCatalogHullId.Should().Be(_testVessel.Id);
     }
 
     [Fact]
-    public async Task CloneHull_HullWithoutGeometry_ReturnsBadRequest()
+    public async Task CloneHull_InvalidVesselId_ReturnsNotFound()
     {
         // Arrange
-        var hullWithoutGeometry = await _context.BenchmarkCases
-            .FirstAsync(h => h.Slug == "hull-no-geometry");
-
         var request = new CatalogHullsController.CloneHullRequestDto
         {
             VesselName = "Should Fail"
-        };
-
-        // Act
-        var result = await _controller.CloneHull(hullWithoutGeometry.Id, request);
-
-        // Assert
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
-    }
-
-    [Fact]
-    public async Task CloneHull_InvalidHullId_ReturnsNotFound()
-    {
-        // Arrange
-        var request = new CatalogHullsController.CloneHullRequestDto
-        {
-            VesselName = "Test"
         };
 
         // Act
@@ -259,38 +226,7 @@ public class CatalogHullsControllerTests : IDisposable
     }
 
     [Fact]
-    public async Task GetHullGeometry_ValidHullWithGeometry_ReturnsGeometry()
-    {
-        // Act
-        var result = await _controller.GetHullGeometry(_testHull.Id);
-
-        // Assert
-        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var geometry = okResult.Value.Should().BeAssignableTo<CatalogHullsController.CatalogGeometryDto>().Subject;
-
-        geometry.StationsJson.Should().NotBeNullOrEmpty();
-        geometry.WaterlinesJson.Should().NotBeNullOrEmpty();
-        geometry.OffsetsJson.Should().NotBeNullOrEmpty();
-        geometry.Type.Should().Be("Offsets");
-        geometry.SourceUrl.Should().Be("https://test.com/geometry");
-    }
-
-    [Fact]
-    public async Task GetHullGeometry_HullWithoutGeometry_ReturnsNotFound()
-    {
-        // Arrange
-        var hullWithoutGeometry = await _context.BenchmarkCases
-            .FirstAsync(h => h.Slug == "hull-no-geometry");
-
-        // Act
-        var result = await _controller.GetHullGeometry(hullWithoutGeometry.Id);
-
-        // Assert
-        result.Result.Should().BeOfType<NotFoundObjectResult>();
-    }
-
-    [Fact]
-    public async Task GetHullGeometry_InvalidHullId_ReturnsNotFound()
+    public async Task GetHullGeometry_InvalidVesselId_ReturnsNotFound()
     {
         // Act
         var result = await _controller.GetHullGeometry(Guid.NewGuid());

@@ -14,9 +14,7 @@ import {
   ChevronRight,
   Ship,
   Cpu,
-  Plus,
   Lock,
-  Edit,
   Eye,
 } from "lucide-react";
 import { api } from "../../services/api";
@@ -164,11 +162,11 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
             <div className="flex items-center gap-3">
               <div
                 className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                  mode === "real" ? "bg-green-500/10" : "bg-purple-500/10"
+                  mode === "real" ? "bg-blue-500/10" : "bg-purple-500/10"
                 }`}
               >
                 {mode === "real" ? (
-                  <Ship className="h-6 w-6 text-green-600" />
+                  <Ship className="h-6 w-6 text-blue-600" />
                 ) : (
                   <Cpu className="h-6 w-6 text-purple-600" />
                 )}
@@ -177,7 +175,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Vessel Catalog</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {mode === "real"
-                    ? "Real-world vessels - Editable & expandable"
+                    ? "Real-world vessels - Curated reference data"
                     : "ML/Parametric hulls - Read-only reference data"}
                 </p>
               </div>
@@ -189,13 +187,12 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 onClick={() => setMode("real")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
                   mode === "real"
-                    ? "bg-white dark:bg-gray-700 shadow text-green-700 dark:text-green-400 font-semibold"
+                    ? "bg-white dark:bg-gray-700 shadow text-blue-700 dark:text-blue-400 font-semibold"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
                 }`}
               >
                 <Ship className="h-4 w-4" />
                 <span>Real-World</span>
-                <Edit className="h-3 w-3" />
               </button>
               <button
                 onClick={() => setMode("ml")}
@@ -214,10 +211,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
 
           {/* Permission Banner */}
           {mode === "real" ? (
-            <div className="flex items-center gap-2 px-4 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <Edit className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <p className="text-sm text-green-800 dark:text-green-300">
-                <strong>Editable:</strong> You can add, edit, and delete vessels in this catalog
+            <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <strong>Curated Data:</strong> Real-world vessel catalog with 600+ vessels from various sources
               </p>
             </div>
           ) : (
@@ -235,10 +232,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
         {mode === "real" && (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 mb-1">
-                  <Ship className="h-4 w-4 text-green-600" />
+                  <Ship className="h-4 w-4 text-blue-600" />
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     Total Vessels
                   </span>
@@ -246,16 +243,6 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {realVessels.length}
                 </p>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Edit className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Editable
-                  </span>
-                </div>
-                <p className="text-lg font-bold text-green-600">✓ Full Access</p>
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
@@ -271,13 +258,13 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => navigate("/catalog/vessels/new")}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Vessel
-                </Button>
+                <div className="flex items-center gap-2 mb-1">
+                  <Lock className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Access
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-gray-600">Read-Only</p>
               </div>
             </div>
 
@@ -285,7 +272,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
             {realLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                   <p className="text-gray-600 dark:text-gray-400">Loading vessels...</p>
                 </div>
               </div>
@@ -294,23 +281,18 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 {realVessels.map((vessel) => (
                   <div
                     key={vessel.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:border-green-500 hover:shadow-lg transition-all cursor-pointer"
+                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer"
                     onClick={() => navigate(`/catalog/hulls/${vessel.id}`)}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-bold text-green-900 dark:text-green-300 text-sm">
-                          {vessel.name}
-                        </h3>
-                        {vessel.vesselType && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {vessel.vesselType}
-                          </p>
-                        )}
-                      </div>
-                      <span className="px-2 py-1 text-xs font-semibold rounded bg-green-50 text-green-700">
-                        Editable
-                      </span>
+                    <div className="mb-3">
+                      <h3 className="font-bold text-blue-900 dark:text-blue-300 text-sm">
+                        {vessel.name}
+                      </h3>
+                      {vessel.vesselType && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {vessel.vesselType}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -341,19 +323,15 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                       {vessel.blockCoefficient && (
                         <div className="flex justify-between text-xs border-t border-gray-200 dark:border-gray-700 pt-2">
                           <span className="text-gray-600 dark:text-gray-400">Cb:</span>
-                          <span className="font-bold text-green-600 dark:text-green-400">
+                          <span className="font-bold text-blue-600 dark:text-blue-400">
                             {vessel.blockCoefficient.toFixed(3)}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-4 flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-xs">
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button size="sm" className="flex-1 text-xs bg-green-600 hover:bg-green-700">
+                    <div className="mt-4">
+                      <Button size="sm" className="w-full text-xs bg-blue-600 hover:bg-blue-700">
                         View Details
                       </Button>
                     </div>
