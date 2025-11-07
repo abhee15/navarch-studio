@@ -17,7 +17,6 @@ import {
   Ship,
   Cpu,
   Lock,
-  Eye,
 } from "lucide-react";
 import { api } from "../../services/api";
 import { useStore } from "../../stores";
@@ -569,17 +568,11 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                             {hull.datasetSource}
                           </p>
                         </div>
-                        <div className="flex flex-col gap-1 items-end">
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded ${getQualityColor(hull.conversionQuality)}`}
-                          >
-                            {hull.conversionQuality}
-                          </span>
-                          <span className="px-2 py-1 text-xs font-semibold rounded bg-purple-50 text-purple-700 flex items-center gap-1">
-                            <Lock className="h-2.5 w-2.5" />
-                            Read-Only
-                          </span>
-                        </div>
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded ${getQualityColor(hull.conversionQuality)}`}
+                        >
+                          {hull.conversionQuality}
+                        </span>
                       </div>
 
                       <div className="space-y-2">
@@ -609,14 +602,10 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                         </div>
                       </div>
 
-                      <div className="mt-4 flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-xs" disabled>
-                          <Eye className="h-3 w-3 mr-1" />
-                          View Only
-                        </Button>
+                      <div className="mt-4">
                         <Button
                           size="sm"
-                          className="flex-1 text-xs bg-purple-600 hover:bg-purple-700"
+                          className="w-full text-xs bg-purple-600 hover:bg-purple-700"
                         >
                           Use in Brief
                         </Button>
