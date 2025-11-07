@@ -62,10 +62,18 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
         // Define the root-finding problem
         Func<double, double> volumeFunction = draft => ComputeVolume(draft, req) - targetVolumeM3;
 
-        // Define draft bounds for bracketing
-        double depth = initialDraft * (double)req.DOverT;
-        double minDraft = Math.Max(0.001, depth * _options.MinDraftFraction); // Avoid zero
-        double maxDraft = depth * _options.MaxDraftFraction;
+        // Define draft bounds for bracketing based on physical limits, not initial guess
+        // Use a wide bracket to ensure we capture the solution
+        double minDraft = req.MaxDraftM.HasValue ? 0.001 : 0.5; // Minimum practical draft
+        double maxDraft = req.MaxDraftM.HasValue
+            ? (double)req.MaxDraftM.Value * 1.1 // Allow 10% over cap for exploration
+            : Math.Max(initialDraft * 3.0, 30.0); // Either 3x initial guess or 30m, whichever is larger
+
+        if (_options.DebugIterations)
+        {
+            _logger.LogDebug("[BRACKET] Draft range: {MinDraft:F2}m to {MaxDraft:F2}m (initial guess: {InitialDraft:F2}m)",
+                minDraft, maxDraft, initialDraft);
+        }
 
         // Try damped Newton first (fast path)
         var newtonResult = TryDampedNewton(volumeFunction, initialDraft, minDraft, maxDraft, targetVolumeM3);
@@ -127,18 +135,23 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
     /// </summary>
     private double PhysicsBasedInitialGuess(ClosureRequest req, double targetVolumeM3)
     {
-        // Volume = L * B * T * Cb = (L/B * B) * B * T * Cb
-        // If we maintain ratios: L = L/B * B, T = B / (B/T)
-        // Volume = L/B * B * B * (B / (B/T)) * Cb = L/B * B³ / (B/T) * Cb
-        // B³ = Volume * (B/T) / (L/B * Cb)
-        // B = (Volume * (B/T) / (L/B * Cb))^(1/3)
+        // Volume = L * B * T * Cb
+        // With ratios: L = (L/B) * B, T = B / (B/T)
+        // Volume = (L/B) * B * B * (B / (B/T)) * Cb
+        // Volume = (L/B) * B³ / (B/T) * Cb
+        // B³ = Volume * (B/T) / ((L/B) * Cb)
+        // B = [Volume * (B/T) / ((L/B) * Cb)]^(1/3)
 
         double BOverT = (double)req.BOverT;
         double LOverB = (double)req.LOverB;
         double Cb = (double)req.Cb;
 
+        // Calculate beam from volume
         double beam = Math.Pow(targetVolumeM3 * BOverT / (LOverB * Cb), 1.0 / 3.0);
         double draft = beam / BOverT;
+
+        _logger.LogDebug("[INITIAL-GUESS] Target volume={Vol:F0}m³, Calculated B={Beam:F2}m, T={Draft:F2}m, L={Lpp:F2}m",
+            targetVolumeM3, beam, draft, beam * LOverB);
 
         return draft;
     }
@@ -423,5 +436,3 @@ public class HybridDisplacementClosureService : IDisplacementClosureService
         ));
     }
 }
-
-

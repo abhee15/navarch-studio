@@ -68,7 +68,7 @@ export const HullDetailPage: React.FC = observer(() => {
           createdAt: new Date().toISOString(),
         };
         setHull(transformedData);
-        
+
         // Benchmark geometries are handled differently (via S3/sourceUrl)
         // For now, just mark that geometry exists
         if (benchmarkData.geometries && benchmarkData.geometries.length > 0) {

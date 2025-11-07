@@ -64,6 +64,7 @@ services:
       - "5001:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - AutoMigrate=true
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=sri_template_dev;Username=postgres;Password=postgres
       - Jwt__SecretKey=navarch-studio-local-development-secret-key-min-32-chars
       - Jwt__Issuer=navarch-studio-local
@@ -111,6 +112,7 @@ services:
       - "5004:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - AutoMigrate=true
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=sri_template_dev;Username=postgres;Password=postgres
       - Services__DataService=http://data-service:8080
       - Jwt__SecretKey=navarch-studio-local-development-secret-key-min-32-chars

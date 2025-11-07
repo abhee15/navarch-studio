@@ -179,6 +179,7 @@ public class HttpClientService : IHttpClientService
             "identity" => _configuration["Services:IdentityService"] ?? "http://localhost:5001",
             "data" => _configuration["Services:DataService"] ?? "http://localhost:5003",
             "hullsizing" => _configuration["Services:HullSizingService"] ?? "http://localhost:5004",
+            "aiagent" => _configuration["Services:AIAgentService"] ?? "http://localhost:5005",
             _ => throw new ArgumentException($"Unknown service: {service}")
         };
     }

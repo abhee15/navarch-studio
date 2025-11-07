@@ -1,0 +1,7 @@
+{
+  "apiUrl": "http://localhost:5002",
+  "authMode": "local",
+  "cognitoUserPoolId": "",
+  "cognitoClientId": "",
+  "awsRegion": "us-east-1"
+}

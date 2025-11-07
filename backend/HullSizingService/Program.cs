@@ -328,7 +328,7 @@ try
             {
                 // Check if auto-migration is enabled via environment variable
                 var autoMigrate = app.Configuration.GetValue<bool>("AutoMigrate", false);
-                
+
                 // Auto-migrate in:
                 // 1. Staging/Production environments (always)
                 // 2. Development with AutoMigrate=true (local Docker)
