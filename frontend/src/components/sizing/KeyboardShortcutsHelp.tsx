@@ -55,8 +55,8 @@ export const KeyboardShortcutsHelp: React.FC = () => {
       items: [
         { keys: ["?"], description: "Show/hide keyboard shortcuts" },
         { keys: ["Esc"], description: "Close modal or return to previous view" },
-        { keys: ["G", "M"], description: "Go to Mission List" },
-        { keys: ["G", "W"], description: "Go to Wizard (New Mission)" },
+        { keys: ["G", "M"], description: "Go to Brief List" },
+        { keys: ["G", "W"], description: "Go to Wizard (New Brief)" },
       ],
     },
     {

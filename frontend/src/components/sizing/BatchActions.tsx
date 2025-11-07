@@ -12,7 +12,7 @@ interface BatchActionsProps {
 /**
  * Batch Actions Toolbar
  *
- * Appears when missions are selected for bulk operations
+ * Appears when briefs are selected for bulk operations
  */
 export const BatchActions: React.FC<BatchActionsProps> = ({
   selectedMissions,
@@ -46,7 +46,7 @@ export const BatchActions: React.FC<BatchActionsProps> = ({
               {selectedCount}
             </div>
             <span className="font-medium">
-              {selectedCount} mission{selectedCount > 1 ? "s" : ""} selected
+              {selectedCount} brief{selectedCount > 1 ? "s" : ""} selected
             </span>
           </div>
 
@@ -109,7 +109,7 @@ export const BatchActions: React.FC<BatchActionsProps> = ({
 
         {showConfirm && (
           <p className="text-xs text-white/80 mt-2 text-center">
-            Click Delete again to confirm deletion of {selectedCount} mission
+            Click Delete again to confirm deletion of {selectedCount} brief
             {selectedCount > 1 ? "s" : ""}
           </p>
         )}

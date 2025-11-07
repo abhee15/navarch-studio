@@ -606,7 +606,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                           size="sm"
                           className="flex-1 text-xs bg-purple-600 hover:bg-purple-700"
                         >
-                          Use in Mission
+                          Use in Brief
                         </Button>
                       </div>
                     </div>

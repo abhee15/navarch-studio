@@ -167,7 +167,7 @@ export const MissionCasesList: React.FC = observer(() => {
           {sizingStore.isLoading && (
             <div className="text-center py-12">
               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading missions...</p>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading briefs...</p>
             </div>
           )}
 
@@ -262,7 +262,7 @@ export const MissionCasesList: React.FC = observer(() => {
                       className="flex-1"
                       onClick={async (e) => {
                         e.stopPropagation();
-                        // Run solver for this mission
+                        // Run solver for this brief
                         const run = await sizingStore.runSolver({
                           missionCaseId: brief.id,
                           mode: "first_principles",

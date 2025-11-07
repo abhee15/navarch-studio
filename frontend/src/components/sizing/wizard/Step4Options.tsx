@@ -75,13 +75,13 @@ export const Step4Options: React.FC<Step4Props> = ({
       <div>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Options & Review</h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Review your mission and configure solver options
+          Review your brief and configure solver options
         </p>
       </div>
 
-      {/* Mission Summary */}
+      {/* Brief Summary */}
       <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-        <h3 className="font-semibold text-blue-900 dark:text-blue-300">Mission Summary</h3>
+        <h3 className="font-semibold text-blue-900 dark:text-blue-300">Brief Summary</h3>
         <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
           <div>
             <dt className="font-medium text-blue-800 dark:text-blue-400">Name:</dt>
@@ -145,7 +145,7 @@ export const Step4Options: React.FC<Step4Props> = ({
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 dark:text-white">First-Principles</h4>
                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                  Physics-based solver from mission requirements
+                  Physics-based solver from brief requirements
                 </p>
               </div>
             </div>

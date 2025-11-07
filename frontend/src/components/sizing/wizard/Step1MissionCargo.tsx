@@ -25,7 +25,7 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
       <div>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Vessel Requirements</h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Define your mission name and cargo requirements
+          Define your brief name and cargo requirements
         </p>
       </div>
 
@@ -160,7 +160,7 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
           id="notes"
           rows={3}
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          placeholder="Additional mission requirements or notes..."
+          placeholder="Additional brief requirements or notes..."
           value={formData.notes || ""}
           onChange={(e) => updateFormData({ notes: e.target.value })}
         />

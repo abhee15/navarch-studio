@@ -70,7 +70,7 @@ export const MissionWizard: React.FC = observer(() => {
       // Navigate to results
       navigate(`/sizing/runs/${run.id}`);
     } catch (error) {
-      console.error("Failed to create mission and run solver:", error);
+      console.error("Failed to create brief and run solver:", error);
       setIsGenerating(false);
     }
   };
@@ -105,7 +105,7 @@ export const MissionWizard: React.FC = observer(() => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hull Sizing Wizard</h1>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Define your mission requirements and choose your solver mode for optimal hull designs
+              Define your brief requirements and choose your solver mode for optimal hull designs
             </p>
           </div>
 

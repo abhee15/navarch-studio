@@ -76,7 +76,7 @@ export const DashboardPage: React.FC = observer(() => {
                 </div>
                 <CardTitle>Hull Sizing</CardTitle>
                 <CardDescription>
-                  AI-powered preliminary hull design from mission requirements
+                  AI-powered preliminary hull design from brief requirements
                 </CardDescription>
               </CardHeader>
               <CardContent>

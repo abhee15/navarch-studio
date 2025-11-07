@@ -93,7 +93,7 @@ export const SizingRunResults: React.FC = observer(() => {
                 </p>
               </div>
               <Button variant="outline" onClick={() => navigate("/sizing/missions")}>
-                ← Back to Missions
+                ← Back to Briefs
               </Button>
             </div>
           </div>
