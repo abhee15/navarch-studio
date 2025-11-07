@@ -6,7 +6,6 @@ import { AppHeader } from "../../components/AppHeader";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { Button } from "../../components/ui/button";
 import { Home, Sparkles, ArrowRight } from "lucide-react";
-import { CopilotPanel } from "../../components/ai/CopilotPanel/CopilotPanel";
 
 export const AIDesignAssistant: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -152,8 +151,7 @@ export const AIDesignAssistant: React.FC = observer(() => {
         </div>
       </main>
 
-      {/* Copilot Panel Overlay */}
-      <CopilotPanel />
+      {/* Note: CopilotPanel is now global and available on all pages */}
     </div>
   );
 });

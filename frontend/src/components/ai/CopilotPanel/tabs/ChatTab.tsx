@@ -14,13 +14,13 @@ const ChatMessage: React.FC<{ message: ChatMessageType }> = ({ message }) => {
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={`max-w-[85%] rounded-lg p-3 ${
-          isUser ? "bg-blue-600 text-white" : "bg-white border border-gray-200"
+          isUser ? "bg-primary text-primary-foreground" : "bg-card border border-border"
         }`}
       >
         {isUser ? (
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <div className="prose prose-sm max-w-none">
+          <div className="prose prose-sm max-w-none dark:prose-invert">
             <ReactMarkdown
               components={{
                 code(props) {
@@ -42,7 +42,7 @@ const ChatMessage: React.FC<{ message: ChatMessageType }> = ({ message }) => {
         )}
 
         <p
-          className={`text-xs mt-2 pt-2 border-t ${isUser ? "border-blue-500 text-blue-100" : "border-gray-200 text-gray-400"}`}
+          className={`text-xs mt-2 pt-2 border-t ${isUser ? "border-primary-foreground/30 text-primary-foreground/70" : "border-border text-muted-foreground"}`}
         >
           {message.timestamp.toLocaleTimeString()}
         </p>
@@ -83,14 +83,46 @@ export const ChatTab: React.FC = observer(() => {
     }
   };
 
-  const quickSuggestions = [
-    "Design a 500 TEU container ship",
-    "Bulk carrier for 80,000 tonnes",
-    "Luxury yacht 50 meters",
-  ];
+  // Context-aware quick suggestions
+  const getQuickSuggestions = () => {
+    switch (copilotStore.currentContext) {
+      case "hull-sizing":
+        return [
+          "Design a 500 TEU container ship",
+          "Bulk carrier for 80,000 tonnes",
+          "Luxury yacht 50 meters",
+        ];
+      case "hydrostatics":
+        return [
+          "Explain GMt and why it matters",
+          "What's a good KB for my vessel?",
+          "How to improve stability",
+        ];
+      case "resistance":
+        return [
+          "Optimize my vessel's speed",
+          "Explain Holtrop-Mennen method",
+          "How to reduce fuel consumption",
+        ];
+      case "catalog":
+        return [
+          "Find similar hulls",
+          "Typical Cb for container ships",
+          "Compare bulk carrier forms",
+        ];
+      default:
+        return [
+          "Design a 500 TEU container ship",
+          "Explain stability calculations",
+          "Find similar hulls in catalog",
+        ];
+    }
+  };
+
+  const quickSuggestions = getQuickSuggestions();
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {copilotStore.messages.map((msg) => (
@@ -98,22 +130,22 @@ export const ChatTab: React.FC = observer(() => {
         ))}
 
         {copilotStore.isLoading && (
-          <div className="flex items-center gap-2 text-gray-500">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <div className="flex gap-1">
               <span
-                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                className="w-2 h-2 bg-primary rounded-full animate-bounce"
                 style={{ animationDelay: "0ms" }}
               />
               <span
-                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                className="w-2 h-2 bg-primary rounded-full animate-bounce"
                 style={{ animationDelay: "150ms" }}
               />
               <span
-                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                className="w-2 h-2 bg-primary rounded-full animate-bounce"
                 style={{ animationDelay: "300ms" }}
               />
             </div>
-            <span className="text-sm">Copilot is thinking...</span>
+            <span className="text-sm">AI is thinking...</span>
           </div>
         )}
 
@@ -121,7 +153,7 @@ export const ChatTab: React.FC = observer(() => {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 bg-white p-4">
+      <div className="border-t border-border bg-card p-4">
         {/* Input Field */}
         <div className="flex gap-2">
           <textarea
@@ -130,16 +162,16 @@ export const ChatTab: React.FC = observer(() => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything... (Shift+Enter for new line)"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none max-h-32"
+            className="flex-1 px-3 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-input resize-none max-h-32"
             rows={1}
             disabled={copilotStore.isLoading}
           />
           <button
             onClick={handleSend}
             disabled={copilotStore.isLoading || !input.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors self-end"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors self-end text-sm font-medium"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </button>
         </div>
 
@@ -150,7 +182,7 @@ export const ChatTab: React.FC = observer(() => {
               <button
                 key={idx}
                 onClick={() => setInput(suggestion)}
-                className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                className="text-xs px-2 py-1 bg-accent hover:bg-accent/80 rounded text-accent-foreground transition-colors"
               >
                 {suggestion}
               </button>
@@ -159,7 +191,7 @@ export const ChatTab: React.FC = observer(() => {
 
           <button
             onClick={() => copilotStore.clearChat()}
-            className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
           >
             <RotateCcw className="w-3 h-3" />
             Clear

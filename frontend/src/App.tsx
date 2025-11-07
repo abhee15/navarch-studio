@@ -21,7 +21,7 @@ import { MissionWizard } from "./pages/sizing/MissionWizard";
 import { SizingRunResults } from "./pages/sizing/SizingRunResults";
 import { CandidateWorkspace } from "./pages/sizing/CandidateWorkspace";
 import { DesignSpaceExplorer } from "./pages/sizing/DesignSpaceExplorer";
-import { AIDesignAssistant } from "./pages/sizing/AIDesignAssistant";
+import { GlobalCopilotWrapper } from "./components/ai/GlobalCopilotWrapper";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/common/Toast";
 import { loadConfig } from "./config/runtime";
@@ -103,184 +103,178 @@ export const App: React.FC = observer(() => (
         <UnitsEffectProvider>
           {/* Soft remount routes when units change so data/effects re-run safely */}
           <div key={settingsStore.preferredUnits}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/hydrostatics/vessels"
-                element={
-                  <ProtectedRoute>
-                    <VesselsList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/hydrostatics/vessels/create"
-                element={
-                  <ProtectedRoute>
-                    <VesselBuilder />
-                  </ProtectedRoute>
-                }
-              />
-              {/* Default to new Workspace */}
-              <Route
-                path="/hydrostatics/vessels/:vesselId"
-                element={
-                  <ProtectedRoute>
-                    <VesselWorkspace />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/hydrostatics/vessels/:vesselId/workspace"
-                element={
-                  <ProtectedRoute>
-                    <VesselWorkspace />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/hydrostatics/vessels/:vesselId/compare"
-                element={
-                  <ProtectedRoute>
-                    <ComparisonWorkspace />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/resistance/vessels"
-                element={
-                  <ProtectedRoute>
-                    <VesselsList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/resistance/vessels/:vesselId"
-                element={
-                  <ProtectedRoute>
-                    <VesselResistanceWorkspace />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/benchmarks"
-                element={
-                  <ProtectedRoute>
-                    <BenchmarksList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/benchmarks/:slug"
-                element={
-                  <ProtectedRoute>
-                    <BenchmarkDetail />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/catalog"
-                element={
-                  <ProtectedRoute>
-                    <UnifiedCatalogBrowser />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/catalog/legacy"
-                element={
-                  <ProtectedRoute>
-                    <CatalogBrowser />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/catalog/hulls/:id"
-                element={
-                  <ProtectedRoute>
-                    <HullDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/sizing/missions"
-                element={
-                  <ProtectedRoute>
-                    <MissionCasesList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/sizing/missions/:missionId"
-                element={<Navigate to="/sizing/missions" replace />}
-              />
-              <Route
-                path="/sizing/explorer/:missionId"
-                element={
-                  <ProtectedRoute>
-                    <DesignSpaceExplorer />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/sizing/ai-assistant"
-                element={
-                  <ProtectedRoute>
-                    <AIDesignAssistant />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/sizing/wizard"
-                element={
-                  <ProtectedRoute>
-                    <MissionWizard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/sizing/mission/new"
-                element={
-                  <ProtectedRoute>
-                    <MissionWizard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/sizing/runs/:runId"
-                element={
-                  <ProtectedRoute>
-                    <SizingRunResults />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/sizing/workspace/:candidateId"
-                element={
-                  <ProtectedRoute>
-                    <CandidateWorkspace />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/catalog/ml-hulls"
-                element={
-                  <ProtectedRoute>
-                    <MLHullBrowser />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/" element={<Navigate to="/dashboard" />} />
-            </Routes>
+            <GlobalCopilotWrapper>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hydrostatics/vessels"
+                  element={
+                    <ProtectedRoute>
+                      <VesselsList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hydrostatics/vessels/create"
+                  element={
+                    <ProtectedRoute>
+                      <VesselBuilder />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* Default to new Workspace */}
+                <Route
+                  path="/hydrostatics/vessels/:vesselId"
+                  element={
+                    <ProtectedRoute>
+                      <VesselWorkspace />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hydrostatics/vessels/:vesselId/workspace"
+                  element={
+                    <ProtectedRoute>
+                      <VesselWorkspace />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/hydrostatics/vessels/:vesselId/compare"
+                  element={
+                    <ProtectedRoute>
+                      <ComparisonWorkspace />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/resistance/vessels"
+                  element={
+                    <ProtectedRoute>
+                      <VesselsList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/resistance/vessels/:vesselId"
+                  element={
+                    <ProtectedRoute>
+                      <VesselResistanceWorkspace />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/benchmarks"
+                  element={
+                    <ProtectedRoute>
+                      <BenchmarksList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/benchmarks/:slug"
+                  element={
+                    <ProtectedRoute>
+                      <BenchmarkDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/catalog"
+                  element={
+                    <ProtectedRoute>
+                      <UnifiedCatalogBrowser />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/catalog/legacy"
+                  element={
+                    <ProtectedRoute>
+                      <CatalogBrowser />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/catalog/hulls/:id"
+                  element={
+                    <ProtectedRoute>
+                      <HullDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sizing/missions"
+                  element={
+                    <ProtectedRoute>
+                      <MissionCasesList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sizing/missions/:missionId"
+                  element={<Navigate to="/sizing/missions" replace />}
+                />
+                <Route
+                  path="/sizing/explorer/:missionId"
+                  element={
+                    <ProtectedRoute>
+                      <DesignSpaceExplorer />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sizing/wizard"
+                  element={
+                    <ProtectedRoute>
+                      <MissionWizard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sizing/mission/new"
+                  element={
+                    <ProtectedRoute>
+                      <MissionWizard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sizing/runs/:runId"
+                  element={
+                    <ProtectedRoute>
+                      <SizingRunResults />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sizing/workspace/:candidateId"
+                  element={
+                    <ProtectedRoute>
+                      <CandidateWorkspace />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/catalog/ml-hulls"
+                  element={
+                    <ProtectedRoute>
+                      <MLHullBrowser />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/" element={<Navigate to="/dashboard" />} />
+              </Routes>
+            </GlobalCopilotWrapper>
           </div>
         </UnitsEffectProvider>
       </BrowserRouter>

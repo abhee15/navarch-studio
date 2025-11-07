@@ -67,10 +67,12 @@ export const MissionCasesList: React.FC = observer(() => {
                 Manage your design briefs and generate preliminary hull candidates
               </p>
             </div>
-            <Button onClick={() => navigate("/sizing/wizard")}>
-              <Ship className="h-4 w-4 mr-2" />
-              New Brief
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate("/sizing/wizard")}>
+                <Ship className="h-4 w-4 mr-2" />
+                New Brief
+              </Button>
+            </div>
           </div>
 
           {/* Search and Filter */}

@@ -80,4 +80,3 @@ public class SizingRunsController : ControllerBase
         return Ok(candidates);
     }
 }
-

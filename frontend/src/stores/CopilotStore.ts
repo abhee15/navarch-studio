@@ -12,6 +12,7 @@ export class CopilotStore {
   @observable isLoading: boolean = false;
   @observable generatedMission: MissionCase | null = null;
   @observable currentConversationId: string | null = null;
+  @observable currentContext: string = "general"; // hull-sizing, hydrostatics, resistance, catalog
 
   constructor() {
     makeObservable(this);
@@ -20,22 +21,93 @@ export class CopilotStore {
   }
 
   @action
+  setContext(context: string) {
+    if (this.currentContext !== context) {
+      this.currentContext = context;
+      this.updateWelcomeMessageForContext();
+    }
+  }
+
+  @action
   initializeWelcomeMessage() {
     if (this.messages.length === 0) {
-      this.messages.push({
-        id: "1",
-        role: "assistant",
-        content: `👋 Hi! I'm your NavArch Copilot. I can help you:
+      this.addWelcomeMessage();
+    }
+  }
 
-- **Design vessels** from natural language descriptions
-- **Generate mission parameters** for hull sizing
-- **Suggest improvements** to your designs
-
-What would you like to work on today?
-
-Try: "Design a 500 TEU container ship for coastal routes"`,
+  @action
+  updateWelcomeMessageForContext() {
+    // Replace first message if it's the welcome message
+    if (this.messages.length > 0 && this.messages[0].role === "assistant") {
+      this.messages[0] = {
+        ...this.messages[0],
+        content: this.getWelcomeMessageForContext(),
         timestamp: new Date(),
-      });
+      };
+    }
+  }
+
+  private addWelcomeMessage() {
+    this.messages.push({
+      id: "1",
+      role: "assistant",
+      content: this.getWelcomeMessageForContext(),
+      timestamp: new Date(),
+    });
+  }
+
+  private getWelcomeMessageForContext(): string {
+    switch (this.currentContext) {
+      case "hull-sizing":
+        return `👋 Hi! I'm your NavArch Copilot for **Hull Sizing**.
+
+I can help you:
+- **Design vessels** from natural language descriptions
+- **Generate mission parameters** automatically
+- **Troubleshoot** solver failures (coming soon)
+
+Try: "Design a 500 TEU container ship for coastal routes"`;
+
+      case "hydrostatics":
+        return `👋 Hi! I'm your NavArch Copilot for **Hydrostatics**.
+
+I can help you:
+- **Analyze stability** parameters
+- **Explain** hydrostatic calculations
+- **Suggest** improvements to your vessel design
+
+Try: "Analyze the stability of my current vessel" or "What is GMt?"`;
+
+      case "resistance":
+        return `👋 Hi! I'm your NavArch Copilot for **Resistance & Powering**.
+
+I can help you:
+- **Optimize** speed and power requirements
+- **Explain** resistance calculations
+- **Suggest** efficiency improvements
+
+Try: "How can I reduce resistance?" or "What's the optimal speed for my vessel?"`;
+
+      case "catalog":
+        return `👋 Hi! I'm your NavArch Copilot for **Catalog**.
+
+I can help you:
+- **Find similar hulls** to your requirements
+- **Compare** hull characteristics
+- **Explain** catalog data
+
+Try: "Find container ship hulls similar to mine" or "What's a good Cb for bulk carriers?"`;
+
+      default:
+        return `👋 Hi! I'm your NavArch Copilot.
+
+I can help you across all modules:
+- **Hull Sizing:** Design vessels from descriptions
+- **Hydrostatics:** Analyze stability and trim
+- **Resistance:** Optimize performance
+- **Catalog:** Find and compare hulls
+
+What would you like to work on?`;
     }
   }
 

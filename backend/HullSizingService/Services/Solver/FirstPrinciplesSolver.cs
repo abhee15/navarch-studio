@@ -390,4 +390,3 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         return ranked;
     }
 }
-

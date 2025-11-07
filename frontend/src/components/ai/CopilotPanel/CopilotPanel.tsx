@@ -14,10 +14,10 @@ export const CopilotPanel: React.FC = observer(() => {
     return (
       <button
         onClick={() => copilotStore.setPosition("right")}
-        className="fixed bottom-6 right-6 p-4 bg-blue-600 text-white rounded-full shadow-2xl hover:bg-blue-700 transition-all hover:scale-110 z-50"
-        title="Open AI Copilot"
+        className="fixed bottom-6 right-6 p-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-all hover:scale-105 z-50"
+        title="Open AI Copilot (⌘K)"
       >
-        <Sparkles className="w-6 h-6" />
+        <Sparkles className="w-5 h-5" />
       </button>
     );
   }

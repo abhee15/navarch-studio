@@ -55,7 +55,8 @@ public class DiagnosticsController : ControllerBase
     }
 
     /// <summary>
-    /// Get seed data status
+    /// Get seed data status with detailed validation
+    /// CRITICAL: If hull families = 0, first-principles solver will generate ZERO candidates
     /// </summary>
     [HttpGet("seed-status")]
     public async Task<ActionResult> GetSeedStatus(CancellationToken ct)
@@ -63,19 +64,36 @@ public class DiagnosticsController : ControllerBase
         _logger.LogInformation("[DIAGNOSTICS] Checking seed data status...");
 
         var hullFamiliesCount = await _context.HullFamilyPresets.CountAsync(ct);
+        var activeFamiliesCount = await _context.HullFamilyPresets.Where(f => f.IsActive).CountAsync(ct);
         var isoContainersCount = await _context.IsoContainers.CountAsync(ct);
         var kpiWeightsCount = await _context.KpiWeights.CountAsync(ct);
+
+        var errors = new List<string>();
+        if (hullFamiliesCount < 5) errors.Add($"Hull families: {hullFamiliesCount}/5 (CRITICAL - solver will generate 0 candidates!)");
+        if (activeFamiliesCount < 5) errors.Add($"Active hull families: {activeFamiliesCount}/5 (CRITICAL - solver needs active families!)");
+        if (isoContainersCount < 8) errors.Add($"ISO containers: {isoContainersCount}/8 (missing {8 - isoContainersCount})");
+        if (kpiWeightsCount < 5) errors.Add($"KPI weights: {kpiWeightsCount}/5 (CRITICAL - candidate scoring will fail!)");
+
+        var isComplete = hullFamiliesCount >= 5 && activeFamiliesCount >= 5 &&
+                        isoContainersCount >= 8 && kpiWeightsCount >= 5;
 
         return Ok(new
         {
             hullFamilies = hullFamiliesCount,
+            activeFamilies = activeFamiliesCount,
             isoContainers = isoContainersCount,
             kpiWeights = kpiWeightsCount,
-            expectedHullFamilies = 5,
-            expectedIsoContainers = 8,
-            expectedKpiWeights = 5,
-            seedDataComplete = hullFamiliesCount >= 5 && isoContainersCount >= 8 && kpiWeightsCount >= 5
+            expected = new
+            {
+                hullFamilies = 5,
+                activeFamilies = 5,
+                isoContainers = 8,
+                kpiWeights = 5
+            },
+            seedDataComplete = isComplete,
+            errors = errors.Any() ? errors : null,
+            severity = !isComplete ? "CRITICAL" : "OK",
+            impact = !isComplete ? "First-principles solver may generate ZERO candidates" : null
         });
     }
 }
-

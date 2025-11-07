@@ -16,7 +16,7 @@ import {
   ZAxis,
   Cell,
 } from "recharts";
-import axios from "axios";
+import { api } from "../../services/api";
 import type {
   CandidateDesign,
   DesignSpaceExplorationRequest,
@@ -79,17 +79,11 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
         maxVariants: 100,
       };
 
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5002";
-
-      const startResponse = await axios.post<{
+      const startResponse = await api.post<{
         batchId: string;
         totalVariants: number;
         status: string;
-      }>(`${apiBaseUrl}/api/v1/hull-sizing/exploration/start`, request, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      }>("/hull-sizing/exploration/start", request);
 
       const { batchId: newBatchId, totalVariants } = startResponse.data;
       setBatchId(newBatchId);
@@ -107,8 +101,8 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
           throw new Error("Exploration timed out after 5 minutes");
         }
 
-        const resultsResponse = await axios.get<ExplorationResultsSummary>(
-          `${apiBaseUrl}/api/v1/hull-sizing/exploration/results/${newBatchId}`
+        const resultsResponse = await api.get<ExplorationResultsSummary>(
+          `/hull-sizing/exploration/results/${newBatchId}`
         );
 
         const results = resultsResponse.data;
