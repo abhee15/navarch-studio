@@ -151,6 +151,21 @@ public class CatalogHullsControllerTests : IDisposable
     {
         // Arrange
         var userId = Guid.NewGuid();
+        
+        // Create a benchmark hull for cloning (CloneHull queries BenchmarkCases, not CatalogVesselsReal)
+        var benchmarkHull = new BenchmarkCase
+        {
+            Id = Guid.NewGuid(),
+            Slug = "test-benchmark",
+            Title = "Test Benchmark Hull",
+            Lpp_m = 100m,
+            B_m = 20m,
+            T_m = 10m,
+            GeometryMissing = false
+        };
+        _context.BenchmarkCases.Add(benchmarkHull);
+        _context.SaveChanges();
+        
         var expectedVessel = new Vessel
         {
             Id = Guid.NewGuid(),
@@ -183,7 +198,7 @@ public class CatalogHullsControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CloneHull(_testVessel.Id, request);
+        var result = await _controller.CloneHull(benchmarkHull.Id, request);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -206,7 +221,7 @@ public class CatalogHullsControllerTests : IDisposable
         // Verify the vessel was updated with catalog reference
         var updatedVessel = await _context.Vessels.FindAsync(expectedVessel.Id);
         updatedVessel.Should().NotBeNull();
-        updatedVessel!.SourceCatalogHullId.Should().Be(_testVessel.Id);
+        updatedVessel!.SourceCatalogHullId.Should().Be(benchmarkHull.Id);
     }
 
     [Fact]
