@@ -31,7 +31,7 @@ public class SeedDataIntegrationTests : IAsyncLifetime
         services.AddDbContext<DataDbContext>(options =>
             options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
 
-        services.AddLogging(builder => builder.AddXUnit(_output));
+        services.AddLogging();
         services.AddScoped<CatalogSeeder>();
 
         _serviceProvider = services.BuildServiceProvider();

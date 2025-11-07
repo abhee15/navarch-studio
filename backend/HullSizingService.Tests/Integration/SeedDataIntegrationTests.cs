@@ -30,7 +30,7 @@ public class SeedDataIntegrationTests : IAsyncLifetime
         services.AddDbContext<SizingDbContext>(options =>
             options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
 
-        services.AddLogging(builder => builder.AddXUnit(_output));
+        services.AddLogging();
         services.AddScoped<CsvDataSeeder>();
 
         _serviceProvider = services.BuildServiceProvider();
