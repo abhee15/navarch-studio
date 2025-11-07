@@ -10,13 +10,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  esbuild: {
+    target: 'es2020',
+    jsx: 'automatic',
+  },
   server: {
     host: true,
     port: 3000,
   },
 })
-
-
-
-
-

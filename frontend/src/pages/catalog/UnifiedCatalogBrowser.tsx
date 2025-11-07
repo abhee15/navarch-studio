@@ -112,17 +112,17 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
     setRealLoading(true);
     try {
       // Show benchmark hulls (Wigley, KCS, KVLCC2, etc.) in Real mode
-      const response = await api.get("/benchmarks/cases");
+      const response = await api.get<Array<{ slug: string; title: string; description: string }>>("/benchmarks/cases");
       // Transform benchmark cases to match RealVessel interface
-      const benchmarks = response.data.map((hull: any) => ({
+      const benchmarks = response.data.map((hull) => ({
         id: hull.slug,
         name: hull.title,
-        vesselType: hull.hullType || "Benchmark",
-        lpp: hull.lpp_m,
-        beam: hull.b_m,
-        draft: hull.t_m,
-        displacement: null,
-        blockCoefficient: hull.cb,
+        vesselType: "Benchmark" as const,
+        lpp: undefined,
+        beam: undefined,
+        draft: undefined,
+        displacement: undefined,
+        blockCoefficient: undefined,
       }));
       setRealVessels(benchmarks);
     } catch (error) {

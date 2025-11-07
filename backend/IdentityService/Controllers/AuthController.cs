@@ -37,6 +37,30 @@ public class AuthController : ControllerBase
 
         return Ok(new { token });
     }
+
+    [HttpPost("signup")]
+    public async Task<ActionResult<string>> Signup(
+        [FromBody] CreateUserDto dto,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var user = await _userService.CreateUserAsync(dto, cancellationToken);
+
+        if (user == null)
+        {
+            return BadRequest("User already exists or signup failed");
+        }
+
+        // Log the user in after signup
+        var loginDto = new LoginDto { Email = dto.Email, Password = dto.Password };
+        var token = await _userService.AuthenticateAsync(loginDto, cancellationToken);
+
+        return Ok(new { token, user });
+    }
 }
 
 

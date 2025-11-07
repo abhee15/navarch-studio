@@ -24,6 +24,7 @@ import {
   cloneCatalogHull,
   getCatalogHullGeometry,
 } from "../../services/catalogApi";
+import { getBenchmarkCase } from "../../services/benchmarksApi";
 import type { CatalogHull, CatalogHullGeometry } from "../../types/catalog";
 import { toast } from "react-hot-toast";
 
@@ -48,17 +49,46 @@ export const HullDetailPage: React.FC = observer(() => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getCatalogHull(hullId);
-      setHull(data);
+      // Check if it's a benchmark hull (slug format) or real vessel (GUID format)
+      const isBenchmark = hullId.includes("-") && !hullId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 
-      // Try to load geometry if available
-      if (!data.geometryMissing) {
-        try {
-          const geometryData = await getCatalogHullGeometry(hullId);
-          setGeometry(geometryData);
-        } catch (err) {
-          console.warn("Failed to load geometry:", err);
-          // Geometry load failure is not critical
+      if (isBenchmark) {
+        // Load benchmark hull details
+        const benchmarkData = await getBenchmarkCase(hullId);
+
+        // Transform benchmark data to CatalogHull format
+        const transformedData: CatalogHull = {
+          id: hullId,
+          slug: benchmarkData.slug,
+          title: benchmarkData.title,
+          description: benchmarkData.description,
+          hullType: "Template",
+          geometryMissing: !benchmarkData.geometries || benchmarkData.geometries.length === 0,
+          units: "SI",
+          createdAt: new Date().toISOString(),
+        };
+        setHull(transformedData);
+        
+        // Benchmark geometries are handled differently (via S3/sourceUrl)
+        // For now, just mark that geometry exists
+        if (benchmarkData.geometries && benchmarkData.geometries.length > 0) {
+          // Geometry will be loaded separately if needed
+          console.log("Benchmark has geometry data available");
+        }
+      } else {
+        // Load real vessel catalog hull
+        const data = await getCatalogHull(hullId);
+        setHull(data);
+
+        // Try to load geometry if available
+        if (!data.geometryMissing) {
+          try {
+            const geometryData = await getCatalogHullGeometry(hullId);
+            setGeometry(geometryData);
+          } catch (err) {
+            console.warn("Failed to load geometry:", err);
+            // Geometry load failure is not critical
+          }
         }
       }
     } catch (err) {

@@ -1,38 +1,40 @@
-import { api as sharedApi } from "./api";
+import { api } from "./api";
 import type {
   BenchmarkCase,
   BenchmarkCaseDetails,
   ValidateRequest,
   MetricResult,
-  ValidationRun,
 } from "../types/benchmarks";
 
-// Use shared API client which includes auth headers and interceptors
-const api = sharedApi;
+/**
+ * List all benchmark cases
+ */
+const listCases = async (): Promise<BenchmarkCase[]> => {
+  const response = await api.get("/benchmarks/cases");
+  return response.data;
+};
+
+/**
+ * Get detailed information for a specific benchmark case by slug
+ */
+const getCase = async (slug: string): Promise<BenchmarkCaseDetails> => {
+  const response = await api.get(`/benchmarks/cases/${slug}`);
+  return response.data;
+};
+
+/**
+ * Validate benchmark data against test points
+ */
+const validate = async (slug: string, data: ValidateRequest): Promise<MetricResult[]> => {
+  const response = await api.post(`/benchmarks/cases/${slug}/validate`, data);
+  return response.data;
+};
 
 export const benchmarksApi = {
-  async listCases(): Promise<BenchmarkCase[]> {
-    const response = await api.get("/benchmarks/cases");
-    return response.data;
-  },
-
-  async getCase(slug: string): Promise<BenchmarkCaseDetails> {
-    const response = await api.get(`/benchmarks/cases/${slug}`);
-    return response.data;
-  },
-
-  async ingest(slug: string): Promise<{ message: string }> {
-    const response = await api.post(`/benchmarks/cases/${slug}/ingest`);
-    return response.data;
-  },
-
-  async validate(slug: string, request: ValidateRequest): Promise<MetricResult[]> {
-    const response = await api.post(`/benchmarks/cases/${slug}/validate`, request);
-    return response.data;
-  },
-
-  async getValidations(slug: string): Promise<ValidationRun[]> {
-    const response = await api.get(`/benchmarks/cases/${slug}/validations`);
-    return response.data;
-  },
+  listCases,
+  getCase,
+  validate,
 };
+
+// Also export individually for convenience
+export { listCases as getBenchmarkCases, getCase as getBenchmarkCase };

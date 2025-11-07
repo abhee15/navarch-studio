@@ -1,6 +1,6 @@
 import { makeObservable, observable, action, runInAction } from "mobx";
-import { ChatMessage, PanelPosition, MissionSuggestionResponse } from "../types/ai";
-import { MissionCase } from "../types/sizing";
+import type { ChatMessage, PanelPosition, MissionSuggestionResponse } from "../types/ai";
+import type { MissionCase } from "../types/sizing";
 import { aiAgentApi } from "../services/aiAgentApi";
 import toast from "react-hot-toast";
 

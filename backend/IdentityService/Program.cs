@@ -150,7 +150,12 @@ try
     // Rate Limiting
     builder.Services.AddRateLimiter(options =>
     {
-        // Global rate limit: 100 requests per minute per IP
+        // In development, use a very high limit to avoid blocking during testing
+        var isDevelopment = builder.Environment.IsDevelopment();
+        var permitLimit = isDevelopment ? 10000 : 100;
+        var window = isDevelopment ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(1);
+
+        // Global rate limit: High limit for dev, 100 requests per minute per IP for production
         options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
         {
             var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -158,8 +163,8 @@ try
                 partitionKey: clientIp,
                 factory: _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 100,
-                    Window = TimeSpan.FromMinutes(1),
+                    PermitLimit = permitLimit,
+                    Window = window,
                     QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0
                 });
@@ -212,9 +217,13 @@ try
                 Log.Warning("⚠️ Pending migrations: {Migrations}",
                     string.Join(", ", pendingMigrations));
 
-                // In Staging/Production, apply migrations automatically
-                // In Development, just warn
-                if (app.Environment.EnvironmentName != "Development")
+                // Check if auto-migration is enabled via environment variable
+                var autoMigrate = app.Configuration.GetValue<bool>("AutoMigrate", false);
+
+                // Auto-migrate in:
+                // 1. Staging/Production environments (always)
+                // 2. Development with AutoMigrate=true (local Docker)
+                if (app.Environment.EnvironmentName != "Development" || autoMigrate)
                 {
                     Log.Information("🔄 Auto-applying {Count} pending migrations in {Environment} environment...",
                         pendingMigrations.Count(), app.Environment.EnvironmentName);
@@ -223,7 +232,7 @@ try
                 }
                 else
                 {
-                    Log.Warning("⚠️ Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
+                    Log.Warning("⚠️ Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually or set AutoMigrate=true.");
                 }
             }
             else
