@@ -43,6 +43,16 @@ output "hull_sizing_service_arn" {
   value       = aws_apprunner_service.hull_sizing_service.arn
 }
 
+output "ai_agent_service_url" {
+  description = "AI Agent Service URL"
+  value       = "https://${aws_apprunner_service.ai_agent_service.service_url}"
+}
+
+output "ai_agent_service_arn" {
+  description = "AI Agent Service ARN"
+  value       = aws_apprunner_service.ai_agent_service.arn
+}
+
 output "instance_role_arn" {
   description = "App Runner instance role ARN"
   value       = aws_iam_role.app_runner_instance.arn

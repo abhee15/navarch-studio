@@ -30,6 +30,7 @@ variable "ecr_repository_urls" {
     api_gateway          = string
     data_service         = string
     hull_sizing_service  = string
+    ai_agent_service     = string
     frontend             = string
   })
 }

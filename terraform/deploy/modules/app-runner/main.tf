@@ -291,6 +291,69 @@ resource "aws_apprunner_service" "hull_sizing_service" {
   }
 }
 
+# AI Agent Service
+resource "aws_apprunner_service" "ai_agent_service" {
+  service_name = "${var.project_name}-${var.environment}-ai-agent-service"
+
+  source_configuration {
+    authentication_configuration {
+      access_role_arn = aws_iam_role.app_runner_ecr.arn
+    }
+
+    image_repository {
+      image_identifier      = "${var.ecr_repository_urls.ai_agent_service}:latest"
+      image_repository_type = "ECR"
+
+      image_configuration {
+        port = "8080"
+
+        runtime_environment_variables = {
+          ASPNETCORE_ENVIRONMENT = var.environment == "prod" ? "Production" : "Staging"
+          # OpenAI API key will be set as a secret in Secrets Manager and injected by App Runner
+          # For now, using empty string - needs to be configured post-deployment
+          OpenAI__ApiKey       = ""  # TODO: Set this via Secrets Manager
+          OpenAI__Model        = "gpt-4o-mini"
+          OpenAI__MaxTokens    = "2000"
+          OpenAI__Temperature  = "0.3"
+          OpenAI__TimeoutSeconds = "30"
+        }
+      }
+    }
+
+    auto_deployments_enabled = false
+  }
+
+  instance_configuration {
+    cpu               = var.cpu
+    memory            = var.memory
+    instance_role_arn = aws_iam_role.app_runner_instance.arn
+  }
+
+  network_configuration {
+    egress_configuration {
+      egress_type = "DEFAULT"  # Needs internet access for OpenAI API
+    }
+  }
+
+  health_check_configuration {
+    protocol            = "HTTP"
+    path                = "/health"
+    interval            = 10
+    timeout             = 20
+    healthy_threshold   = 1
+    unhealthy_threshold = 5
+  }
+
+  observability_configuration {
+    observability_enabled           = true
+    observability_configuration_arn = aws_apprunner_observability_configuration.main.arn
+  }
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-ai-agent-service"
+  }
+}
+
 # API Gateway Service
 resource "aws_apprunner_service" "api_gateway" {
   service_name = "${var.project_name}-${var.environment}-api-gateway"
@@ -313,6 +376,7 @@ resource "aws_apprunner_service" "api_gateway" {
           Services__IdentityService    = "https://${aws_apprunner_service.identity_service.service_url}"
           Services__DataService        = "https://${aws_apprunner_service.data_service.service_url}"
           Services__HullSizingService  = "https://${aws_apprunner_service.hull_sizing_service.service_url}"
+          Services__AIAgentService     = "https://${aws_apprunner_service.ai_agent_service.service_url}"
           Cognito__UserPoolId          = var.cognito_user_pool_id
           Cognito__AppClientId         = var.cognito_user_pool_client_id
           Cognito__Domain              = var.cognito_domain
@@ -365,6 +429,7 @@ resource "aws_apprunner_service" "api_gateway" {
 
   depends_on = [
     aws_apprunner_service.identity_service,
-    aws_apprunner_service.data_service
+    aws_apprunner_service.data_service,
+    aws_apprunner_service.ai_agent_service
   ]
 }

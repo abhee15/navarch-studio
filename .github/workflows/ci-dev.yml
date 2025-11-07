@@ -41,6 +41,7 @@ jobs:
       backend_gateway: ${{ steps.filter.outputs.backend_gateway }}
       backend_data: ${{ steps.filter.outputs.backend_data }}
       backend_hullsizing: ${{ steps.filter.outputs.backend_hullsizing }}
+      backend_aiagent: ${{ steps.filter.outputs.backend_aiagent }}
       infrastructure: ${{ steps.filter.outputs.infrastructure }}
     steps:
       - uses: actions/checkout@v4
@@ -70,6 +71,8 @@ jobs:
             backend_hullsizing:
               - 'backend/HullSizingService/**'
               - 'backend/HullSizingService.Tests/**'
+            backend_aiagent:
+              - 'backend/AIAgentService/**'
             infrastructure:
               - 'terraform/deploy/**'
               - '.github/workflows/ci-dev.yml'
@@ -386,8 +389,9 @@ jobs:
       gateway-image: ${{ steps.build-gateway.outputs.image || '' }}
       data-image: ${{ steps.build-data.outputs.image || '' }}
       hullsizing-image: ${{ steps.build-hullsizing.outputs.image || '' }}
+      aiagent-image: ${{ steps.build-aiagent.outputs.image || '' }}
       frontend-image: ${{ steps.build-frontend.outputs.image || '' }}
-      built-backend: ${{ steps.build-identity.outcome == 'success' || steps.build-gateway.outcome == 'success' || steps.build-data.outcome == 'success' || steps.build-hullsizing.outcome == 'success' }}
+      built-backend: ${{ steps.build-identity.outcome == 'success' || steps.build-gateway.outcome == 'success' || steps.build-data.outcome == 'success' || steps.build-hullsizing.outcome == 'success' || steps.build-aiagent.outcome == 'success' }}
       built-frontend: ${{ steps.build-frontend.outcome == 'success' }}
 
     steps:
@@ -521,6 +525,23 @@ jobs:
           echo "image=${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "✅ Hull Sizing Service built and pushed"
 
+      - name: Build and push AI Agent Service
+        id: build-aiagent
+        if: |
+          steps.build-plan.outputs.build_backend == 'true' && (
+            needs.check-changed-paths.outputs.backend_shared == 'true' ||
+            needs.check-changed-paths.outputs.backend_aiagent == 'true' ||
+            needs.check-last-complete-build.outputs.needs_complete_build == 'true'
+          )
+        run: |
+          IMAGE_TAG="${GITHUB_SHA:0:7}"
+          echo "🔨 Building AI Agent Service..."
+          docker build -f backend/AIAgentService/Dockerfile -t ${{ secrets.ECR_AI_AGENT_SERVICE_URL }}:$IMAGE_TAG -t ${{ secrets.ECR_AI_AGENT_SERVICE_URL }}:latest .
+          docker push ${{ secrets.ECR_AI_AGENT_SERVICE_URL }}:$IMAGE_TAG
+          docker push ${{ secrets.ECR_AI_AGENT_SERVICE_URL }}:latest
+          echo "image=${{ secrets.ECR_AI_AGENT_SERVICE_URL }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "✅ AI Agent Service built and pushed"
+
       - name: Build and push Frontend
         id: build-frontend
         if: steps.build-plan.outputs.build_frontend == 'true'
@@ -539,6 +560,7 @@ jobs:
           echo "  API Gateway:          ${{ steps.build-gateway.outcome }}"
           echo "  Data Service:         ${{ steps.build-data.outcome }}"
           echo "  Hull Sizing Service:  ${{ steps.build-hullsizing.outcome }}"
+          echo "  AI Agent Service:     ${{ steps.build-aiagent.outcome }}"
           echo "  Frontend:             ${{ steps.build-frontend.outcome }}"
 
   deploy-infrastructure:

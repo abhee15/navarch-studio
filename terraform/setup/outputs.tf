@@ -15,6 +15,7 @@ output "ecr_repository_urls" {
     api_gateway          = aws_ecr_repository.api_gateway.repository_url
     data_service         = aws_ecr_repository.data_service.repository_url
     hull_sizing_service  = aws_ecr_repository.hull_sizing_service.repository_url
+    ai_agent_service     = aws_ecr_repository.ai_agent_service.repository_url
     frontend             = aws_ecr_repository.frontend.repository_url
   }
 }
