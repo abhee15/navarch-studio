@@ -85,6 +85,7 @@ jobs:
             api_gateway         = "${{ secrets.ECR_API_GATEWAY_URL }}"
             data_service        = "${{ secrets.ECR_DATA_SERVICE_URL }}"
             hull_sizing_service = "${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}"
+            ai_agent_service    = "${{ secrets.ECR_AI_AGENT_SERVICE_URL }}"
             frontend            = "${{ secrets.ECR_FRONTEND_URL }}"
           }
           cognito_user_pool_id        = "${{ secrets.COGNITO_USER_POOL_ID }}"
@@ -154,7 +155,7 @@ jobs:
           
           # Delete App Runner services (Terraform doesn't always remove these)
           echo "🔍 Cleaning up App Runner services..."
-          for service in "identity-service" "data-service" "api-gateway" "hull-sizing-service"; do
+          for service in "identity-service" "data-service" "api-gateway" "hull-sizing-service" "ai-agent-service"; do
             SERVICE_ARN=$(aws apprunner list-services \
               --query "ServiceSummaryList[?ServiceName=='${PROJECT}-${ENV}-${service}'].ServiceArn | [0]" \
               --output text 2>/dev/null | head -1)
@@ -237,7 +238,7 @@ jobs:
 
           # Delete App Runner services
           echo "🔍 Cleaning up App Runner services..."
-          for service in "identity-service" "data-service" "api-gateway" "hull-sizing-service"; do
+          for service in "identity-service" "data-service" "api-gateway" "hull-sizing-service" "ai-agent-service"; do
             SERVICE_ARN=$(aws apprunner list-services \
               --query "ServiceSummaryList[?ServiceName=='${PROJECT}-${ENV}-${service}'].ServiceArn | [0]" \
               --output text 2>/dev/null || echo "")
@@ -480,7 +481,7 @@ jobs:
             echo ""
             echo "📦 Resources destroyed:"
             echo "  - RDS PostgreSQL instance"
-            echo "  - App Runner services (Identity, API Gateway, Data Service, Hull Sizing Service)"
+            echo "  - App Runner services (Identity, API Gateway, Data Service, Hull Sizing Service, AI Agent Service)"
             echo "  - S3 buckets (frontend, benchmark-raw, benchmark-curated)"
             echo "  - CloudFront distribution"
             echo "  - CloudWatch Log Groups"
