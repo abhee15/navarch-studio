@@ -21,6 +21,7 @@ import { MissionWizard } from "./pages/sizing/MissionWizard";
 import { SizingRunResults } from "./pages/sizing/SizingRunResults";
 import { CandidateWorkspace } from "./pages/sizing/CandidateWorkspace";
 import { DesignSpaceExplorer } from "./pages/sizing/DesignSpaceExplorer";
+import { AIDesignAssistant } from "./pages/sizing/AIDesignAssistant";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/common/Toast";
 import { loadConfig } from "./config/runtime";
@@ -231,7 +232,23 @@ export const App: React.FC = observer(() => (
                 }
               />
               <Route
+                path="/sizing/ai-assistant"
+                element={
+                  <ProtectedRoute>
+                    <AIDesignAssistant />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/sizing/wizard"
+                element={
+                  <ProtectedRoute>
+                    <MissionWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sizing/mission/new"
                 element={
                   <ProtectedRoute>
                     <MissionWizard />

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../../stores";
 import { Footer } from "../../components/Footer";
 import { Step1MissionCargo } from "../../components/sizing/wizard/Step1MissionCargo";
@@ -12,19 +12,41 @@ import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
 import { Button } from "../../components/ui/button";
-import { Home } from "lucide-react";
+import { Home, Sparkles } from "lucide-react";
 
 export const MissionWizard: React.FC = observer(() => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { sizingStore, authStore } = useStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [formData, setFormData] = useState<Partial<CreateMissionCaseDto>>({
-    missionType: "commercial",
-    cargoBasis: "teu",
-    serviceSpeedKn: 20,
-    seaMarginPct: 15,
+
+  // Check if coming from AI Copilot with pre-filled data
+  const aiGeneratedMission = location.state?.aiGeneratedMission;
+  const isAIGenerated = !!aiGeneratedMission;
+
+  const [formData, setFormData] = useState<Partial<CreateMissionCaseDto>>(() => {
+    if (aiGeneratedMission) {
+      return {
+        name: aiGeneratedMission.name,
+        missionType: aiGeneratedMission.missionType || "commercial",
+        cargoBasis: aiGeneratedMission.cargoBasis?.toLowerCase() || "teu",
+        cargoValue: aiGeneratedMission.cargoValue,
+        cargoDensityTPerM3: aiGeneratedMission.cargoDensityTPerM3,
+        serviceSpeedKn: aiGeneratedMission.serviceSpeedKn,
+        seaMarginPct: aiGeneratedMission.seaMarginPct || 15,
+        capBeamM: aiGeneratedMission.capBeamM,
+        capDraftM: aiGeneratedMission.capDraftM,
+        notes: aiGeneratedMission.notes,
+      };
+    }
+    return {
+      missionType: "commercial",
+      cargoBasis: "teu",
+      serviceSpeedKn: 20,
+      seaMarginPct: 15,
+    };
   });
   const [solverMode, setSolverMode] = useState<
     "first_principles" | "data_driven_real" | "data_driven_ml"
@@ -107,6 +129,19 @@ export const MissionWizard: React.FC = observer(() => {
             <p className="mt-2 text-gray-600 dark:text-gray-400">
               Define your brief requirements and choose your solver mode for optimal hull designs
             </p>
+
+            {/* AI Generated Banner */}
+            {isAIGenerated && (
+              <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
+                    Mission parameters pre-filled by AI Copilot. Review and adjust as needed before
+                    generating candidates.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Progress Steps */}
