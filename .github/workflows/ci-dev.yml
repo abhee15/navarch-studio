@@ -527,7 +527,9 @@ jobs:
 
       - name: Build and push AI Agent Service
         id: build-aiagent
+        # Only build if ECR URL is configured
         if: |
+          secrets.ECR_AI_AGENT_SERVICE_URL != '' &&
           steps.build-plan.outputs.build_backend == 'true' && (
             needs.check-changed-paths.outputs.backend_shared == 'true' ||
             needs.check-changed-paths.outputs.backend_aiagent == 'true' ||
