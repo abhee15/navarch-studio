@@ -344,24 +344,15 @@ try
                 Log.Warning("[MIGRATION] Pending migrations: {Migrations}",
                     string.Join(", ", pendingMigrations));
 
-                // In Staging/Production, apply migrations automatically
-                // In Development, just warn
-                if (app.Environment.EnvironmentName != "Development")
-                {
-                    Console.WriteLine($"[MIGRATION] Auto-applying {pendingMigrations.Count()} pending migrations in {app.Environment.EnvironmentName} environment...");
-                    Log.Information("[MIGRATION] Auto-applying {Count} pending migrations in {Environment} environment...",
-                        pendingMigrations.Count(), app.Environment.EnvironmentName);
+                // Auto-apply migrations in ALL environments (Development, Staging, Production)
+                Console.WriteLine($"[MIGRATION] Auto-applying {pendingMigrations.Count()} pending migrations in {app.Environment.EnvironmentName} environment...");
+                Log.Information("[MIGRATION] Auto-applying {Count} pending migrations in {Environment} environment...",
+                    pendingMigrations.Count(), app.Environment.EnvironmentName);
 
-                    await dbContext.Database.MigrateAsync();
+                await dbContext.Database.MigrateAsync();
 
-                    Console.WriteLine("[MIGRATION] Migrations applied successfully!");
-                    Log.Information("[MIGRATION] Migrations applied successfully!");
-                }
-                else
-                {
-                    Console.WriteLine("[MIGRATION] Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
-                    Log.Warning("[MIGRATION] Development mode: Skipping auto-migration. Run 'dotnet ef database update' manually.");
-                }
+                Console.WriteLine("[MIGRATION] Migrations applied successfully!");
+                Log.Information("[MIGRATION] Migrations applied successfully!");
             }
             else
             {
