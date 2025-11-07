@@ -111,10 +111,22 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
   const loadRealVessels = useCallback(async () => {
     setRealLoading(true);
     try {
-      const response = await api.get("/catalog/hulls");
-      setRealVessels(response.data);
+      // Show benchmark hulls (Wigley, KCS, KVLCC2, etc.) in Real mode
+      const response = await api.get("/benchmarks/cases");
+      // Transform benchmark cases to match RealVessel interface
+      const benchmarks = response.data.map((hull: any) => ({
+        id: hull.slug,
+        name: hull.title,
+        vesselType: hull.hullType || "Benchmark",
+        lpp: hull.lpp_m,
+        beam: hull.b_m,
+        draft: hull.t_m,
+        displacement: null,
+        blockCoefficient: hull.cb,
+      }));
+      setRealVessels(benchmarks);
     } catch (error) {
-      console.error("Failed to load real vessels:", error);
+      console.error("Failed to load benchmark hulls:", error);
     } finally {
       setRealLoading(false);
     }
