@@ -66,6 +66,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
   const [showLoadcasesDialog, setShowLoadcasesDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showSaveSnapshotPrompt, setShowSaveSnapshotPrompt] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
 
   // Detect mobile
   useEffect(() => {
@@ -338,12 +339,16 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
             {/* Preset Layouts Dropdown */}
             {layout.mode === "view" && !isMobile && (
               <Select
-                value=""
+                value={selectedPresetId}
                 onChange={(value) => {
                   if (value === "reset") {
                     resetLayout();
+                    setSelectedPresetId("");
                   } else if (value) {
                     loadPreset(value);
+                    setSelectedPresetId(value);
+                  } else {
+                    setSelectedPresetId("");
                   }
                 }}
                 options={[

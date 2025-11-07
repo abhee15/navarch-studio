@@ -53,6 +53,9 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Track selected preset for dropdown
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
+
   // Data state
   const [speedGrids, setSpeedGrids] = useState<SpeedGrid[]>([]);
   const [selectedSpeedGridId, setSelectedSpeedGridId] = useState<string>("");
@@ -433,12 +436,16 @@ export function ResistanceWorkspaceLayout({ vessel, onBack }: ResistanceWorkspac
             {/* Preset Layouts Dropdown (view mode only) */}
             {layout.mode === "view" && !isMobile && (
               <Select
-                value=""
+                value={selectedPresetId}
                 onChange={(value) => {
                   if (value === "reset") {
                     resetLayout();
+                    setSelectedPresetId("");
                   } else if (value) {
                     loadPreset(value);
+                    setSelectedPresetId(value);
+                  } else {
+                    setSelectedPresetId("");
                   }
                 }}
                 options={[

@@ -363,6 +363,9 @@ export function ViewModeLayout({
   return (
     <div className="h-full bg-background overflow-auto p-4">
       <ResponsiveGridLayout
+        key={JSON.stringify(
+          gridLayouts.lg.map((item) => `${item.i}-${item.x}-${item.y}-${item.w}-${item.h}`)
+        )}
         className="layout"
         layouts={adjustedLayouts}
         breakpoints={{ lg: 1200, md: 996, sm: 768 }}

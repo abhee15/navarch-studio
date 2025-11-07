@@ -75,6 +75,9 @@ export function ViewModeLayout(props: ViewModeLayoutProps) {
   return (
     <div className="h-full overflow-auto bg-background p-4">
       <ResponsiveGridLayout
+        key={JSON.stringify(
+          gridLayouts.lg.map((item) => `${item.i}-${item.x}-${item.y}-${item.w}-${item.h}`)
+        )}
         className="layout"
         layouts={gridLayouts}
         breakpoints={breakpoints}
