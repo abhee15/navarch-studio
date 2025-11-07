@@ -19,6 +19,12 @@ This document lists all required GitHub secrets for CI/CD workflows. These secre
 | `COST_CENTER`  | Cost center tag          | `engineering`  | Your department/team name  |
 | `DOMAIN_NAME`  | Custom domain (optional) | `example.com`  | Your domain or leave empty |
 
+### AI Copilot Configuration
+
+| Secret Name       | Description                     | Example                                 | How to Get                                    |
+| ----------------- | ------------------------------- | --------------------------------------- | --------------------------------------------- |
+| `OPENAI_API_KEY`  | OpenAI API key for AI Copilot   | `sk-proj-abc123...`                     | https://platform.openai.com/api-keys          |
+
 ### Infrastructure IDs (from Phase 4)
 
 | Secret Name                    | Description                    | Example                                     | How to Get                                                    |
@@ -32,12 +38,14 @@ This document lists all required GitHub secrets for CI/CD workflows. These secre
 
 ### ECR Repository URLs
 
-| Secret Name                | Description          | Example                                                                      | How to Get                                                                |
-| -------------------------- | -------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `ECR_IDENTITY_SERVICE_URL` | Identity Service ECR | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-identity-service` | `terraform output -json ecr_repository_urls \| jq -r '.identity_service'` |
-| `ECR_API_GATEWAY_URL`      | API Gateway ECR      | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-api-gateway`      | `terraform output -json ecr_repository_urls \| jq -r '.api_gateway'`      |
-| `ECR_DATA_SERVICE_URL`     | Data Service ECR     | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-data-service`     | `terraform output -json ecr_repository_urls \| jq -r '.data_service'`     |
-| `ECR_FRONTEND_URL`         | Frontend ECR         | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-frontend`         | `terraform output -json ecr_repository_urls \| jq -r '.frontend'`         |
+| Secret Name                    | Description              | Example                                                                          | How to Get                                                                    |
+| ------------------------------ | ------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `ECR_IDENTITY_SERVICE_URL`     | Identity Service ECR     | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-identity-service`     | `terraform output -json ecr_repository_urls \| jq -r '.identity_service'`     |
+| `ECR_API_GATEWAY_URL`          | API Gateway ECR          | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-api-gateway`          | `terraform output -json ecr_repository_urls \| jq -r '.api_gateway'`          |
+| `ECR_DATA_SERVICE_URL`         | Data Service ECR         | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-data-service`         | `terraform output -json ecr_repository_urls \| jq -r '.data_service'`         |
+| `ECR_HULL_SIZING_SERVICE_URL`  | Hull Sizing Service ECR  | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-hull-sizing-service`  | `terraform output -json ecr_repository_urls \| jq -r '.hull_sizing_service'`  |
+| `ECR_AI_AGENT_SERVICE_URL`     | AI Agent Service ECR     | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-ai-agent-service`     | `terraform output -json ecr_repository_urls \| jq -r '.ai_agent_service'`     |
+| `ECR_FRONTEND_URL`             | Frontend ECR             | `123456789012.dkr.ecr.us-east-1.amazonaws.com/sri-template-frontend`             | `terraform output -json ecr_repository_urls \| jq -r '.frontend'`             |
 
 ### Cognito Configuration
 
@@ -85,6 +93,9 @@ gh secret set PROJECT_NAME --body "sri-template"
 gh secret set COST_CENTER --body "engineering"
 gh secret set DOMAIN_NAME --body ""  # Leave empty if no custom domain
 
+# Set AI Copilot API key
+gh secret set OPENAI_API_KEY --body "YOUR_OPENAI_API_KEY"
+
 # Fetch and set infrastructure IDs from Terraform (requires `jq` and `terraform`)
 cd terraform/setup
 gh secret set S3_BUCKET_NAME --body "$(terraform output -raw s3_bucket_name)"
@@ -98,6 +109,8 @@ gh secret set RDS_SECURITY_GROUP_ID --body "$(terraform output -raw rds_security
 gh secret set ECR_IDENTITY_SERVICE_URL --body "$(terraform output -json ecr_repository_urls | jq -r '.identity_service')"
 gh secret set ECR_API_GATEWAY_URL --body "$(terraform output -json ecr_repository_urls | jq -r '.api_gateway')"
 gh secret set ECR_DATA_SERVICE_URL --body "$(terraform output -json ecr_repository_urls | jq -r '.data_service')"
+gh secret set ECR_HULL_SIZING_SERVICE_URL --body "$(terraform output -json ecr_repository_urls | jq -r '.hull_sizing_service')"
+gh secret set ECR_AI_AGENT_SERVICE_URL --body "$(terraform output -json ecr_repository_urls | jq -r '.ai_agent_service')"
 gh secret set ECR_FRONTEND_URL --body "$(terraform output -json ecr_repository_urls | jq -r '.frontend')"
 
 # Cognito
@@ -116,6 +129,9 @@ gh secret set RDS_PASSWORD --body "YOUR_SECURE_PASSWORD"
 # Fetch Terraform outputs
 cd terraform/setup
 
+# AI Copilot
+gh secret set OPENAI_API_KEY --body "YOUR_OPENAI_API_KEY"
+
 # Set secrets using GitHub CLI
 gh secret set S3_BUCKET_NAME --body (terraform output -raw s3_bucket_name)
 gh secret set DYNAMODB_TABLE_NAME --body (terraform output -raw dynamodb_table_name)
@@ -129,6 +145,8 @@ $ecrUrls = terraform output -json ecr_repository_urls | ConvertFrom-Json
 gh secret set ECR_IDENTITY_SERVICE_URL --body $ecrUrls.identity_service
 gh secret set ECR_API_GATEWAY_URL --body $ecrUrls.api_gateway
 gh secret set ECR_DATA_SERVICE_URL --body $ecrUrls.data_service
+gh secret set ECR_HULL_SIZING_SERVICE_URL --body $ecrUrls.hull_sizing_service
+gh secret set ECR_AI_AGENT_SERVICE_URL --body $ecrUrls.ai_agent_service
 gh secret set ECR_FRONTEND_URL --body $ecrUrls.frontend
 
 # Cognito
@@ -242,8 +260,3 @@ When infrastructure changes (e.g., new VPC, new ECR repos):
 ---
 
 **Last Updated:** Phase 7 - CI/CD Pipeline Setup
-
-
-
-
-
