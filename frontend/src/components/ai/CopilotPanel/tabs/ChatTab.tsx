@@ -27,7 +27,11 @@ const ChatMessage: React.FC<{ message: ChatMessageType }> = ({ message }) => {
                   const { children, className } = props;
                   const match = /language-(\w+)/.exec(className || "");
                   return match ? (
-                    <SyntaxHighlighter style={vscDarkPlus as any} language={match[1]} PreTag="div">
+                    <SyntaxHighlighter
+                      style={vscDarkPlus}
+                      language={match[1]}
+                      PreTag="div"
+                    >
                       {String(children).replace(/\n$/, "")}
                     </SyntaxHighlighter>
                   ) : (

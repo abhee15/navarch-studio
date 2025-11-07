@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "../../components/AppHeader";
@@ -77,26 +77,16 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
   const [maxCb, setMaxCb] = useState("");
   const [sortBy, setSortBy] = useState("hull_id");
 
-  // Load data based on mode
-  useEffect(() => {
-    if (mode === "ml") {
-      loadMlStats();
-      loadMlHulls();
-    } else {
-      loadRealVessels();
-    }
-  }, [mode, mlPage, datasetFilter, minCb, maxCb, sortBy]);
-
-  const loadMlStats = async () => {
+  const loadMlStats = useCallback(async () => {
     try {
       const response = await api.get("/catalog/parametric/stats");
       setMlStats(response.data);
     } catch (error) {
       console.error("Failed to load ML catalog stats:", error);
     }
-  };
+  }, []);
 
-  const loadMlHulls = async () => {
+  const loadMlHulls = useCallback(async () => {
     setMlLoading(true);
     try {
       const params = new URLSearchParams({
@@ -117,9 +107,9 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
     } finally {
       setMlLoading(false);
     }
-  };
+  }, [mlPage, datasetFilter, minCb, maxCb, sortBy]);
 
-  const loadRealVessels = async () => {
+  const loadRealVessels = useCallback(async () => {
     setRealLoading(true);
     try {
       const response = await api.get("/catalog/hulls");
@@ -129,7 +119,17 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
     } finally {
       setRealLoading(false);
     }
-  };
+  }, []);
+
+  // Load data based on mode
+  useEffect(() => {
+    if (mode === "ml") {
+      loadMlStats();
+      loadMlHulls();
+    } else {
+      loadRealVessels();
+    }
+  }, [mode, loadMlStats, loadMlHulls, loadRealVessels]);
 
   const resetFilters = () => {
     setDatasetFilter("");

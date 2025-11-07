@@ -46,26 +46,16 @@ export const MLHullBrowser: React.FC = observer(() => {
   const [maxCb, setMaxCb] = useState("");
   const [sortBy, setSortBy] = useState("hull_id");
 
-  // Load stats on mount
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  // Load hulls when filters/page change
-  useEffect(() => {
-    loadHulls();
-  }, [page, datasetFilter, minCb, maxCb, sortBy]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await api.get("/catalog/parametric/stats");
       setStats(response.data);
     } catch (error) {
       console.error("Failed to load catalog stats:", error);
     }
-  };
+  }, []);
 
-  const loadHulls = async () => {
+  const loadHulls = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -86,7 +76,17 @@ export const MLHullBrowser: React.FC = observer(() => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, datasetFilter, minCb, maxCb, sortBy]);
+
+  // Load stats on mount
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  // Load hulls when filters/page change
+  useEffect(() => {
+    loadHulls();
+  }, [loadHulls]);
 
   const resetFilters = () => {
     setDatasetFilter("");
