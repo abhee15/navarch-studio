@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import { BookOpen, Ship, Anchor, Droplets, Loader2, AlertCircle } from "lucide-react";
+import {
+  BookOpen,
+  Ship,
+  Anchor,
+  Droplets,
+  Loader2,
+  AlertCircle,
+  Package,
+  Ruler,
+} from "lucide-react";
 import { useStore } from "../../stores";
 import { Button } from "../../components/ui/button";
 import {
@@ -75,15 +84,15 @@ export const CatalogBrowser: React.FC = observer(() => {
   const getHullTypeIcon = (hullType?: string) => {
     switch (hullType) {
       case "Container":
-        return "📦";
+        return Package;
       case "Tanker":
-        return "🛳️";
+        return Droplets;
       case "Naval":
-        return "⚓";
+        return Anchor;
       case "Template":
-        return "📐";
+        return Ruler;
       default:
-        return "🚢";
+        return Ship;
     }
   };
 
@@ -116,51 +125,54 @@ export const CatalogBrowser: React.FC = observer(() => {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {hulls.map((hull) => (
-          <Card
-            key={hull.id}
-            className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-            onClick={() => handleHullClick(hull.id)}
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between mb-2">
-                <span className="text-3xl">{getHullTypeIcon(hull.hullType)}</span>
-                {hull.geometryMissing && (
-                  <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded">
-                    No Geometry
-                  </span>
-                )}
-              </div>
-              <CardTitle>{hull.title}</CardTitle>
-              <CardDescription className="line-clamp-2">{hull.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                {hull.hullType && (
-                  <div className="flex justify-between">
-                    <span>Type:</span>
-                    <span className="font-medium">{hull.hullType}</span>
-                  </div>
-                )}
-                {hull.lpp != null && (
-                  <div className="flex justify-between">
-                    <span>Lpp:</span>
-                    <span className="font-medium">{hull.lpp.toFixed(2)} m</span>
-                  </div>
-                )}
-                {hull.cb != null && (
-                  <div className="flex justify-between">
-                    <span>Cb:</span>
-                    <span className="font-medium">{hull.cb.toFixed(3)}</span>
-                  </div>
-                )}
-              </div>
-              <Button className="w-full mt-4" variant="outline">
-                View Details →
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+        {hulls.map((hull) => {
+          const HullIcon = getHullTypeIcon(hull.hullType);
+          return (
+            <Card
+              key={hull.id}
+              className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+              onClick={() => handleHullClick(hull.id)}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between mb-2">
+                  <HullIcon className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+                  {hull.geometryMissing && (
+                    <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded">
+                      No Geometry
+                    </span>
+                  )}
+                </div>
+                <CardTitle>{hull.title}</CardTitle>
+                <CardDescription className="line-clamp-2">{hull.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  {hull.hullType && (
+                    <div className="flex justify-between">
+                      <span>Type:</span>
+                      <span className="font-medium">{hull.hullType}</span>
+                    </div>
+                  )}
+                  {hull.lpp != null && (
+                    <div className="flex justify-between">
+                      <span>Lpp:</span>
+                      <span className="font-medium">{hull.lpp.toFixed(2)} m</span>
+                    </div>
+                  )}
+                  {hull.cb != null && (
+                    <div className="flex justify-between">
+                      <span>Cb:</span>
+                      <span className="font-medium">{hull.cb.toFixed(3)}</span>
+                    </div>
+                  )}
+                </div>
+                <Button className="w-full mt-4" variant="outline">
+                  View Details →
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     );
   };
@@ -199,7 +211,7 @@ export const CatalogBrowser: React.FC = observer(() => {
           <Card key={series.id} className="hover:shadow-lg transition-shadow duration-200">
             <CardHeader>
               <div className="flex items-start justify-between mb-2">
-                <span className="text-3xl">⚓</span>
+                <Anchor className="h-8 w-8 text-gray-600 dark:text-gray-400" />
                 {series.isDemo && (
                   <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
                     DEMO

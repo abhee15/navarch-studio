@@ -67,7 +67,7 @@ export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInf
     error?.code === "ERR_NETWORK"
   ) {
     diagnostic.corsIssue = true;
-    diagnostic.diagnosticMessage = "🚫 CORS Error Detected";
+    diagnostic.diagnosticMessage = "[CORS ERROR] Detected";
     diagnostic.recommendedActions.push(
       "The API Gateway is not allowing requests from your domain.",
       "This usually means:",
@@ -75,24 +75,24 @@ export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInf
       "  2. CORS configuration has not been applied",
       "  3. CloudFront domain not in allowed origins list",
       "",
-      "💡 Check service status:",
+      "[TIP] Check service status:",
       "  aws apprunner list-services --region us-east-1",
       "",
-      "💡 Look for Status: OPERATION_IN_PROGRESS (stuck deployment)"
+      "[TIP] Look for Status: OPERATION_IN_PROGRESS (stuck deployment)"
     );
   }
 
   // Check for URL mismatch
   if (apiUrl && attemptedUrl && !attemptedUrl.includes(apiUrl)) {
     diagnostic.urlMismatch = true;
-    diagnostic.diagnosticMessage = "⚠️ URL Mismatch Detected";
+    diagnostic.diagnosticMessage = "[WARNING] URL Mismatch Detected";
     diagnostic.recommendedActions.push(
       `Expected API URL: ${apiUrl}`,
       `Actually calling: ${attemptedUrl}`,
       "",
       "This means the frontend has stale configuration.",
       "",
-      "💡 Solutions:",
+      "[TIP] Solutions:",
       "  1. Hard refresh browser (Ctrl+Shift+R)",
       "  2. Clear browser cache",
       "  3. Open in Incognito/Private mode",
@@ -105,7 +105,7 @@ export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInf
     diagnostic.serviceReachable = await testApiReachability(apiUrl);
 
     if (!diagnostic.serviceReachable) {
-      diagnostic.diagnosticMessage = "🔴 API Service Not Reachable";
+      diagnostic.diagnosticMessage = "[ERROR] API Service Not Reachable";
       diagnostic.recommendedActions.push(
         `Cannot connect to: ${apiUrl}`,
         "",
@@ -115,10 +115,10 @@ export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInf
         "  3. Network connectivity issues",
         "  4. DNS not resolved yet (new service)",
         "",
-        "💡 Check service health:",
+        "[TIP] Check service health:",
         `  curl ${apiUrl}/health`,
         "",
-        "💡 Check service status in AWS:",
+        "[TIP] Check service status in AWS:",
         "  aws apprunner describe-service --service-arn <ARN>"
       );
     }
@@ -126,7 +126,7 @@ export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInf
 
   // Timeout errors
   if (error?.message?.includes("timeout") || error?.code === "ECONNABORTED") {
-    diagnostic.diagnosticMessage = "⏱️ Request Timeout";
+    diagnostic.diagnosticMessage = "[TIMEOUT] Request Timeout";
     diagnostic.recommendedActions.push(
       "Request took too long to complete.",
       "",
@@ -136,7 +136,7 @@ export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInf
       "  3. Database queries taking too long",
       "  4. Service starting up (migrations running)",
       "",
-      "💡 Check CloudWatch logs:",
+      "[TIP] Check CloudWatch logs:",
       "  aws logs tail /aws/apprunner/navarch-studio-dev-data-service/service --follow"
     );
   }
@@ -148,24 +148,24 @@ export async function diagnoseApiIssue(error: AxiosError): Promise<DiagnosticInf
  * Log diagnostic information in a user-friendly format
  */
 export function logDiagnostics(diagnostic: DiagnosticInfo): void {
-  console.group("🔍 API Diagnostic Report");
+  console.group("[DIAGNOSTIC] API Diagnostic Report");
   console.log("Timestamp:", diagnostic.timestamp);
-  console.log("Config Loaded:", diagnostic.configLoaded ? "✅" : "❌");
+  console.log("Config Loaded:", diagnostic.configLoaded ? "YES" : "NO");
   console.log("Expected API URL:", diagnostic.apiUrl || "Not loaded");
   console.log("Attempted URL:", diagnostic.expectedUrl || "Unknown");
 
   if (diagnostic.urlMismatch) {
-    console.warn("⚠️ URL MISMATCH DETECTED!");
+    console.warn("[WARNING] URL MISMATCH DETECTED!");
   }
 
   if (diagnostic.corsIssue) {
-    console.error("🚫 CORS ERROR DETECTED");
+    console.error("[ERROR] CORS ERROR DETECTED");
   }
 
   if (diagnostic.serviceReachable === false) {
-    console.error("🔴 SERVICE NOT REACHABLE");
+    console.error("[ERROR] SERVICE NOT REACHABLE");
   } else if (diagnostic.serviceReachable === true) {
-    console.log("Service Reachable: ✅");
+    console.log("Service Reachable: YES");
   }
 
   if (diagnostic.diagnosticMessage) {
@@ -173,7 +173,7 @@ export function logDiagnostics(diagnostic: DiagnosticInfo): void {
   }
 
   if (diagnostic.recommendedActions.length > 0) {
-    console.log("\n📋 Recommended Actions:");
+    console.log("\n[ACTIONS] Recommended Actions:");
     diagnostic.recommendedActions.forEach((action) => {
       if (action === "") {
         console.log("");
@@ -204,47 +204,47 @@ export function getUserFriendlyError(error: AxiosError): string {
 
   // CORS errors
   if (error?.message?.includes("CORS") || error?.message?.includes("Access-Control-Allow-Origin")) {
-    return "🚫 Connection Blocked: The API service is not accepting requests from this domain. This usually means the service is being deployed or has a configuration issue. Please try again in a few minutes.";
+    return "Connection Blocked: The API service is not accepting requests from this domain. This usually means the service is being deployed or has a configuration issue. Please try again in a few minutes.";
   }
 
   // Network errors
   if (error?.code === "ERR_NETWORK" || error?.message?.includes("Network Error")) {
-    return "🔴 Cannot Reach API: Unable to connect to the backend service. The service may be restarting or experiencing issues. Please try again in a moment.";
+    return "Cannot Reach API: Unable to connect to the backend service. The service may be restarting or experiencing issues. Please try again in a moment.";
   }
 
   // Timeout errors
   if (error?.message?.includes("timeout") || error?.code === "ECONNABORTED") {
-    return "⏱️ Request Timeout: The request took too long to complete. The service may be starting up or under heavy load. Please try again.";
+    return "Request Timeout: The request took too long to complete. The service may be starting up or under heavy load. Please try again.";
   }
 
   // 500 errors
   if (error?.response?.status === 500) {
-    return "⚠️ Server Error: The backend encountered an error processing your request. This has been logged and will be investigated.";
+    return "Server Error: The backend encountered an error processing your request. This has been logged and will be investigated.";
   }
 
   // 401/403 errors
   if (error?.response?.status === 401 || error?.response?.status === 403) {
-    return "🔒 Authentication Required: Your session may have expired. Please log in again.";
+    return "Authentication Required: Your session may have expired. Please log in again.";
   }
 
   // 404 errors
   if (error?.response?.status === 404) {
-    return "❓ Not Found: The requested resource could not be found. This may indicate a configuration issue.";
+    return "Not Found: The requested resource could not be found. This may indicate a configuration issue.";
   }
 
   // Default
-  return `❌ Request Failed: ${error?.message || "Unknown error occurred"}. Please try again or contact support if the issue persists.`;
+  return `Request Failed: ${error?.message || "Unknown error occurred"}. Please try again or contact support if the issue persists.`;
 }
 
 /**
  * Check system health and log diagnostics
  */
 export async function checkSystemHealth(): Promise<void> {
-  console.group("🏥 System Health Check");
+  console.group("[HEALTH CHECK] System Health Check");
 
   // Check if runtime config is loaded
   const configLoaded = isConfigLoaded();
-  console.log("Runtime Config:", configLoaded ? "✅ Loaded" : "❌ Not loaded");
+  console.log("Runtime Config:", configLoaded ? "LOADED" : "NOT LOADED");
 
   if (configLoaded) {
     const config = getConfig();
@@ -257,17 +257,17 @@ export async function checkSystemHealth(): Promise<void> {
     const reachable = await testApiReachability(config.apiUrl);
 
     if (reachable) {
-      console.log("✅ API is reachable and responding");
+      console.log("[SUCCESS] API is reachable and responding");
     } else {
-      console.error("❌ API is not reachable");
-      console.log("💡 Possible issues:");
+      console.error("[ERROR] API is not reachable");
+      console.log("[TIP] Possible issues:");
       console.log("  - Service is down or restarting");
       console.log("  - Service stuck in deployment");
       console.log("  - DNS not resolved yet");
       console.log("  - Network connectivity issues");
     }
   } else {
-    console.warn("⚠️ Runtime config not loaded - using fallback");
+    console.warn("[WARNING] Runtime config not loaded - using fallback");
   }
 
   console.groupEnd();

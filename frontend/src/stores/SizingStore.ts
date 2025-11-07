@@ -134,7 +134,7 @@ export class SizingStore {
 
       // If it's an error object, log it clearly
       if ("error" in run || "message" in run) {
-        console.error("[SizingStore] ❌ Backend returned error instead of run:", run);
+        console.error("[SizingStore] ERROR: Backend returned error instead of run:", run);
       }
 
       runInAction(() => {

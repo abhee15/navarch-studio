@@ -79,7 +79,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
                     {station === 0
                       ? "AP"
                       : station === Math.floor(stationCount / 2)
-                        ? "⚓"
+                        ? "⚓︎"
                         : station === stationCount - 1
                           ? "FP"
                           : station}
@@ -131,7 +131,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
               <span className="font-bold">AP</span> = Aft Perpendicular
             </div>
             <div className="flex items-center gap-2">
-              <span>⚓</span> = Midship
+              <span>⚓︎</span> = Midship
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold">FP</span> = Forward Perpendicular

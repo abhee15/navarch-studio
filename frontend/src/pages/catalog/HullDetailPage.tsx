@@ -1,7 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import { ArrowLeft, Copy, Loader2, AlertCircle, AlertTriangle, Table } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  Loader2,
+  AlertCircle,
+  AlertTriangle,
+  Table,
+  Ship,
+  Anchor,
+  Package,
+  Droplets,
+  Ruler,
+} from "lucide-react";
 import { useStore } from "../../stores";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
@@ -89,15 +101,15 @@ export const HullDetailPage: React.FC = observer(() => {
   const getHullTypeIcon = (hullType?: string) => {
     switch (hullType) {
       case "Container":
-        return "📦";
+        return Package;
       case "Tanker":
-        return "🛳️";
+        return Droplets;
       case "Naval":
-        return "⚓";
+        return Anchor;
       case "Template":
-        return "📐";
+        return Ruler;
       default:
-        return "🚢";
+        return Ship;
     }
   };
 
@@ -158,7 +170,9 @@ export const HullDetailPage: React.FC = observer(() => {
               Back
             </Button>
             <div className="rounded-lg bg-purple-600 p-2">
-              <span className="text-2xl">{getHullTypeIcon(hull.hullType)}</span>
+              {React.createElement(getHullTypeIcon(hull.hullType), {
+                className: "h-6 w-6 text-white",
+              })}
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">{hull.title}</h1>

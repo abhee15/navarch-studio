@@ -3,6 +3,21 @@ import type { CreateMissionCaseDto } from "../../../types/sizing";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
+import {
+  Package,
+  Anchor,
+  Ship,
+  Fish,
+  Sailboat,
+  Waves,
+  Calculator,
+  BarChart3,
+  Bot,
+  Rocket,
+  Lightbulb,
+  Fuel,
+  Zap,
+} from "lucide-react";
 
 interface Step4Props {
   formData: Partial<CreateMissionCaseDto>;
@@ -40,13 +55,13 @@ export const Step4Options: React.FC<Step4Props> = ({
   const [familyHints, setFamilyHints] = useState<string[]>([]);
 
   const availableFamilies = [
-    { value: "container", label: "Container Ship", icon: "📦" },
-    { value: "tanker", label: "Tanker", icon: "🛢️" },
-    { value: "bulk", label: "Bulk Carrier", icon: "⚓" },
-    { value: "general_cargo", label: "General Cargo", icon: "🚢" },
-    { value: "fishing", label: "Fishing Vessel", icon: "🎣" },
-    { value: "yacht_disp", label: "Displacement Yacht", icon: "⛵" },
-    { value: "yacht_planing", label: "Planing Yacht", icon: "🏄" },
+    { value: "container", label: "Container Ship", icon: Package },
+    { value: "tanker", label: "Tanker", icon: Fuel },
+    { value: "bulk", label: "Bulk Carrier", icon: Anchor },
+    { value: "general_cargo", label: "General Cargo", icon: Ship },
+    { value: "fishing", label: "Fishing Vessel", icon: Fish },
+    { value: "yacht_disp", label: "Displacement Yacht", icon: Sailboat },
+    { value: "yacht_planing", label: "Planing Yacht", icon: Waves },
   ];
 
   const toggleFamily = (family: string) => {
@@ -126,7 +141,7 @@ export const Step4Options: React.FC<Step4Props> = ({
             `}
           >
             <div className="flex items-start space-x-3">
-              <div className="text-2xl">🧮</div>
+              <Calculator className="h-8 w-8 text-gray-700 dark:text-gray-300" />
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 dark:text-white">First-Principles</h4>
                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
@@ -156,7 +171,7 @@ export const Step4Options: React.FC<Step4Props> = ({
             `}
           >
             <div className="flex items-start space-x-3">
-              <div className="text-2xl">📊</div>
+              <BarChart3 className="h-8 w-8 text-gray-700 dark:text-gray-300" />
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 dark:text-white">
                   Data-Driven{" "}
@@ -189,7 +204,7 @@ export const Step4Options: React.FC<Step4Props> = ({
             `}
           >
             <div className="flex items-start space-x-3">
-              <div className="text-2xl">🤖</div>
+              <Bot className="h-8 w-8 text-gray-700 dark:text-gray-300" />
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 dark:text-white">
                   ML/Parametric{" "}
@@ -211,10 +226,13 @@ export const Step4Options: React.FC<Step4Props> = ({
             )}
           </button>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          💡 <strong>First-Principles</strong>: Pure physics. <strong>Data-Driven</strong>: Real
-          vessels (600). <strong>ML/Parametric</strong>: Massive design space (82K hulls).
-        </p>
+        <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <Lightbulb className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <p>
+            <strong>First-Principles</strong>: Pure physics. <strong>Data-Driven</strong>: Real
+            vessels (600). <strong>ML/Parametric</strong>: Massive design space (82K hulls).
+          </p>
+        </div>
       </div>
 
       {/* Solver Options */}
@@ -271,12 +289,14 @@ export const Step4Options: React.FC<Step4Props> = ({
         <div className="space-y-2">
           <Label>Hull Family Hints (Optional)</Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {availableFamilies.map((family) => (
-              <button
-                key={family.value}
-                type="button"
-                onClick={() => toggleFamily(family.value)}
-                className={`
+            {availableFamilies.map((family) => {
+              const IconComponent = family.icon;
+              return (
+                <button
+                  key={family.value}
+                  type="button"
+                  onClick={() => toggleFamily(family.value)}
+                  className={`
                   flex items-center justify-center space-x-2 rounded-lg border-2 p-3 transition-all
                   ${
                     familyHints.includes(family.value)
@@ -284,11 +304,12 @@ export const Step4Options: React.FC<Step4Props> = ({
                       : "border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
                   }
                 `}
-              >
-                <span className="text-xl">{family.icon}</span>
-                <span className="text-xs font-medium">{family.label}</span>
-              </button>
-            ))}
+                >
+                  <IconComponent className="h-5 w-5" />
+                  <span className="text-xs font-medium">{family.label}</span>
+                </button>
+              );
+            })}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Select hull types to guide the solver (leave empty for automatic selection)
@@ -353,21 +374,24 @@ export const Step4Options: React.FC<Step4Props> = ({
         {/* Solver Info */}
         {solverMode === "first_principles" ? (
           <div className="rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 p-4 text-sm dark:from-blue-900/20 dark:to-cyan-900/20">
-            <p className="font-medium text-blue-900 dark:text-blue-300">
-              🧮 Solver Mode: First-Principles
+            <p className="font-medium text-blue-900 dark:text-blue-300 flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Solver Mode: First-Principles
             </p>
             <p className="mt-1 text-blue-800 dark:text-blue-400">
               Physics-based solver using displacement closure, Holtrop-Mennen resistance, and
               stability screening.
             </p>
-            <p className="mt-2 text-xs text-blue-700 dark:text-blue-500">
-              ⚡ Expected compute time: ~1-2 seconds for {maxCandidates} candidates
+            <p className="mt-2 text-xs text-blue-700 dark:text-blue-500 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Expected compute time: ~1-2 seconds for {maxCandidates} candidates
             </p>
           </div>
         ) : solverMode === "data_driven_real" ? (
           <div className="rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 p-4 text-sm dark:from-green-900/20 dark:to-emerald-900/20">
-            <p className="font-medium text-green-900 dark:text-green-300">
-              📊 Solver Mode: Data-Driven (Real-World Catalog)
+            <p className="font-medium text-green-900 dark:text-green-300 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Solver Mode: Data-Driven (Real-World Catalog)
             </p>
             <p className="mt-1 text-green-800 dark:text-green-400">
               KNN search on 600 real-world vessels → Scaling → Physics refinement
@@ -377,14 +401,16 @@ export const Step4Options: React.FC<Step4Props> = ({
               <li>✓ Proven hull forms (KCS, KVLCC2, etc.)</li>
               <li>✓ Shows reference vessel & similarity score</li>
             </ul>
-            <p className="mt-2 text-xs text-green-700 dark:text-green-500">
-              ⚡ Expected compute time: {"<"}1 second for {maxCandidates} candidates
+            <p className="mt-2 text-xs text-green-700 dark:text-green-500 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Expected compute time: {"<"}1 second for {maxCandidates} candidates
             </p>
           </div>
         ) : (
           <div className="rounded-lg bg-gradient-to-r from-purple-50 to-violet-50 p-4 text-sm dark:from-purple-900/20 dark:to-violet-900/20">
-            <p className="font-medium text-purple-900 dark:text-purple-300">
-              🤖 Solver Mode: ML/Parametric (ShipD Dataset - BETA)
+            <p className="font-medium text-purple-900 dark:text-purple-300 flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              Solver Mode: ML/Parametric (ShipD Dataset - BETA)
             </p>
             <p className="mt-1 text-purple-800 dark:text-purple-400">
               KNN on 82K parametric hulls → Convert & scale → Physics refinement
@@ -394,8 +420,9 @@ export const Step4Options: React.FC<Step4Props> = ({
               <li>✓ Explore unconventional geometries</li>
               <li>✓ Shows parametric hull ID & similarity</li>
             </ul>
-            <p className="mt-2 text-xs text-purple-700 dark:text-purple-500">
-              ⚡ Expected compute time: ~1 second for {maxCandidates} candidates
+            <p className="mt-2 text-xs text-purple-700 dark:text-purple-500 flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Expected compute time: ~1 second for {maxCandidates} candidates
             </p>
           </div>
         )}
@@ -417,7 +444,10 @@ export const Step4Options: React.FC<Step4Props> = ({
               Generating...
             </>
           ) : (
-            "🚀 Generate Hulls"
+            <>
+              <Rocket className="mr-2 h-4 w-4" />
+              Generate Hulls
+            </>
           )}
         </Button>
       </div>

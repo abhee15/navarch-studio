@@ -61,14 +61,14 @@ async function loadConfigInternal(): Promise<AppConfig> {
 
     const config = await response.json();
 
-    console.log("[Config] ✅ Runtime configuration loaded successfully");
+    console.log("[Config] SUCCESS: Runtime configuration loaded successfully");
     console.log("[Config] API URL:", config.apiUrl);
     console.log("[Config] Auth Mode:", config.authMode);
 
     return config;
   } catch (error) {
     console.warn(
-      "[Config] ⚠️ Failed to load runtime config, falling back to build-time config:",
+      "[Config] WARNING: Failed to load runtime config, falling back to build-time config:",
       error
     );
 

@@ -361,7 +361,7 @@ export function ResistanceBreakdownTable({ result }: ResistanceBreakdownTablePro
             <span>Minimum value</span>
           </div>
           <div className="flex items-center gap-1">
-            <span>📈</span>
+            <span className="text-blue-600 dark:text-blue-400 font-semibold">▬</span>
             <span>Sparkline shows trend across all speeds</span>
           </div>
         </div>

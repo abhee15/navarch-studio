@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, FileJson, FileSpreadsheet } from "lucide-react";
 
 interface BatchActionsProps {
   selectedMissions: string[];
@@ -68,7 +68,8 @@ export const BatchActions: React.FC<BatchActionsProps> = ({
               onClick={() => onExportBatch(selectedMissions, "json")}
               className="bg-white/10 text-white hover:bg-white/20"
             >
-              📄 Export JSON
+              <FileJson className="h-4 w-4 mr-1" />
+              Export JSON
             </Button>
 
             <Button
@@ -76,7 +77,8 @@ export const BatchActions: React.FC<BatchActionsProps> = ({
               onClick={() => onExportBatch(selectedMissions, "csv")}
               className="bg-white/10 text-white hover:bg-white/20"
             >
-              📊 Export CSV
+              <FileSpreadsheet className="h-4 w-4 mr-1" />
+              Export CSV
             </Button>
 
             <div className="h-6 w-px bg-white/30"></div>

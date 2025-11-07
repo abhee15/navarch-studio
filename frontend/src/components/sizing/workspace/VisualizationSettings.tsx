@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Label } from "../../ui/label";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Settings, Zap, Scale, Sparkles } from "lucide-react";
 
 interface VisualizationSettingsProps {
   onSettingsChange: (settings: VisualizationOptions) => void;
@@ -56,7 +56,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
       <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow">
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <span className="text-purple-600 dark:text-purple-400">⚙️</span>
+            <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             Visualization Settings
           </h3>
         </div>
@@ -208,10 +208,25 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  {settings.meshQuality === "low" && "⚡ Faster (30×20 mesh)"}
-                  {settings.meshQuality === "medium" && "⚖️ Balanced (60×40 mesh)"}
-                  {settings.meshQuality === "high" && "✨ Best Quality (120×80 mesh)"}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
+                  {settings.meshQuality === "low" && (
+                    <>
+                      <Zap className="h-3 w-3" />
+                      Faster (30×20 mesh)
+                    </>
+                  )}
+                  {settings.meshQuality === "medium" && (
+                    <>
+                      <Scale className="h-3 w-3" />
+                      Balanced (60×40 mesh)
+                    </>
+                  )}
+                  {settings.meshQuality === "high" && (
+                    <>
+                      <Sparkles className="h-3 w-3" />
+                      Best Quality (120×80 mesh)
+                    </>
+                  )}
                 </p>
               </div>
 

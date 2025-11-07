@@ -70,7 +70,7 @@ const ConfigLoader: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
         // Expose health check function in browser console for debugging
         window.checkHealth = checkSystemHealth;
-        console.log("💡 Run checkHealth() in console anytime to diagnose issues");
+        console.log("[TIP] Run checkHealth() in console anytime to diagnose issues");
 
         setConfigLoaded(true);
       })
