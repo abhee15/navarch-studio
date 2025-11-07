@@ -235,13 +235,37 @@ public class SizingRunService : ISizingRunService
             .Where(sr => sr.Id == runId && sr.MissionCase.TenantId == tenantId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (run == null) return new List<CandidateDesignDto>();
+        if (run == null)
+        {
+            _logger.LogWarning("[SIZING_RUN] No run found with ID={RunId} and TenantId={TenantId}", runId, tenantId);
+
+            // Check if run exists with ANY tenantId (for debugging)
+            var anyRun = await _context.SizingRuns.FirstOrDefaultAsync(sr => sr.Id == runId, cancellationToken);
+            if (anyRun != null)
+            {
+                var actualTenant = await _context.MissionCases
+                    .Where(mc => mc.Id == anyRun.MissionCaseId)
+                    .Select(mc => mc.TenantId)
+                    .FirstOrDefaultAsync(cancellationToken);
+                _logger.LogError("[SIZING_RUN] ⚠️ TENANT MISMATCH! Run {RunId} exists but with different tenantId! Expected={Expected}, Actual={Actual}",
+                    runId, tenantId, actualTenant);
+                Console.WriteLine($"[SIZING_RUN] ⚠️ TENANT MISMATCH! Run {runId} exists but tenantId mismatch: expected '{tenantId}', actual '{actualTenant}'");
+            }
+            else
+            {
+                _logger.LogWarning("[SIZING_RUN] Run {RunId} does not exist at all (not just tenant mismatch)", runId);
+                Console.WriteLine($"[SIZING_RUN] Run {runId} does not exist in database");
+            }
+
+            return new List<CandidateDesignDto>();
+        }
 
         var candidates = await _context.CandidateDesigns
             .Where(cd => cd.SizingRunId == runId)
             .OrderBy(cd => cd.Rank)
             .ToListAsync(cancellationToken);
 
+        _logger.LogInformation("[SIZING_RUN] Found {Count} candidates for run {RunId}", candidates.Count, runId);
         return candidates.Select(MapCandidateToDto).ToList();
     }
 

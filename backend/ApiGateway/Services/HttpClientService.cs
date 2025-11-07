@@ -161,7 +161,13 @@ public class HttpClientService : IHttpClientService
             }
             else
             {
-                _logger.LogWarning("User not authenticated, cannot forward claims to downstream service");
+                // TEMPORARY DEV FIX: If user is not authenticated, use default dev tenant
+                // This ensures consistent tenant IDs across all requests in development
+                // TODO: Remove this before production - all requests should be authenticated
+                _logger.LogWarning("[HTTP_CLIENT] ⚠️ DEV MODE: User not authenticated, using default tenant");
+                request.Headers.Add("X-User-Sub", "dev-default-user");
+                request.Headers.Add("X-Tenant-Id", "dev-default-tenant");
+                Console.WriteLine("[HTTP_CLIENT] ⚠️ DEV MODE: Using default tenant (user not authenticated)");
             }
         }
     }
