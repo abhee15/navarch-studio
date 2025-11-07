@@ -205,6 +205,7 @@ try
     builder.Services.AddScoped<DataService.Services.Catalog.RealWorldKnnService>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogSeeder>();
+    builder.Services.AddScoped<DataService.Services.Catalog.ParametricDemoDataGenerator>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricKnnService>();
     builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkHullImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkTestImporter>();
@@ -358,6 +359,23 @@ try
             {
                 Console.WriteLine("[MIGRATION] Database schema is up to date (no pending migrations)");
                 Log.Information("[MIGRATION] Database schema is up to date (no pending migrations)");
+            }
+
+            // Seed parametric catalog (runs in all environments if empty)
+            Console.WriteLine("[SEED] Checking for parametric hull catalog...");
+            Log.Information("[SEED] Checking for parametric hull catalog...");
+            try
+            {
+                var parametricSeeder = scope.ServiceProvider.GetRequiredService<DataService.Services.Catalog.ParametricCatalogSeeder>();
+                await parametricSeeder.SeedParametricCatalogAsync();
+                Console.WriteLine("[SEED] Parametric catalog check complete");
+                Log.Information("[SEED] Parametric catalog check complete");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SEED] ERROR seeding parametric catalog: {ex.Message}");
+                Log.Error(ex, "[SEED] Failed to seed parametric catalog");
+                // Don't fail startup on seeding errors
             }
 
             // Seed template vessels (runs in all environments)

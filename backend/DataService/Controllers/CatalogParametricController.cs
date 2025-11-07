@@ -22,15 +22,21 @@ public class CatalogParametricController : ControllerBase
 {
     private readonly ParametricKnnService _knnService;
     private readonly DataDbContext _context;
+    private readonly ParametricCatalogSeeder _seeder;
+    private readonly ParametricDemoDataGenerator _demoGenerator;
     private readonly ILogger<CatalogParametricController> _logger;
 
     public CatalogParametricController(
         ParametricKnnService knnService,
         DataDbContext context,
+        ParametricCatalogSeeder seeder,
+        ParametricDemoDataGenerator demoGenerator,
         ILogger<CatalogParametricController> logger)
     {
         _knnService = knnService;
         _context = context;
+        _seeder = seeder;
+        _demoGenerator = demoGenerator;
         _logger = logger;
     }
 
@@ -103,6 +109,7 @@ public class CatalogParametricController : ControllerBase
     /// Browse parametric catalog with pagination and filters
     /// </summary>
     [HttpGet("browse")]
+    [AllowAnonymous] // Allow unauthenticated access to browse
     public async Task<ActionResult<PagedParametricResponse>> Browse(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -189,6 +196,7 @@ public class CatalogParametricController : ControllerBase
     /// Get catalog statistics
     /// </summary>
     [HttpGet("stats")]
+    [AllowAnonymous] // Allow unauthenticated access to stats
     public async Task<ActionResult<CatalogStatsDto>> GetStats(CancellationToken cancellationToken)
     {
         try
@@ -197,6 +205,7 @@ public class CatalogParametricController : ControllerBase
 
             if (total == 0)
             {
+                _logger.LogInformation("Parametric catalog is empty - returning zero stats");
                 return Ok(new CatalogStatsDto
                 {
                     TotalHulls = 0,
@@ -226,7 +235,121 @@ public class CatalogParametricController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting catalog stats");
-            return StatusCode(500, new { error = "Internal server error" });
+            return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Admin endpoint: Seed parametric catalog
+    /// Attempts to load from ShipD dataset, falls back to demo data
+    /// </summary>
+    [HttpPost("admin/seed")]
+    [Authorize] // Require authentication for admin operations
+    public async Task<ActionResult> SeedCatalog(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var existingCount = await _context.ParametricHulls.CountAsync(cancellationToken);
+
+            if (existingCount > 0)
+            {
+                return BadRequest(new
+                {
+                    error = "Catalog already contains data",
+                    existingCount,
+                    message = "Use DELETE /admin/clear first if you want to re-seed"
+                });
+            }
+
+            _logger.LogInformation("[ADMIN] Manual seed requested");
+            await _seeder.SeedParametricCatalogAsync(cancellationToken);
+
+            var newCount = await _context.ParametricHulls.CountAsync(cancellationToken);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Catalog seeded successfully",
+                hullsAdded = newCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[ADMIN] Error seeding catalog");
+            return StatusCode(500, new { error = "Failed to seed catalog", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Admin endpoint: Clear parametric catalog
+    /// </summary>
+    [HttpDelete("admin/clear")]
+    [Authorize] // Require authentication for admin operations
+    public async Task<ActionResult> ClearCatalog(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var count = await _context.ParametricHulls.CountAsync(cancellationToken);
+
+            if (count == 0)
+            {
+                return Ok(new { message = "Catalog is already empty" });
+            }
+
+            _logger.LogWarning("[ADMIN] Clearing {Count} parametric hulls", count);
+
+            await _context.Database.ExecuteSqlRawAsync(
+                "DELETE FROM catalog_ml.parametric_hulls",
+                cancellationToken);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"Cleared {count} hulls from catalog"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[ADMIN] Error clearing catalog");
+            return StatusCode(500, new { error = "Failed to clear catalog", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Admin endpoint: Generate demo data
+    /// </summary>
+    [HttpPost("admin/generate-demo")]
+    [Authorize] // Require authentication for admin operations
+    public async Task<ActionResult> GenerateDemoData(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var existingCount = await _context.ParametricHulls.CountAsync(cancellationToken);
+
+            if (existingCount > 0)
+            {
+                return BadRequest(new
+                {
+                    error = "Catalog already contains data",
+                    existingCount,
+                    message = "Use DELETE /admin/clear first if you want to regenerate"
+                });
+            }
+
+            _logger.LogInformation("[ADMIN] Manual demo data generation requested");
+            var count = await _demoGenerator.GenerateDemoDataAsync(cancellationToken);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Demo data generated successfully",
+                hullsAdded = count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[ADMIN] Error generating demo data");
+            return StatusCode(500, new { error = "Failed to generate demo data", details = ex.Message });
         }
     }
 

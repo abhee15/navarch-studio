@@ -7,22 +7,26 @@ namespace DataService.Services.Catalog;
 
 /// <summary>
 /// Seeds parametric hull catalog from ShipD dataset on startup
+/// Falls back to demo data if dataset not available
 /// </summary>
 public class ParametricCatalogSeeder
 {
     private readonly DataDbContext _context;
     private readonly ParametricCatalogImporter _importer;
+    private readonly ParametricDemoDataGenerator _demoGenerator;
     private readonly IConfiguration _configuration;
     private readonly ILogger<ParametricCatalogSeeder> _logger;
 
     public ParametricCatalogSeeder(
         DataDbContext context,
         ParametricCatalogImporter importer,
+        ParametricDemoDataGenerator demoGenerator,
         IConfiguration configuration,
         ILogger<ParametricCatalogSeeder> logger)
     {
         _context = context;
         _importer = importer;
+        _demoGenerator = demoGenerator;
         _configuration = configuration;
         _logger = logger;
     }
@@ -57,8 +61,11 @@ public class ParametricCatalogSeeder
             if (!Directory.Exists(dataset1Path))
             {
                 _logger.LogWarning(
-                    "[SEED] ShipD dataset not found at {Path}. Skipping parametric catalog seeding.",
+                    "[SEED] ShipD dataset not found at {Path}. Using demo data instead.",
                     dataset1Path);
+
+                // Fallback to demo data for testing/development
+                await _demoGenerator.GenerateDemoDataAsync(cancellationToken);
                 return;
             }
 
