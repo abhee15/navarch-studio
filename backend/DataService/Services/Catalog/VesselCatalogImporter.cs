@@ -76,7 +76,7 @@ public class VesselCatalogImporter
                         HullGeometryFile = string.IsNullOrWhiteSpace(record.HullGeometryFile) ||
                                           record.HullGeometryFile == "None"
                                           ? null : record.HullGeometryFile,
-                        ResistanceCurve = record.ResistanceCurve,  // Already JSON string
+                        ResistanceCurve = SanitizeJsonField(record.ResistanceCurve),
                         IsSystemData = true,  // These are system-seeded vessels
                         CreatedBy = null,  // System data
                         CreatedAt = DateTime.UtcNow,
@@ -219,6 +219,25 @@ public class VesselCatalogImporter
             return Math.Min(cb / cp.Value, 1.0m);
 
         return null;
+    }
+
+    private string? SanitizeJsonField(string? jsonString)
+    {
+        // Return null for empty/whitespace strings
+        if (string.IsNullOrWhiteSpace(jsonString))
+            return null;
+
+        // Validate that it's valid JSON
+        try
+        {
+            using var doc = JsonDocument.Parse(jsonString);
+            return jsonString;  // Valid JSON, return as-is
+        }
+        catch
+        {
+            // Invalid JSON, return null instead of throwing
+            return null;
+        }
     }
 }
 
