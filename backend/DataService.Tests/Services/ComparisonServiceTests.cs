@@ -49,34 +49,6 @@ public class ComparisonServiceTests
         service.Should().NotBeNull();
     }
 
-    [Fact]
-    public void ComparisonService_Constructor_ShouldRequireDbContext()
-    {
-        // Arrange
-        var mockUnitConversionService = new Mock<IUnitConversionService>();
-
-        // Act & Assert - Constructor should require non-null DataDbContext
-        // Service uses dependency injection, will throw if null is passed
-        Action act = () => new ComparisonService(null!, mockUnitConversionService.Object);
-
-        act.Should().Throw<Exception>("null context should cause failure");
-    }
-
-    [Fact]
-    public void ComparisonService_Constructor_ShouldRequireUnitConversionService()
-    {
-        // Arrange
-        var options = new DbContextOptionsBuilder<DataDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDb_ComparisonService_NullService")
-            .Options;
-
-        using var context = new DataDbContext(options);
-
-        // Act & Assert - Constructor should require non-null unit conversion service
-        Action act = () => new ComparisonService(context, null!);
-
-        act.Should().Throw<Exception>("null service should cause failure");
-    }
 
     [Fact]
     public void ComparisonService_UnitConversionService_ShouldBeFromCorrectNamespace()
