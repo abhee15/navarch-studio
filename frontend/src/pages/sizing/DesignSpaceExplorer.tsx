@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppHeader } from "../../components/AppHeader";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
-import { Home, Play, Grid3x3, AlertCircle, Loader2 } from "lucide-react";
+import { Home, Play, Grid3x3, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import {
   ScatterChart,
   Scatter,
@@ -16,7 +16,12 @@ import {
   ZAxis,
   Cell,
 } from "recharts";
-import type { CandidateDesign } from "../../types/sizing";
+import axios from "axios";
+import type {
+  CandidateDesign,
+  DesignSpaceExplorationRequest,
+  ExplorationResultsSummary,
+} from "../../types/sizing";
 
 /**
  * Design Space Exploration
@@ -30,6 +35,10 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [variants, setVariants] = useState<CandidateDesign[]>([]);
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const [explorationStatus, setExplorationStatus] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [paretoFrontIds, setParetoFrontIds] = useState<string[]>([]);
 
   // Parameter ranges for exploration
   const [paramRanges, setParamRanges] = useState({
@@ -42,66 +51,106 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
   });
 
   /**
-   * Generate design variants by sweeping parameter space
+   * Generate design variants by sweeping parameter space using real backend API
    */
   const generateVariants = async () => {
     if (!missionId) return;
 
     setIsGenerating(true);
-    const newVariants: CandidateDesign[] = [];
+    setError(null);
+    setExplorationStatus("Submitting exploration request...");
 
-    // Sweep Lpp and Beam
-    const lppStep = (paramRanges.lppMax - paramRanges.lppMin) / (paramRanges.lppSteps - 1);
-    const beamStep = (paramRanges.beamMax - paramRanges.beamMin) / (paramRanges.beamSteps - 1);
+    try {
+      // Step 1: Start exploration
+      const request: DesignSpaceExplorationRequest = {
+        missionCaseId: missionId,
+        ranges: {
+          lppMinM: paramRanges.lppMin,
+          lppMaxM: paramRanges.lppMax,
+          lppSteps: paramRanges.lppSteps,
+          beamMinM: paramRanges.beamMin,
+          beamMaxM: paramRanges.beamMax,
+          beamSteps: paramRanges.beamSteps,
+          draftSteps: 1, // Keep draft fixed for now
+          speedSteps: 1, // Keep speed fixed for now
+          cbSteps: 1, // Keep Cb fixed for now
+        },
+        mode: "first_principles",
+        maxVariants: 100,
+      };
 
-    for (let i = 0; i < paramRanges.lppSteps; i++) {
-      for (let j = 0; j < paramRanges.beamSteps; j++) {
-        const lpp = paramRanges.lppMin + i * lppStep;
-        const beam = paramRanges.beamMin + j * beamStep;
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5002";
 
-        // Create a variant (in real app, this would call backend API)
-        // For now, simulate with mock data
-        const variant: CandidateDesign = {
-          id: `variant-${i}-${j}`,
-          sizingRunId: missionId || "",
-          userId: "",
-          tenantId: "",
-          rank: 0,
-          score: 0.5 + Math.random() * 0.5,
-          hullFamily: "Wigley",
-          lppM: lpp,
-          lwlM: lpp * 1.02,
-          loaM: lpp * 1.05,
-          beamM: beam,
-          draftM: beam / 2.5,
-          depthM: beam / 2,
-          dispT: ((lpp * beam * beam) / 2.5) * 0.7,
-          cb: 0.6 + Math.random() * 0.1,
-          cp: 0.75 + Math.random() * 0.05,
-          cwp: 0.8 + Math.random() * 0.05,
-          fn: 0.25 + Math.random() * 0.1,
-          ehpKw: 500 + Math.random() * 500,
-          shpKw: 600 + Math.random() * 600,
-          kbM: (beam / 2.5) * 0.53,
-          lcbPctLpp: -2 + Math.random() * 4,
-          gmEstM: 1 + Math.random() * 2,
-          flagsJson: "[]",
-          isSelected: false,
-          createdAt: new Date().toISOString(),
-        };
+      const startResponse = await axios.post<{
+        batchId: string;
+        totalVariants: number;
+        status: string;
+      }>(`${apiBaseUrl}/api/v1/hull-sizing/exploration/start`, request, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-        newVariants.push(variant);
-      }
+      const { batchId: newBatchId, totalVariants } = startResponse.data;
+      setBatchId(newBatchId);
+      setExplorationStatus(`Generating ${totalVariants} design variants...`);
+
+      // Step 2: Poll for results
+      let attempts = 0;
+      const maxAttempts = 60; // 5 minutes max (5s intervals)
+      const pollInterval = 5000; // 5 seconds
+
+      const pollResults = async (): Promise<void> => {
+        attempts++;
+
+        if (attempts > maxAttempts) {
+          throw new Error("Exploration timed out after 5 minutes");
+        }
+
+        const resultsResponse = await axios.get<ExplorationResultsSummary>(
+          `${apiBaseUrl}/api/v1/hull-sizing/exploration/results/${newBatchId}`
+        );
+
+        const results = resultsResponse.data;
+
+        setExplorationStatus(
+          `Generated ${results.completedVariants}/${results.totalVariants} variants...`
+        );
+
+        if (results.status === "completed") {
+          // Success!
+          setVariants(results.candidates);
+          setParetoFrontIds(results.paretoAnalysis?.paretoFrontIds || []);
+          setExplorationStatus(`✓ Completed: ${results.candidates.length} designs generated`);
+          setIsGenerating(false);
+        } else if (results.status === "not_found") {
+          throw new Error("Exploration batch not found");
+        } else {
+          // Still running, poll again
+          setTimeout(pollResults, pollInterval);
+        }
+      };
+
+      await pollResults();
+    } catch (err: unknown) {
+      console.error("Exploration error:", err);
+      const error = err as { response?: { data?: { error?: string } }; message?: string };
+      setError(error.response?.data?.error || error.message || "Failed to generate variants");
+      setExplorationStatus("Error");
+      setIsGenerating(false);
     }
-
-    setVariants(newVariants);
-    setIsGenerating(false);
   };
 
   /**
-   * Get color based on score (green = high, red = low)
+   * Get color based on whether design is on Pareto front or score
    */
-  const getScoreColor = (score: number) => {
+  const getDesignColor = (candidateId: string, score: number) => {
+    // Highlight Pareto front designs in gold
+    if (paretoFrontIds.includes(candidateId)) {
+      return "#FFD700"; // Gold for Pareto front
+    }
+
+    // Otherwise color by score
     if (score > 0.8) return "hsl(var(--accent))"; // Green
     if (score > 0.6) return "hsl(var(--primary))"; // Blue
     return "hsl(var(--destructive))"; // Red
@@ -124,15 +173,39 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
           {/* Header */}
           <div className="bg-card border border-border rounded-lg p-6">
             <div className="flex items-start justify-between">
-              <div>
+              <div className="flex-1">
                 <h1 className="text-2xl font-bold text-foreground mb-2">
                   Design Space Exploration
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-3">
                   Generate multiple hull variants by sweeping parameter ranges. Visualize trade-offs
                   and identify Pareto-optimal designs.
                 </p>
+
+                {/* Status Message */}
+                {explorationStatus && (
+                  <div className="flex items-center gap-2 text-sm">
+                    {isGenerating ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    ) : error ? (
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-accent" />
+                    )}
+                    <span className={error ? "text-destructive" : "text-muted-foreground"}>
+                      {explorationStatus}
+                    </span>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {error && (
+                  <div className="mt-2 p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+                    {error}
+                  </div>
+                )}
               </div>
+
               <Button
                 onClick={generateVariants}
                 disabled={isGenerating}
@@ -308,7 +381,10 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
                       />
                       <Scatter name="Variants" data={variants}>
                         {variants.map((variant, index) => (
-                          <Cell key={`cell-${index}`} fill={getScoreColor(variant.score)} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={getDesignColor(variant.id, variant.score)}
+                          />
                         ))}
                       </Scatter>
                     </ScatterChart>
@@ -363,7 +439,10 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
                       />
                       <Scatter name="Design Space" data={variants}>
                         {variants.map((variant, index) => (
-                          <Cell key={`cell-${index}`} fill={getScoreColor(variant.score)} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={getDesignColor(variant.id, variant.score)}
+                          />
                         ))}
                       </Scatter>
                     </ScatterChart>
@@ -372,7 +451,16 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
               </div>
 
               {/* Legend */}
-              <div className="mt-4 flex items-center justify-center gap-6 text-xs">
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-6 text-xs">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: "#FFD700" }}
+                  ></div>
+                  <span className="text-muted-foreground font-semibold">
+                    Pareto Front ({paretoFrontIds.length})
+                  </span>
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full bg-accent"></div>
                   <span className="text-muted-foreground">High Score (&gt;0.8)</span>
@@ -388,9 +476,91 @@ export const DesignSpaceExplorer: React.FC = observer(() => {
               </div>
 
               <p className="mt-4 text-xs text-muted-foreground text-center">
-                Bubble size indicates relative score. Look for Pareto front (lower-left in Power vs
-                Displacement).
+                Bubble size indicates relative score. Gold markers indicate Pareto-optimal designs
+                (not dominated in displacement AND power).
               </p>
+            </div>
+          )}
+
+          {/* Results Table */}
+          {variants.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Design Variants Summary ({variants.length} designs)
+                </h3>
+                {batchId && (
+                  <div className="text-xs text-muted-foreground">Batch ID: {batchId}</div>
+                )}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-border">
+                    <tr className="text-left">
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">#</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Family</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Lpp (m)</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Beam (m)</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Draft (m)</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Disp (t)</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Cb</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Fn</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">EHP (kW)</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Score</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {variants.slice(0, 20).map((variant, idx) => {
+                      const isPareto = paretoFrontIds.includes(variant.id);
+                      return (
+                        <tr
+                          key={variant.id}
+                          className="hover:bg-accent/5 cursor-pointer transition-colors"
+                          onClick={() => navigate(`/sizing/candidate/${variant.id}`)}
+                        >
+                          <td className="py-2 pr-4 text-muted-foreground">{idx + 1}</td>
+                          <td className="py-2 pr-4 font-medium">{variant.hullFamily}</td>
+                          <td className="py-2 pr-4">{variant.lppM.toFixed(1)}</td>
+                          <td className="py-2 pr-4">{variant.beamM.toFixed(1)}</td>
+                          <td className="py-2 pr-4">{variant.draftM.toFixed(2)}</td>
+                          <td className="py-2 pr-4">{variant.dispT.toFixed(0)}</td>
+                          <td className="py-2 pr-4">{variant.cb.toFixed(3)}</td>
+                          <td className="py-2 pr-4">{variant.fn.toFixed(3)}</td>
+                          <td className="py-2 pr-4">{variant.ehpKw?.toFixed(0) || "N/A"}</td>
+                          <td className="py-2 pr-4">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-xs ${
+                                variant.score > 0.8
+                                  ? "bg-accent/20 text-accent-foreground"
+                                  : variant.score > 0.6
+                                    ? "bg-primary/20 text-primary-foreground"
+                                    : "bg-destructive/20 text-destructive-foreground"
+                              }`}
+                            >
+                              {variant.score.toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-4">
+                            {isPareto && (
+                              <span className="text-xs font-semibold" style={{ color: "#FFD700" }}>
+                                ★ Pareto
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {variants.length > 20 && (
+                <p className="mt-3 text-xs text-muted-foreground text-center">
+                  Showing first 20 of {variants.length} designs. Click any row to view details.
+                </p>
+              )}
             </div>
           )}
 

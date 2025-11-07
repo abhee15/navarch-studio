@@ -157,6 +157,10 @@ try
     builder.Services.AddScoped<HullSizingService.Services.ICandidateDesignService, HullSizingService.Services.CandidateDesignService>();
     Log.Information("Candidate design service registered");
 
+    // Design Space Exploration Service
+    builder.Services.AddScoped<HullSizingService.Services.IDesignSpaceExplorationService, HullSizingService.Services.DesignSpaceExplorationService>();
+    Log.Information("Design space exploration service registered");
+
     // Hull Family Service
     builder.Services.AddScoped<HullSizingService.Services.IHullFamilyService, HullSizingService.Services.HullFamilyService>();
     Log.Information("Hull family service registered");

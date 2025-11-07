@@ -165,3 +165,60 @@ export interface SizingWorkspaceState {
   viewMode: "3d" | "2d" | "table";
   locksEnabled: SizingLocksDto;
 }
+
+// Design Space Exploration Types
+export interface ParameterRanges {
+  lppMinM?: number;
+  lppMaxM?: number;
+  lppSteps: number;
+  beamMinM?: number;
+  beamMaxM?: number;
+  beamSteps: number;
+  draftMinM?: number;
+  draftMaxM?: number;
+  draftSteps: number;
+  speedMinKn?: number;
+  speedMaxKn?: number;
+  speedSteps: number;
+  cbMin?: number;
+  cbMax?: number;
+  cbSteps: number;
+}
+
+export interface DesignSpaceExplorationRequest {
+  missionCaseId: string;
+  ranges: ParameterRanges;
+  mode?: string;
+  hullFamily?: string;
+  maxVariants?: number;
+}
+
+export interface DesignSpaceExplorationResponse {
+  batchId: string;
+  sizingRunIds: string[];
+  totalVariants: number;
+  status: string;
+  computeTimeMs?: number;
+}
+
+export interface ObjectiveStats {
+  min: number;
+  max: number;
+  mean: number;
+  stdDev: number;
+}
+
+export interface ParetoAnalysis {
+  paretoFrontIds: string[];
+  objectiveStatistics: Record<string, ObjectiveStats>;
+}
+
+export interface ExplorationResultsSummary {
+  batchId: string;
+  totalVariants: number;
+  completedVariants: number;
+  failedVariants: number;
+  status: string;
+  candidates: CandidateDesign[];
+  paretoAnalysis?: ParetoAnalysis;
+}
