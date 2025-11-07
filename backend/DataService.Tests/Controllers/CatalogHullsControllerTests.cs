@@ -151,7 +151,7 @@ public class CatalogHullsControllerTests : IDisposable
     {
         // Arrange
         var userId = Guid.NewGuid();
-        
+
         // Create a benchmark hull for cloning (CloneHull queries BenchmarkCases, not CatalogVesselsReal)
         var benchmarkHull = new BenchmarkCase
         {
@@ -165,7 +165,7 @@ public class CatalogHullsControllerTests : IDisposable
         };
         _context.BenchmarkCases.Add(benchmarkHull);
         _context.SaveChanges();
-        
+
         var expectedVessel = new Vessel
         {
             Id = Guid.NewGuid(),
