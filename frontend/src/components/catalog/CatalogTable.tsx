@@ -16,12 +16,14 @@ import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 interface CatalogTableProps {
   data: CatalogHullListItem[];
   onRowClick?: (hull: CatalogHullListItem) => void;
+  onSelectionChange?: (selectedHulls: CatalogHullListItem[]) => void;
   isLoading?: boolean;
 }
 
 export const CatalogTable: React.FC<CatalogTableProps> = ({
   data,
   onRowClick,
+  onSelectionChange,
   isLoading = false,
 }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -53,6 +55,13 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
     },
     enableRowSelection: true,
   });
+
+  // Notify parent of selection changes
+  React.useEffect(() => {
+    const selectedRows = table.getSelectedRowModel().rows;
+    const selectedHulls = selectedRows.map((row) => row.original);
+    onSelectionChange?.(selectedHulls);
+  }, [rowSelection, onSelectionChange]);
 
   if (isLoading) {
     return (
@@ -165,7 +174,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                   onClick={() => onRowClick?.(row.original)}
                   className={`
                     transition-all duration-150
-                    hover:bg-gray-50 dark:hover:bg-gray-800 
+                    hover:bg-gray-50 dark:hover:bg-gray-800
                     hover:border-l-4 hover:border-l-blue-500
                     cursor-pointer
                     ${isSelected ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500" : ""}
@@ -224,4 +233,3 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
     </div>
   );
 };
-

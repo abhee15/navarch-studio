@@ -1,3 +1,4 @@
+import React from "react";
 import { createColumnHelper } from "@tanstack/react-table";
 import { CatalogHullListItem } from "../../types/catalog";
 import { DataQualityBadge } from "./DataQualityBadge";
@@ -10,16 +11,25 @@ export const catalogColumns = [
   columnHelper.display({
     id: "select",
     size: 40,
-    header: ({ table }) => (
-      <input
-        type="checkbox"
-        checked={table.getIsAllRowsSelected()}
-        indeterminate={table.getIsSomeRowsSelected()}
-        onChange={table.getToggleAllRowsSelectedHandler()}
-        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        aria-label="Select all vessels"
-      />
-    ),
+    header: ({ table }) => {
+      const checkboxRef = React.useRef<HTMLInputElement>(null);
+      React.useEffect(() => {
+        if (checkboxRef.current) {
+          checkboxRef.current.indeterminate = table.getIsSomeRowsSelected();
+        }
+      }, [table.getIsSomeRowsSelected()]);
+
+      return (
+        <input
+          ref={checkboxRef}
+          type="checkbox"
+          checked={table.getIsAllRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          aria-label="Select all vessels"
+        />
+      );
+    },
     cell: ({ row }) => (
       <input
         type="checkbox"
@@ -169,11 +179,11 @@ export const catalogColumns = [
     id: "actions",
     size: 80,
     header: "",
-    cell: ({ row }) => (
+    cell: () => (
       <button
         onClick={(e) => {
           e.stopPropagation();
-          // This will be handled by the parent component
+          // This will be handled by the parent component (row click)
         }}
         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
       >
