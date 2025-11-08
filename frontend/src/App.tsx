@@ -14,6 +14,7 @@ import { SeakeepingWorkspace } from "./pages/seakeeping/SeakeepingWorkspace";
 import { BenchmarksList } from "./pages/benchmarks/BenchmarksList";
 import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
 import { CatalogBrowser } from "./pages/catalog/CatalogBrowser";
+import { CatalogBrowserV2 } from "./pages/catalog/CatalogBrowserV2";
 import { HullDetailPage } from "./pages/catalog/HullDetailPage";
 import { MLHullBrowser } from "./pages/catalog/MLHullBrowser";
 import { UnifiedCatalogBrowser } from "./pages/catalog/UnifiedCatalogBrowser";
@@ -210,6 +211,14 @@ export const App: React.FC = observer(() => (
                   element={
                     <ProtectedRoute>
                       <UnifiedCatalogBrowser />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/catalog/v2"
+                  element={
+                    <ProtectedRoute>
+                      <CatalogBrowserV2 />
                     </ProtectedRoute>
                   }
                 />
