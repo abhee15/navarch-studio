@@ -394,3 +394,58 @@ If after checking all three layers you still can't resolve:
 - [Terraform Debugging](./terraform.md#debugging-terraform-managed-infrastructure)
 - [.NET Cloud Debugging](./dotnet.md#debugging-net-applications-in-cloud)
 - [React Debugging](./react-typescript.md#debugging-frontend-issues)
+- [Testing Strategy](../temp/FINAL_TESTING_STRATEGY.md)
+- [Coding Conventions](../temp/CODING_CONVENTIONS.md)
+
+---
+
+## Testing & Quality Assurance
+
+### Comprehensive Testing Framework
+
+**Manual Test Suite** (trigger when ready):
+- **Location:** `.github/workflows/comprehensive-tests.yml`
+- **Trigger:** GitHub Actions → "Comprehensive Test Suite" → Run workflow
+- **Duration:** ~40 minutes
+- **Tests:** 260+ (unit, integration, E2E, architectural, performance, security)
+
+**Architectural Tests** (convention enforcement):
+- **Location:** `backend/Shared.Tests/Architecture/ArchitectureTests.cs`
+- **Run:** `dotnet test --filter "Category=Architecture"`
+- **Enforces:** API versioning, error handling, unit handling, logging, naming, async patterns
+
+**Local Quick Checks** (before major commits):
+```bash
+# Backend (2 min)
+cd backend && dotnet format && dotnet test --filter "Category=Architecture"
+
+# Frontend (2 min)  
+cd frontend && npm run lint && npm test
+```
+
+### Coding Conventions (Automatically Enforced)
+
+**API Versioning:**
+- All controllers MUST have `[ApiVersion("1.0")]`
+- All routes MUST use `api/v{version:apiVersion}/[controller]`
+
+**Error Handling:**
+- POST endpoints MUST have `[ProducesResponseType(400)]`
+- GET endpoints with `id` MUST have `[ProducesResponseType(404)]`
+- All async methods MUST have `CancellationToken` parameter
+
+**Unit Handling:**
+- Dimension properties MUST have `[Convertible("QuantityType")]`
+- Unit-aware DTOs MUST inherit from `UnitAwareDto`
+
+**Logging:**
+- All controllers/services MUST have `ILogger<T>` field
+- Use structured logging: `_logger.LogInformation("Message: {Param}", param)`
+
+**Naming:**
+- Controllers MUST end with "Controller"
+- DTOs MUST end with "Dto"
+- Service interfaces MUST start with "I"
+- Async methods MUST end with "Async"
+
+**See:** `temp/CODING_CONVENTIONS.md` for complete guidelines

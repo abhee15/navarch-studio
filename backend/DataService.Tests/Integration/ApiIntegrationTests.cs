@@ -158,4 +158,3 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
         json.RootElement.TryGetProperty("waterDensitySalt", out _).Should().BeTrue();
     }
 }
-

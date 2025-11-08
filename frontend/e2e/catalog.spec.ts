@@ -202,4 +202,3 @@ test.describe('Comparison Workspace', () => {
     ).toBeVisible({ timeout: 3000 });
   });
 });
-

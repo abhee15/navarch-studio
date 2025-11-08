@@ -50,8 +50,8 @@ jobs:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'unit' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'unit' ||
       github.event_name == 'schedule'
     strategy:
       fail-fast: false
@@ -107,12 +107,9 @@ jobs:
     name: Frontend Unit Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'unit' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'unit' ||
       github.event_name == 'schedule'
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -125,15 +122,17 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Build unit-conversion package
+        working-directory: ./packages/unit-conversion/typescript
         run: |
-          cd ../packages/unit-conversion/typescript
           npm ci
           npm run build
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: Run unit tests with coverage
+        working-directory: ./frontend
         run: npm test -- --coverage --watchAll=false --ci
 
       - name: Upload test results
@@ -159,8 +158,8 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'integration' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'integration' ||
       github.event_name == 'schedule'
     services:
       postgres:
@@ -214,8 +213,8 @@ jobs:
     name: API Contract Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'integration' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'integration' ||
       github.event_name == 'schedule'
     steps:
       - name: Checkout code
@@ -244,7 +243,7 @@ jobs:
       - name: Test API endpoints (smoke tests)
         run: |
           echo "Testing API endpoints..."
-          
+
           # Test vessels endpoint (should return 401 without auth)
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.get-api-url.outputs.api_url }}/api/v1/hydrostatics/vessels)
           if [ "$STATUS" != "401" ]; then
@@ -268,8 +267,8 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'e2e' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'e2e' ||
       github.event_name == 'schedule'
     strategy:
       fail-fast: false
@@ -284,7 +283,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Build unit-conversion package
+        working-directory: ./packages/unit-conversion/typescript
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install frontend dependencies
         working-directory: ./frontend
         run: npm ci
 
@@ -306,12 +311,12 @@ jobs:
           S3_BUCKET=$(aws s3api list-buckets \
             --query "Buckets[?contains(Name, '-${{ env.ENVIRONMENT }}-frontend')].Name | [0]" \
             --output text)
-          
+
           # Get CloudFront domain
           CF_DOMAIN=$(aws cloudfront list-distributions \
             --query "DistributionList.Items[?Origins.Items[?contains(DomainName, '$S3_BUCKET')]].DomainName | [0]" \
             --output text)
-          
+
           echo "app_url=https://$CF_DOMAIN" >> $GITHUB_OUTPUT
 
       - name: Wait for app to be ready
@@ -365,8 +370,8 @@ jobs:
     name: Algorithm Performance Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'performance' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'performance' ||
       github.event_name == 'schedule'
     steps:
       - name: Checkout code
@@ -380,7 +385,7 @@ jobs:
       - name: Run performance benchmarks
         run: |
           echo "Running algorithm performance benchmarks..."
-          
+
           # Run tests with performance category
           dotnet test backend/DataService.Tests \
             --filter Category=Performance \
@@ -399,8 +404,8 @@ jobs:
     name: API Load Tests
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'performance' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'performance' ||
       github.event_name == 'schedule'
     steps:
       - name: Checkout code
@@ -490,8 +495,8 @@ jobs:
     name: Security Scans
     runs-on: ubuntu-latest
     if: |
-      github.event.inputs.test_suite == 'all' || 
-      github.event.inputs.test_suite == 'security' || 
+      github.event.inputs.test_suite == 'all' ||
+      github.event.inputs.test_suite == 'security' ||
       github.event_name == 'schedule'
     steps:
       - name: Checkout code
@@ -689,4 +694,3 @@ jobs:
       #           }
       #         ]
       #       }
-

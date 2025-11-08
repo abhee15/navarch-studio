@@ -92,10 +92,10 @@ test.describe('Hydrostatics Workflow', () => {
 
     // Create a simple CSV file in memory (mock upload)
     // Note: In a real test, you'd prepare a CSV file
-    const csvContent = `Station,WL0,WL1,WL2
-0,0,5,8
-1,2,6,9
-2,4,7,10`;
+    // const csvContent = `Station,WL0,WL1,WL2
+    // 0,0,5,8
+    // 1,2,6,9
+    // 2,4,7,10`;
 
     // Upload the file (this is a simplified example)
     // In practice, you'd use page.setInputFiles() with a file path
@@ -188,4 +188,3 @@ test.describe('Hydrostatics Workflow', () => {
     expect(download.suggestedFilename()).toMatch(/\.pdf$/);
   });
 });
-
