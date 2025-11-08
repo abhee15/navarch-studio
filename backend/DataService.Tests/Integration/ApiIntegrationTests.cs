@@ -11,15 +11,15 @@ namespace DataService.Tests.Integration;
 
 /// <summary>
 /// Integration tests for DataService API endpoints
-/// Tests full request/response cycles with database
+/// Tests full request/response cycles with in-memory database
 /// </summary>
 [Trait("Category", "Integration")]
-public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class ApiIntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly CustomWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public ApiIntegrationTests(WebApplicationFactory<Program> factory)
+    public ApiIntegrationTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
         _client = _factory.CreateClient();
@@ -77,7 +77,7 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task Benchmarks_ReturnsListOfBenchmarks()
     {
         // Act
-        var response = await _client.GetAsync("/api/v1/benchmarks");
+        var response = await _client.GetAsync("/api/v1/benchmarks/cases");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
