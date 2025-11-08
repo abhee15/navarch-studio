@@ -21,7 +21,11 @@ interface FilterPanelProps {
 const HULL_TYPES = ["Container", "Tanker", "Naval", "Template"];
 const STATUSES = ["Complete", "Partial", "Minimal", "Missing Geometry"];
 
-export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFiltersChange, totalResults }) => {
+export const FilterPanel: React.FC<FilterPanelProps> = ({
+  filters,
+  onFiltersChange,
+  totalResults,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localSearchText, setLocalSearchText] = useState(filters.searchText);
 
@@ -33,7 +37,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFiltersChan
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [localSearchText]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSearchText]); // Intentionally omit filters to avoid infinite loop
 
   const handleHullTypeToggle = (type: string) => {
     const newTypes = filters.hullTypes.includes(type)
@@ -92,7 +97,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFiltersChan
               </button>
             )}
           </div>
-          <Button variant="outline" onClick={() => setIsExpanded(!isExpanded)} className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-2"
+          >
             <Filter className="h-4 w-4" />
             Filters
             {hasActiveFilters && (
@@ -100,7 +109,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFiltersChan
                 {filters.hullTypes.length + filters.statuses.length}
               </span>
             )}
-            <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            />
           </Button>
         </div>
 

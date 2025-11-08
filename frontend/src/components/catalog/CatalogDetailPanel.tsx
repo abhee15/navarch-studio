@@ -23,10 +23,7 @@ export const CatalogDetailPanel: React.FC<CatalogDetailPanelProps> = ({
   return (
     <>
       {/* Backdrop (mobile only) */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={onClose} />
 
       {/* Panel */}
       <div
@@ -39,9 +36,7 @@ export const CatalogDetailPanel: React.FC<CatalogDetailPanelProps> = ({
       >
         {/* Header */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Vessel Details
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Vessel Details</h2>
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -55,12 +50,8 @@ export const CatalogDetailPanel: React.FC<CatalogDetailPanelProps> = ({
         <div className="px-6 py-6 space-y-6">
           {/* Title & Slug */}
           <div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {hull.title}
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">
-              {hull.slug}
-            </p>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{hull.title}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{hull.slug}</p>
           </div>
 
           {/* Description */}
@@ -83,9 +74,7 @@ export const CatalogDetailPanel: React.FC<CatalogDetailPanelProps> = ({
             <div className="grid grid-cols-2 gap-4">
               {hull.lpp != null && (
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Length (Lpp)
-                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Length (Lpp)</div>
                   <div className="text-base font-semibold text-gray-900 dark:text-white">
                     {hull.lpp.toFixed(2)} m
                   </div>

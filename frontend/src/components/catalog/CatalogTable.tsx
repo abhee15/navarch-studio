@@ -61,7 +61,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
     const selectedRows = table.getSelectedRowModel().rows;
     const selectedHulls = selectedRows.map((row) => row.original);
     onSelectionChange?.(selectedHulls);
-  }, [rowSelection, onSelectionChange]);
+  }, [rowSelection, table, onSelectionChange]);
 
   if (isLoading) {
     return (
@@ -78,12 +78,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="text-gray-400 dark:text-gray-500 mb-4">
-          <svg
-            className="h-16 w-16 mx-auto"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -92,9 +87,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          No vessels found
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No vessels found</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Try adjusting your filters or search terms
         </p>

@@ -1,10 +1,10 @@
-using Xunit;
-using Moq;
-using FluentAssertions;
-using DataService.Services.Seakeeping;
-using DataService.Services.Hydrostatics;
 using DataService.Data;
+using DataService.Services.Hydrostatics;
+using DataService.Services.Seakeeping;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace DataService.Tests.Services.Seakeeping;
 
@@ -93,3 +93,4 @@ public class StripTheoryEngineTests
         );
     }
 }
+

@@ -1,9 +1,9 @@
-using Xunit;
-using FluentAssertions;
 using DataService.Services.Seakeeping;
-using NavArch.Shared.DTOs;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using NavArch.Shared.DTOs;
+using Xunit;
 
 namespace DataService.Tests.Services.Seakeeping;
 
@@ -117,3 +117,4 @@ public class WaveSpectrumServiceTests
         );
     }
 }
+

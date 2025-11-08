@@ -1,8 +1,8 @@
-using Xunit;
-using FluentAssertions;
 using DataService.Services.Seakeeping;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace DataService.Tests.Services.Seakeeping;
 
@@ -105,3 +105,4 @@ public class ExceedanceCalculatorTests
         result[threshold].Should().BeApproximately(expectedProb, 0.01);
     }
 }
+

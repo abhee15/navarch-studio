@@ -28,7 +28,7 @@ export const RaoSetupPanel = observer(() => {
         motionModes: ["heave", "pitch", "roll"],
       });
       toast.success("RAO calculation complete");
-    } catch (err) {
+    } catch {
       toast.error("RAO calculation failed");
     }
   };
