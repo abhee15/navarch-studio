@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NavArch.Shared.Models;
 using Shared.Models;
 
 namespace DataService.Data;
@@ -54,6 +55,10 @@ public class DataDbContext : DbContext
     public DbSet<EngineCurve> EngineCurves => Set<EngineCurve>();
     public DbSet<EnginePoint> EnginePoints => Set<EnginePoint>();
     public DbSet<SeaState> SeaStates => Set<SeaState>();
+
+    // Seakeeping entities
+    public DbSet<RaoResult> RaoResults => Set<RaoResult>();
+    public DbSet<MotionResponse> MotionResponses => Set<MotionResponse>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -479,6 +484,57 @@ public class DataDbContext : DbContext
             entity.Property(e => e.WindDirection).HasColumnType("decimal(6,2)");
             entity.Property(e => e.WaterDepth).HasColumnType("decimal(10,3)");
             entity.HasIndex(e => e.VesselId);
+        });
+
+        // RaoResult configuration
+        modelBuilder.Entity<RaoResult>(entity =>
+        {
+            entity.ToTable("rao_results");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasIndex(e => e.VesselId);
+            entity.HasIndex(e => e.LoadcaseId);
+            entity.HasQueryFilter(e => e.DeletedAt == null); // Global soft delete filter
+
+            entity.HasOne(e => e.Vessel)
+                .WithMany()
+                .HasForeignKey(e => e.VesselId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Loadcase)
+                .WithMany()
+                .HasForeignKey(e => e.LoadcaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // MotionResponse configuration
+        modelBuilder.Entity<MotionResponse>(entity =>
+        {
+            entity.ToTable("motion_responses");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SeaStateHs).HasColumnType("decimal(8,3)");
+            entity.Property(e => e.SeaStateTp).HasColumnType("decimal(8,3)");
+            entity.Property(e => e.SeaStateHeading).HasColumnType("decimal(6,2)");
+            entity.Property(e => e.SeaStateSpectrum).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.SeaStateGamma).HasColumnType("decimal(6,3)");
+            entity.Property(e => e.SignificantHeave).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.SignificantPitch).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.SignificantRoll).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.HeaveMeanPeriod).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.PitchMeanPeriod).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.RollMeanPeriod).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasIndex(e => e.RaoResultId);
+            entity.HasQueryFilter(e => e.DeletedAt == null); // Global soft delete filter
+
+            entity.HasOne(e => e.RaoResult)
+                .WithMany()
+                .HasForeignKey(e => e.RaoResultId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // CatalogPropellerSeries configuration

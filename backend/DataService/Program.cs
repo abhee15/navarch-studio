@@ -202,6 +202,14 @@ try
     builder.Services.AddScoped<DataService.Services.Resistance.SpeedDraftMatrixService>();
     builder.Services.AddScoped<DataService.Services.Resistance.IDefaultValuesService, DataService.Services.Resistance.DefaultValuesService>();
 
+    // Seakeeping services
+    builder.Services.AddScoped<DataService.Services.Seakeeping.IStripTheoryEngine, DataService.Services.Seakeeping.StripTheoryEngine>();
+    builder.Services.AddScoped<DataService.Services.Seakeeping.IRaoCalculator, DataService.Services.Seakeeping.RaoCalculator>();
+    builder.Services.AddScoped<DataService.Services.Seakeeping.IWaveSpectrumService, DataService.Services.Seakeeping.WaveSpectrumService>();
+    builder.Services.AddScoped<DataService.Services.Seakeeping.IMotionAnalysisService, DataService.Services.Seakeeping.MotionAnalysisService>();
+    builder.Services.AddScoped<DataService.Services.Seakeeping.IExceedanceCalculator, DataService.Services.Seakeeping.ExceedanceCalculator>();
+    builder.Services.AddScoped<DataService.Services.Seakeeping.ISeakeepingExportService, DataService.Services.Seakeeping.SeakeepingExportService>();
+
     // Comparison service
     builder.Services.AddScoped<ComparisonService>();
 

@@ -353,20 +353,20 @@ try
             }
 
             // Seed reference data
-            Console.WriteLine("[SEED] Starting seed data import...");
-            Log.Information("[SEED] Starting seed data import...");
+            Console.WriteLine("[SEED] Starting reference data import...");
+            Log.Information("[SEED] Starting reference data import...");
 
             try
             {
-                var seeder = new HullSizingService.Data.Seeds.CsvDataSeeder(dbContext, scope.ServiceProvider.GetRequiredService<ILogger<HullSizingService.Data.Seeds.CsvDataSeeder>>());
+                var seeder = new HullSizingService.Data.Seeds.ReferenceDataSeeder(dbContext, scope.ServiceProvider.GetRequiredService<ILogger<HullSizingService.Data.Seeds.ReferenceDataSeeder>>());
                 await seeder.SeedAllAsync();
-                Console.WriteLine("[SEED] Seed data import complete");
-                Log.Information("[SEED] Seed data import complete");
+                Console.WriteLine("[SEED] Reference data import complete");
+                Log.Information("[SEED] Reference data import complete");
             }
             catch (Exception seedEx)
             {
                 Console.WriteLine($"[SEED] ERROR: {seedEx.Message}");
-                Log.Error(seedEx, "[SEED] Seed data import failed");
+                Log.Error(seedEx, "[SEED] Reference data import failed");
             }
         }
         catch (Exception ex)

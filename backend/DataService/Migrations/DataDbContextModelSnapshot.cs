@@ -23,6 +23,151 @@ namespace DataService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("NavArch.Shared.Models.MotionResponse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<double>("HeaveMeanPeriod")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("heave_mean_period");
+
+                    b.Property<double>("PitchMeanPeriod")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("pitch_mean_period");
+
+                    b.Property<Guid>("RaoResultId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rao_result_id");
+
+                    b.Property<double>("RollMeanPeriod")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("roll_mean_period");
+
+                    b.Property<double>("SeaStateGamma")
+                        .HasColumnType("decimal(6,3)")
+                        .HasColumnName("sea_state_gamma");
+
+                    b.Property<double>("SeaStateHeading")
+                        .HasColumnType("decimal(6,2)")
+                        .HasColumnName("sea_state_heading");
+
+                    b.Property<double>("SeaStateHs")
+                        .HasColumnType("decimal(8,3)")
+                        .HasColumnName("sea_state_hs");
+
+                    b.Property<string>("SeaStateSpectrum")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("sea_state_spectrum");
+
+                    b.Property<double>("SeaStateTp")
+                        .HasColumnType("decimal(8,3)")
+                        .HasColumnName("sea_state_tp");
+
+                    b.Property<double>("SignificantHeave")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("significant_heave");
+
+                    b.Property<double>("SignificantPitch")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("significant_pitch");
+
+                    b.Property<double>("SignificantRoll")
+                        .HasColumnType("decimal(10,4)")
+                        .HasColumnName("significant_roll");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("Id")
+                        .HasName("pk_motion_responses");
+
+                    b.HasIndex("RaoResultId")
+                        .HasDatabaseName("ix_motion_responses_rao_result_id");
+
+                    b.ToTable("motion_responses", "data");
+                });
+
+            modelBuilder.Entity("NavArch.Shared.Models.RaoResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<double[]>("Frequency")
+                        .IsRequired()
+                        .HasColumnType("double precision[]")
+                        .HasColumnName("frequency");
+
+                    b.Property<double[]>("HeaveRao")
+                        .IsRequired()
+                        .HasColumnType("double precision[]")
+                        .HasColumnName("heave_rao");
+
+                    b.Property<Guid>("LoadcaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("loadcase_id");
+
+                    b.Property<double[]>("PitchRao")
+                        .IsRequired()
+                        .HasColumnType("double precision[]")
+                        .HasColumnName("pitch_rao");
+
+                    b.Property<double[]>("RollRao")
+                        .IsRequired()
+                        .HasColumnType("double precision[]")
+                        .HasColumnName("roll_rao");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid>("VesselId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vessel_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_rao_results");
+
+                    b.HasIndex("LoadcaseId")
+                        .HasDatabaseName("ix_rao_results_loadcase_id");
+
+                    b.HasIndex("VesselId")
+                        .HasDatabaseName("ix_rao_results_vessel_id");
+
+                    b.ToTable("rao_results", "data");
+                });
+
             modelBuilder.Entity("Shared.Models.BenchmarkAsset", b =>
                 {
                     b.Property<Guid>("Id")
@@ -334,6 +479,12 @@ namespace DataService.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_benchmark_test_conditions");
+
+                    b.HasIndex("HullName")
+                        .HasDatabaseName("ix_benchmark_test_conditions_hull_name");
+
+                    b.HasIndex("TestType")
+                        .HasDatabaseName("ix_benchmark_test_conditions_test_type");
 
                     b.ToTable("benchmark_test_conditions", "catalog_real");
                 });
@@ -691,6 +842,15 @@ namespace DataService.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_vessels_real");
+
+                    b.HasIndex("VesselId")
+                        .HasDatabaseName("ix_vessels_real_vessel_id");
+
+                    b.HasIndex("VesselType")
+                        .HasDatabaseName("ix_vessels_real_vessel_type");
+
+                    b.HasIndex("LppM", "BeamM", "Cb")
+                        .HasDatabaseName("ix_vessels_real_lpp_m_beam_m_cb");
 
                     b.ToTable("vessels_real", "catalog_user");
                 });
@@ -1411,6 +1571,19 @@ namespace DataService.Migrations
                     b.HasKey("Id")
                         .HasName("pk_parametric_hulls");
 
+                    b.HasIndex("DatasetSource")
+                        .HasDatabaseName("ix_parametric_hulls_dataset_source");
+
+                    b.HasIndex("HullId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_parametric_hulls_hull_id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_parametric_hulls_is_active");
+
+                    b.HasIndex("VolumeNorm", "LcbNorm")
+                        .HasDatabaseName("ix_parametric_hulls_volume_norm_lcb_norm");
+
                     b.ToTable("parametric_hulls", "catalog_ml");
                 });
 
@@ -1761,6 +1934,39 @@ namespace DataService.Migrations
                         .HasDatabaseName("ix_waterlines_vessel_id_waterline_index");
 
                     b.ToTable("waterlines", "data");
+                });
+
+            modelBuilder.Entity("NavArch.Shared.Models.MotionResponse", b =>
+                {
+                    b.HasOne("NavArch.Shared.Models.RaoResult", "RaoResult")
+                        .WithMany()
+                        .HasForeignKey("RaoResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_motion_responses_rao_results_rao_result_id");
+
+                    b.Navigation("RaoResult");
+                });
+
+            modelBuilder.Entity("NavArch.Shared.Models.RaoResult", b =>
+                {
+                    b.HasOne("Shared.Models.Loadcase", "Loadcase")
+                        .WithMany()
+                        .HasForeignKey("LoadcaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_rao_results_loadcases_loadcase_id");
+
+                    b.HasOne("Shared.Models.Vessel", "Vessel")
+                        .WithMany()
+                        .HasForeignKey("VesselId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_rao_results_vessels_vessel_id");
+
+                    b.Navigation("Loadcase");
+
+                    b.Navigation("Vessel");
                 });
 
             modelBuilder.Entity("Shared.Models.BenchmarkAsset", b =>

@@ -1,0 +1,692 @@
+name: Comprehensive Test Suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - e2e
+          - performance
+          - security
+      environment:
+        description: 'Environment to test against'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+      enable_video_recording:
+        description: 'Record videos for E2E tests (slower but useful for debugging)'
+        required: false
+        default: true
+        type: boolean
+      parallel_execution:
+        description: 'Run tests in parallel where possible'
+        required: false
+        default: true
+        type: boolean
+
+  # Optional: Run nightly
+  schedule:
+    - cron: '0 2 * * *'  # 2 AM UTC daily
+
+env:
+  AWS_REGION: us-east-1
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+
+jobs:
+  # ============================================================================
+  # 1. UNIT TESTS
+  # ============================================================================
+  backend-unit-tests:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'unit' || 
+      github.event_name == 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - IdentityService
+          - ApiGateway
+          - DataService
+          - HullSizingService
+          - Shared
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore backend/${{ matrix.service }}.Tests
+        continue-on-error: true
+
+      - name: Build test project
+        run: dotnet build backend/${{ matrix.service }}.Tests --no-restore
+        continue-on-error: true
+
+      - name: Run unit tests
+        run: |
+          dotnet test backend/${{ matrix.service }}.Tests \
+            --no-build \
+            --verbosity normal \
+            --logger "trx;LogFileName=${{ matrix.service }}.trx" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./test-results/${{ matrix.service }}
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-unit-test-results-${{ matrix.service }}
+          path: ./test-results/${{ matrix.service }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./test-results/${{ matrix.service }}/*/coverage.cobertura.xml
+          flags: ${{ matrix.service }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  frontend-unit-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'unit' || 
+      github.event_name == 'schedule'
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build unit-conversion package
+        run: |
+          cd ../packages/unit-conversion/typescript
+          npm ci
+          npm run build
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm test -- --coverage --watchAll=false --ci
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-unit-test-results
+          path: |
+            frontend/coverage/
+            frontend/junit.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ============================================================================
+  # 2. INTEGRATION TESTS
+  # ============================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'integration' || 
+      github.event_name == 'schedule'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: navarch_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - IdentityService
+          - DataService
+          - HullSizingService
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run integration tests
+        run: |
+          dotnet test backend/${{ matrix.service }}.Tests \
+            --filter Category=Integration \
+            --verbosity normal \
+            --logger "trx;LogFileName=${{ matrix.service }}-integration.trx" \
+            --results-directory ./test-results/integration/${{ matrix.service }}
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=navarch_test;Username=testuser;Password=testpass"
+        continue-on-error: true
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results-${{ matrix.service }}
+          path: ./test-results/integration/${{ matrix.service }}
+
+  api-contract-tests:
+    name: API Contract Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'integration' || 
+      github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get API Gateway URL
+        id: get-api-url
+        run: |
+          API_URL=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceUrl | [0]" \
+            --output text)
+          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Test API health endpoints
+        run: |
+          echo "Testing API Gateway health..."
+          curl -f ${{ steps.get-api-url.outputs.api_url }}/health || exit 1
+
+      - name: Test API endpoints (smoke tests)
+        run: |
+          echo "Testing API endpoints..."
+          
+          # Test vessels endpoint (should return 401 without auth)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.get-api-url.outputs.api_url }}/api/v1/hydrostatics/vessels)
+          if [ "$STATUS" != "401" ]; then
+            echo "❌ Unexpected status code: $STATUS (expected 401)"
+            exit 1
+          fi
+          echo "✅ Vessels endpoint returns 401 (expected)"
+
+          # Test catalog endpoints (public)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.get-api-url.outputs.api_url }}/api/v1/catalog/hulls)
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Catalog hulls endpoint failed: $STATUS"
+            exit 1
+          fi
+          echo "✅ Catalog hulls endpoint returns 200"
+
+  # ============================================================================
+  # 3. END-TO-END TESTS
+  # ============================================================================
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'e2e' || 
+      github.event_name == 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]  # Shard E2E tests for parallel execution
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get CloudFront URL
+        id: get-urls
+        run: |
+          # Get S3 bucket name
+          S3_BUCKET=$(aws s3api list-buckets \
+            --query "Buckets[?contains(Name, '-${{ env.ENVIRONMENT }}-frontend')].Name | [0]" \
+            --output text)
+          
+          # Get CloudFront domain
+          CF_DOMAIN=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Origins.Items[?contains(DomainName, '$S3_BUCKET')]].DomainName | [0]" \
+            --output text)
+          
+          echo "app_url=https://$CF_DOMAIN" >> $GITHUB_OUTPUT
+
+      - name: Wait for app to be ready
+        run: |
+          echo "Waiting for app at ${{ steps.get-urls.outputs.app_url }}..."
+          for i in {1..30}; do
+            if curl -sf "${{ steps.get-urls.outputs.app_url }}" > /dev/null; then
+              echo "✅ App is ready"
+              exit 0
+            fi
+            echo "⏳ Waiting... ($i/30)"
+            sleep 10
+          done
+          echo "❌ App did not become ready in time"
+          exit 1
+
+      - name: Run E2E tests (shard ${{ matrix.shard }}/3)
+        working-directory: ./frontend
+        run: |
+          npx playwright test \
+            --shard=${{ matrix.shard }}/3 \
+            --reporter=html,junit \
+            --output=./e2e-results \
+            ${{ github.event.inputs.enable_video_recording == 'true' && '--video=on-first-retry' || '--video=off' }}
+        env:
+          BASE_URL: ${{ steps.get-urls.outputs.app_url }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results-shard-${{ matrix.shard }}
+          path: |
+            frontend/playwright-report/
+            frontend/e2e-results/
+            frontend/test-results/
+
+      - name: Upload E2E videos on failure
+        uses: actions/upload-artifact@v4
+        if: failure() && github.event.inputs.enable_video_recording == 'true'
+        with:
+          name: e2e-videos-shard-${{ matrix.shard }}
+          path: frontend/e2e-results/**/*.webm
+
+  # ============================================================================
+  # 4. PERFORMANCE TESTS
+  # ============================================================================
+  algorithm-performance:
+    name: Algorithm Performance Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'performance' || 
+      github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run performance benchmarks
+        run: |
+          echo "Running algorithm performance benchmarks..."
+          
+          # Run tests with performance category
+          dotnet test backend/DataService.Tests \
+            --filter Category=Performance \
+            --logger "trx;LogFileName=performance.trx" \
+            --results-directory ./test-results/performance
+        continue-on-error: true
+
+      - name: Upload performance test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: ./test-results/performance
+
+  api-load-tests:
+    name: API Load Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'performance' || 
+      github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get API Gateway URL
+        id: get-api-url
+        run: |
+          API_URL=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?contains(ServiceName, '${{ env.ENVIRONMENT }}-api-gateway')].ServiceUrl | [0]" \
+            --output text)
+          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Create k6 load test script
+        run: |
+          cat > load-test.js << 'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
+
+          export const options = {
+            stages: [
+              { duration: '30s', target: 10 },  // Ramp up to 10 users
+              { duration: '1m', target: 10 },   // Stay at 10 users
+              { duration: '30s', target: 20 },  // Ramp up to 20 users
+              { duration: '1m', target: 20 },   // Stay at 20 users
+              { duration: '30s', target: 0 },   // Ramp down to 0 users
+            ],
+            thresholds: {
+              http_req_duration: ['p(95)<500'], // 95% of requests must complete below 500ms
+              http_req_failed: ['rate<0.1'],    // Error rate must be below 10%
+            },
+          };
+
+          const BASE_URL = __ENV.API_URL;
+
+          export default function () {
+            // Test health endpoint
+            let res = http.get(`${BASE_URL}/health`);
+            check(res, {
+              'health endpoint status is 200': (r) => r.status === 200,
+            });
+
+            // Test catalog endpoint (public)
+            res = http.get(`${BASE_URL}/api/v1/catalog/hulls?page=1&pageSize=10`);
+            check(res, {
+              'catalog endpoint status is 200': (r) => r.status === 200,
+              'catalog response time < 500ms': (r) => r.timings.duration < 500,
+            });
+
+            sleep(1);
+          }
+          EOF
+
+      - name: Run k6 load test
+        run: |
+          k6 run load-test.js \
+            --out json=load-test-results.json \
+            -e API_URL=${{ steps.get-api-url.outputs.api_url }}
+        continue-on-error: true
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results
+          path: load-test-results.json
+
+  # ============================================================================
+  # 5. SECURITY TESTS
+  # ============================================================================
+  security-scans:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.test_suite == 'all' || 
+      github.event.inputs.test_suite == 'security' || 
+      github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Setup Node.js for npm audit
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run npm audit (frontend)
+        working-directory: ./frontend
+        run: |
+          npm audit --audit-level=moderate --json > npm-audit-results.json || true
+          npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Upload npm audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-results
+          path: frontend/npm-audit-results.json
+
+      - name: Setup .NET for vulnerability check
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Check .NET packages for vulnerabilities
+        run: |
+          dotnet list backend/navarch-studio.sln package --vulnerable --include-transitive > dotnet-vulnerable-packages.txt || true
+          cat dotnet-vulnerable-packages.txt
+        continue-on-error: true
+
+      - name: Upload .NET vulnerability results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dotnet-vulnerability-results
+          path: dotnet-vulnerable-packages.txt
+
+  # ============================================================================
+  # 6. TEST REPORT AGGREGATION
+  # ============================================================================
+  generate-report:
+    name: Generate Test Report
+    runs-on: ubuntu-latest
+    needs:
+      - backend-unit-tests
+      - frontend-unit-tests
+      - integration-tests
+      - api-contract-tests
+      - e2e-tests
+      - algorithm-performance
+      - api-load-tests
+      - security-scans
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./test-artifacts
+
+      - name: Generate summary report
+        run: |
+          cat > test-report.md << 'EOF'
+          # Comprehensive Test Report
+
+          **Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          **Trigger:** ${{ github.event_name }}
+          **Environment:** ${{ env.ENVIRONMENT }}
+          **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## Test Results Summary
+
+          | Test Suite | Status |
+          |------------|--------|
+          | Backend Unit Tests | ${{ needs.backend-unit-tests.result }} |
+          | Frontend Unit Tests | ${{ needs.frontend-unit-tests.result }} |
+          | Integration Tests | ${{ needs.integration-tests.result }} |
+          | API Contract Tests | ${{ needs.api-contract-tests.result }} |
+          | E2E Tests | ${{ needs.e2e-tests.result }} |
+          | Performance Tests | ${{ needs.algorithm-performance.result }} |
+          | Load Tests | ${{ needs.api-load-tests.result }} |
+          | Security Scans | ${{ needs.security-scans.result }} |
+
+          ---
+
+          ## Artifacts
+
+          All test results, coverage reports, videos, and logs have been uploaded as artifacts.
+
+          **Download artifacts:**
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+
+          ## Next Steps
+
+          - Review failed tests
+          - Check coverage reports
+          - Analyze performance metrics
+          - Address security vulnerabilities
+
+          EOF
+
+          cat test-report.md
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-test-report
+          path: test-report.md
+
+      - name: Comment on PR (if triggered from PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('test-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+  # ============================================================================
+  # 7. NOTIFICATIONS
+  # ============================================================================
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs:
+      - generate-report
+    if: always()
+    steps:
+      - name: Determine overall status
+        id: status
+        run: |
+          if [ "${{ needs.generate-report.result }}" == "success" ]; then
+            echo "status=✅ SUCCESS" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          else
+            echo "status=❌ FAILURE" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send notification (placeholder)
+        run: |
+          echo "Test run completed with status: ${{ steps.status.outputs.status }}"
+          echo ""
+          echo "View results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo ""
+          echo "TODO: Configure Slack/email notifications by:"
+          echo "  1. Adding SLACK_WEBHOOK_URL secret"
+          echo "  2. Uncommenting Slack notification step below"
+
+      # Uncomment and configure when ready
+      # - name: Send Slack notification
+      #   uses: slackapi/slack-github-action@v1
+      #   with:
+      #     webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     payload: |
+      #       {
+      #         "text": "Comprehensive Test Suite: ${{ steps.status.outputs.status }}",
+      #         "blocks": [
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*Comprehensive Test Suite*\n*Status:* ${{ steps.status.outputs.status }}\n*Environment:* ${{ env.ENVIRONMENT }}\n*Triggered by:* ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Results>"
+      #             }
+      #           }
+      #         ]
+      #       }
+
