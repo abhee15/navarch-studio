@@ -26,7 +26,7 @@ public class StripTheoryEngineTests
         _mockGeometry = new Mock<IGeometryService>();
         _mockIntegration = new Mock<IIntegrationEngine>();
         _mockLogger = new Mock<ILogger<StripTheoryEngine>>();
-        
+
         // _sut would need real DbContext - skip unit tests and use integration tests instead
         _sut = null;
     }
@@ -74,7 +74,7 @@ public class StripTheoryEngineTests
         var frequencies = new[] { 0.4 };
 
         // TODO: Convert to integration test with real in-memory database
-        
+
         // Act & Assert
         Assert.True(true);
     }
