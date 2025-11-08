@@ -13,14 +13,14 @@ const ChatMessage: React.FC<{ message: ChatMessageType }> = ({ message }) => {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-lg p-3 ${
+        className={`max-w-[85%] rounded-lg p-2.5 ${
           isUser ? "bg-primary text-primary-foreground" : "bg-card border border-border"
         }`}
       >
         {isUser ? (
-          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          <p className="text-sm leading-snug whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <div className="prose prose-sm max-w-none dark:prose-invert">
+          <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-headings:my-2">
             <ReactMarkdown
               components={{
                 code(props) {
@@ -42,7 +42,7 @@ const ChatMessage: React.FC<{ message: ChatMessageType }> = ({ message }) => {
         )}
 
         <p
-          className={`text-xs mt-2 pt-2 border-t ${isUser ? "border-primary-foreground/30 text-primary-foreground/70" : "border-border text-muted-foreground"}`}
+          className={`text-xs mt-1.5 pt-1.5 border-t ${isUser ? "border-primary-foreground/30 text-primary-foreground/70" : "border-border text-muted-foreground"}`}
         >
           {message.timestamp.toLocaleTimeString()}
         </p>
@@ -83,39 +83,19 @@ export const ChatTab: React.FC = observer(() => {
     }
   };
 
-  // Context-aware quick suggestions
+  // Context-aware quick suggestions (reduced to 2 per context)
   const getQuickSuggestions = () => {
     switch (copilotStore.currentContext) {
       case "hull-sizing":
-        return [
-          "Design a 500 TEU container ship",
-          "Bulk carrier for 80,000 tonnes",
-          "Luxury yacht 50 meters",
-        ];
+        return ["Design a 500 TEU container ship", "Bulk carrier for 80,000 tonnes"];
       case "hydrostatics":
-        return [
-          "Explain GMt and why it matters",
-          "What's a good KB for my vessel?",
-          "How to improve stability",
-        ];
+        return ["Explain GMt and why it matters", "How to improve stability"];
       case "resistance":
-        return [
-          "Optimize my vessel's speed",
-          "Explain Holtrop-Mennen method",
-          "How to reduce fuel consumption",
-        ];
+        return ["Optimize my vessel's speed", "How to reduce fuel consumption"];
       case "catalog":
-        return [
-          "Find similar hulls",
-          "Typical Cb for container ships",
-          "Compare bulk carrier forms",
-        ];
+        return ["Find similar hulls", "Typical Cb for container ships"];
       default:
-        return [
-          "Design a 500 TEU container ship",
-          "Explain stability calculations",
-          "Find similar hulls in catalog",
-        ];
+        return ["Design a 500 TEU container ship", "Explain stability calculations"];
     }
   };
 
@@ -177,12 +157,12 @@ export const ChatTab: React.FC = observer(() => {
 
         {/* Quick Actions */}
         <div className="flex items-center justify-between mt-2">
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap">
             {quickSuggestions.map((suggestion, idx) => (
               <button
                 key={idx}
                 onClick={() => setInput(suggestion)}
-                className="text-xs px-2 py-1 bg-accent hover:bg-accent/80 rounded text-accent-foreground transition-colors"
+                className="text-xs px-1.5 py-0.5 bg-accent hover:bg-accent/80 rounded text-accent-foreground transition-colors"
               >
                 {suggestion}
               </button>
@@ -191,10 +171,11 @@ export const ChatTab: React.FC = observer(() => {
 
           <button
             onClick={() => copilotStore.clearChat()}
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors flex-shrink-0 ml-2"
+            title="Clear chat"
           >
             <RotateCcw className="w-3 h-3" />
-            Clear
+            <span className="hidden sm:inline">Clear</span>
           </button>
         </div>
       </div>

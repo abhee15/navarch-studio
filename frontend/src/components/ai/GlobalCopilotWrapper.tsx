@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useLocation } from "react-router-dom";
 import { useStore } from "../../stores";
@@ -8,9 +8,25 @@ export const GlobalCopilotWrapper: React.FC<{ children: React.ReactNode }> = obs
   ({ children }) => {
     const location = useLocation();
     const { copilotStore } = useStore();
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    // Mobile detection - hide AI below 768px
+    useEffect(() => {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     // Determine if we should show AI on this page
     const shouldShowAI = () => {
+      // Hide on mobile devices
+      if (isMobile) {
+        return false;
+      }
+
       const path = location.pathname;
 
       // EXCLUDE: Login, signup, dashboard, and listing pages
@@ -18,7 +34,7 @@ export const GlobalCopilotWrapper: React.FC<{ children: React.ReactNode }> = obs
         "/login",
         "/signup",
         "/dashboard",
-        "/sizing/missions", // Mission list page
+        "/sizing/wizard", // Wizard page - users build briefs from missions page
         "/hydrostatics/vessels", // Vessels list
         "/resistance/vessels", // Vessels list
         "/catalog/ml-hulls", // Just listing
@@ -32,7 +48,7 @@ export const GlobalCopilotWrapper: React.FC<{ children: React.ReactNode }> = obs
 
       // INCLUDE: Actual workspace/detail pages only
       const workspacePatterns = [
-        /\/sizing\/wizard/,
+        /\/sizing\/missions/, // Mission list page - users build briefs here
         /\/sizing\/mission\/new/,
         /\/sizing\/runs\/[^/]+/,
         /\/sizing\/workspace\/[^/]+/,
@@ -87,11 +103,24 @@ export const GlobalCopilotWrapper: React.FC<{ children: React.ReactNode }> = obs
       return () => document.removeEventListener("keydown", handleKeyDown);
     }, [copilotStore]);
 
+    const showAI = shouldShowAI();
+    const isPanelOpen = showAI && copilotStore.panelPosition !== "hidden";
+
     return (
-      <>
-        {children}
-        {shouldShowAI() && <CopilotPanel />}
-      </>
+      <div className="flex h-screen overflow-hidden">
+        {/* Main content area */}
+        <div
+          className="flex-1 overflow-auto transition-all duration-300 ease-in-out"
+          style={{
+            marginRight: isPanelOpen ? `${copilotStore.panelWidth}px` : "0px",
+          }}
+        >
+          {children}
+        </div>
+
+        {/* AI Panel */}
+        {showAI && <CopilotPanel />}
+      </div>
     );
   }
 );
