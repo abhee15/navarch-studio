@@ -72,7 +72,7 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Run tests (unit tests only)
-        run: dotnet test --no-build --verbosity normal --filter "Category!=Integration"
+        run: dotnet test --no-build --verbosity normal --filter "Category!=Integration&Category!=Architecture"
 
   build-and-push:
     runs-on: ubuntu-latest

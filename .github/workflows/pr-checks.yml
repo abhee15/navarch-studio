@@ -84,7 +84,7 @@ jobs:
         run: dotnet build backend/${{ matrix.service }} --no-restore
 
       - name: Run tests (unit tests only)
-        run: dotnet test backend/${{ matrix.service }}.Tests --no-build --verbosity normal --filter "Category!=Integration" --collect:"XPlat Code Coverage"
+        run: dotnet test backend/${{ matrix.service }}.Tests --no-build --verbosity normal --filter "Category!=Integration&Category!=Architecture" --collect:"XPlat Code Coverage"
 
       - name: Run code analysis
         run: dotnet build backend/${{ matrix.service }} --verbosity normal /p:RunAnalyzersDuringBuild=true

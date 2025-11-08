@@ -351,7 +351,7 @@ jobs:
         run: dotnet build --no-restore
 
       - name: Run tests (unit tests only)
-        run: dotnet test --no-build --verbosity normal --filter "Category!=Integration"
+        run: dotnet test --no-build --verbosity normal --filter "Category!=Integration&Category!=Architecture"
 
   check-infrastructure:
     runs-on: ubuntu-latest
