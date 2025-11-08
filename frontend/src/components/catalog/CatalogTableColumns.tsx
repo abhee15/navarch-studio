@@ -1,29 +1,11 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { CatalogHullListItem } from "../../types/catalog";
 import { DataQualityBadge } from "./DataQualityBadge";
-import { SelectAllCheckbox } from "./SelectAllCheckbox";
 import { Ship, Package, Droplets, Anchor, Ruler } from "lucide-react";
 
 const columnHelper = createColumnHelper<CatalogHullListItem>();
 
 export const catalogColumns = [
-  // Selection checkbox
-  columnHelper.display({
-    id: "select",
-    size: 40,
-    header: ({ table }) => <SelectAllCheckbox table={table} />,
-    cell: ({ row }) => (
-      <input
-        type="checkbox"
-        checked={row.getIsSelected()}
-        onChange={row.getToggleSelectedHandler()}
-        onClick={(e) => e.stopPropagation()} // Prevent row click
-        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        aria-label={`Select ${row.original.title}`}
-      />
-    ),
-  }),
-
   // Title (with icon)
   columnHelper.accessor("title", {
     id: "title",

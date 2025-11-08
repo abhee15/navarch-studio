@@ -10,7 +10,6 @@ import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { CatalogTable } from "../../components/catalog/CatalogTable";
 import { CatalogDetailPanel } from "../../components/catalog/CatalogDetailPanel";
 import { FilterPanel, CatalogFilters } from "../../components/catalog/FilterPanel";
-import { BatchActionBar } from "../../components/catalog/BatchActionBar";
 import { toast } from "react-hot-toast";
 
 // Helper to determine data quality status
@@ -31,7 +30,6 @@ export const CatalogBrowserV2: React.FC = observer(() => {
   const [selectedHull, setSelectedHull] = useState<CatalogHullListItem | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [cloning, setCloning] = useState(false);
-  const [selectedVessels, setSelectedVessels] = useState<CatalogHullListItem[]>([]);
   const [filters, setFilters] = useState<CatalogFilters>({
     searchText: "",
     hullTypes: [],
@@ -96,84 +94,6 @@ export const CatalogBrowserV2: React.FC = observer(() => {
   const handleLogout = async () => {
     await authStore.logout();
     navigate("/login");
-  };
-
-  const handleBatchClone = async () => {
-    const vesselsToClone = selectedVessels.filter((v) => !v.geometryMissing);
-    if (vesselsToClone.length === 0) {
-      toast.error("No vessels with geometry selected");
-      return;
-    }
-
-    setCloning(true);
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const vessel of vesselsToClone) {
-      try {
-        await cloneCatalogHull(vessel.id, {
-          vesselName: `${vessel.title} (Cloned)`,
-        });
-        successCount++;
-      } catch (error) {
-        console.error(`Failed to clone ${vessel.title}:`, error);
-        errorCount++;
-      }
-    }
-
-    setCloning(false);
-    setSelectedVessels([]);
-
-    if (successCount > 0) {
-      toast.success(`Successfully cloned ${successCount} vessel${successCount > 1 ? "s" : ""}`);
-      setTimeout(() => navigate("/hydrostatics/vessels"), 1000);
-    }
-    if (errorCount > 0) {
-      toast.error(`Failed to clone ${errorCount} vessel${errorCount > 1 ? "s" : ""}`);
-    }
-  };
-
-  const handleBatchCompare = () => {
-    if (selectedVessels.length < 2) {
-      toast.error("Please select at least 2 vessels to compare");
-      return;
-    }
-    // TODO: Implement comparison view
-    toast.success(`Comparing ${selectedVessels.length} vessels (feature coming soon)`);
-  };
-
-  const handleBatchExport = () => {
-    if (selectedVessels.length === 0) {
-      toast.error("No vessels selected");
-      return;
-    }
-
-    // Export as JSON
-    const exportData = selectedVessels.map((v) => ({
-      id: v.id,
-      title: v.title,
-      slug: v.slug,
-      description: v.description,
-      hullType: v.hullType,
-      lpp: v.lpp,
-      beam: v.beam,
-      draft: v.draft,
-      cb: v.cb,
-      geometryMissing: v.geometryMissing,
-      units: v.units,
-    }));
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `catalog-vessels-${new Date().toISOString().split("T")[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success(`Exported ${selectedVessels.length} vessels to JSON`);
   };
 
   // Filter hulls based on active filters
@@ -265,22 +185,8 @@ export const CatalogBrowserV2: React.FC = observer(() => {
           onFiltersChange={setFilters}
           totalResults={filteredHulls.length}
         />
-        <CatalogTable
-          data={filteredHulls}
-          onRowClick={handleRowClick}
-          onSelectionChange={setSelectedVessels}
-          isLoading={loading}
-        />
+        <CatalogTable data={filteredHulls} onRowClick={handleRowClick} isLoading={loading} />
       </main>
-
-      {/* Batch Action Bar */}
-      <BatchActionBar
-        selectedVessels={selectedVessels}
-        onClear={() => setSelectedVessels([])}
-        onCloneAll={handleBatchClone}
-        onCompare={handleBatchCompare}
-        onExport={handleBatchExport}
-      />
 
       {/* Detail Panel */}
       {selectedHull && (

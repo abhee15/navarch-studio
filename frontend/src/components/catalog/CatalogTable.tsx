@@ -1,14 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
   SortingState,
   ColumnFiltersState,
 } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { CatalogHullListItem } from "../../types/catalog";
 import { catalogColumns } from "./CatalogTableColumns";
 import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
@@ -16,19 +16,16 @@ import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 interface CatalogTableProps {
   data: CatalogHullListItem[];
   onRowClick?: (hull: CatalogHullListItem) => void;
-  onSelectionChange?: (selectedHulls: CatalogHullListItem[]) => void;
   isLoading?: boolean;
 }
 
 export const CatalogTable: React.FC<CatalogTableProps> = ({
   data,
   onRowClick,
-  onSelectionChange,
   isLoading = false,
 }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = useState({});
 
   // Memoize columns for performance
   const columns = useMemo(() => catalogColumns, []);
@@ -39,29 +36,24 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
     state: {
       sorting,
       columnFilters,
-      rowSelection,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 20,
-      },
-    },
-    enableRowSelection: true,
   });
 
-  // Notify parent of selection changes
-  React.useEffect(() => {
-    const selectedRows = table.getSelectedRowModel().rows;
-    const selectedHulls = selectedRows.map((row) => row.original);
-    onSelectionChange?.(selectedHulls);
-  }, [rowSelection, table, onSelectionChange]);
+  // Virtual scrolling setup
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const rows = table.getRowModel().rows;
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 48, // Row height in pixels
+    overscan: 10, // Render 10 extra rows above/below viewport
+  });
 
   if (isLoading) {
     return (
@@ -95,30 +87,20 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
     );
   }
 
-  const selectedCount = Object.keys(rowSelection).length;
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
 
   return (
     <div className="w-full">
-      {/* Selection Info Bar */}
-      {selectedCount > 0 && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
-          <div className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>{selectedCount}</strong> vessel{selectedCount > 1 ? "s" : ""} selected
-          </div>
-          <button
-            onClick={() => setRowSelection({})}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
-          >
-            Clear selection
-          </button>
-        </div>
-      )}
-
-      {/* Table Container */}
-      <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+      {/* Table Container with Virtual Scrolling */}
+      <div
+        ref={tableContainerRef}
+        className="overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm"
+        style={{ height: "calc(100vh - 400px)", minHeight: "400px" }}
+      >
         <table className="w-full text-sm">
-          {/* Header */}
-          <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          {/* Header - Sticky */}
+          <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -156,22 +138,35 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
             ))}
           </thead>
 
-          {/* Body */}
-          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-            {table.getRowModel().rows.map((row) => {
-              const isSelected = row.getIsSelected();
-
+          {/* Body - Virtualized */}
+          <tbody
+            className="bg-white dark:bg-gray-900"
+            style={{
+              height: `${totalSize}px`,
+              position: "relative",
+            }}
+          >
+            {virtualRows.map((virtualRow) => {
+              const row = rows[virtualRow.index];
               return (
                 <tr
                   key={row.id}
                   onClick={() => onRowClick?.(row.original)}
-                  className={`
+                  className="
                     transition-all duration-150
                     hover:bg-gray-50 dark:hover:bg-gray-800
                     hover:border-l-4 hover:border-l-blue-500
                     cursor-pointer
-                    ${isSelected ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500" : ""}
-                  `}
+                    border-b border-gray-200 dark:border-gray-700
+                  "
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-3 text-gray-900 dark:text-white">
@@ -185,43 +180,18 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-4">
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          Showing{" "}
-          <span className="font-medium">
-            {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-          </span>{" "}
-          to{" "}
-          <span className="font-medium">
-            {Math.min(
-              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-              table.getFilteredRowModel().rows.length
-            )}
-          </span>{" "}
-          of <span className="font-medium">{table.getFilteredRowModel().rows.length}</span> vessels
+      {/* Results Count & Scroll Position */}
+      <div className="mt-4 flex items-center justify-between text-sm text-gray-700 dark:text-gray-300">
+        <div>
+          Showing <span className="font-medium">{table.getFilteredRowModel().rows.length}</span>{" "}
+          vessels
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Page <span className="font-medium">{table.getState().pagination.pageIndex + 1}</span> of{" "}
-            <span className="font-medium">{table.getPageCount()}</span>
-          </span>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Next
-          </button>
-        </div>
+        {virtualRows.length > 0 && (
+          <div className="text-gray-500 dark:text-gray-400">
+            Rows {virtualRows[0].index + 1} - {virtualRows[virtualRows.length - 1].index + 1}{" "}
+            visible
+          </div>
+        )}
       </div>
     </div>
   );
