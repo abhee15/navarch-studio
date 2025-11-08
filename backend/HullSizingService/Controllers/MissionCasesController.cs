@@ -90,6 +90,21 @@ public class MissionCasesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("{id}/clone")]
+    public async Task<ActionResult<MissionCaseDto>> Clone(Guid id, CancellationToken ct)
+    {
+        var userIdStr = HttpContext.Items["Claims:Sub"]?.ToString();
+        var userId = Guid.TryParse(userIdStr, out var parsedUserId) ? parsedUserId : Guid.NewGuid();
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
+
+        var result = await _service.CloneAsync(id, userId, tenantId, ct);
+
+        if (result == null)
+            return NotFound(new { error = "Mission case not found" });
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
     {

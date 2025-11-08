@@ -10,8 +10,9 @@ public interface IFirstPrinciplesSolver
 {
     /// <summary>
     /// Generate candidate hull designs from mission requirements
+    /// Returns tuple of (Candidates, Diagnostics)
     /// </summary>
-    Task<List<SolverCandidate>> SolveAsync(SolverRequest request, CancellationToken cancellationToken = default);
+    Task<(List<SolverCandidate> Candidates, SolverDiagnostics Diagnostics)> SolveAsync(SolverRequest request, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

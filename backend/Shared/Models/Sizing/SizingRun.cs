@@ -48,6 +48,12 @@ public class SizingRun
     public string? ErrorMessage { get; set; }
 
     /// <summary>
+    /// Solver diagnostics (JSON) - provides actionable feedback when 0 candidates generated
+    /// Contains failure reasons, suggestions, and technical details
+    /// </summary>
+    public string? DiagnosticsJson { get; set; }
+
+    /// <summary>
     /// Creation timestamp
     /// </summary>
     public DateTime CreatedAt { get; set; }
@@ -64,8 +70,3 @@ public class SizingRun
     /// </summary>
     public ICollection<CandidateDesign> Candidates { get; set; } = new List<CandidateDesign>();
 }
-
-
-
-
-

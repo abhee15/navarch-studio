@@ -5,6 +5,7 @@ import { useStore } from "../../stores";
 import { Footer } from "../../components/Footer";
 import { CandidateCard } from "../../components/sizing/CandidateCard";
 import { ComparisonView } from "../../components/sizing/ComparisonView";
+import { EmptyResultsPanel } from "../../components/sizing/EmptyResultsPanel";
 import { Button } from "../../components/ui/button";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
@@ -113,6 +114,31 @@ export const SizingRunResults: React.FC = observer(() => {
             <div className="mb-6 rounded-lg bg-accent/10 p-4 text-sm text-accent-foreground border border-accent/20">
               Solver completed in {sizingStore.currentRun.computeTimeMs}ms
             </div>
+          )}
+
+          {/* Empty State - No Candidates */}
+          {!sizingStore.isLoading && sizingStore.candidates.length === 0 && (
+            <EmptyResultsPanel
+              diagnostics={sizingStore.currentRun?.diagnostics}
+              onAdjustParameters={async () => {
+                // Navigate back to wizard with the mission case to edit
+                if (sizingStore.currentRun) {
+                  await sizingStore.selectMission(sizingStore.currentRun.missionCaseId);
+                  navigate(`/sizing/wizard`);
+                }
+              }}
+              onCloneBrief={async () => {
+                // Clone the brief and navigate to missions list
+                if (sizingStore.currentRun) {
+                  try {
+                    await sizingStore.cloneMissionCase(sizingStore.currentRun.missionCaseId);
+                    navigate(`/sizing/missions`);
+                  } catch (error) {
+                    console.error("Failed to clone brief:", error);
+                  }
+                }
+              }}
+            />
           )}
 
           {/* Candidates Grid */}

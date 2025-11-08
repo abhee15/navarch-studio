@@ -130,6 +130,7 @@ public class SizingRunService : ISizingRunService
 
             // Route to appropriate solver based on mode
             List<Solver.SolverCandidate> solverCandidates;
+            Solver.SolverDiagnostics? diagnostics = null;
 
             if (dto.Mode == "data_driven_real" && _dataDrivenSolver != null)
             {
@@ -138,12 +139,13 @@ public class SizingRunService : ISizingRunService
                 if (!featureEnabled)
                 {
                     _logger.LogWarning("Data-Driven Real mode requested but feature flag disabled. Falling back to First-Principles.");
-                    solverCandidates = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
+                    (solverCandidates, diagnostics) = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
                 }
                 else
                 {
                     _logger.LogInformation("Using Data-Driven Real-World solver");
                     solverCandidates = await _dataDrivenSolver.SolveAsync(solverRequest, cancellationToken);
+                    // Note: Data-driven solver doesn't return diagnostics yet
                 }
             }
             else if (dto.Mode == "data_driven_ml" && _parametricSolver != null)
@@ -153,19 +155,20 @@ public class SizingRunService : ISizingRunService
                 if (!featureEnabled)
                 {
                     _logger.LogWarning("Data-Driven ML mode requested but feature flag disabled. Falling back to First-Principles.");
-                    solverCandidates = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
+                    (solverCandidates, diagnostics) = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
                 }
                 else
                 {
                     _logger.LogInformation("Using Data-Driven ML/Parametric solver (ShipD dataset)");
                     solverCandidates = await _parametricSolver.SolveAsync(solverRequest, cancellationToken);
+                    // Note: Data-driven solver doesn't return diagnostics yet
                 }
             }
             else
             {
                 // Default: First-Principles mode
                 _logger.LogInformation("Using First-Principles solver");
-                solverCandidates = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
+                (solverCandidates, diagnostics) = await _firstPrinciplesSolver.SolveAsync(solverRequest, cancellationToken);
             }
 
             // Convert solver candidates to database entities
@@ -211,6 +214,14 @@ public class SizingRunService : ISizingRunService
 
             run.Status = "completed";
             run.ComputeTimeMs = (int)sw.ElapsedMilliseconds;
+
+            // Store diagnostics if 0 candidates generated
+            if (candidateEntities.Count == 0 && diagnostics != null)
+            {
+                run.DiagnosticsJson = JsonSerializer.Serialize(diagnostics);
+                _logger.LogWarning("[SIZING_RUN] 0 candidates generated. Diagnostics: {Summary}", diagnostics.GetSummary());
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("[SIZING_RUN] Completed run {RunId} in {ElapsedMs}ms, generated {Count} candidates",
@@ -271,6 +282,37 @@ public class SizingRunService : ISizingRunService
 
     private static SizingRunDto MapToDto(SizingRun entity, int candidateCount)
     {
+        // Deserialize diagnostics if present
+        SolverDiagnosticsDto? diagnosticsDto = null;
+        if (!string.IsNullOrEmpty(entity.DiagnosticsJson))
+        {
+            try
+            {
+                var diagnostics = JsonSerializer.Deserialize<Solver.SolverDiagnostics>(entity.DiagnosticsJson);
+                if (diagnostics != null)
+                {
+                    diagnosticsDto = new SolverDiagnosticsDto
+                    {
+                        TotalFamiliesConsidered = diagnostics.TotalFamiliesConsidered,
+                        FamiliesAfterFnFiltering = diagnostics.FamiliesAfterFnFiltering,
+                        FamiliesAfterHintsFiltering = diagnostics.FamiliesAfterHintsFiltering,
+                        FamiliesFailedClosure = diagnostics.FamiliesFailedClosure,
+                        FailureReasons = diagnostics.FailureReasons,
+                        Suggestions = diagnostics.Suggestions,
+                        TargetDisplacementT = diagnostics.TargetDisplacementT,
+                        EstimatedFroudeNumber = diagnostics.EstimatedFroudeNumber,
+                        MissionType = diagnostics.MissionType,
+                        FailedFamilies = diagnostics.FailedFamilies,
+                        Summary = diagnostics.GetSummary()
+                    };
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore deserialization errors - diagnostics is optional
+            }
+        }
+
         return new SizingRunDto
         {
             Id = entity.Id,
@@ -282,7 +324,8 @@ public class SizingRunService : ISizingRunService
             ComputeTimeMs = entity.ComputeTimeMs,
             ErrorMessage = entity.ErrorMessage,
             CreatedAt = entity.CreatedAt,
-            CandidateCount = candidateCount
+            CandidateCount = candidateCount,
+            Diagnostics = diagnosticsDto
         };
     }
 

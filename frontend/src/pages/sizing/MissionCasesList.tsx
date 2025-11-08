@@ -8,7 +8,7 @@ import { Input } from "../../components/ui/input";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
-import { Ship, Home, Trash2, FileText, Package, Zap, Play, Grid3x3 } from "lucide-react";
+import { Ship, Home, Trash2, FileText, Package, Zap, Play, Grid3x3, Copy } from "lucide-react";
 
 export const MissionCasesList: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -278,6 +278,22 @@ export const MissionCasesList: React.FC = observer(() => {
                     >
                       <Play className="h-3 w-3 mr-2" />
                       Run Solver
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await sizingStore.cloneMissionCase(brief.id);
+                          await sizingStore.loadMissionCases();
+                        } catch (error) {
+                          console.error("Failed to clone:", error);
+                        }
+                      }}
+                      title="Clone this brief"
+                    >
+                      <Copy className="h-3 w-3" />
                     </Button>
                     <Button
                       size="sm"

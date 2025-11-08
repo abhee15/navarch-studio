@@ -522,6 +522,10 @@ namespace HullSizingService.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("DiagnosticsJson")
+                        .HasColumnType("text")
+                        .HasColumnName("diagnostics_json");
+
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text")
                         .HasColumnName("error_message");

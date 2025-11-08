@@ -17,6 +17,27 @@ public record SizingRunDto
 
     // Include candidate count summary
     public int CandidateCount { get; init; }
+
+    // Diagnostics for when 0 candidates are generated
+    public SolverDiagnosticsDto? Diagnostics { get; init; }
+}
+
+/// <summary>
+/// Diagnostics information when solver generates 0 candidates
+/// </summary>
+public record SolverDiagnosticsDto
+{
+    public int TotalFamiliesConsidered { get; init; }
+    public int FamiliesAfterFnFiltering { get; init; }
+    public int FamiliesAfterHintsFiltering { get; init; }
+    public int FamiliesFailedClosure { get; init; }
+    public List<string> FailureReasons { get; init; } = new();
+    public List<string> Suggestions { get; init; } = new();
+    public decimal TargetDisplacementT { get; init; }
+    public decimal? EstimatedFroudeNumber { get; init; }
+    public string? MissionType { get; init; }
+    public Dictionary<string, string> FailedFamilies { get; init; } = new();
+    public string Summary { get; init; } = string.Empty;
 }
 
 /// <summary>
@@ -53,9 +74,3 @@ public record SizingOptionsDto
     public decimal? MaxFn { get; init; }
     public bool IncludeGeometry { get; init; } = false;
 }
-
-
-
-
-
-

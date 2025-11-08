@@ -323,7 +323,7 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
             );
 
             // Run solver
-            var candidates = await _solver.SolveAsync(solverRequest, cancellationToken);
+            var (candidates, diagnostics) = await _solver.SolveAsync(solverRequest, cancellationToken);
 
             if (candidates.Count == 0)
             {
@@ -348,6 +348,7 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
                 }),
                 Status = "completed",
                 ComputeTimeMs = 0,
+                DiagnosticsJson = diagnostics != null ? JsonSerializer.Serialize(diagnostics) : null,
                 CreatedAt = DateTime.UtcNow
             };
 

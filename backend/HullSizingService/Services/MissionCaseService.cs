@@ -107,6 +107,50 @@ public class MissionCaseService : IMissionCaseService
         return MapToDto(missionCase);
     }
 
+    public async Task<MissionCaseDto?> CloneAsync(Guid id, Guid userId, string tenantId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("[MISSION_SERVICE] Cloning mission case {Id}", id);
+
+        var original = await _context.MissionCases
+            .Where(mc => mc.Id == id && mc.TenantId == tenantId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (original == null) return null;
+
+        var clone = new MissionCase
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TenantId = tenantId,
+            Name = $"{original.Name} (Copy)",
+            MissionType = original.MissionType,
+            CargoBasis = original.CargoBasis,
+            CargoValue = original.CargoValue,
+            CargoDensityTPerM3 = original.CargoDensityTPerM3,
+            CargoVolumeM3 = original.CargoVolumeM3,
+            TeuCount = original.TeuCount,
+            ServiceSpeedKn = original.ServiceSpeedKn,
+            SeaMarginPct = original.SeaMarginPct,
+            EnvHsM = original.EnvHsM,
+            EnvTzS = original.EnvTzS,
+            CapLoaM = original.CapLoaM,
+            CapBeamM = original.CapBeamM,
+            CapDraftM = original.CapDraftM,
+            CapAirdraftM = original.CapAirdraftM,
+            EnduranceNm = original.EnduranceNm,
+            Notes = original.Notes,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.MissionCases.Add(clone);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("[MISSION_SERVICE] Cloned mission case {OriginalId} to {CloneId}", id, clone.Id);
+
+        return MapToDto(clone);
+    }
+
     public async Task<bool> DeleteAsync(Guid id, string tenantId, CancellationToken cancellationToken = default)
     {
         var missionCase = await _context.MissionCases

@@ -101,6 +101,26 @@ export class SizingStore {
     }
   }
 
+  async cloneMissionCase(id: string) {
+    this.isLoading = true;
+    this.error = null;
+    try {
+      const clonedMission = await sizingApi.cloneMissionCase(id);
+      runInAction(() => {
+        this.missionCases.push(clonedMission);
+        this.selectedMission = clonedMission;
+        this.isLoading = false;
+      });
+      return clonedMission;
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : "Failed to clone mission case";
+        this.isLoading = false;
+      });
+      throw error;
+    }
+  }
+
   async deleteMissionCase(id: string) {
     this.isLoading = true;
     this.error = null;

@@ -39,17 +39,24 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         _logger = logger;
     }
 
-    public async Task<List<SolverCandidate>> SolveAsync(SolverRequest request, CancellationToken cancellationToken = default)
+    public async Task<(List<SolverCandidate> Candidates, SolverDiagnostics Diagnostics)> SolveAsync(SolverRequest request, CancellationToken cancellationToken = default)
     {
         var mission = request.MissionCase;
         var locks = request.Locks ?? new SizingLocksDto(false, false, false, false, false);
         var options = request.Options ?? new SizingOptionsDto(null, 5, null, null);
+
+        // Initialize diagnostics
+        var diagnostics = new SolverDiagnostics
+        {
+            MissionType = mission.MissionType
+        };
 
         _logger.LogInformation("[SOLVER] Starting first-principles solve for mission {MissionId}, cargo={Cargo}, speed={Speed}kn",
             mission.Id, mission.CargoValue, mission.ServiceSpeedKn);
 
         // Step 1: Convert payload to target displacement
         var targetDisplacementT = await EstimateTargetDisplacementAsync(mission);
+        diagnostics.TargetDisplacementT = targetDisplacementT;
         _logger.LogDebug("[SOLVER] Target displacement: {Disp:F1} tonnes", targetDisplacementT);
 
         // Step 2: Get water properties (cached)
@@ -63,17 +70,30 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             mission.CapBeamM,
             cancellationToken);
 
+        diagnostics.TotalFamiliesConsidered = families.Count;
+        diagnostics.FamiliesAfterFnFiltering = families.Count;
+
         if (families.Count == 0)
         {
             _logger.LogWarning("[SOLVER] No applicable families found for mission type '{Type}'", mission.MissionType);
+            diagnostics.FailureReasons.Add("no_applicable_families");
             families = await _context.HullFamilyPresets.Where(f => f.IsActive).Take(3).ToListAsync(cancellationToken);
+            diagnostics.TotalFamiliesConsidered = families.Count;
+            diagnostics.FamiliesAfterFnFiltering = families.Count;
         }
 
         // Filter by family hints if provided
         if (options.FamilyHints != null && options.FamilyHints.Any())
         {
+            var beforeHints = families.Count;
             families = families.Where(f => options.FamilyHints.Contains(f.Family)).ToList();
+            if (families.Count == 0)
+            {
+                diagnostics.FailureReasons.Add($"family_hints_filtered_all_{beforeHints}_families");
+            }
         }
+
+        diagnostics.FamiliesAfterHintsFiltering = families.Count;
 
         // Limit to max candidates
         families = families.Take(options.MaxCandidates).ToList();
@@ -83,7 +103,8 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         if (families.Count == 0)
         {
             _logger.LogError("[SOLVER] ⚠️ NO HULL FAMILIES AVAILABLE! Check database seeding.");
-            return new List<SolverCandidate>();
+            diagnostics.GenerateSuggestions(mission);
+            return (new List<SolverCandidate>(), diagnostics);
         }
 
         // Step 4: Generate candidates for each family (in parallel)
@@ -100,6 +121,8 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         var allCandidates = await Task.WhenAll(candidateTasks);
         var nullCount = allCandidates.Count(c => c == null);
 
+        diagnostics.FamiliesFailedClosure = nullCount;
+
         if (nullCount > 0)
         {
             _logger.LogWarning("[SOLVER] {NullCount} of {TotalCount} candidates failed to generate (displacement closure failed)",
@@ -111,13 +134,40 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             .Cast<SolverCandidate>()
             .ToList();
 
+        // Collect failure flags from successful candidates to understand constraints
+        foreach (var candidate in candidates)
+        {
+            foreach (var flag in candidate.Flags)
+            {
+                if (!diagnostics.FailureReasons.Contains(flag))
+                {
+                    diagnostics.FailureReasons.Add(flag);
+                }
+            }
+        }
+
         // Step 5: Score and rank candidates
         var scoredCandidates = await ScoreAndRankCandidatesAsync(candidates, mission, cancellationToken);
 
         _logger.LogInformation("[SOLVER] Generated {Count} valid candidates out of {TotalFamilies} families",
             scoredCandidates.Count, families.Count);
 
-        return scoredCandidates;
+        // Generate diagnostics and suggestions if no candidates
+        if (scoredCandidates.Count == 0)
+        {
+            // Estimate Froude number for diagnostics
+            if (targetDisplacementT > 0)
+            {
+                var estimatedLength = (decimal)Math.Pow((double)targetDisplacementT * 0.65, 1.0 / 3.0) * 7.0m; // Rough estimate
+                var speedMs = mission.ServiceSpeedKn * 0.5144m;
+                diagnostics.EstimatedFroudeNumber = speedMs / (decimal)Math.Sqrt((double)estimatedLength * 9.81);
+            }
+
+            diagnostics.GenerateSuggestions(mission);
+            _logger.LogWarning("[SOLVER] No candidates generated. Diagnostics: {Summary}", diagnostics.GetSummary());
+        }
+
+        return (scoredCandidates, diagnostics);
     }
 
     private async Task<SolverCandidate?> GenerateCandidateAsync(
@@ -169,9 +219,10 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
 
             if (!closure.Converged)
             {
-                _logger.LogWarning("[SOLVER] Family '{Family}' failed to converge. Target disp={TargetDisp:F1}t, Fn={Fn:F3}, L/B={LOverB:F2}, B/T={BOverT:F2}, Cb={Cb:F3}",
-                    family.Family, targetDisplacementT, fnTarget, lOverB, bOverT, cb);
-                return null; // Skip this family
+                var failureReason = closure.Flags.Any() ? string.Join(", ", closure.Flags) : "no_convergence";
+                _logger.LogWarning("[SOLVER] Family '{Family}' failed to converge. Reason: {Reason}. Target disp={TargetDisp:F1}t, Fn={Fn:F3}, L/B={LOverB:F2}, B/T={BOverT:F2}, Cb={Cb:F3}",
+                    family.Family, failureReason, targetDisplacementT, fnTarget, lOverB, bOverT, cb);
+                return null; // Skip this family (diagnostics tracked at caller)
             }
 
             // Step 4: Calculate derived dimensions

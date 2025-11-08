@@ -203,7 +203,7 @@ public class DataDrivenParametricSolver
                 );
 
                 // Run First-Principles solver (will use its own initialization, but influenced by mission)
-                var candidates = await _firstPrinciplesSolver.SolveAsync(refinementRequest, cancellationToken);
+                var (candidates, _) = await _firstPrinciplesSolver.SolveAsync(refinementRequest, cancellationToken);
 
                 if (candidates.Any())
                 {
@@ -268,7 +268,7 @@ public class DataDrivenParametricSolver
     {
         _logger.LogInformation("Using First-Principles fallback");
 
-        var candidates = await _firstPrinciplesSolver.SolveAsync(request, cancellationToken);
+        var (candidates, _) = await _firstPrinciplesSolver.SolveAsync(request, cancellationToken);
 
         // Mark as fallback
         return candidates.Select(c =>

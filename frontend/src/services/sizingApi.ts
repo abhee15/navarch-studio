@@ -35,6 +35,11 @@ export const updateMissionCase = async (
   return response.data;
 };
 
+export const cloneMissionCase = async (id: string): Promise<MissionCase> => {
+  const response = await api.post<MissionCase>(`${BASE_PATH}/mission-cases/${id}/clone`);
+  return response.data;
+};
+
 export const deleteMissionCase = async (id: string): Promise<void> => {
   await api.delete(`${BASE_PATH}/mission-cases/${id}`);
 };

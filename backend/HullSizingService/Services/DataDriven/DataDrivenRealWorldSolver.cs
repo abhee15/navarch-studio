@@ -221,7 +221,7 @@ public class DataDrivenRealWorldSolver
 
                 // Run first-principles solver
                 // NOTE: In future, pass scaled dimensions as initial guess to speed up convergence
-                var solverCandidates = await _firstPrinciplesSolver.SolveAsync(
+                var (solverCandidates, _) = await _firstPrinciplesSolver.SolveAsync(
                     solverRequest,
                     cancellationToken);
 
@@ -260,7 +260,7 @@ public class DataDrivenRealWorldSolver
     {
         _logger.LogInformation("Executing First-Principles fallback...");
 
-        var solverCandidates = await _firstPrinciplesSolver.SolveAsync(request, cancellationToken);
+        var (solverCandidates, _) = await _firstPrinciplesSolver.SolveAsync(request, cancellationToken);
 
         // Mark as fallback in flags
         var marked = solverCandidates.Select(c =>

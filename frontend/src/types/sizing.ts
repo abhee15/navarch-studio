@@ -81,6 +81,21 @@ export interface SizingRun {
   errorMessage?: string;
   candidatesCount: number;
   createdAt: string;
+  diagnostics?: SolverDiagnostics;
+}
+
+export interface SolverDiagnostics {
+  totalFamiliesConsidered: number;
+  familiesAfterFnFiltering: number;
+  familiesAfterHintsFiltering: number;
+  familiesFailedClosure: number;
+  failureReasons: string[];
+  suggestions: string[];
+  targetDisplacementT: number;
+  estimatedFroudeNumber?: number;
+  missionType?: string;
+  failedFamilies: Record<string, string>;
+  summary: string;
 }
 
 export interface CandidateDesign {
