@@ -9,3 +9,4 @@ public class OpenAISettings
     public int TimeoutSeconds { get; set; } = 30;
 }
 
+

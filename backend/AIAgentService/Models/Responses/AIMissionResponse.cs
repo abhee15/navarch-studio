@@ -21,3 +21,4 @@ public class AIMissionResponse
     public double Confidence { get; set; }
 }
 
+

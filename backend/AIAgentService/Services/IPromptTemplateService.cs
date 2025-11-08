@@ -8,3 +8,4 @@ public interface IPromptTemplateService
     string GetRefinementPrompt(MissionCaseDto currentMission, string userFeedback);
 }
 
+

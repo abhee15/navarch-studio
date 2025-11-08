@@ -9,4 +9,3 @@ public record ExceedanceAnalysisDto(
 // e.g., { "heave": { 1.0: 0.42, 2.0: 0.15 }, "pitch": { 3.0: 0.38 }, ... }
 // Outer key: motion type, Inner: threshold -> probability
 );
-

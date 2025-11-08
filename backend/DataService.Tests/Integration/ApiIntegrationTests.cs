@@ -53,7 +53,7 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Verify response structure (adjust based on your actual response type)
         var json = JsonDocument.Parse(content);
-        json.RootElement.GetProperty("items").GetArrayLength().Should().BeLessOrEqualTo(pageSize);
+        json.RootElement.GetProperty("items").GetArrayLength().Should().BeLessThanOrEqualTo(pageSize);
     }
 
     [Fact]
@@ -93,10 +93,9 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
         var vesselDto = new VesselDto
         {
             Name = "Test Vessel",
-            LengthOverall = 100,
-            Breadth = 20,
-            Depth = 10,
-            Draft = 5
+            Lpp = 100,
+            Beam = 20,
+            DesignDraft = 5
         };
 
         // Act

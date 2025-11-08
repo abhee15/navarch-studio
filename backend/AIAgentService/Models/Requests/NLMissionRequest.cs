@@ -11,3 +11,4 @@ public class NLMissionRequest
     public string? PreferredUnits { get; set; } = "SI"; // SI or Imperial
 }
 
+

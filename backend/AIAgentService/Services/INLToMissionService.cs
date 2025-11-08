@@ -8,3 +8,4 @@ public interface INLToMissionService
     Task<MissionResult> RefineAsync(Shared.DTOs.Sizing.MissionCaseDto currentMission, string userFeedback, CancellationToken cancellationToken = default);
 }
 
+
