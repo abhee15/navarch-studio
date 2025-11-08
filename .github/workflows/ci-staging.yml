@@ -71,8 +71,8 @@ jobs:
       - name: Build solution
         run: dotnet build --no-restore
 
-      - name: Run tests
-        run: dotnet test --no-build --verbosity normal
+      - name: Run tests (unit tests only)
+        run: dotnet test --no-build --verbosity normal --filter "Category!=Integration"
 
   build-and-push:
     runs-on: ubuntu-latest

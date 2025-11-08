@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace DataService.Tests.Integration;
 
@@ -15,6 +16,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Use Test environment to avoid certain production configurations
+        builder.UseEnvironment("Test");
+
+        // Disable Serilog for tests - use simple console logging instead
+        builder.ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+            logging.AddConsole();
+            logging.SetMinimumLevel(LogLevel.Warning); // Reduce noise in test output
+        });
+
         builder.ConfigureServices(services =>
         {
             // Remove the existing DbContext registration
