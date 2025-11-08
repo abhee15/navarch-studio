@@ -165,7 +165,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().NotBeEmpty("solver should generate candidates");
@@ -179,6 +179,7 @@ public class FirstPrinciplesSolverTests : IDisposable
             c.DisplacementT.Should().BeGreaterThan(0, "Displacement should be positive");
             c.Fn.Should().BeGreaterThan(0, "Froude number should be positive");
         });
+        diagnostics.Should().NotBeNull("diagnostics should always be returned");
     }
 
     [Fact]
@@ -207,7 +208,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().NotBeEmpty();
@@ -215,6 +216,7 @@ public class FirstPrinciplesSolverTests : IDisposable
             "total displacement should be > payload (includes lightship)");
         candidates.First().DisplacementT.Should().BeLessThan(20000m,
             "total displacement should be reasonable (DWT/Δ ratio ~0.65-0.75)");
+        diagnostics.Should().NotBeNull();
     }
 
     [Fact]
@@ -245,13 +247,14 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().NotBeEmpty();
         // Payload = 5000 m³ * 0.8 t/m³ = 4,000 tonnes
         // Total displacement should be higher
         candidates.First().DisplacementT.Should().BeGreaterThan(4000m, "displacement should include cargo + lightship");
+        diagnostics.Should().NotBeNull();
     }
 
     [Fact]
@@ -281,12 +284,13 @@ public class FirstPrinciplesSolverTests : IDisposable
 
         // Act
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
         sw.Stop();
 
         // Assert
         sw.ElapsedMilliseconds.Should().BeLessThan(2000, "solver should complete <2s for 3 candidates");
         candidates.Count.Should().BeLessThanOrEqualTo(3);
+        diagnostics.Should().NotBeNull();
     }
 
     [Fact]
@@ -315,7 +319,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().NotBeEmpty();
@@ -332,6 +336,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         {
             c.Score.Should().BeInRange(0m, 1m, "scores should be normalized 0-1");
         });
+        diagnostics.Should().NotBeNull();
     }
 
     [Fact]
@@ -365,7 +370,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().NotBeEmpty();
@@ -373,6 +378,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         {
             c.HullFamily.Should().Be("tanker", "only tanker family was hinted");
         });
+        diagnostics.Should().NotBeNull();
     }
 
     [Fact]
@@ -402,7 +408,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().NotBeEmpty();
@@ -412,6 +418,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         // Δ = DWT / 0.70 ≈ 69,000t for container ship
         candidates.First().DisplacementT.Should().BeInRange(50000m, 90000m,
             "displacement should be reasonable for 3000 TEU vessel");
+        diagnostics.Should().NotBeNull();
     }
 
     [Fact]
@@ -440,7 +447,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().AllSatisfy(c =>
@@ -450,6 +457,7 @@ public class FirstPrinciplesSolverTests : IDisposable
             c.KbM.Should().HaveValue("all candidates should have KB");
             c.KbM.Should().BeGreaterThan(0m, "KB should be positive");
         });
+        diagnostics.Should().NotBeNull();
     }
 
     [Fact]
@@ -478,7 +486,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         );
 
         // Act
-        var candidates = await _solver.SolveAsync(request, default);
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
 
         // Assert
         candidates.Should().AllSatisfy(c =>
@@ -488,6 +496,7 @@ public class FirstPrinciplesSolverTests : IDisposable
             c.ShpKw.Should().HaveValue("all candidates should have SHP");
             c.ShpKw.Should().BeGreaterThan(c.EhpKw.GetValueOrDefault(0), "SHP should be > EHP");
         });
+        diagnostics.Should().NotBeNull();
     }
 
     public void Dispose()
