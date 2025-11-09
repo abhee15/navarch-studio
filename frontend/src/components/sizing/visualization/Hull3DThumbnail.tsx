@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { WigleyHull3D } from "./WigleyHull3D";
+import { ParametricHull3D } from "./WigleyHull3D";
 import type { CandidateDesign } from "../../../types/sizing";
 
 interface Hull3DThumbnailProps {
@@ -15,6 +15,7 @@ interface Hull3DThumbnailProps {
  * - No grid, no overlays, no controls text
  * - Auto-rotate disabled for performance
  * - Fixed camera angle for consistency
+ * - Uses vessel-type-specific hull shapes
  */
 export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, height = 200 }) => {
   const cameraDistance = Math.max(candidate.lppM, candidate.beamM, candidate.draftM) * 2;
@@ -37,7 +38,7 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, hei
           <pointLight position={[-10, -10, -5]} intensity={0.2} />
 
           {/* Hull only - no overlays for thumbnail */}
-          <WigleyHull3D
+          <ParametricHull3D
             candidate={candidate}
             showWaterplane={false}
             showCenters={false}

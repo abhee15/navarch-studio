@@ -2,7 +2,7 @@ import React, { Suspense, useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid, Environment } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { WigleyHull3D } from "./WigleyHull3D";
+import { ParametricHull3D } from "./WigleyHull3D";
 import type { CandidateDesign } from "../../../types/sizing";
 import { Home, Move3D } from "lucide-react";
 
@@ -81,7 +81,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
           <Environment preset="city" />
 
           {/* Hull */}
-          <WigleyHull3D
+          <ParametricHull3D
             candidate={candidate}
             showWaterplane={showWaterplane}
             showCenters={showCenters}

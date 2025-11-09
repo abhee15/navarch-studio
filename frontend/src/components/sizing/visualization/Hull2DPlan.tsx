@@ -1,5 +1,6 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
+import { generateHullWaterlines } from "../../../utils/hullShapeGenerator";
 
 interface Hull2DPlanProps {
   candidate: CandidateDesign;
@@ -14,6 +15,7 @@ interface Hull2DPlanProps {
  * 2D Plan View (Top-Down Projection) - Professional CAD Style
  *
  * Features:
+ * - Vessel-type-specific hull shapes based on form coefficients
  * - Animated waterlines with staggered fade-in
  * - Gradient ocean background
  * - Hover effects with tooltips
@@ -36,35 +38,40 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     const [hoveredStation, setHoveredStation] = useState<number | null>(null);
     const [showLegend, setShowLegend] = useState(false);
 
-    // Calculate waterline curves
+    // Generate vessel-type-specific waterline curves
     const waterlines = useMemo(() => {
-      const lpp = candidate.lppM;
-      const beam = candidate.beamM;
-      const draft = candidate.draftM;
-      const lines = [];
+      const generatedWaterlines = generateHullWaterlines({
+        hullFamily: candidate.hullFamily,
+        lppM: candidate.lppM,
+        beamM: candidate.beamM,
+        draftM: candidate.draftM,
+        cb: candidate.cb,
+        cp: candidate.cp,
+        cwp: candidate.cwp,
+        cm: candidate.cm,
+        lcbPctLpp: candidate.lcbPctLpp,
+        waterlineCount,
+        pointsPerWaterline: 60
+      });
 
-      for (let i = 0; i <= waterlineCount; i++) {
-        const z = -(i / waterlineCount) * draft;
-        const zNorm = z / draft;
-        const points: [number, number][] = [];
-        const numPoints = 60;
-
-        for (let j = 0; j <= numPoints; j++) {
-          const x = (j / numPoints) * lpp - lpp / 2;
-          const xNorm = (2 * j) / numPoints - 1;
-          const y = (beam / 2) * (1 - zNorm * zNorm) * (1 - xNorm * xNorm);
-          points.push([x, y]);
-        }
-
-        lines.push({
-          depth: Math.abs(z),
-          points,
-          isDesignWaterline: i === waterlineCount,
-        });
-      }
-
-      return lines;
-    }, [candidate.lppM, candidate.beamM, candidate.draftM, waterlineCount]);
+      // Convert to format expected by rendering code
+      return generatedWaterlines.map(wl => ({
+        depth: wl.depth,
+        points: wl.points.map(pt => [pt.x, pt.y] as [number, number]),
+        isDesignWaterline: wl.isDesignWaterline
+      }));
+    }, [
+      candidate.hullFamily,
+      candidate.lppM,
+      candidate.beamM,
+      candidate.draftM,
+      candidate.cb,
+      candidate.cp,
+      candidate.cwp,
+      candidate.cm,
+      candidate.lcbPctLpp,
+      waterlineCount
+    ]);
 
     const stations = useMemo(() => {
       const lpp = candidate.lppM;
