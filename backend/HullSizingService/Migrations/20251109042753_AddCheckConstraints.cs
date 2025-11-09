@@ -35,10 +35,11 @@ namespace HullSizingService.Migrations
             ");
 
             // Candidate Designs - Validate hull dimensions and coefficients
+            // NOTE: Column names are bm, tm, dm (not beam_m, draft_m, depth_m) due to snake_case convention
             migrationBuilder.Sql(@"
                 ALTER TABLE sizing.candidate_designs
                 ADD CONSTRAINT chk_candidate_dimensions_positive
-                    CHECK (lpp_m > 0 AND beam_m > 0 AND draft_m > 0 AND depth_m > 0),
+                    CHECK (lpp_m > 0 AND bm > 0 AND tm > 0 AND dm > 0),
                 ADD CONSTRAINT chk_candidate_coefficients_range
                     CHECK (
                         cb BETWEEN 0.25 AND 0.95 AND
@@ -47,13 +48,13 @@ namespace HullSizingService.Migrations
                         (cm IS NULL OR cm BETWEEN 0.7 AND 1.0)
                     ),
                 ADD CONSTRAINT chk_candidate_disp_positive
-                    CHECK (disp_t > 0),
+                    CHECK (displacement_t > 0),
                 ADD CONSTRAINT chk_candidate_speed_positive
-                    CHECK (speed_kn > 0 AND speed_kn <= 50),
+                    CHECK (fn > 0 AND fn <= 1.0),
                 ADD CONSTRAINT chk_candidate_resistance_non_negative
-                    CHECK (total_res_kn >= 0),
+                    CHECK (ehp_kw IS NULL OR ehp_kw >= 0),
                 ADD CONSTRAINT chk_candidate_gm_reasonable
-                    CHECK (gm_est_m > -5.0 AND gm_est_m < 10.0),
+                    CHECK (gm_est_m IS NULL OR (gm_est_m > -5.0 AND gm_est_m < 10.0)),
                 ADD CONSTRAINT chk_candidate_score_range
                     CHECK (score BETWEEN 0 AND 1);
             ");
@@ -117,6 +118,7 @@ namespace HullSizingService.Migrations
             migrationBuilder.Sql("ALTER TABLE sizing.sizing_runs DROP CONSTRAINT IF EXISTS chk_run_max_candidates_range;");
             migrationBuilder.Sql("ALTER TABLE sizing.sizing_runs DROP CONSTRAINT IF EXISTS chk_run_compute_time_non_negative;");
 
+            // Remove candidate_designs constraints
             migrationBuilder.Sql("ALTER TABLE sizing.candidate_designs DROP CONSTRAINT IF EXISTS chk_candidate_dimensions_positive;");
             migrationBuilder.Sql("ALTER TABLE sizing.candidate_designs DROP CONSTRAINT IF EXISTS chk_candidate_coefficients_range;");
             migrationBuilder.Sql("ALTER TABLE sizing.candidate_designs DROP CONSTRAINT IF EXISTS chk_candidate_disp_positive;");
