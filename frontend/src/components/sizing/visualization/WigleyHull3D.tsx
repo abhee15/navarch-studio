@@ -10,6 +10,8 @@ interface ParametricHull3DProps {
   showCenters?: boolean;
   color?: string;
   opacity?: number;
+  /** Resolution multiplier (0-1). Use 0.5 for thumbnails to reduce WebGL load. Default: 1.0 */
+  resolution?: number;
 }
 
 /**
@@ -28,6 +30,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
   showCenters = true,
   color,
   opacity = 0.8,
+  resolution = 1.0,
 }) => {
   const { theme } = useTheme();
 
@@ -50,6 +53,10 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
     }
 
     // Use vessel-type-specific hull shape generator
+    // Adjust resolution based on prop (thumbnails use lower resolution)
+    const longitudinalSegments = Math.max(10, Math.floor(60 * resolution));
+    const verticalSegments = Math.max(8, Math.floor(40 * resolution));
+
     try {
       return generateHull3DGeometry({
         hullFamily: candidate.hullFamily,
@@ -61,8 +68,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
         cwp: candidate.cwp,
         cm: candidate.cm,
         lcbPctLpp: candidate.lcbPctLpp,
-        longitudinalSegments: 60,
-        verticalSegments: 40,
+        longitudinalSegments,
+        verticalSegments,
       });
     } catch (error) {
       console.error("[ParametricHull3D] Error generating hull geometry:", error);
@@ -79,9 +86,19 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
     candidate.cwp,
     candidate.cm,
     candidate.lcbPctLpp,
+    resolution,
   ]);
 
-  // Waterplane (horizontal plane at draft)
+  // Cleanup hull geometry when component unmounts or geometry changes
+  React.useEffect(() => {
+    return () => {
+      if (hullGeometry) {
+        hullGeometry.dispose();
+      }
+    };
+  }, [hullGeometry]);
+
+  // Waterplane (horizontal plane at draft) with proper cleanup
   const waterplaneGeometry = useMemo(() => {
     if (!showWaterplane) return null;
 
@@ -92,6 +109,15 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
     geometry.rotateX(-Math.PI / 2); // Rotate to horizontal
     return geometry;
   }, [candidate.lppM, candidate.beamM, showWaterplane]);
+
+  // Cleanup waterplane geometry
+  React.useEffect(() => {
+    return () => {
+      if (waterplaneGeometry) {
+        waterplaneGeometry.dispose();
+      }
+    };
+  }, [waterplaneGeometry]);
 
   // Center markers (LCB, LCG, KB)
   const centerMarkers = useMemo(() => {

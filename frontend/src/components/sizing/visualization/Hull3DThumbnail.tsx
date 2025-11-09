@@ -37,12 +37,15 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, hei
           <directionalLight position={[10, 10, 5]} intensity={0.8} />
           <pointLight position={[-10, -10, -5]} intensity={0.2} />
 
-          {/* Hull only - no overlays for thumbnail */}
+          {/* Hull only - no overlays for thumbnail
+              IMPORTANT: Use low resolution (0.3 = 18x12 segments instead of 60x40)
+              to prevent WebGL context exhaustion when rendering multiple thumbnails */}
           <ParametricHull3D
             candidate={candidate}
             showWaterplane={false}
             showCenters={false}
             opacity={0.9}
+            resolution={0.3}
           />
 
           {/* Orbit controls (enable interaction) */}
