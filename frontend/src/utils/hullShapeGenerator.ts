@@ -10,7 +10,7 @@
  * @version 1.0.0
  */
 
-import * as THREE from 'three';
+import * as THREE from "three";
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -104,8 +104,8 @@ export interface ValidationResult {
 
 /** Minimum valid form coefficients */
 const MIN_CB = 0.25;
-const MIN_CP = 0.50;
-const MIN_CWP = 0.60;
+const MIN_CP = 0.5;
+const MIN_CWP = 0.6;
 
 /** Maximum valid form coefficients */
 const MAX_CB = 0.95;
@@ -162,7 +162,7 @@ export function generateHullWaterlines(params: WaterlinesParams): Waterline[] {
     waterlines.push({
       depth,
       points,
-      isDesignWaterline
+      isDesignWaterline,
     });
   }
 
@@ -232,7 +232,7 @@ export function generateHull3DGeometry(params: Hull3DParams): THREE.BufferGeomet
     }
   }
 
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals(); // Smooth shading
 
@@ -285,29 +285,29 @@ function calculateHalfBreadth(
   let horizontalShape: number;
 
   switch (family) {
-    case 'container':
+    case "container":
       horizontalShape = containerShapeFunction(xNorm, cp, cb);
       break;
 
-    case 'tanker':
-    case 'bulk':
-    case 'lng':
+    case "tanker":
+    case "bulk":
+    case "lng":
       horizontalShape = tankerShapeFunction(xNorm, cb, cp);
       break;
 
-    case 'fishing':
+    case "fishing":
       horizontalShape = fishingShapeFunction(xNorm, cb);
       break;
 
-    case 'yacht_disp':
-    case 'yacht':
-    case 'sailing':
+    case "yacht_disp":
+    case "yacht":
+    case "sailing":
       horizontalShape = yachtShapeFunction(xNorm, cb);
       break;
 
-    case 'roro':
-    case 'cargo':
-    case 'osv':
+    case "roro":
+    case "cargo":
+    case "osv":
       horizontalShape = roroShapeFunction(xNorm, cp, cb);
       break;
 
@@ -350,7 +350,7 @@ function containerShapeFunction(xNorm: number, cp: number, cb: number): number {
   const taperX = (absX - taperStart) / taperLength; // 0-1 in taper region
 
   // Smooth parabolic taper with Cb influence
-  const exponent = 1.5 + (0.70 - cb) * 2.0; // Finer shapes = higher exponent
+  const exponent = 1.5 + (0.7 - cb) * 2.0; // Finer shapes = higher exponent
   return Math.pow(1.0 - taperX, exponent);
 }
 
@@ -362,7 +362,7 @@ function containerShapeFunction(xNorm: number, cp: number, cb: number): number {
 function tankerShapeFunction(xNorm: number, cb: number, cp: number): number {
   // Very short parallel mid-body for tankers
   const parallelFraction = Math.max(0, (cp - 0.78) / 0.12);
-  const parallelHalfLength = parallelFraction * 0.30;
+  const parallelHalfLength = parallelFraction * 0.3;
 
   const absX = Math.abs(xNorm);
 
@@ -419,7 +419,7 @@ function yachtShapeFunction(xNorm: number, cb: number): number {
  */
 function roroShapeFunction(xNorm: number, cp: number, cb: number): number {
   // Moderate parallel mid-body
-  const parallelFraction = Math.max(0, (cp - 0.60) / 0.18);
+  const parallelFraction = Math.max(0, (cp - 0.6) / 0.18);
   const parallelHalfLength = parallelFraction * 0.35;
 
   const absX = Math.abs(xNorm);
@@ -457,7 +457,7 @@ function verticalDistribution(zNorm: number, cb: number, cwp: number): number {
 
   // Waterplane coefficient affects surface fullness
   // Higher Cwp = fuller at waterline
-  const surfaceFullness = (cwp - 0.65) / 0.30; // Normalize to 0-1 range
+  const surfaceFullness = (cwp - 0.65) / 0.3; // Normalize to 0-1 range
   const surfaceBoost = surfaceFullness * 0.15 * (1.0 - zNorm);
 
   // Base vertical shape
@@ -478,7 +478,9 @@ function validateParams(params: HullShapeParams): void {
 
   // Check dimensions
   if (lppM <= 0 || beamM <= 0 || draftM <= 0) {
-    throw new Error(`Invalid dimensions: Lpp=${lppM}, Beam=${beamM}, Draft=${draftM}. All must be positive.`);
+    throw new Error(
+      `Invalid dimensions: Lpp=${lppM}, Beam=${beamM}, Draft=${draftM}. All must be positive.`
+    );
   }
 
   // Check form coefficients
@@ -494,7 +496,9 @@ function validateParams(params: HullShapeParams): void {
 
   // Check Cp >= Cb (physical constraint)
   if (cp < cb - 0.05) {
-    console.warn(`Cp (${cp}) is less than Cb (${cb}), which is unusual. Cp should typically be >= Cb.`);
+    console.warn(
+      `Cp (${cp}) is less than Cb (${cb}), which is unusual. Cp should typically be >= Cb.`
+    );
   }
 
   // Check reasonable ratios
@@ -517,29 +521,29 @@ function normalizeHullFamily(family: string): string {
 
   // Map variations to standard names
   const familyMap: Record<string, string> = {
-    'container': 'container',
-    'container_ship': 'container',
-    'tanker': 'tanker',
-    'crude_oil_tanker': 'tanker',
-    'product_tanker': 'tanker',
-    'vlcc': 'tanker',
-    'bulk': 'bulk',
-    'bulk_carrier': 'bulk',
-    'bulker': 'bulk',
-    'fishing': 'fishing',
-    'fishing_vessel': 'fishing',
-    'trawler': 'fishing',
-    'yacht': 'yacht_disp',
-    'yacht_disp': 'yacht_disp',
-    'sailing': 'yacht_disp',
-    'roro': 'roro',
-    'car_carrier': 'roro',
-    'cargo': 'cargo',
-    'general_cargo': 'cargo',
-    'lng': 'lng',
-    'lng_carrier': 'lng',
-    'osv': 'osv',
-    'offshore_supply': 'osv'
+    container: "container",
+    container_ship: "container",
+    tanker: "tanker",
+    crude_oil_tanker: "tanker",
+    product_tanker: "tanker",
+    vlcc: "tanker",
+    bulk: "bulk",
+    bulk_carrier: "bulk",
+    bulker: "bulk",
+    fishing: "fishing",
+    fishing_vessel: "fishing",
+    trawler: "fishing",
+    yacht: "yacht_disp",
+    yacht_disp: "yacht_disp",
+    sailing: "yacht_disp",
+    roro: "roro",
+    car_carrier: "roro",
+    cargo: "cargo",
+    general_cargo: "cargo",
+    lng: "lng",
+    lng_carrier: "lng",
+    osv: "osv",
+    offshore_supply: "osv",
   };
 
   return familyMap[normalized] || normalized;
@@ -562,9 +566,9 @@ export function validateGeneratedShape(
   // Simple heuristic checks (full validation would require numerical integration)
 
   // Check if design waterline exists
-  const designWL = waterlines.find(wl => wl.isDesignWaterline);
+  const designWL = waterlines.find((wl) => wl.isDesignWaterline);
   if (!designWL) {
-    warnings.push('No design waterline found in generated shape');
+    warnings.push("No design waterline found in generated shape");
   }
 
   // Check for reasonable point distribution
@@ -574,24 +578,24 @@ export function validateGeneratedShape(
   }
 
   // Check for non-zero values
-  const hasValidPoints = waterlines.some(wl =>
-    wl.points.some(pt => pt.y > 0.01)
-  );
+  const hasValidPoints = waterlines.some((wl) => wl.points.some((pt) => pt.y > 0.01));
   if (!hasValidPoints) {
-    warnings.push('Generated shape has no significant beam (all points near zero)');
+    warnings.push("Generated shape has no significant beam (all points near zero)");
   }
 
   info.push(`Generated ${waterlines.length} waterlines`);
   info.push(`Resolution: ${firstWL?.points.length || 0} points per waterline`);
   info.push(`Hull family: ${params.hullFamily}`);
-  info.push(`Target Cb: ${params.cb.toFixed(3)}, Cp: ${params.cp.toFixed(3)}, Cwp: ${params.cwp.toFixed(3)}`);
+  info.push(
+    `Target Cb: ${params.cb.toFixed(3)}, Cp: ${params.cp.toFixed(3)}, Cwp: ${params.cwp.toFixed(3)}`
+  );
 
   return {
     isValid: warnings.length === 0,
     cbError: 0, // Would require numerical integration
     cwpError: 0, // Would require numerical integration
     warnings,
-    info
+    info,
   };
 }
 
@@ -599,17 +603,7 @@ export function validateGeneratedShape(
  * Generates a cache key for geometry caching
  */
 export function generateCacheKey(params: HullShapeParams): string {
-  const {
-    hullFamily,
-    lppM,
-    beamM,
-    draftM,
-    cb,
-    cp,
-    cwp,
-    cm,
-    lcbPctLpp
-  } = params;
+  const { hullFamily, lppM, beamM, draftM, cb, cp, cwp, cm, lcbPctLpp } = params;
 
   // Round to reasonable precision for caching
   return [
@@ -620,7 +614,7 @@ export function generateCacheKey(params: HullShapeParams): string {
     cb.toFixed(3),
     cp.toFixed(3),
     cwp.toFixed(3),
-    cm?.toFixed(3) || 'auto',
-    lcbPctLpp?.toFixed(1) || '0'
-  ].join('_');
+    cm?.toFixed(3) || "auto",
+    lcbPctLpp?.toFixed(1) || "0",
+  ].join("_");
 }

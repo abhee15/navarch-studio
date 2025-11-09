@@ -51,14 +51,14 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         cm: candidate.cm,
         lcbPctLpp: candidate.lcbPctLpp,
         waterlineCount,
-        pointsPerWaterline: 60
+        pointsPerWaterline: 60,
       });
 
       // Convert to format expected by rendering code
-      return generatedWaterlines.map(wl => ({
+      return generatedWaterlines.map((wl) => ({
         depth: wl.depth,
-        points: wl.points.map(pt => [pt.x, pt.y] as [number, number]),
-        isDesignWaterline: wl.isDesignWaterline
+        points: wl.points.map((pt) => [pt.x, pt.y] as [number, number]),
+        isDesignWaterline: wl.isDesignWaterline,
       }));
     }, [
       candidate.hullFamily,
@@ -70,7 +70,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       candidate.cwp,
       candidate.cm,
       candidate.lcbPctLpp,
-      waterlineCount
+      waterlineCount,
     ]);
 
     const stations = useMemo(() => {

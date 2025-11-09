@@ -62,7 +62,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
         cm: candidate.cm,
         lcbPctLpp: candidate.lcbPctLpp,
         longitudinalSegments: 60,
-        verticalSegments: 40
+        verticalSegments: 40,
       });
     } catch (error) {
       console.error("[ParametricHull3D] Error generating hull geometry:", error);
@@ -78,7 +78,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
     candidate.cp,
     candidate.cwp,
     candidate.cm,
-    candidate.lcbPctLpp
+    candidate.lcbPctLpp,
   ]);
 
   // Waterplane (horizontal plane at draft)
