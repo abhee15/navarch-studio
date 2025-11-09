@@ -8,6 +8,7 @@ import { ViewportQuadLayout } from "../../components/sizing/visualization/Viewpo
 import { CompactHUD } from "../../components/sizing/workspace/CompactHUD";
 import { OffsetsTable } from "../../components/sizing/workspace/OffsetsTable";
 import { ParameterSliders } from "../../components/sizing/workspace/ParameterSliders";
+import { ParametersDrawer } from "../../components/sizing/workspace/ParametersDrawer";
 import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
 import { SensitivityPanel } from "../../components/sizing/workspace/SensitivityPanel";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
@@ -224,233 +225,161 @@ export const CandidateWorkspace: React.FC = observer(() => {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          {/* CAD-Style Quad Viewport */}
-          <div className="mb-6 rounded-lg bg-white shadow dark:bg-gray-800 overflow-hidden">
-            <div className="border-b border-gray-200 dark:border-gray-700 p-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                Hull Visualization (CAD Layout)
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Click any viewport header to maximize. Plan view shows waterlines, 3D shows
-                parametric Wigley hull.
-              </p>
-            </div>
-            <div className="h-[900px]">
-              <ViewportQuadLayout candidate={candidate} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Left: KPI Panel with Tabs */}
-            <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
-              {/* Tab Switcher */}
-              <div className="flex gap-2 border-b border-border bg-muted/30 px-4">
-                <button
-                  onClick={() => setActiveTab("kpi")}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === "kpi"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  KPIs & Metrics
-                </button>
-                <button
-                  onClick={() => setActiveTab("offsets")}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === "offsets"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Ruler className="h-4 w-4 mr-2" />
-                  Offsets
-                </button>
-                <button
-                  onClick={() => setActiveTab("sensitivity")}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === "sensitivity"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Activity className="h-4 w-4 mr-2" />
-                  Sensitivity
-                </button>
-              </div>
-
-              {/* Tab Content */}
-              <div className="p-4">
-                {activeTab === "kpi" && <CompactHUD candidate={candidate} />}
-                {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
-                {activeTab === "sensitivity" && <SensitivityPanel candidate={candidate} />}
-              </div>
-            </div>
-
-            {/* Center: Parameter Sliders */}
-            <div className="space-y-6">
+        {/* Content - New Flex Layout */}
+        <div className="flex min-h-[calc(100vh-4rem)]">
+          {/* Left Sidebar - Parameters (Desktop & Tablet) */}
+          <aside className="hidden md:flex md:flex-col w-64 lg:w-80 xl:w-96 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto border-r border-border bg-card/50 backdrop-blur-sm">
+            <div className="p-4 space-y-4">
               <ParameterSliders
                 candidate={candidate}
                 onUpdate={handleParameterAdjust}
                 isUpdating={isAdjusting}
               />
             </div>
+          </aside>
 
-            {/* Center (Old): Performance KPIs - Keeping for backward compatibility */}
-            <div className="space-y-6 hidden">
-              <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Performance</h3>
-                <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-gray-600 dark:text-gray-400">Displacement:</dt>
-                    <dd className="font-medium text-gray-900 dark:text-white">
-                      {candidate.dispT.toFixed(0)} tonnes
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-gray-600 dark:text-gray-400">Froude Number:</dt>
-                    <dd className="font-medium text-gray-900 dark:text-white">
-                      {candidate.fn.toFixed(4)}
-                    </dd>
-                  </div>
-                  {candidate.lwlOverLambda && (
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600 dark:text-gray-400">Lwl/λ:</dt>
-                      <dd className="font-medium text-gray-900 dark:text-white">
-                        {candidate.lwlOverLambda.toFixed(2)}
-                      </dd>
-                    </div>
-                  )}
-                  {candidate.ehpKw && (
-                    <>
-                      <div className="flex justify-between">
-                        <dt className="text-gray-600 dark:text-gray-400">EHP:</dt>
-                        <dd className="font-medium text-gray-900 dark:text-white">
-                          {candidate.ehpKw.toFixed(0)} kW
-                        </dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-gray-600 dark:text-gray-400">SHP:</dt>
-                        <dd className="font-medium text-gray-900 dark:text-white">
-                          {candidate.shpKw?.toFixed(0)} kW
-                        </dd>
-                      </div>
-                    </>
-                  )}
-                </dl>
+          {/* Main Content Area */}
+          <main className="flex-1 min-w-0 overflow-y-auto">
+            <div className="px-4 py-8 sm:px-6">
+              {/* Viewports - Flexible Height */}
+              <div className="mb-6 rounded-lg bg-white shadow dark:bg-gray-800 overflow-hidden">
+                <div className="border-b border-gray-200 dark:border-gray-700 p-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Hull Visualization
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Click any viewport header to maximize. Adjust parameters on the left to see live
+                    updates.
+                  </p>
+                </div>
+                <div className="h-[calc(100vh-16rem)] md:h-[calc(100vh-12rem)] min-h-[600px]">
+                  <ViewportQuadLayout candidate={candidate} />
+                </div>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                  Stability (Preliminary)
-                </h3>
-                <dl className="space-y-3 text-sm">
-                  {candidate.kbM && (
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600 dark:text-gray-400">KB:</dt>
-                      <dd className="font-medium text-gray-900 dark:text-white">
-                        {candidate.kbM.toFixed(2)} m
-                      </dd>
+              {/* Compact Metrics Below - 2 Column Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* KPI Panel with Tabs */}
+                <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
+                  {/* Tab Switcher */}
+                  <div className="flex gap-2 border-b border-border bg-muted/30 px-4">
+                    <button
+                      onClick={() => setActiveTab("kpi")}
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                        activeTab === "kpi"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      <span className="hidden sm:inline">KPIs</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("offsets")}
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                        activeTab === "offsets"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Ruler className="h-4 w-4" />
+                      <span className="hidden sm:inline">Offsets</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("sensitivity")}
+                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                        activeTab === "sensitivity"
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Activity className="h-4 w-4" />
+                      <span className="hidden sm:inline">Sensitivity</span>
+                    </button>
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="p-4">
+                    {activeTab === "kpi" && <CompactHUD candidate={candidate} />}
+                    {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
+                    {activeTab === "sensitivity" && <SensitivityPanel candidate={candidate} />}
+                  </div>
+                </div>
+
+                {/* Resistance & Actions Combined */}
+                <div className="space-y-6">
+                  {/* Resistance Curve */}
+                  <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
+                    <div className="bg-muted/30 px-4 py-3 border-b border-border">
+                      <h3 className="text-sm font-semibold text-foreground">Resistance Analysis</h3>
                     </div>
-                  )}
-                  {candidate.lcbPctLpp && (
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600 dark:text-gray-400">LCB (% Lpp):</dt>
-                      <dd className="font-medium text-gray-900 dark:text-white">
-                        {candidate.lcbPctLpp.toFixed(2)}%
-                      </dd>
+                    <div className="p-4">
+                      <ResistanceCurvePanel candidate={candidate} />
                     </div>
-                  )}
-                  {candidate.gmEstM && (
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600 dark:text-gray-400">GMt (est):</dt>
-                      <dd
-                        className={`font-medium ${
-                          candidate.gmEstM > 1.0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-yellow-600 dark:text-yellow-400"
-                        }`}
+                  </div>
+
+                  {/* Actions Panel */}
+                  <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
+                    <div className="bg-muted/30 px-4 py-3 border-b border-border">
+                      <h3 className="text-sm font-semibold text-foreground">Actions</h3>
+                    </div>
+                    <div className="p-4 space-y-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="w-full"
+                        onClick={async () => {
+                          const vesselId = await sizingStore.pushToHydrostatics(candidate.id);
+                          navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
+                        }}
                       >
-                        {candidate.gmEstM.toFixed(2)} m
-                      </dd>
+                        <Ship className="h-3 w-3 mr-2" />
+                        Push to Hydrostatics
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          console.log("Push to resistance");
+                        }}
+                      >
+                        <Zap className="h-3 w-3 mr-2" />
+                        Analyze Resistance
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => downloadDXF(candidate)}
+                      >
+                        <FileDown className="h-3 w-3 mr-2" />
+                        Export DXF (CAD)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => sizingStore.exportCandidate(candidate.id, "csv")}
+                      >
+                        <BarChart3 className="h-3 w-3 mr-2" />
+                        Export CSV (Data)
+                      </Button>
                     </div>
-                  )}
-                </dl>
-                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                  Preliminary estimates. Push to Hydrostatics for detailed stability analysis.
-                </p>
-              </div>
-            </div>
-
-            {/* Right: Resistance Curve & Actions */}
-            <div className="space-y-6">
-              {/* Resistance Curve */}
-              <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
-                <div className="bg-muted/30 px-4 py-3 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground">Resistance Analysis</h3>
-                </div>
-                <div className="p-4">
-                  <ResistanceCurvePanel candidate={candidate} />
-                </div>
-              </div>
-
-              {/* Export & Push Actions */}
-              <div className="rounded-lg bg-card border border-border shadow-sm overflow-hidden">
-                <div className="bg-muted/30 px-4 py-3 border-b border-border">
-                  <h3 className="text-sm font-semibold text-foreground">Actions</h3>
-                </div>
-                <div className="p-4 space-y-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="w-full"
-                    onClick={async () => {
-                      const vesselId = await sizingStore.pushToHydrostatics(candidate.id);
-                      navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
-                    }}
-                  >
-                    <Ship className="h-3 w-3 mr-2" />
-                    Push to Hydrostatics
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      // TODO: Implement push to resistance
-                      console.log("Push to resistance");
-                    }}
-                  >
-                    <Zap className="h-3 w-3 mr-2" />
-                    Analyze Resistance
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => downloadDXF(candidate)}
-                  >
-                    <FileDown className="h-3 w-3 mr-2" />
-                    Export DXF (CAD)
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => sizingStore.exportCandidate(candidate.id, "csv")}
-                  >
-                    <BarChart3 className="h-3 w-3 mr-2" />
-                    Export CSV (Data)
-                  </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </main>
+
+      {/* Mobile Parameters Drawer */}
+      <ParametersDrawer
+        candidate={candidate}
+        onUpdate={handleParameterAdjust}
+        isUpdating={isAdjusting}
+      />
 
       <Footer />
 

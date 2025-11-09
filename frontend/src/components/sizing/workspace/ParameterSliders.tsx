@@ -160,18 +160,18 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
         <div className="p-6 space-y-8">
           {/* Principal Dimensions Section */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-blue-500">📏</span> Principal Dimensions
             </h4>
             <div className="space-y-6">
               {dimensionSliders.map((slider) => (
                 <div key={slider.id} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Label className="text-sm md:text-xs lg:text-sm font-medium text-gray-700 dark:text-gray-300">
                       {slider.label}
                     </Label>
                     <span
-                      className={`text-sm font-bold tabular-nums text-${slider.color}-600 dark:text-${slider.color}-400`}
+                      className={`text-sm md:text-xs lg:text-sm font-bold tabular-nums text-${slider.color}-600 dark:text-${slider.color}-400`}
                     >
                       {slider.value.toFixed(slider.step >= 1 ? 1 : 2)} {slider.unit}
                     </span>
@@ -227,39 +227,47 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
 
           {/* Derived Ratios */}
           <div className="rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 p-4 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              <span className="text-emerald-500">📊</span> Derived Ratios (Live)
+            <h4 className="text-xs md:text-[10px] lg:text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+              <span className="text-emerald-500">📊</span>{" "}
+              <span className="hidden md:inline">Ratios (Live)</span>
+              <span className="md:hidden">Derived Ratios (Live)</span>
             </h4>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-2 md:gap-3 lg:gap-4 text-center">
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">L/B</div>
-                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{lOverB}</div>
+                <div className="text-base md:text-sm lg:text-lg font-bold text-blue-600 dark:text-blue-400">
+                  {lOverB}
+                </div>
               </div>
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">B/T</div>
-                <div className="text-lg font-bold text-cyan-600 dark:text-cyan-400">{bOverT}</div>
+                <div className="text-base md:text-sm lg:text-lg font-bold text-cyan-600 dark:text-cyan-400">
+                  {bOverT}
+                </div>
               </div>
               <div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">D/T</div>
-                <div className="text-lg font-bold text-green-600 dark:text-green-400">{dOverT}</div>
+                <div className="text-base md:text-sm lg:text-lg font-bold text-green-600 dark:text-green-400">
+                  {dOverT}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Form Coefficients Section */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-purple-500">📐</span> Form Coefficients
             </h4>
             <div className="space-y-6">
               {formSliders.map((slider) => (
                 <div key={slider.id} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Label className="text-sm md:text-xs lg:text-sm font-medium text-gray-700 dark:text-gray-300">
                       {slider.label}
                     </Label>
                     <span
-                      className={`text-sm font-bold tabular-nums text-${slider.color}-600 dark:text-${slider.color}-400`}
+                      className={`text-sm md:text-xs lg:text-sm font-bold tabular-nums text-${slider.color}-600 dark:text-${slider.color}-400`}
                     >
                       {slider.value.toFixed(slider.step >= 1 ? 1 : 2)} {slider.unit}
                     </span>
