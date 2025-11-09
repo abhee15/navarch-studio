@@ -76,9 +76,18 @@ export const CandidateWorkspace: React.FC = observer(() => {
       } else if (updates.draftM !== undefined) {
         parameter = "tM";
         value = updates.draftM;
+      } else if (updates.depthM !== undefined) {
+        parameter = "dM";
+        value = updates.depthM;
       } else if (updates.cb !== undefined) {
         parameter = "cb";
         value = updates.cb;
+      } else if (updates.cp !== undefined) {
+        parameter = "cp";
+        value = updates.cp;
+      } else if (updates.cwp !== undefined) {
+        parameter = "cwp";
+        value = updates.cwp;
       }
 
       if (!parameter) {
