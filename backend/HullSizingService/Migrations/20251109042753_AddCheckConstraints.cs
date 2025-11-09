@@ -60,10 +60,9 @@ namespace HullSizingService.Migrations
             ");
 
             // Sizing Runs - Validate solver options
+            // Note: max_candidates is stored in options_json, not as a separate column
             migrationBuilder.Sql(@"
                 ALTER TABLE sizing.sizing_runs
-                ADD CONSTRAINT chk_run_max_candidates_range
-                    CHECK (max_candidates BETWEEN 1 AND 20),
                 ADD CONSTRAINT chk_run_compute_time_non_negative
                     CHECK (compute_time_ms IS NULL OR compute_time_ms >= 0);
             ");
@@ -115,7 +114,6 @@ namespace HullSizingService.Migrations
             migrationBuilder.Sql("ALTER TABLE sizing.hull_family_presets DROP CONSTRAINT IF EXISTS chk_family_ratios_positive;");
             migrationBuilder.Sql("ALTER TABLE sizing.hull_family_presets DROP CONSTRAINT IF EXISTS chk_family_coefficients_range;");
 
-            migrationBuilder.Sql("ALTER TABLE sizing.sizing_runs DROP CONSTRAINT IF EXISTS chk_run_max_candidates_range;");
             migrationBuilder.Sql("ALTER TABLE sizing.sizing_runs DROP CONSTRAINT IF EXISTS chk_run_compute_time_non_negative;");
 
             // Remove candidate_designs constraints
