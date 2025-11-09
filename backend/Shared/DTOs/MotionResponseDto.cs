@@ -14,3 +14,4 @@ public record MotionResponseDto(
     Dictionary<string, double> ExceedanceProbabilities,  // { "heave2m": 0.15, "pitch5deg": 0.22, ... }
     DateTime CreatedAt
 );
+

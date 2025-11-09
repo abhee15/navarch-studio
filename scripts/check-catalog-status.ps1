@@ -86,3 +86,4 @@ if ($connString -match "Host=([^;]+);.*Database=([^;]+);.*Username=([^;]+);.*Pas
 Write-Host ""
 
 
+

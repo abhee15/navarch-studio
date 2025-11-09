@@ -15,3 +15,4 @@ public interface IWaveSpectrumService
     /// <returns>Energy spectrum S(ω) in m²s</returns>
     double[] ComputeSpectrum(SeaStateDto seaState, double[] frequencies);
 }
+

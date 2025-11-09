@@ -73,3 +73,4 @@ export const UserAvatar = ({ name, email, size = "md", className = "" }: UserAva
     </div>
   );
 };
+

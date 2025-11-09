@@ -40,3 +40,4 @@ public class HydrodynamicCoefficients
     // Wave excitation forces (3x1) for each frequency
     public double[][] ExcitationForce { get; set; } = Array.Empty<double[]>();
 }
+

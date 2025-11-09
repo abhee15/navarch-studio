@@ -123,3 +123,4 @@ test.describe('Authentication', () => {
     await expect(page.getByLabel(/password/i)).toBeVisible();
   });
 });
+

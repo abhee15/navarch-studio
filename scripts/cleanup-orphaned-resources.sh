@@ -149,3 +149,4 @@ echo "  terraform apply -var-file=\"environments/$ENV.tfvars\""
 
 
 
+

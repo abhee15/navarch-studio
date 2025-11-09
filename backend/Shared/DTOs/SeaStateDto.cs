@@ -10,3 +10,4 @@ public record SeaStateDto(
     string Spectrum,           // "JONSWAP" or "PM"
     double Gamma = 3.3         // Peak enhancement factor (default 3.3 for JONSWAP)
 );
+

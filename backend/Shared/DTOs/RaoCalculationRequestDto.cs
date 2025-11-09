@@ -17,3 +17,4 @@ public record FrequencyRangeDto(
     double Max,  // Maximum frequency (rad/s)
     double Step  // Frequency step (rad/s)
 );
+

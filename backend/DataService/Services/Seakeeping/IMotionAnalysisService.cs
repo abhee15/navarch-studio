@@ -20,3 +20,4 @@ public interface IMotionAnalysisService
         CancellationToken cancellationToken = default
     );
 }
+

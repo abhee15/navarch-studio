@@ -13,3 +13,4 @@ public record RaoResultDto(
     double[] RollRao,       // rad/m
     DateTime CreatedAt
 );
+

@@ -504,4 +504,3 @@ public class FirstPrinciplesSolverTests : IDisposable
         _context?.Dispose();
     }
 }
-
