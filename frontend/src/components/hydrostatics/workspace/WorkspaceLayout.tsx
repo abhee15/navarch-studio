@@ -10,11 +10,13 @@ import { ModeToggle } from "./ModeToggle";
 import { ViewModeLayout } from "./ViewModeLayout";
 import { EditModeLayout } from "./EditModeLayout";
 import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydrostaticsApi";
-import { comparisonApi } from "../../../services/comparisonApi";
+// TODO: Re-enable when comparison feature is ready
+// import { comparisonApi } from "../../../services/comparisonApi";
 import { GeometryManagementDialog } from "../GeometryManagementDialog";
 import { ManageLoadcasesDialog } from "../ManageLoadcasesDialog";
 import { getErrorMessage } from "../../../types/errors";
-import { Select } from "../../ui/select";
+// TODO: Re-enable when layout dropdown is added back
+// import { Select } from "../../ui/select";
 
 interface WorkspaceLayoutProps {
   vessel: VesselDetails;
@@ -33,9 +35,10 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
     updateGridLayout,
     togglePanelCollapsed,
     setPanelFullscreen,
-    resetLayout,
-    loadPreset,
-    getPresets,
+    // TODO: Re-enable when layout dropdown is added back
+    // resetLayout,
+    // loadPreset,
+    // getPresets,
   } = useWorkspaceLayout(vesselId);
 
   // Data state
@@ -65,8 +68,10 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
   const [showGeometryEditor, setShowGeometryEditor] = useState(false);
   const [showLoadcasesDialog, setShowLoadcasesDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [showSaveSnapshotPrompt, setShowSaveSnapshotPrompt] = useState(false);
-  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
+  // TODO: Re-enable when comparison feature is ready
+  // const [showSaveSnapshotPrompt, setShowSaveSnapshotPrompt] = useState(false);
+  // TODO: Replace with "Reset Layout" button when re-enabling
+  // const [selectedPresetId, setSelectedPresetId] = useState<string>("");
 
   // Detect mobile
   useEffect(() => {
@@ -178,8 +183,9 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
       // Auto-switch to view mode
       setMode("view");
 
+      // TODO: Re-enable when comparison feature is ready
       // Prompt to save snapshot for comparison
-      setShowSaveSnapshotPrompt(true);
+      // setShowSaveSnapshotPrompt(true);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -268,31 +274,32 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
     [setMode]
   );
 
+  // TODO: Re-enable when comparison feature is ready
   // Save snapshot for comparison
-  const handleSaveSnapshot = useCallback(
-    async (runName: string) => {
-      if (results.length === 0 || computationTime === null) return;
+  // const handleSaveSnapshot = useCallback(
+  //   async (runName: string) => {
+  //     if (results.length === 0 || computationTime === null) return;
 
-      try {
-        await comparisonApi.createSnapshot(vesselId, {
-          runName,
-          description: `Computation at ${new Date().toLocaleString()}`,
-          isBaseline: false,
-          loadcaseId: selectedLoadcaseId || undefined,
-          minDraft,
-          maxDraft,
-          draftStep,
-          results,
-          computationTimeMs: computationTime,
-        });
-        toast.success(`Snapshot "${runName}" saved for comparison`);
-        setShowSaveSnapshotPrompt(false);
-      } catch (err) {
-        toast.error(`Failed to save snapshot: ${getErrorMessage(err)}`);
-      }
-    },
-    [vesselId, selectedLoadcaseId, minDraft, maxDraft, draftStep, results, computationTime]
-  );
+  //     try {
+  //       await comparisonApi.createSnapshot(vesselId, {
+  //         runName,
+  //         description: `Computation at ${new Date().toLocaleString()}`,
+  //         isBaseline: false,
+  //         loadcaseId: selectedLoadcaseId || undefined,
+  //         minDraft,
+  //         maxDraft,
+  //         draftStep,
+  //         results,
+  //         computationTimeMs: computationTime,
+  //       });
+  //       toast.success(`Snapshot "${runName}" saved for comparison`);
+  //       setShowSaveSnapshotPrompt(false);
+  //     } catch (err) {
+  //       toast.error(`Failed to save snapshot: ${getErrorMessage(err)}`);
+  //     }
+  //   },
+  //   [vesselId, selectedLoadcaseId, minDraft, maxDraft, draftStep, results, computationTime]
+  // );
 
   const canSwitchToView = results.length > 0;
 
@@ -336,8 +343,9 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* TODO: Replace with simple "Reset Layout" button when re-enabling */}
             {/* Preset Layouts Dropdown */}
-            {layout.mode === "view" && !isMobile && (
+            {/* {layout.mode === "view" && !isMobile && (
               <Select
                 value={selectedPresetId}
                 onChange={(value) => {
@@ -361,7 +369,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
                 ]}
                 className="text-xs w-52"
               />
-            )}
+            )} */}
 
             {/* Seakeeping Button */}
             {results.length > 0 && (
@@ -602,8 +610,9 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
         />
       )}
 
+      {/* TODO: Re-enable when comparison feature is ready */}
       {/* Save Snapshot Prompt */}
-      {showSaveSnapshotPrompt && (
+      {/* {showSaveSnapshotPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card border border-border rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-foreground mb-2">Save for Comparison?</h3>
@@ -646,7 +655,7 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
             </form>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
