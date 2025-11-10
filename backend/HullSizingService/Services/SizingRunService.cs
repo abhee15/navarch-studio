@@ -106,10 +106,15 @@ public class SizingRunService : ISizingRunService
         };
 
         _context.SizingRuns.Add(run);
-        await _context.SaveChangesAsync(cancellationToken);
+
+        bool runPersisted = false;
 
         try
         {
+            // Persist the run entity first
+            await _context.SaveChangesAsync(cancellationToken);
+            runPersisted = true;
+
             // Build solver request
             var solverRequest = new Solver.SolverRequest(
                 MissionCase: missionCase,
@@ -229,10 +234,27 @@ public class SizingRunService : ISizingRunService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[SIZING_RUN] Failed to generate candidates for run {RunId}", run.Id);
-            run.Status = "failed";
-            run.ErrorMessage = ex.Message;
-            await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogError(ex, "[SIZING_RUN] Error during sizing run {RunId}. Run persisted: {Persisted}", run.Id, runPersisted);
+
+            // Only update run status if it was successfully persisted to the database
+            if (runPersisted)
+            {
+                try
+                {
+                    run.Status = "failed";
+                    run.ErrorMessage = ex.Message;
+                    run.ComputeTimeMs = (int)sw.ElapsedMilliseconds;
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                catch (Exception saveEx)
+                {
+                    _logger.LogError(saveEx, "[SIZING_RUN] Failed to update run status to 'failed' for run {RunId}", run.Id);
+                    // Don't throw - we already have the original exception to propagate
+                }
+            }
+
+            // Re-throw the exception so the controller can handle it and return proper HTTP status
+            throw;
         }
 
         return MapToDto(run, await _context.CandidateDesigns.Where(cd => cd.SizingRunId == run.Id).CountAsync(cancellationToken));

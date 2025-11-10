@@ -68,7 +68,13 @@ public class SizingRunsController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
+            _logger.LogWarning(ex, "Invalid operation while creating sizing run");
             return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while creating sizing run");
+            return StatusCode(500, new { error = "An unexpected error occurred while processing your request" });
         }
     }
 
