@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataService.Migrations
 {
     [DbContext(typeof(DataDbContext))]
-    [Migration("20251108051305_AddSeakeepingTables")]
-    partial class AddSeakeepingTables
+    [Migration("20251110203038_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
