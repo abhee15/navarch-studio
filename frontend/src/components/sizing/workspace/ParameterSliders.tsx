@@ -163,7 +163,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
             <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-blue-500">📏</span> Principal Dimensions
             </h4>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {dimensionSliders.map((slider) => (
                 <div key={slider.id} className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -206,18 +206,21 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                           var(--${slider.color}-400) 100%)`,
                       }}
                     />
+                    {/* ±% badge overlay */}
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
+                      <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">
+                        ±
+                        {(
+                          ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
+                          100
+                        ).toFixed(0)}
+                        %
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                     <span>{slider.min.toFixed(1)}</span>
-                    <span className="text-gray-400 dark:text-gray-500">
-                      ±
-                      {(
-                        ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
-                        100
-                      ).toFixed(0)}
-                      %
-                    </span>
                     <span>{slider.max.toFixed(1)}</span>
                   </div>
                 </div>
@@ -259,7 +262,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
             <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <span className="text-purple-500">📐</span> Form Coefficients
             </h4>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {formSliders.map((slider) => (
                 <div key={slider.id} className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -302,18 +305,21 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                           var(--${slider.color}-400) 100%)`,
                       }}
                     />
+                    {/* ±% badge overlay */}
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
+                      <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">
+                        ±
+                        {(
+                          ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
+                          100
+                        ).toFixed(0)}
+                        %
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                     <span>{slider.min.toFixed(2)}</span>
-                    <span className="text-gray-400 dark:text-gray-500">
-                      ±
-                      {(
-                        ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
-                        100
-                      ).toFixed(0)}
-                      %
-                    </span>
                     <span>{slider.max.toFixed(2)}</span>
                   </div>
                 </div>

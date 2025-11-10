@@ -241,7 +241,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
   return (
     <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-3 bg-background p-3">
       {/* Top-Left: Plan View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[420px] relative">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[520px] relative">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("plan")}
@@ -252,13 +252,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize
           </button>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-h-0">
           <Hull2DPlan candidate={candidate} />
         </div>
       </div>
 
       {/* Top-Right: Profile View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[420px] relative">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[520px] relative">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("profile")}
@@ -269,13 +269,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize
           </button>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-h-0">
           <Hull2DProfile candidate={candidate} />
         </div>
       </div>
 
       {/* Bottom-Left: Sections View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[500px] relative mb-4">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative mb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("sections")}
@@ -286,13 +286,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize
           </button>
         </div>
-        <div className="flex-1 pb-4">
+        <div className="flex-1 min-h-0 pb-4">
           <Hull2DSections candidate={candidate} />
         </div>
       </div>
 
       {/* Bottom-Right: 3D View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[480px] relative mb-4">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[560px] relative mb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={() => setMode("3d")}
@@ -303,7 +303,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
             Maximize
           </button>
         </div>
-        <div className="flex-1 pb-4">
+        <div className="flex-1 min-h-0 pb-4">
           <Hull3DScene
             candidate={candidate}
             showWaterplane={show3DWaterplane}
