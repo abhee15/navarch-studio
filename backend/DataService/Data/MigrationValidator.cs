@@ -124,9 +124,9 @@ public class MigrationValidator
     private async Task<bool> CheckTableExistsAsync(string tableName, CancellationToken cancellationToken)
     {
         var sql = @"
-            SELECT COUNT(*) 
-            FROM information_schema.tables 
-            WHERE table_schema = 'data' 
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = 'data'
               AND table_name = {0}";
 
         var count = await _context.Database
@@ -139,9 +139,9 @@ public class MigrationValidator
     private async Task<List<string>> GetTableColumnsAsync(string tableName, CancellationToken cancellationToken)
     {
         var sql = @"
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_schema = 'data' 
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'data'
               AND table_name = {0}
             ORDER BY ordinal_position";
 
@@ -164,4 +164,3 @@ public class ValidationResult
     public void AddError(string error) => Errors.Add(error);
     public void AddWarning(string warning) => Warnings.Add(warning);
 }
-

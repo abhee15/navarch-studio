@@ -148,9 +148,9 @@ public class MigrationValidator
     private async Task<List<string>> GetTableColumnsAsync(string tableName, CancellationToken cancellationToken)
     {
         var sql = @"
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_schema = 'sizing' 
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'sizing'
               AND table_name = {0}
             ORDER BY ordinal_position";
 
@@ -164,9 +164,9 @@ public class MigrationValidator
     private async Task<bool> CheckConstraintExistsAsync(string tableName, string constraintName, CancellationToken cancellationToken)
     {
         var sql = @"
-            SELECT COUNT(*) 
-            FROM information_schema.table_constraints 
-            WHERE table_schema = 'sizing' 
+            SELECT COUNT(*)
+            FROM information_schema.table_constraints
+            WHERE table_schema = 'sizing'
               AND table_name = {0}
               AND constraint_name = {1}";
 
@@ -216,4 +216,3 @@ public class ValidationResult
         }
     }
 }
-

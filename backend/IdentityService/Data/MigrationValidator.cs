@@ -100,9 +100,9 @@ public class MigrationValidator
     private async Task<List<string>> GetTableColumnsAsync(string tableName, CancellationToken cancellationToken)
     {
         var sql = @"
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_schema = 'identity' 
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'identity'
               AND table_name = {0}
             ORDER BY ordinal_position";
 
@@ -116,9 +116,9 @@ public class MigrationValidator
     private async Task<bool> CheckConstraintExistsAsync(string tableName, string constraintName, CancellationToken cancellationToken)
     {
         var sql = @"
-            SELECT COUNT(*) 
-            FROM pg_indexes 
-            WHERE schemaname = 'identity' 
+            SELECT COUNT(*)
+            FROM pg_indexes
+            WHERE schemaname = 'identity'
               AND tablename = {0}
               AND indexname = {1}";
 
@@ -141,4 +141,3 @@ public class ValidationResult
     public void AddError(string error) => Errors.Add(error);
     public void AddWarning(string warning) => Warnings.Add(warning);
 }
-
