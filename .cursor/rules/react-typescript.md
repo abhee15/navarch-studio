@@ -1,5 +1,18 @@
 # React + TypeScript Rules
 
+## Design System
+
+**Before implementing any UI components, always consult the [Design System Documentation](./design-system.md).**
+
+The design system provides:
+- Typography scale and font sizing standards
+- Spacing and layout patterns
+- Color system and theme tokens
+- Component patterns and code examples
+- Interactive state guidelines
+
+**Key principle:** Reuse established patterns rather than creating new variations.
+
 ## General Guidelines
 
 - Use functional components with hooks (no class components)
@@ -7,6 +20,7 @@
 - Prefer named exports over default exports
 - Use explicit return types for functions
 - Keep components small and focused (< 200 lines)
+- **Follow design system patterns for all UI elements**
 
 ## File Naming
 

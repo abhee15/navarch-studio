@@ -82,39 +82,36 @@ export const EditModeLayout = observer(
             <div className="space-y-2 min-w-0">
               {vessel && (
                 <div className="space-y-1.5 min-w-0">
-                  <div className="text-[11px]">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">Lpp:</span>
-                    <span className="ml-1 font-medium text-foreground">
+                    <span className="font-medium text-foreground">
                       {vessel.lpp} {lengthUnit}
                     </span>
                   </div>
-                  <div className="text-[11px]">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">Beam:</span>
-                    <span className="ml-1 font-medium text-foreground">
+                    <span className="font-medium text-foreground">
                       {vessel.beam} {lengthUnit}
                     </span>
                   </div>
-                  <div className="text-[11px]">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-muted-foreground">Design Draft:</span>
-                    <span className="ml-1 font-medium text-foreground">
+                    <span className="font-medium text-foreground">
                       {vessel.designDraft} {lengthUnit}
                     </span>
                   </div>
-                  <div className="text-[11px] mt-2">
-                    <span className="text-muted-foreground">Stations:</span>
-                    <span className="ml-1 font-medium text-foreground">{vessel.stationsCount}</span>
-                    <span className="mx-1 text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">Waterlines:</span>
-                    <span className="ml-1 font-medium text-foreground">
-                      {vessel.waterlinesCount}
+                  <div className="flex justify-between items-center text-xs mt-2">
+                    <span className="text-muted-foreground">Stations • Waterlines:</span>
+                    <span className="font-medium text-foreground">
+                      {vessel.stationsCount} • {vessel.waterlinesCount}
                     </span>
                   </div>
                 </div>
               )}
               {vessel && (
-                <div className="text-[11px] mt-2">
+                <div className="flex justify-between items-center text-xs mt-2">
                   <span className="text-muted-foreground">Offsets:</span>
-                  <span className="ml-1 font-medium text-foreground">{vessel.offsetsCount}</span>
+                  <span className="font-medium text-foreground">{vessel.offsetsCount}</span>
                 </div>
               )}
               <button
@@ -188,7 +185,7 @@ export const EditModeLayout = observer(
           <CollapsibleSection title="Computation Controls" defaultExpanded={true}>
             <div className="space-y-2 min-w-0">
               <div className="min-w-0">
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
+                <label className="block text-xs font-medium text-muted-foreground mb-0.5 truncate">
                   Range ({lengthUnit}) - {draftCount} pts
                 </label>
                 <div className="flex gap-0.5 items-center text-xs min-w-0">
@@ -198,31 +195,31 @@ export const EditModeLayout = observer(
                     onChange={(e) => onMinDraftChange(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     placeholder="Min"
-                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
                   />
-                  <span className="text-muted-foreground text-[10px]">to</span>
+                  <span className="text-muted-foreground text-xs">to</span>
                   <input
                     type="number"
                     value={maxDraft}
                     onChange={(e) => onMaxDraftChange(parseFloat(e.target.value) || 0)}
                     step="0.1"
                     placeholder="Max"
-                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
                   />
-                  <span className="text-muted-foreground text-[10px]">by</span>
+                  <span className="text-muted-foreground text-xs">by</span>
                   <input
                     type="number"
                     value={draftStep}
                     onChange={(e) => onDraftStepChange(parseFloat(e.target.value) || 0.1)}
                     step="0.1"
                     placeholder="Step"
-                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 border border-border bg-background text-foreground placeholder:text-muted-foreground rounded py-0.5 px-1 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
 
               <div className="min-w-0">
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
+                <label className="block text-xs font-medium text-muted-foreground mb-0.5 truncate">
                   Integration
                 </label>
                 <Select
@@ -234,7 +231,7 @@ export const EditModeLayout = observer(
               </div>
 
               <div className="min-w-0">
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
+                <label className="block text-xs font-medium text-muted-foreground mb-0.5 truncate">
                   Smoothing
                 </label>
                 <Select
@@ -251,7 +248,7 @@ export const EditModeLayout = observer(
           <CollapsibleSection title="Mass Properties" defaultExpanded={true}>
             <div className="space-y-2 min-w-0">
               <div className="min-w-0">
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
+                <label className="block text-xs font-medium text-muted-foreground mb-0.5 truncate">
                   KG ({lengthUnit})
                 </label>
                 <input
@@ -264,7 +261,7 @@ export const EditModeLayout = observer(
               </div>
 
               <div className="min-w-0">
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
+                <label className="block text-xs font-medium text-muted-foreground mb-0.5 truncate">
                   LCG ({lengthUnit})
                 </label>
                 <input
@@ -277,7 +274,7 @@ export const EditModeLayout = observer(
               </div>
 
               <div className="min-w-0">
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
+                <label className="block text-xs font-medium text-muted-foreground mb-0.5 truncate">
                   TCG ({lengthUnit})
                 </label>
                 <input
@@ -295,7 +292,7 @@ export const EditModeLayout = observer(
           <CollapsibleSection title="Environment" defaultExpanded={false}>
             <div className="space-y-2 min-w-0">
               <div className="min-w-0">
-                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5 truncate">
+                <label className="block text-xs font-medium text-muted-foreground mb-0.5 truncate">
                   Water Type
                 </label>
                 <Select
@@ -305,9 +302,9 @@ export const EditModeLayout = observer(
                   className="w-full text-xs"
                 />
               </div>
-              <div className="text-[11px]">
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground">Density:</span>
-                <span className="ml-1 font-medium text-foreground">
+                <span className="font-medium text-foreground">
                   {waterTypes.find((wt) => wt.label === waterType)?.density || 1025} kg/m³
                 </span>
               </div>

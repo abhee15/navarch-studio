@@ -60,6 +60,17 @@ This is a full-stack template project with:
 
 ## Code Style
 
+**CRITICAL**: Always consult `.cursor/rules/design-system.md` before implementing UI components.
+
+### Design System Compliance
+
+- **All new UI components MUST follow the design system patterns**
+- Use established typography scale (`text-xs`, `text-sm`, etc.)
+- Follow spacing standards (p-2, p-4, space-y-2, etc.)
+- Use semantic color tokens (text-foreground, bg-card, border-border)
+- Reuse component patterns rather than creating new variations
+- Consult design system documentation BEFORE writing UI code
+
 ### TypeScript/React
 
 - Use functional components with hooks
@@ -67,6 +78,7 @@ This is a full-stack template project with:
 - Use MobX for state management
 - Use Axios for API calls
 - Follow rules in `.cursor/rules/react-typescript.md`
+- **Follow design system in `.cursor/rules/design-system.md`**
 - Use Tailwind classes (no inline styles)
 - Use named exports (no default exports)
 

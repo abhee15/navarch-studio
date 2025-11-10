@@ -16,7 +16,7 @@ export function CollapsibleSection({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
-    <div className="border-b border-border">
+    <div className="mx-2 my-1.5 border border-border/50 rounded-md overflow-hidden bg-card/50">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-medium transition-all ${
