@@ -1,9 +1,11 @@
 /**
  * Local JWT-based authentication service for development
  * Uses the IdentityService backend instead of AWS Cognito
+ * Includes proactive token expiration checking for better UX
  */
 
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import { getConfig, isConfigLoaded } from "../config/runtime";
 import { getApiUrl } from "../utils/env";
 
@@ -22,6 +24,14 @@ export interface CreateUserResponse {
   id: string;
   email: string;
   name: string;
+}
+
+interface JwtPayload {
+  exp: number;
+  sub: string;
+  email: string;
+  name?: string;
+  iat: number;
 }
 
 const getBaseUrl = () => {
@@ -129,6 +139,75 @@ export class LocalAuthService {
    * Check if user is authenticated
    */
   static isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+
+    // Also check if token is expired
+    return !this.isTokenExpired(token);
+  }
+
+  /**
+   * Check if a JWT token is expired
+   */
+  static isTokenExpired(token?: string | null): boolean {
+    const tokenToCheck = token || this.getToken();
+    if (!tokenToCheck) return true;
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(tokenToCheck);
+      const currentTime = Date.now() / 1000;
+
+      // Token is expired if current time is past expiration
+      return decoded.exp < currentTime;
+    } catch (error) {
+      console.error("Failed to decode JWT token:", error);
+      return true; // Treat invalid tokens as expired
+    }
+  }
+
+  /**
+   * Get time until token expires (in seconds)
+   * Returns null if token is invalid or doesn't exist
+   */
+  static getTimeUntilExpiration(): number | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(token);
+      const currentTime = Date.now() / 1000;
+      const secondsRemaining = Math.max(0, decoded.exp - currentTime);
+
+      return secondsRemaining;
+    } catch (error) {
+      console.error("Failed to decode JWT token:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get token expiration date
+   */
+  static getTokenExpiration(): Date | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(token);
+      return new Date(decoded.exp * 1000);
+    } catch (error) {
+      console.error("Failed to decode JWT token:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if token will expire soon (within the given minutes)
+   */
+  static willExpireSoon(minutes: number = 5): boolean {
+    const secondsRemaining = this.getTimeUntilExpiration();
+    if (secondsRemaining === null) return true;
+
+    return secondsRemaining < minutes * 60;
   }
 }

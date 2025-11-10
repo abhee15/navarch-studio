@@ -212,6 +212,17 @@ try
             Log.Information("📊 Migration status - Applied: {Applied}, Pending: {Pending}",
                 appliedMigrations.Count(), pendingMigrations.Count());
 
+            // Log last applied migration for easy verification
+            var lastMigration = appliedMigrations.LastOrDefault();
+            if (lastMigration != null)
+            {
+                Log.Information("✅ Last applied migration: {Migration}", lastMigration);
+            }
+            else
+            {
+                Log.Warning("⚠️  No migrations have been applied yet (empty database)");
+            }
+
             if (pendingMigrations.Any())
             {
                 Log.Warning("⚠️ Pending migrations: {Migrations}",

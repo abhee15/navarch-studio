@@ -902,12 +902,25 @@ jobs:
             --query 'events[*].message' \
             --output text 2>/dev/null || echo "")
 
-          if [ -n "$IDENTITY_MIGRATION_SUCCESS" ] || [ -n "$IDENTITY_MIGRATION_UP_TO_DATE" ]; then
+          # Check for last applied migration log (new check - always present)
+          IDENTITY_LAST_MIGRATION=$(aws logs filter-log-events \
+            --log-group-name "$IDENTITY_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "Last applied migration" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$IDENTITY_MIGRATION_SUCCESS" ] || [ -n "$IDENTITY_MIGRATION_UP_TO_DATE" ] || [ -n "$IDENTITY_LAST_MIGRATION" ]; then
             echo "✅ Identity Service: Migrations verified"
+            if [ -n "$IDENTITY_LAST_MIGRATION" ]; then
+              # Extract and display the migration name
+              MIGRATION_NAME=$(echo "$IDENTITY_LAST_MIGRATION" | grep -oP 'Last applied migration: \K.*' | head -1)
+              echo "   Last migration: $MIGRATION_NAME"
+            fi
           else
             echo "⚠️  Identity Service: Migration status inconclusive (may still be starting)"
             echo "   Check logs manually: aws logs tail $IDENTITY_LOG_GROUP --since 15m --region ${{ env.AWS_REGION }}"
-            echo "   Looking for: '✅ Migrations applied successfully!' or '✅ Database schema is up to date'"
+            echo "   Looking for: '✅ Migrations applied successfully!' or '✅ Last applied migration:'"
           fi
 
           # Check Data Service migrations
@@ -929,12 +942,25 @@ jobs:
             --query 'events[*].message' \
             --output text 2>/dev/null || echo "")
 
-          if [ -n "$DATA_MIGRATION_SUCCESS" ] || [ -n "$DATA_MIGRATION_UP_TO_DATE" ]; then
+          # Check for last applied migration log (new check - always present)
+          DATA_LAST_MIGRATION=$(aws logs filter-log-events \
+            --log-group-name "$DATA_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "[MIGRATION] Last applied migration" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$DATA_MIGRATION_SUCCESS" ] || [ -n "$DATA_MIGRATION_UP_TO_DATE" ] || [ -n "$DATA_LAST_MIGRATION" ]; then
             echo "✅ Data Service: Migrations verified"
+            if [ -n "$DATA_LAST_MIGRATION" ]; then
+              # Extract and display the migration name
+              MIGRATION_NAME=$(echo "$DATA_LAST_MIGRATION" | grep -oP 'Last applied migration: \K.*' | head -1)
+              echo "   Last migration: $MIGRATION_NAME"
+            fi
           else
             echo "⚠️  Data Service: Migration status inconclusive (may still be starting)"
             echo "   Check logs manually: aws logs tail $DATA_LOG_GROUP --since 15m --region ${{ env.AWS_REGION }}"
-            echo "   Looking for: '[MIGRATION] Migrations applied successfully!' or '[MIGRATION] Database schema is up to date'"
+            echo "   Looking for: '[MIGRATION] Migrations applied successfully!' or '[MIGRATION] Last applied migration:'"
           fi
 
           # Check Hull Sizing Service migrations
@@ -956,12 +982,25 @@ jobs:
             --query 'events[*].message' \
             --output text 2>/dev/null || echo "")
 
-          if [ -n "$HULLSIZING_MIGRATION_SUCCESS" ] || [ -n "$HULLSIZING_MIGRATION_UP_TO_DATE" ]; then
+          # Check for last applied migration log (new check - always present)
+          HULLSIZING_LAST_MIGRATION=$(aws logs filter-log-events \
+            --log-group-name "$HULLSIZING_LOG_GROUP" \
+            --start-time "$START_TIME" \
+            --filter-pattern "[MIGRATION] Last applied migration" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$HULLSIZING_MIGRATION_SUCCESS" ] || [ -n "$HULLSIZING_MIGRATION_UP_TO_DATE" ] || [ -n "$HULLSIZING_LAST_MIGRATION" ]; then
             echo "✅ Hull Sizing Service: Migrations verified"
+            if [ -n "$HULLSIZING_LAST_MIGRATION" ]; then
+              # Extract and display the migration name
+              MIGRATION_NAME=$(echo "$HULLSIZING_LAST_MIGRATION" | grep -oP 'Last applied migration: \K.*' | head -1)
+              echo "   Last migration: $MIGRATION_NAME"
+            fi
           else
             echo "⚠️  Hull Sizing Service: Migration status inconclusive (may still be starting)"
             echo "   Check logs manually: aws logs tail $HULLSIZING_LOG_GROUP --since 15m --region ${{ env.AWS_REGION }}"
-            echo "   Looking for: '[MIGRATION] Migrations applied successfully!' or '[MIGRATION] Database schema is up to date'"
+            echo "   Looking for: '[MIGRATION] Migrations applied successfully!' or '[MIGRATION] Last applied migration:'"
           fi
 
           # Check for migration errors (fail if found)

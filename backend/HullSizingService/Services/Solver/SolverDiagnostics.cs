@@ -145,3 +145,5 @@ public class SolverDiagnostics
         return "The solver completed but generated no valid designs.";
     }
 }
+
+

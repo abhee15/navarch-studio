@@ -101,11 +101,11 @@ export class SizingStore {
     }
   }
 
-  async cloneMissionCase(id: string) {
+  async cloneMissionCase(id: string, newName: string) {
     this.isLoading = true;
     this.error = null;
     try {
-      const clonedMission = await sizingApi.cloneMissionCase(id);
+      const clonedMission = await sizingApi.cloneMissionCase(id, newName);
       runInAction(() => {
         this.missionCases.push(clonedMission);
         this.selectedMission = clonedMission;

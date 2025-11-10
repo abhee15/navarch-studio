@@ -131,7 +131,34 @@ export const SizingRunResults: React.FC = observer(() => {
                 // Clone the brief and navigate to missions list
                 if (sizingStore.currentRun) {
                   try {
-                    await sizingStore.cloneMissionCase(sizingStore.currentRun.missionCaseId);
+                    // Get the original brief to find its name
+                    const originalBrief = sizingStore.missionCases.find(
+                      (mc) => mc.id === sizingStore.currentRun!.missionCaseId
+                    );
+
+                    if (!originalBrief) {
+                      console.error("Original brief not found");
+                      return;
+                    }
+
+                    // Generate a unique name with timestamp
+                    const existingNames = sizingStore.missionCases.map((mc) => mc.name);
+                    const baseName = originalBrief.name;
+                    let newName = `${baseName} - Copy`;
+                    let counter = 2;
+
+                    // Find a unique name
+                    while (
+                      existingNames.some((name) => name.toLowerCase() === newName.toLowerCase())
+                    ) {
+                      newName = `${baseName} - Copy ${counter}`;
+                      counter++;
+                    }
+
+                    await sizingStore.cloneMissionCase(
+                      sizingStore.currentRun.missionCaseId,
+                      newName
+                    );
                     navigate(`/sizing/missions`);
                   } catch (error) {
                     console.error("Failed to clone brief:", error);

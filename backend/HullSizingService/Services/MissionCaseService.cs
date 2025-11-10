@@ -107,9 +107,30 @@ public class MissionCaseService : IMissionCaseService
         return MapToDto(missionCase);
     }
 
-    public async Task<MissionCaseDto?> CloneAsync(Guid id, Guid userId, string tenantId, CancellationToken cancellationToken = default)
+    public async Task<MissionCaseDto?> CloneAsync(Guid id, string newName, Guid userId, string tenantId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("[MISSION_SERVICE] Cloning mission case {Id}", id);
+        _logger.LogInformation("[MISSION_SERVICE] Cloning mission case {Id} with new name '{Name}'", id, newName);
+
+        // Validate name
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            throw new ArgumentException("Brief name cannot be empty", nameof(newName));
+        }
+
+        var trimmedName = newName.Trim();
+        if (trimmedName.Length > 255)
+        {
+            throw new ArgumentException("Brief name cannot exceed 255 characters", nameof(newName));
+        }
+
+        // Check if name already exists for this tenant
+        var nameExists = await _context.MissionCases
+            .AnyAsync(mc => mc.Name == trimmedName && mc.TenantId == tenantId, cancellationToken);
+
+        if (nameExists)
+        {
+            throw new InvalidOperationException($"A brief with the name '{trimmedName}' already exists");
+        }
 
         var original = await _context.MissionCases
             .Where(mc => mc.Id == id && mc.TenantId == tenantId)
@@ -122,7 +143,7 @@ public class MissionCaseService : IMissionCaseService
             Id = Guid.NewGuid(),
             UserId = userId,
             TenantId = tenantId,
-            Name = $"{original.Name} (Copy)",
+            Name = trimmedName,
             MissionType = original.MissionType,
             CargoBasis = original.CargoBasis,
             CargoValue = original.CargoValue,
@@ -146,7 +167,7 @@ public class MissionCaseService : IMissionCaseService
         _context.MissionCases.Add(clone);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("[MISSION_SERVICE] Cloned mission case {OriginalId} to {CloneId}", id, clone.Id);
+        _logger.LogInformation("[MISSION_SERVICE] Cloned mission case {OriginalId} to {CloneId} with name '{Name}'", id, clone.Id, trimmedName);
 
         return MapToDto(clone);
     }

@@ -27,10 +27,12 @@ export class AuthStore {
   loading = false;
   error: string | null = null;
   private currentSession: CognitoUserSession | null = null;
+  private tokenCheckInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     makeAutoObservable(this);
     this.initializeAuth();
+    this.startTokenExpirationCheck();
   }
 
   private readAuthMode(): AuthMode {
@@ -376,7 +378,54 @@ export class AuthStore {
     return this.currentSession.getIdToken().getJwtToken();
   }
 
+  private startTokenExpirationCheck(): void {
+    // Check token expiration every 30 seconds
+    this.tokenCheckInterval = setInterval(() => {
+      const mode = this.readAuthMode();
+
+      if (mode === "local" && this.isAuthenticated) {
+        // Check if token is expired for local auth
+        if (LocalAuthService.isTokenExpired()) {
+          console.log("[AuthStore] Token expired, logging out");
+          this.logout();
+          // Optionally redirect to login page
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
+        } else {
+          // Log remaining time for debugging
+          const timeRemaining = LocalAuthService.getTimeUntilExpiration();
+          if (timeRemaining !== null && timeRemaining < 300) {
+            // Log when less than 5 minutes remaining
+            console.log(`[AuthStore] Token expires in ${Math.floor(timeRemaining / 60)} minutes`);
+          }
+        }
+      } else if (mode === "cognito" && this.currentSession) {
+        // Check Cognito session validity
+        if (!this.currentSession.isValid()) {
+          console.log("[AuthStore] Cognito session expired, logging out");
+          this.logout();
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
+        }
+      }
+    }, 30000); // Check every 30 seconds
+  }
+
+  private stopTokenExpirationCheck(): void {
+    if (this.tokenCheckInterval) {
+      clearInterval(this.tokenCheckInterval);
+      this.tokenCheckInterval = null;
+    }
+  }
+
   clearError(): void {
     this.error = null;
+  }
+
+  // Cleanup method to be called when store is destroyed
+  dispose(): void {
+    this.stopTokenExpirationCheck();
   }
 }

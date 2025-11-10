@@ -355,6 +355,19 @@ try
             Log.Information("[MIGRATION] Migration status - Applied: {Applied}, Pending: {Pending}",
                 appliedMigrations.Count(), pendingMigrations.Count());
 
+            // Log last applied migration for easy verification
+            var lastMigration = appliedMigrations.LastOrDefault();
+            if (lastMigration != null)
+            {
+                Console.WriteLine($"[MIGRATION] ✅ Last applied migration: {lastMigration}");
+                Log.Information("[MIGRATION] Last applied migration: {Migration}", lastMigration);
+            }
+            else
+            {
+                Console.WriteLine("[MIGRATION] ⚠️  No migrations have been applied yet (empty database)");
+                Log.Warning("[MIGRATION] No migrations have been applied yet");
+            }
+
             if (pendingMigrations.Any())
             {
                 Console.WriteLine($"[MIGRATION] Pending migrations: {string.Join(", ", pendingMigrations)}");

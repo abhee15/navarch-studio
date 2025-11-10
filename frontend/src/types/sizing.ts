@@ -48,6 +48,10 @@ export interface CreateMissionCaseDto {
 
 export type UpdateMissionCaseDto = Partial<CreateMissionCaseDto>;
 
+export interface CloneMissionCaseDto {
+  name: string;
+}
+
 export interface SizingLocksDto {
   keepFn?: boolean;
   keepLOverB?: boolean;

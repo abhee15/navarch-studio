@@ -75,6 +75,17 @@ const createApiClient = (): AxiosInstance => {
     );
 
     try {
+      // Check if token is expired before making request (for local auth)
+      const authMode = readAuthMode();
+      if (authMode === "local") {
+        if (LocalAuthService.isTokenExpired()) {
+          console.warn("[API] Token is expired, rejecting request");
+          LocalAuthService.logout();
+          window.location.href = "/login";
+          return Promise.reject(new Error("Token expired"));
+        }
+      }
+
       const token = await getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;

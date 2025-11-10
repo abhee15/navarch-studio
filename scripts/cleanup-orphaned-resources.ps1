@@ -156,3 +156,5 @@ Write-Host "  terraform apply -var-file=`"environments/$Environment.tfvars`"" -F
 
 
 
+
+

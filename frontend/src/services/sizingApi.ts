@@ -35,8 +35,10 @@ export const updateMissionCase = async (
   return response.data;
 };
 
-export const cloneMissionCase = async (id: string): Promise<MissionCase> => {
-  const response = await api.post<MissionCase>(`${BASE_PATH}/mission-cases/${id}/clone`);
+export const cloneMissionCase = async (id: string, newName: string): Promise<MissionCase> => {
+  const response = await api.post<MissionCase>(`${BASE_PATH}/mission-cases/${id}/clone`, {
+    name: newName,
+  });
   return response.data;
 };
 

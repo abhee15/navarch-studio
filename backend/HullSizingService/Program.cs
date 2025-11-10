@@ -324,6 +324,19 @@ try
 
             Console.WriteLine($"[MIGRATION] Migration status - Applied: {appliedMigrations.Count()}, Pending: {pendingMigrations.Count()}");
 
+            // Log last applied migration for easy verification
+            var lastMigration = appliedMigrations.LastOrDefault();
+            if (lastMigration != null)
+            {
+                Console.WriteLine($"[MIGRATION] ✅ Last applied migration: {lastMigration}");
+                Log.Information("[MIGRATION] Last applied migration: {Migration}", lastMigration);
+            }
+            else
+            {
+                Console.WriteLine("[MIGRATION] ⚠️  No migrations have been applied yet (empty database)");
+                Log.Warning("[MIGRATION] No migrations have been applied yet");
+            }
+
             if (pendingMigrations.Any())
             {
                 // Check if auto-migration is enabled via environment variable

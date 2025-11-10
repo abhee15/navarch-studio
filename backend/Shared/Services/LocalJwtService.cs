@@ -18,6 +18,7 @@ public class LocalJwtService : IJwtService
     private readonly string _secretKey;
     private readonly string _issuer;
     private readonly string _audience;
+    private readonly int _tokenExpirationMinutes;
 
     public LocalJwtService(
         IConfiguration configuration,
@@ -32,12 +33,17 @@ public class LocalJwtService : IJwtService
         _issuer = _configuration["Jwt:Issuer"] ?? "navarch-studio-local";
         _audience = _configuration["Jwt:Audience"] ?? "navarch-studio-api";
 
+        // Token expiration - default to 60 minutes (1 hour) for better security
+        _tokenExpirationMinutes = _configuration.GetValue<int>("Jwt:ExpirationMinutes", 60);
+
         if (_secretKey.Length < 32)
         {
             throw new InvalidOperationException("JWT secret key must be at least 32 characters");
         }
 
-        _logger.LogInformation("LocalJwtService initialized for local development");
+        _logger.LogInformation(
+            "LocalJwtService initialized - Token expiration: {ExpirationMinutes} minutes",
+            _tokenExpirationMinutes);
     }
 
     public Task<ClaimsPrincipal?> ValidateTokenAsync(
@@ -108,7 +114,7 @@ public class LocalJwtService : IJwtService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(24),
+            Expires = DateTime.UtcNow.AddMinutes(_tokenExpirationMinutes),
             Issuer = _issuer,
             Audience = _audience,
             SigningCredentials = new SigningCredentials(
@@ -117,7 +123,12 @@ public class LocalJwtService : IJwtService
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
+
+        _logger.LogInformation(
+            "Generated JWT token for user {UserId}, expires in {ExpirationMinutes} minutes",
+            userId,
+            _tokenExpirationMinutes);
+
         return tokenHandler.WriteToken(token);
     }
 }
-

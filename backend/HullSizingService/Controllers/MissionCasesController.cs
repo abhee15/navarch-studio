@@ -91,18 +91,36 @@ public class MissionCasesController : ControllerBase
     }
 
     [HttpPost("{id}/clone")]
-    public async Task<ActionResult<MissionCaseDto>> Clone(Guid id, CancellationToken ct)
+    public async Task<ActionResult<MissionCaseDto>> Clone(Guid id, [FromBody] CloneMissionCaseRequest request, CancellationToken ct)
     {
+        // Validate name
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest(new { error = "Brief name is required" });
+        }
+
         var userIdStr = HttpContext.Items["Claims:Sub"]?.ToString();
         var userId = Guid.TryParse(userIdStr, out var parsedUserId) ? parsedUserId : Guid.NewGuid();
         var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
 
-        var result = await _service.CloneAsync(id, userId, tenantId, ct);
+        try
+        {
+            var result = await _service.CloneAsync(id, request.Name, userId, tenantId, ct);
 
-        if (result == null)
-            return NotFound(new { error = "Mission case not found" });
+            if (result == null)
+                return NotFound(new { error = "Mission case not found" });
 
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Name already exists
+            return Conflict(new { error = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
@@ -117,3 +135,5 @@ public class MissionCasesController : ControllerBase
         return NoContent();
     }
 }
+
+public record CloneMissionCaseRequest(string Name);

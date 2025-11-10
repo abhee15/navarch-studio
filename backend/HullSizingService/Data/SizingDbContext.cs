@@ -77,6 +77,11 @@ public class SizingDbContext : DbContext
             entity.HasIndex(e => e.TenantId).HasFilter("deleted_at IS NULL");
             entity.HasIndex(e => e.MissionType).HasFilter("deleted_at IS NULL");
 
+            // Unique constraint on name per tenant (excluding soft-deleted records)
+            entity.HasIndex(e => new { e.Name, e.TenantId })
+                .IsUnique()
+                .HasFilter("deleted_at IS NULL");
+
             // Query filter for soft delete
             entity.HasQueryFilter(e => e.DeletedAt == null);
 

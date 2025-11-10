@@ -8,7 +8,9 @@ import { Input } from "../../components/ui/input";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
+import { CloneBriefDialog } from "../../components/sizing/CloneBriefDialog";
 import { Ship, Home, Trash2, FileText, Package, Zap, Play, Grid3x3, Copy } from "lucide-react";
+import type { MissionCase } from "../../types/sizing";
 
 export const MissionCasesList: React.FC = observer(() => {
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ export const MissionCasesList: React.FC = observer(() => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [showSettings, setShowSettings] = useState(false);
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+  const [briefToClone, setBriefToClone] = useState<MissionCase | null>(null);
 
   useEffect(() => {
     sizingStore.loadMissionCases();
@@ -282,14 +286,10 @@ export const MissionCasesList: React.FC = observer(() => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={async (e) => {
+                      onClick={(e) => {
                         e.stopPropagation();
-                        try {
-                          await sizingStore.cloneMissionCase(brief.id);
-                          await sizingStore.loadMissionCases();
-                        } catch (error) {
-                          console.error("Failed to clone:", error);
-                        }
+                        setBriefToClone(brief);
+                        setCloneDialogOpen(true);
                       }}
                       title="Clone this brief"
                     >
@@ -318,6 +318,25 @@ export const MissionCasesList: React.FC = observer(() => {
 
       {/* Settings Dialog */}
       <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
+
+      {/* Clone Brief Dialog */}
+      {briefToClone && (
+        <CloneBriefDialog
+          isOpen={cloneDialogOpen}
+          onClose={() => {
+            setCloneDialogOpen(false);
+            setBriefToClone(null);
+          }}
+          originalBrief={briefToClone}
+          onClone={async (newName) => {
+            await sizingStore.cloneMissionCase(briefToClone.id, newName);
+            await sizingStore.loadMissionCases();
+            setCloneDialogOpen(false);
+            setBriefToClone(null);
+          }}
+          existingNames={sizingStore.missionCases.map((mc) => mc.name)}
+        />
+      )}
     </div>
   );
 });
