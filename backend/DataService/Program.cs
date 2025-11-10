@@ -391,7 +391,72 @@ try
             }
 
             // Seed parametric catalog (runs in all environments if empty)
+            // Validate schema after migrations
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Console.WriteLine("[VALIDATION] Validating database schema...");
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Log.Information("[VALIDATION] Starting schema validation");
+
+            try
+            {
+                var validator = new DataService.Data.MigrationValidator(
+                    dbContext,
+                    scope.ServiceProvider.GetRequiredService<ILogger<DataService.Data.MigrationValidator>>());
+
+                var validationResult = await validator.ValidateAsync();
+
+                if (validationResult.Errors.Count > 0)
+                {
+                    Console.WriteLine($"❌ [VALIDATION] {validationResult.Errors.Count} critical error(s) found:");
+                    foreach (var error in validationResult.Errors)
+                    {
+                        Console.WriteLine($"   - {error}");
+                        Log.Error("[VALIDATION] {Error}", error);
+                    }
+                }
+
+                if (validationResult.Warnings.Count > 0)
+                {
+                    Console.WriteLine($"⚠️  [VALIDATION] {validationResult.Warnings.Count} warning(s) found:");
+                    foreach (var warning in validationResult.Warnings)
+                    {
+                        Console.WriteLine($"   - {warning}");
+                        Log.Warning("[VALIDATION] {Warning}", warning);
+                    }
+                }
+
+                if (validationResult.IsValid && !validationResult.HasWarnings)
+                {
+                    Console.WriteLine("✅ [VALIDATION] All schema validation checks passed");
+                    Log.Information("[VALIDATION] Schema validation passed");
+                }
+
+                // FAIL STARTUP if critical errors found
+                if (!validationResult.IsValid)
+                {
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Console.WriteLine("❌ [VALIDATION] CRITICAL: Schema validation failed!");
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Log.Fatal("[VALIDATION] Schema validation failed - ABORTING STARTUP");
+                    throw new InvalidOperationException(
+                        $"Database schema validation failed with {validationResult.Errors.Count} error(s). " +
+                        "See logs for details. Service cannot start with incorrect schema.");
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                throw; // Re-throw validation failures
+            }
+            catch (Exception validationEx)
+            {
+                Console.WriteLine($"⚠️  [VALIDATION] ERROR: {validationEx.Message}");
+                Log.Error(validationEx, "[VALIDATION] Schema validation failed with exception");
+            }
+
+            // Seed parametric hull catalog (runs in all environments)
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
             Console.WriteLine("[SEED] Checking for parametric hull catalog...");
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
             Log.Information("[SEED] Checking for parametric hull catalog...");
             try
             {

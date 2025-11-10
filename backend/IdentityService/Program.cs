@@ -251,11 +251,71 @@ try
                 Log.Information("✅ Database schema is up to date (no pending migrations)");
             }
 
+            // Validate schema after migrations
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Console.WriteLine("[VALIDATION] Validating database schema...");
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Log.Information("[VALIDATION] Starting schema validation");
+
+            try
+            {
+                var validator = new IdentityService.Data.MigrationValidator(
+                    dbContext,
+                    scope.ServiceProvider.GetRequiredService<ILogger<IdentityService.Data.MigrationValidator>>());
+
+                var validationResult = await validator.ValidateAsync();
+
+                if (validationResult.Errors.Count > 0)
+                {
+                    Console.WriteLine($"❌ [VALIDATION] {validationResult.Errors.Count} critical error(s) found:");
+                    foreach (var error in validationResult.Errors)
+                    {
+                        Console.WriteLine($"   - {error}");
+                    }
+                }
+
+                if (validationResult.Warnings.Count > 0)
+                {
+                    Console.WriteLine($"⚠️  [VALIDATION] {validationResult.Warnings.Count} warning(s) found:");
+                    foreach (var warning in validationResult.Warnings)
+                    {
+                        Console.WriteLine($"   - {warning}");
+                    }
+                }
+
+                if (validationResult.IsValid && !validationResult.HasWarnings)
+                {
+                    Console.WriteLine("✅ [VALIDATION] All schema validation checks passed");
+                }
+
+                // FAIL STARTUP if critical errors found
+                if (!validationResult.IsValid)
+                {
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Console.WriteLine("❌ [VALIDATION] CRITICAL: Schema validation failed!");
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Log.Fatal("[VALIDATION] Schema validation failed - ABORTING STARTUP");
+                    throw new InvalidOperationException(
+                        $"Database schema validation failed with {validationResult.Errors.Count} error(s).");
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                throw; // Re-throw validation failures
+            }
+            catch (Exception validationEx)
+            {
+                Console.WriteLine($"⚠️  [VALIDATION] ERROR: {validationEx.Message}");
+                Log.Error(validationEx, "[VALIDATION] Schema validation failed with exception");
+            }
+
             // Seed essential data in non-Development environments
             // Development uses manual seeding via database/seeds/dev-seed.sql
             if (app.Environment.EnvironmentName != "Development")
             {
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
                 Console.WriteLine("[SEED] Checking for essential users...");
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
                 Log.Information("[SEED] Checking for essential users...");
 
                 try

@@ -319,6 +319,7 @@ try
             var canConnect = await dbContext.Database.CanConnectAsync();
             Console.WriteLine($"[MIGRATION] Database connection successful: {canConnect}");
 
+            // Get migration status
             var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
             var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync();
 
@@ -365,21 +366,98 @@ try
                 Console.WriteLine("[MIGRATION] Database schema is up to date");
             }
 
+            // Validate schema after migrations
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Console.WriteLine("[VALIDATION] Validating database schema...");
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Log.Information("[VALIDATION] Starting schema validation");
+
+            try
+            {
+                var validator = new HullSizingService.Data.MigrationValidator(
+                    dbContext,
+                    scope.ServiceProvider.GetRequiredService<ILogger<HullSizingService.Data.MigrationValidator>>());
+
+                var validationResult = await validator.ValidateAsync();
+
+                // Log all errors and warnings
+                if (validationResult.Errors.Count > 0)
+                {
+                    Console.WriteLine($"❌ [VALIDATION] {validationResult.Errors.Count} critical error(s) found:");
+                    foreach (var error in validationResult.Errors)
+                    {
+                        Console.WriteLine($"   - {error}");
+                        Log.Error("[VALIDATION] {Error}", error);
+                    }
+                }
+
+                if (validationResult.Warnings.Count > 0)
+                {
+                    Console.WriteLine($"⚠️  [VALIDATION] {validationResult.Warnings.Count} warning(s) found:");
+                    foreach (var warning in validationResult.Warnings)
+                    {
+                        Console.WriteLine($"   - {warning}");
+                        Log.Warning("[VALIDATION] {Warning}", warning);
+                    }
+                }
+
+                if (validationResult.IsValid && !validationResult.HasWarnings)
+                {
+                    Console.WriteLine("✅ [VALIDATION] All schema validation checks passed");
+                    Log.Information("[VALIDATION] Schema validation passed");
+                }
+
+                // FAIL STARTUP if critical errors found
+                if (!validationResult.IsValid)
+                {
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Console.WriteLine("❌ [VALIDATION] CRITICAL: Schema validation failed!");
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Console.WriteLine("The database schema does not match the code expectations.");
+                    Console.WriteLine("This indicates migrations were not applied correctly.");
+                    Console.WriteLine("");
+                    Console.WriteLine("To fix:");
+                    Console.WriteLine("1. Check migration history: SELECT * FROM sizing.__EFMigrationsHistory");
+                    Console.WriteLine("2. Verify pending migrations were applied");
+                    Console.WriteLine("3. Review deployment logs for migration errors");
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+
+                    Log.Fatal("[VALIDATION] Schema validation failed - ABORTING STARTUP");
+                    throw new InvalidOperationException(
+                        $"Database schema validation failed with {validationResult.Errors.Count} error(s). " +
+                        "See logs for details. Service cannot start with incorrect schema.");
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Re-throw validation failures
+                throw;
+            }
+            catch (Exception validationEx)
+            {
+                Console.WriteLine($"⚠️  [VALIDATION] ERROR: {validationEx.Message}");
+                Log.Error(validationEx, "[VALIDATION] Schema validation failed with exception");
+                // Don't fail startup for validation errors - log and continue
+            }
+
             // Seed reference data
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
             Console.WriteLine("[SEED] Starting reference data import...");
+            Console.WriteLine("═══════════════════════════════════════════════════════════");
             Log.Information("[SEED] Starting reference data import...");
 
             try
             {
                 var seeder = new HullSizingService.Data.Seeds.ReferenceDataSeeder(dbContext, scope.ServiceProvider.GetRequiredService<ILogger<HullSizingService.Data.Seeds.ReferenceDataSeeder>>());
                 await seeder.SeedAllAsync();
-                Console.WriteLine("[SEED] Reference data import complete");
+                Console.WriteLine("✅ [SEED] Reference data import complete");
                 Log.Information("[SEED] Reference data import complete");
             }
             catch (Exception seedEx)
             {
-                Console.WriteLine($"[SEED] ERROR: {seedEx.Message}");
+                Console.WriteLine($"⚠️  [SEED] ERROR: {seedEx.Message}");
                 Log.Error(seedEx, "[SEED] Reference data import failed");
+                // Don't fail startup for seed errors
             }
         }
         catch (Exception ex)
