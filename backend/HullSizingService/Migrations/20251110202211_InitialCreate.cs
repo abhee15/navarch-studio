@@ -155,6 +155,7 @@ namespace HullSizingService.Migrations
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     compute_time_ms = table.Column<int>(type: "integer", nullable: true),
                     error_message = table.Column<string>(type: "text", nullable: true),
+                    diagnostics_json = table.Column<string>(type: "text", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -293,6 +294,14 @@ namespace HullSizingService.Migrations
                 schema: "sizing",
                 table: "mission_cases",
                 column: "mission_type",
+                filter: "deleted_at IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_mission_cases_name_tenant_id",
+                schema: "sizing",
+                table: "mission_cases",
+                columns: new[] { "name", "tenant_id" },
+                unique: true,
                 filter: "deleted_at IS NULL");
 
             migrationBuilder.CreateIndex(

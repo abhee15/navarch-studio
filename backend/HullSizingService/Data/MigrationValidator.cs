@@ -80,14 +80,18 @@ public class MigrationValidator
             ["sizing_runs"] = new List<string>
             {
                 "id", "mission_case_id", "mode", "status", "created_at",
-                "diagnostics_json", // Added in 20251108000000_AddDiagnosticsToSizingRuns
-                "length", "breadth", "draft", "displacement",
-                "block_coefficient", "prismatic_coefficient", "waterplane_coefficient",
-                "bm", "gm", "brief_name"
+                "locks_json", "options_json", "compute_time_ms", "error_message",
+                "diagnostics_json" // Added in comprehensive migration
             },
             ["mission_cases"] = new List<string>
             {
-                "id", "user_id", "name", "vessel_type", "speed", "range", "cargo_weight"
+                "id", "user_id", "tenant_id", "name", "mission_type", "cargo_basis",
+                "service_speed_kn", "sea_margin_pct", "service_margin_pct", "created_at", "updated_at"
+            },
+            ["candidate_designs"] = new List<string>
+            {
+                "id", "sizing_run_id", "hull_family", "rank", "lpp_m", "bm", "tm", "dm",
+                "cb", "cp", "cwp", "displacement_t", "score", "created_at"
             }
         };
 
@@ -116,27 +120,15 @@ public class MigrationValidator
         _logger.LogInformation("[VALIDATION] Checking constraints...");
 
         // Check for critical constraints
-        var hasUniqueConstraint = await CheckConstraintExistsAsync(
+        var hasComputeTimeConstraint = await CheckConstraintExistsAsync(
             "sizing_runs",
-            "ak_sizing_runs_brief_name",
+            "chk_run_compute_time_non_negative",
             cancellationToken);
 
-        if (!hasUniqueConstraint)
+        if (!hasComputeTimeConstraint)
         {
-            result.AddWarning("UNIQUE constraint 'ak_sizing_runs_brief_name' is missing (may cause duplicate brief names)");
-            _logger.LogWarning("[VALIDATION] Missing UNIQUE constraint on sizing_runs.brief_name");
-        }
-
-        // Check for check constraints
-        var hasGmConstraint = await CheckConstraintExistsAsync(
-            "sizing_runs",
-            "ck_sizing_runs_gm_non_negative",
-            cancellationToken);
-
-        if (!hasGmConstraint)
-        {
-            result.AddWarning("CHECK constraint 'ck_sizing_runs_gm_non_negative' is missing");
-            _logger.LogWarning("[VALIDATION] Missing CHECK constraint for GM");
+            result.AddWarning("CHECK constraint 'chk_run_compute_time_non_negative' is missing");
+            _logger.LogWarning("[VALIDATION] Missing CHECK constraint for compute_time_ms");
         }
 
         if (result.Warnings.Count == 0)
