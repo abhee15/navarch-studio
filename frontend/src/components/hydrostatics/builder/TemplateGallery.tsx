@@ -57,7 +57,7 @@ export function TemplateGallery({ onSelectTemplate, showHeader = true }: Templat
             <button
               onClick={handleSurpriseMe}
               disabled={loading || templates.length === 0}
-              className="text-[11px] px-2 py-1 rounded-lg border border-border hover:bg-accent/10 disabled:opacity-50"
+              className="text-xs px-2 py-1 rounded-lg border border-border hover:bg-accent/10 disabled:opacity-50"
             >
               Surprise me
             </button>
@@ -86,7 +86,7 @@ export function TemplateGallery({ onSelectTemplate, showHeader = true }: Templat
                   <div className="text-xs text-muted-foreground">Template</div>
                   <div className="text-sm font-medium">{template.name}</div>
                   {template.description && (
-                    <div className="text-[11px] text-muted-foreground mt-1 line-clamp-2">
+                    <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {template.description}
                     </div>
                   )}

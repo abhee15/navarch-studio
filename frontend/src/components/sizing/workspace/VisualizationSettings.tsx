@@ -53,8 +53,8 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow">
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="rounded-lg border border-border bg-card overflow-hidden shadow">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 px-4 py-3 border-b border-border">
           <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             Visualization Settings
@@ -99,7 +99,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           </div>
 
           {/* 2D Settings */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 border-t border-border">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">2D Views</h4>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -133,7 +133,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           </div>
 
           {/* Quality Settings */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 border-t border-border">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
               Detail Level
             </h4>
@@ -184,7 +184,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           </div>
 
           {/* Performance Settings */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 border-t border-border">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
               Performance
             </h4>
@@ -243,7 +243,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           </div>
 
           {/* Info */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 border-t border-border">
             <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-xs text-blue-800 dark:text-blue-400">
               <p className="font-medium mb-1 flex items-center gap-1">
                 <Lightbulb className="h-3 w-3" />

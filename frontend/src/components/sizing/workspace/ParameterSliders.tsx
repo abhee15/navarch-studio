@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Label } from "../../ui/label";
 import type { CandidateDesign } from "../../../types/sizing";
-import { Sliders, Lightbulb } from "lucide-react";
+import { Sliders, Lightbulb, Ruler, BarChart2, Triangle } from "lucide-react";
 
 interface ParameterSlidersProps {
   candidate: CandidateDesign;
@@ -146,13 +146,13 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow-lg">
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+      <div className="rounded-lg border border-border bg-card overflow-hidden shadow-lg">
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 px-4 py-3 border-b border-border">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
             <Sliders className="h-4 w-4 text-primary" />
             Interactive Parameters
           </h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Adjust dimensions to explore design space
           </p>
         </div>
@@ -160,14 +160,15 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
         <div className="p-6 space-y-8">
           {/* Principal Dimensions Section */}
           <div>
-            <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <span className="text-blue-500">📏</span> Principal Dimensions
+            <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Ruler className="h-4 w-4 text-blue-500" />
+              Principal Dimensions
             </h4>
             <div className="space-y-4">
               {dimensionSliders.map((slider) => (
                 <div key={slider.id} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm md:text-xs lg:text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Label className="text-sm md:text-xs lg:text-sm font-medium text-foreground">
                       {slider.label}
                     </Label>
                     <span
@@ -208,7 +209,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                     />
                     {/* ±% badge overlay */}
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
-                      <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">
+                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                         ±
                         {(
                           ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
@@ -219,7 +220,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>{slider.min.toFixed(1)}</span>
                     <span>{slider.max.toFixed(1)}</span>
                   </div>
@@ -229,27 +230,27 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
           </div>
 
           {/* Derived Ratios */}
-          <div className="rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 p-4 border border-gray-200 dark:border-gray-700">
-            <h4 className="text-xs md:text-[10px] lg:text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-              <span className="text-emerald-500">📊</span>{" "}
+          <div className="rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 p-4 border border-border">
+            <h4 className="text-xs md:text-[10px] lg:text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-emerald-500" />
               <span className="hidden md:inline">Ratios (Live)</span>
               <span className="md:hidden">Derived Ratios (Live)</span>
             </h4>
             <div className="grid grid-cols-3 gap-2 md:gap-3 lg:gap-4 text-center">
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">L/B</div>
+                <div className="text-xs text-muted-foreground mb-1">L/B</div>
                 <div className="text-base md:text-sm lg:text-lg font-bold text-blue-600 dark:text-blue-400">
                   {lOverB}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">B/T</div>
+                <div className="text-xs text-muted-foreground mb-1">B/T</div>
                 <div className="text-base md:text-sm lg:text-lg font-bold text-cyan-600 dark:text-cyan-400">
                   {bOverT}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">D/T</div>
+                <div className="text-xs text-muted-foreground mb-1">D/T</div>
                 <div className="text-base md:text-sm lg:text-lg font-bold text-green-600 dark:text-green-400">
                   {dOverT}
                 </div>
@@ -259,14 +260,15 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
 
           {/* Form Coefficients Section */}
           <div>
-            <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <span className="text-purple-500">📐</span> Form Coefficients
+            <h4 className="text-sm md:text-xs lg:text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Triangle className="h-4 w-4 text-purple-500" />
+              Form Coefficients
             </h4>
             <div className="space-y-4">
               {formSliders.map((slider) => (
                 <div key={slider.id} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm md:text-xs lg:text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Label className="text-sm md:text-xs lg:text-sm font-medium text-foreground">
                       {slider.label}
                     </Label>
                     <span
@@ -307,7 +309,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                     />
                     {/* ±% badge overlay */}
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
-                      <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">
+                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                         ±
                         {(
                           ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
@@ -318,7 +320,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>{slider.min.toFixed(2)}</span>
                     <span>{slider.max.toFixed(2)}</span>
                   </div>

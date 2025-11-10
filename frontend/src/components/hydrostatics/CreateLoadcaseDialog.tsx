@@ -2,6 +2,11 @@ import { useState } from "react";
 import { loadcasesApi } from "../../services/hydrostaticsApi";
 import { getErrorMessage } from "../../types/errors";
 import type { CreateLoadcaseDto } from "../../types/hydrostatics";
+import { Dialog, DialogHeader, DialogDescription, DialogContent, DialogFooter } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Anchor } from "lucide-react";
 
 interface CreateLoadcaseDialogProps {
   vesselId: string;
@@ -56,176 +61,108 @@ export function CreateLoadcaseDialog({
     }));
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed z-10 inset-0 overflow-y-auto"
-      aria-labelledby="modal-title"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-          aria-hidden="true"
-          onClick={onClose}
-        ></div>
+    <Dialog isOpen={isOpen} onClose={onClose} maxWidth="lg">
+      <DialogHeader icon={<Anchor className="h-6 w-6 text-primary" />}>
+        Create New Loadcase
+      </DialogHeader>
 
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
-          &#8203;
-        </span>
+      <DialogDescription>Define a load condition for hydrostatic analysis</DialogDescription>
 
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-          <div>
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900">
-              <svg
-                className="h-6 w-6 text-green-600 dark:text-green-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          {error && (
+            <div className="mb-4 bg-destructive/10 border border-destructive/50 text-destructive px-3 py-2 rounded text-sm">
+              {error}
             </div>
-            <div className="mt-3 text-center sm:mt-5">
-              <h3
-                className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
-                id="modal-title"
-              >
-                Create New Loadcase
-              </h3>
-              <div className="mt-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Define a load condition for hydrostatic analysis
-                </p>
-              </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Name */}
+            <div>
+              <Label htmlFor="name">Loadcase Name *</Label>
+              <Input
+                type="text"
+                name="name"
+                id="name"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="e.g., Full Load, Ballast, Design"
+                className="mt-1"
+              />
+            </div>
+
+            {/* Rho (density) */}
+            <div>
+              <Label htmlFor="rho">Water Density (ρ) *</Label>
+              <Input
+                type="number"
+                name="rho"
+                id="rho"
+                required
+                step="0.1"
+                min="0"
+                value={formData.rho || ""}
+                onChange={handleChange}
+                className="mt-1"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                kg/m³ (1025 for seawater, 1000 for freshwater)
+              </p>
+            </div>
+
+            {/* KG (center of gravity) */}
+            <div>
+              <Label htmlFor="kg">Vertical Center of Gravity (KG)</Label>
+              <Input
+                type="number"
+                name="kg"
+                id="kg"
+                step="0.1"
+                min="0"
+                value={formData.kg || ""}
+                onChange={handleChange}
+                placeholder="Optional"
+                className="mt-1"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Meters from keel. Required for GM calculations.
+              </p>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <textarea
+                name="notes"
+                id="notes"
+                rows={3}
+                value={formData.notes}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Optional description or notes"
+              />
             </div>
           </div>
+        </DialogContent>
 
-          <form onSubmit={handleSubmit} className="mt-5 sm:mt-6">
-            {error && (
-              <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded text-sm">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-4">
-              {/* Name */}
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Loadcase Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="e.g., Full Load, Ballast, Design"
-                />
-              </div>
-
-              {/* Rho (density) */}
-              <div>
-                <label
-                  htmlFor="rho"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Water Density (ρ) *
-                </label>
-                <input
-                  type="number"
-                  name="rho"
-                  id="rho"
-                  required
-                  step="0.1"
-                  min="0"
-                  value={formData.rho || ""}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  kg/m³ (1025 for seawater, 1000 for freshwater)
-                </p>
-              </div>
-
-              {/* KG (center of gravity) */}
-              <div>
-                <label
-                  htmlFor="kg"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Vertical Center of Gravity (KG)
-                </label>
-                <input
-                  type="number"
-                  name="kg"
-                  id="kg"
-                  step="0.1"
-                  min="0"
-                  value={formData.kg || ""}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Optional"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Meters from keel. Required for GM calculations.
-                </p>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label
-                  htmlFor="notes"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Notes
-                </label>
-                <textarea
-                  name="notes"
-                  id="notes"
-                  rows={3}
-                  value={formData.notes}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Optional description or notes"
-                />
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Creating..." : "Create Loadcase"}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button type="submit" variant="default" disabled={loading} className="sm:col-start-2">
+            {loading ? "Creating..." : "Create Loadcase"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="sm:col-start-1"
+          >
+            Cancel
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 }
 

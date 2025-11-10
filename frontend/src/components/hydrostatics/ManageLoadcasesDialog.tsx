@@ -146,18 +146,15 @@ export function ManageLoadcasesDialog({
             &#8203;
           </span>
 
-          <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full w-full max-h-[90vh] flex flex-col">
+          <div className="inline-block align-bottom bg-card rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full w-full max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-card px-4 pt-5 pb-4 sm:p-6 border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3
-                    className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
-                    id="modal-title"
-                  >
+                  <h3 className="text-lg leading-6 font-medium text-foreground" id="modal-title">
                     Manage Loadcases
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Create, edit, or delete load conditions for this vessel
                   </p>
                 </div>
@@ -178,7 +175,7 @@ export function ManageLoadcasesDialog({
             </div>
 
             {/* Content */}
-            <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 flex-1 overflow-y-auto">
+            <div className="bg-card px-4 pt-5 pb-4 sm:p-6 flex-1 overflow-y-auto">
               {error && (
                 <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded text-sm">
                   {error}
@@ -212,9 +209,7 @@ export function ManageLoadcasesDialog({
               {loading && loadcases.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    Loading loadcases...
-                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">Loading loadcases...</p>
                 </div>
               ) : loadcases.length === 0 ? (
                 <div className="text-center py-8">
@@ -231,10 +226,8 @@ export function ManageLoadcasesDialog({
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                     />
                   </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    No loadcases
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <h3 className="mt-2 text-sm font-medium text-foreground">No loadcases</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Get started by creating a new loadcase.
                   </p>
                 </div>
@@ -269,7 +262,7 @@ export function ManageLoadcasesDialog({
                 /* Desktop: Table layout */
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
+                    <thead className="bg-muted">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Name
@@ -288,7 +281,7 @@ export function ManageLoadcasesDialog({
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                       {loadcases.map((loadcase) => {
                         if (editingLoadcase?.id === loadcase.id) {
                           return (
@@ -319,7 +312,7 @@ export function ManageLoadcasesDialog({
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <div className="bg-muted px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
               <button
                 onClick={onClose}
                 className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
@@ -366,7 +359,7 @@ function LoadcaseRow({
       <tr className="bg-yellow-50 dark:bg-yellow-900/20">
         <td colSpan={5} className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-900 dark:text-gray-100">
+            <span className="text-sm text-foreground">
               Are you sure you want to delete "{loadcase.name}"?
             </span>
             <div className="flex gap-2">
@@ -378,7 +371,7 @@ function LoadcaseRow({
               </button>
               <button
                 onClick={onDeleteCancel}
-                className="px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+                className="px-3 py-1 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
               >
                 Cancel
               </button>
@@ -391,18 +384,14 @@ function LoadcaseRow({
 
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-foreground">
         {loadcase.name}
       </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {loadcase.rho}
-      </td>
-      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">{loadcase.rho}</td>
+      <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
         {loadcase.kg ?? "—"}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-        {loadcase.notes || "—"}
-      </td>
+      <td className="px-4 py-3 text-sm text-muted-foreground">{loadcase.notes || "—"}</td>
       <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
         <button
           onClick={() => onEdit(loadcase)}
@@ -455,22 +444,18 @@ function EditLoadcaseRow({ loadcase, onSave, onCancel }: EditLoadcaseRowProps) {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-4 gap-3 items-end">
             <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                Name *
-              </label>
+              <label className="block text-xs font-medium text-foreground">Name *</label>
               <input
                 type="text"
                 name="name"
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-1.5 px-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full border border-input rounded-md shadow-sm py-1.5 px-2 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                Density (kg/m³) *
-              </label>
+              <label className="block text-xs font-medium text-foreground">Density (kg/m³) *</label>
               <input
                 type="number"
                 name="rho"
@@ -479,13 +464,11 @@ function EditLoadcaseRow({ loadcase, onSave, onCancel }: EditLoadcaseRowProps) {
                 min="0"
                 value={formData.rho || ""}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-1.5 px-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full border border-input rounded-md shadow-sm py-1.5 px-2 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                KG (m)
-              </label>
+              <label className="block text-xs font-medium text-foreground">KG (m)</label>
               <input
                 type="number"
                 name="kg"
@@ -493,7 +476,7 @@ function EditLoadcaseRow({ loadcase, onSave, onCancel }: EditLoadcaseRowProps) {
                 min="0"
                 value={formData.kg || ""}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-1.5 px-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full border border-input rounded-md shadow-sm py-1.5 px-2 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div className="flex gap-2">
@@ -506,22 +489,20 @@ function EditLoadcaseRow({ loadcase, onSave, onCancel }: EditLoadcaseRowProps) {
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+                className="px-3 py-1.5 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
               >
                 Cancel
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-              Notes
-            </label>
+            <label className="block text-xs font-medium text-foreground">Notes</label>
             <textarea
               name="notes"
               rows={2}
               value={formData.notes}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-1.5 px-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-input rounded-md shadow-sm py-1.5 px-2 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </form>
@@ -551,7 +532,7 @@ function LoadcaseCard({
   if (isDeleting) {
     return (
       <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-        <p className="text-sm text-gray-900 dark:text-gray-100 mb-3">
+        <p className="text-sm text-foreground mb-3">
           Are you sure you want to delete "{loadcase.name}"?
         </p>
         <div className="flex gap-2">
@@ -563,7 +544,7 @@ function LoadcaseCard({
           </button>
           <button
             onClick={onDeleteCancel}
-            className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+            className="flex-1 px-3 py-2 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
           >
             Cancel
           </button>
@@ -573,9 +554,9 @@ function LoadcaseCard({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div className="bg-card border border-border rounded-lg p-4">
       <div className="flex items-start justify-between mb-2">
-        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{loadcase.name}</h4>
+        <h4 className="text-sm font-medium text-foreground">{loadcase.name}</h4>
         <div className="flex gap-2">
           <button
             onClick={() => onEdit(loadcase)}
@@ -643,21 +624,19 @@ function EditLoadcaseCard({ loadcase, onSave, onCancel }: EditLoadcaseCardProps)
     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Name *
-          </label>
+          <label className="block text-xs font-medium text-foreground mb-1">Name *</label>
           <input
             type="text"
             name="name"
             required
             value={formData.name}
             onChange={handleChange}
-            className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="block w-full border border-input rounded-md shadow-sm py-2 px-3 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-xs font-medium text-foreground mb-1">
               Density (kg/m³) *
             </label>
             <input
@@ -668,13 +647,11 @@ function EditLoadcaseCard({ loadcase, onSave, onCancel }: EditLoadcaseCardProps)
               min="0"
               value={formData.rho || ""}
               onChange={handleChange}
-              className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full border border-input rounded-md shadow-sm py-2 px-3 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              KG (m)
-            </label>
+            <label className="block text-xs font-medium text-foreground mb-1">KG (m)</label>
             <input
               type="number"
               name="kg"
@@ -682,20 +659,18 @@ function EditLoadcaseCard({ loadcase, onSave, onCancel }: EditLoadcaseCardProps)
               min="0"
               value={formData.kg || ""}
               onChange={handleChange}
-              className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full border border-input rounded-md shadow-sm py-2 px-3 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Notes
-          </label>
+          <label className="block text-xs font-medium text-foreground mb-1">Notes</label>
           <textarea
             name="notes"
             rows={2}
             value={formData.notes}
             onChange={handleChange}
-            className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="block w-full border border-input rounded-md shadow-sm py-2 px-3 bg-background text-foreground text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
         <div className="flex gap-2 pt-2">
@@ -708,7 +683,7 @@ function EditLoadcaseCard({ loadcase, onSave, onCancel }: EditLoadcaseCardProps)
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+            className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
           >
             Cancel
           </button>

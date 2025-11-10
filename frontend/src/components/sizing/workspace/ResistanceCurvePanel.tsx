@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Zap } from "lucide-react";
 
 interface ResistanceCurvePanelProps {
   candidate: CandidateDesign;
@@ -40,8 +40,8 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
 
   if (!candidate.ehpKw) {
     return (
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Resistance Curve</h3>
+      <div className="rounded-lg border border-border bg-card p-6 shadow">
+        <h3 className="font-semibold text-foreground mb-4">Resistance Curve</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Resistance data not available for this candidate.
         </p>
@@ -53,13 +53,13 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
   const maxSpeed = Math.max(...curveData.map((d) => d.speedKn));
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow-lg">
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <span className="text-green-600 dark:text-green-400">⚡</span>
+    <div className="rounded-lg border border-border bg-card overflow-hidden shadow-lg">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-4 py-3 border-b border-border">
+        <h3 className="font-semibold text-foreground flex items-center gap-2">
+          <Zap className="h-4 w-4 text-green-600 dark:text-green-400" />
           Resistance Curve
         </h3>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           EHP vs Speed (Holtrop-Mennen approximation)
         </p>
       </div>
@@ -234,7 +234,7 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
         <div className="mt-4">
           <button
             onClick={() => setShowLegend(!showLegend)}
-            className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="text-xs font-medium text-muted-foreground hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             {showLegend ? "▼" : "▶"} Legend
           </button>
@@ -256,7 +256,7 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
         <div className="mt-4 grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Design Speed</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
+            <p className="text-lg font-bold text-foreground">
               {candidate.fn && candidate.lwlM
                 ? (candidate.fn * Math.sqrt(9.81 * candidate.lwlM) * 1.944).toFixed(1)
                 : "N/A"}{" "}

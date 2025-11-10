@@ -529,7 +529,7 @@ export const HullDiagram = observer(
         {/* Tooltip */}
         {tooltip && (
           <div
-            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 pointer-events-none"
+            className="fixed z-50 bg-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 pointer-events-none"
             style={{
               left: tooltip.x + 15,
               top: tooltip.y + 15,
@@ -539,7 +539,7 @@ export const HullDiagram = observer(
               {tooltip.content.title}
             </div>
             {tooltip.content.items.map((item, idx) => (
-              <div key={idx} className="text-[11px] text-gray-600 dark:text-gray-400">
+              <div key={idx} className="text-xs text-gray-600 dark:text-gray-400">
                 <span className="font-medium">{item.label}:</span> {item.value}
               </div>
             ))}

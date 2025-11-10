@@ -83,9 +83,9 @@ export function GeometryManagementDialog({
             &#8203;
           </span>
 
-          <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+          <div className="inline-block align-bottom bg-card rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
             {/* Header */}
-            <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="bg-card px-4 pt-5 pb-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3
@@ -173,7 +173,7 @@ export function GeometryManagementDialog({
             </div>
 
             {/* Tab Content Placeholder - actual content handled by separate dialogs */}
-            <div className="bg-white dark:bg-gray-800 px-4 py-6 sm:p-6">
+            <div className="bg-card px-4 py-6 sm:p-6">
               {activeTab === "import" && (
                 <div className="text-center py-8">
                   <p className="text-sm text-gray-600 dark:text-gray-400">

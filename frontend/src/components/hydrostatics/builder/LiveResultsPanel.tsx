@@ -67,7 +67,7 @@ export function LiveResultsPanel({ loa, beam, draft, cb }: LiveResultsPanelProps
         </div>
       </div>
 
-      <div className="text-[11px] text-muted-foreground mt-3">
+      <div className="text-xs text-muted-foreground mt-3">
         Quick Create hides advanced sections on mobile automatically.
       </div>
     </div>

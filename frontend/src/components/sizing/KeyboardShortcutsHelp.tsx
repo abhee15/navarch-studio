@@ -100,7 +100,7 @@ export const KeyboardShortcutsHelp: React.FC = () => {
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="pointer-events-auto max-w-3xl w-full bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden animate-zoomIn">
+        <div className="pointer-events-auto max-w-3xl w-full bg-card rounded-xl shadow-2xl overflow-hidden animate-zoomIn">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 text-white">
             <div className="flex items-center justify-between">
@@ -164,7 +164,7 @@ export const KeyboardShortcutsHelp: React.FC = () => {
           <div className="bg-gray-50 dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
               Tip: Press{" "}
-              <kbd className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded">
+              <kbd className="px-2 py-1 text-xs bg-card border border-gray-300 dark:border-gray-600 rounded">
                 ?
               </kbd>{" "}
               anytime to toggle this help

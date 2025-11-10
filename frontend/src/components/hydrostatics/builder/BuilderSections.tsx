@@ -69,7 +69,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
           <h3 className="text-sm font-semibold mb-2">Principal Dimensions</h3>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-[11px] text-muted-foreground">L (m)</label>
+              <label className="block text-xs text-muted-foreground">L (m)</label>
               <input
                 type="number"
                 step="0.1"
@@ -79,7 +79,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               />
             </div>
             <div>
-              <label className="block text-[11px] text-muted-foreground">B (m)</label>
+              <label className="block text-xs text-muted-foreground">B (m)</label>
               <input
                 type="number"
                 step="0.1"
@@ -89,7 +89,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               />
             </div>
             <div>
-              <label className="block text-[11px] text-muted-foreground">T (m)</label>
+              <label className="block text-xs text-muted-foreground">T (m)</label>
               <input
                 type="number"
                 step="0.1"
@@ -101,9 +101,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
           </div>
 
           <div className="mt-2">
-            <label className="block text-[11px] text-muted-foreground">
-              Block Coefficient (Cb)
-            </label>
+            <label className="block text-xs text-muted-foreground">Block Coefficient (Cb)</label>
             <input
               type="number"
               step="0.01"
@@ -120,7 +118,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               }
               className="w-full rounded-lg border border-input bg-background px-2 py-1.5"
             />
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Seeded from Type/Size. Adjust as needed.
             </p>
           </div>
@@ -136,7 +134,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               </div>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[11px] text-muted-foreground">Hull Family</label>
+                  <label className="block text-xs text-muted-foreground">Hull Family</label>
                   <Select
                     value={formData.metadata?.hullFamily || "Wigley"}
                     onChange={(value) =>
@@ -152,11 +150,11 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-muted-foreground">
+                  <label className="block text-xs text-muted-foreground">
                     Upload Offsets (CSV)
                   </label>
                   <input type="file" accept=".csv" className="w-full text-xs mt-1" />
-                  <p className="text-[11px] text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Pick a hull family or upload CSV later
                   </p>
                 </div>
@@ -168,7 +166,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               <h3 className="text-sm font-semibold mb-2">Loading Conditions</h3>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] text-muted-foreground">Lightship (t)</label>
+                  <label className="block text-xs text-muted-foreground">Lightship (t)</label>
                   <input
                     type="number"
                     value={formData.loading?.lightshipTonnes || ""}
@@ -185,7 +183,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-muted-foreground">Deadweight (t)</label>
+                  <label className="block text-xs text-muted-foreground">Deadweight (t)</label>
                   <input
                     type="number"
                     value={formData.loading?.deadweightTonnes || ""}
@@ -209,7 +207,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
               <h3 className="text-sm font-semibold mb-2">Materials</h3>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] text-muted-foreground">Hull</label>
+                  <label className="block text-xs text-muted-foreground">Hull</label>
                   <Select
                     value={formData.materials?.hullMaterial || ""}
                     onChange={(value) =>
@@ -233,7 +231,7 @@ export function BuilderSections({ formData, onChange, quickMode }: BuilderSectio
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-muted-foreground">Superstructure</label>
+                  <label className="block text-xs text-muted-foreground">Superstructure</label>
                   <Select
                     value={formData.materials?.superstructureMaterial || ""}
                     onChange={(value) =>

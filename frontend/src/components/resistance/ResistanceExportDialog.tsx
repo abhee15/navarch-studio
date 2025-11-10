@@ -4,6 +4,10 @@ import type {
   HoltropMennenCalculationResult,
   PowerCurveResult,
 } from "../../types/resistance";
+import { Dialog, DialogHeader, DialogContent, DialogFooter } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Download } from "lucide-react";
 
 interface ResistanceExportDialogProps {
   vesselName: string;
@@ -159,136 +163,78 @@ export function ResistanceExportDialog({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed z-10 inset-0 overflow-y-auto"
-      aria-labelledby="modal-title"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-          aria-hidden="true"
-          onClick={onClose}
-        ></div>
+    <Dialog isOpen={isOpen} onClose={onClose} maxWidth="lg">
+      <DialogHeader icon={<Download className="h-6 w-6 text-primary" />} onClose={onClose}>
+        Export Resistance Results
+      </DialogHeader>
 
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
-          &#8203;
-        </span>
+      <DialogContent>
+        {error && (
+          <div className="mb-4 bg-destructive/10 border border-destructive/50 text-destructive px-3 py-2 rounded text-sm">
+            {error}
+          </div>
+        )}
 
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3
-                className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
-                id="modal-title"
-              >
-                Export Resistance Results
-              </h3>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
+        {!hasResults && (
+          <div className="mb-4 bg-warning/10 border border-warning/50 text-warning-foreground px-3 py-2 rounded text-sm">
+            No calculation results available to export. Please run calculations first.
+          </div>
+        )}
 
-            {error && (
-              <div className="mb-4 rounded-md bg-red-50 dark:bg-red-900/20 p-3">
-                <div className="flex">
-                  <svg
-                    className="h-5 w-5 text-red-400 flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="ml-2 text-sm text-red-700 dark:text-red-400">{error}</p>
-                </div>
-              </div>
-            )}
-
-            {!hasResults && (
-              <div className="mb-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-3">
-                <p className="text-sm text-yellow-700 dark:text-yellow-400">
-                  No calculation results available to export. Please run calculations first.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Export Format
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="csv"
-                      checked={format === "csv"}
-                      onChange={(e) => setFormat(e.target.value as ExportFormat)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">CSV (Comma-separated values)</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="format"
-                      value="json"
-                      checked={format === "json"}
-                      onChange={(e) => setFormat(e.target.value as ExportFormat)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">JSON (Structured data)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                <p className="mb-2">This export will include:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  {ittc57Result && <li>ITTC-57 friction results</li>}
-                  {hmResult && <li>Holtrop-Mennen resistance results</li>}
-                  {powerResult && <li>Power curves (EHP, DHP, P_inst)</li>}
-                </ul>
-              </div>
+        <div className="space-y-4">
+          <div>
+            <Label className="block mb-2">Export Format</Label>
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="format"
+                  value="csv"
+                  checked={format === "csv"}
+                  onChange={(e) => setFormat(e.target.value as ExportFormat)}
+                  className="mr-2"
+                />
+                <span className="text-sm text-foreground">CSV (Comma-separated values)</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="format"
+                  value="json"
+                  checked={format === "json"}
+                  onChange={(e) => setFormat(e.target.value as ExportFormat)}
+                  className="mr-2"
+                />
+                <span className="text-sm text-foreground">JSON (Structured data)</span>
+              </label>
             </div>
           </div>
 
-          <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button
-              onClick={handleExport}
-              disabled={exporting || !hasResults}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {exporting ? "Exporting..." : "Export"}
-            </button>
-            <button
-              onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Cancel
-            </button>
+          <div className="text-sm text-muted-foreground">
+            <p className="mb-2">This export will include:</p>
+            <ul className="list-disc list-inside space-y-1">
+              {ittc57Result && <li>ITTC-57 friction results</li>}
+              {hmResult && <li>Holtrop-Mennen resistance results</li>}
+              {powerResult && <li>Power curves (EHP, DHP, P_inst)</li>}
+            </ul>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+
+      <DialogFooter className="sm:flex sm:flex-row-reverse">
+        <Button
+          variant="default"
+          onClick={handleExport}
+          disabled={exporting || !hasResults}
+          className="sm:ml-3"
+        >
+          {exporting ? "Exporting..." : "Export"}
+        </Button>
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+      </DialogFooter>
+    </Dialog>
   );
 }

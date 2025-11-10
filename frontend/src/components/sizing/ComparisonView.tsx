@@ -48,7 +48,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
     const max = Math.max(...validValues);
 
     return (
-      <div className="grid grid-cols-4 gap-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-4 gap-4 py-3 border-b border-border">
         <div className="font-medium text-gray-700 dark:text-gray-300">{label}</div>
         {values.map((value, idx) => {
           if (value === undefined) return <div key={idx}>-</div>;
@@ -90,7 +90,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sticky top-0 z-10 shadow-sm">
+      <div className="bg-card border-b border-border p-4 sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -111,10 +111,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
         {/* 3D Thumbnails */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {compareCandidates.map((candidate) => (
-            <div
-              key={candidate.id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
-            >
+            <div key={candidate.id} className="bg-card rounded-lg shadow-lg overflow-hidden">
               <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -152,8 +149,8 @@ export const ComparisonView: React.FC<ComparisonViewProps> = observer(({ candida
         </div>
 
         {/* Comparison Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-          <div className="p-4 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-card rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 border-b border-border">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Detailed Comparison</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Green with checkmark = Best value • Red = Worst value

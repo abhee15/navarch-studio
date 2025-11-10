@@ -129,16 +129,13 @@ export function CsvImportWizard({
           &#8203;
         </span>
 
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full sm:p-6">
+        <div className="inline-block align-bottom bg-card rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full sm:p-6">
           {/* Header */}
           <div className="mb-6">
-            <h3
-              className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
-              id="modal-title"
-            >
+            <h3 className="text-lg leading-6 font-medium text-foreground" id="modal-title">
               Import Hull Geometry from CSV
             </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Step {step} of 3:{" "}
               {step === 1 ? "Select File" : step === 2 ? "Review & Import" : "Complete"}
             </p>
@@ -196,7 +193,7 @@ export function CsvImportWizard({
                     ? "Drop the CSV file here"
                     : "Drag & drop CSV file here, or click to select"}
                 </p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Supports combined format or offsets-only format
                 </p>
               </div>
@@ -219,10 +216,8 @@ export function CsvImportWizard({
                         />
                       </svg>
                       <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-sm font-medium text-foreground">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">
                           {(file.size / 1024).toFixed(2)} KB
                           {format &&
                             ` • ${format === "combined" ? "Combined format" : "Offsets only"}`}
@@ -260,10 +255,8 @@ export function CsvImportWizard({
                         className="h-4 w-4 text-blue-600"
                       />
                       <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          Combined Format
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-sm font-medium text-foreground">Combined Format</p>
+                        <p className="text-xs text-muted-foreground">
                           Includes station_x, waterline_z, and half_breadth_y
                         </p>
                       </div>
@@ -278,10 +271,8 @@ export function CsvImportWizard({
                         className="h-4 w-4 text-blue-600"
                       />
                       <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          Offsets Only
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-sm font-medium text-foreground">Offsets Only</p>
+                        <p className="text-xs text-muted-foreground">
                           Only half_breadth_y (stations and waterlines must exist)
                         </p>
                       </div>
@@ -296,9 +287,7 @@ export function CsvImportWizard({
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  Preview (first 5 rows)
-                </h4>
+                <h4 className="text-sm font-medium text-foreground mb-2">Preview (first 5 rows)</h4>
                 <div className="overflow-x-auto border border-gray-200 dark:border-gray-600 rounded-lg">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700/50">
@@ -307,20 +296,20 @@ export function CsvImportWizard({
                           Object.keys(previewData[0]).map((header) => (
                             <th
                               key={header}
-                              className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                              className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase"
                             >
                               {header}
                             </th>
                           ))}
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-card divide-y divide-gray-200 dark:divide-gray-700">
                       {previewData.map((row, idx) => (
                         <tr key={idx}>
                           {Object.values(row).map((value, colIdx) => (
                             <td
                               key={colIdx}
-                              className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap"
+                              className="px-4 py-2 text-sm text-foreground whitespace-nowrap"
                             >
                               {value}
                             </td>
@@ -375,9 +364,7 @@ export function CsvImportWizard({
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
-                Import Successful!
-              </h3>
+              <h3 className="mt-4 text-lg font-medium text-foreground">Import Successful!</h3>
               <div className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <p>✓ {importResult.stations_imported} stations imported</p>
                 <p>✓ {importResult.waterlines_imported} waterlines imported</p>

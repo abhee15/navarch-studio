@@ -49,7 +49,7 @@ export function PreviewPanel({ loa, beam, draft, cb, hullFamily }: PreviewPanelP
     <div className="bg-card rounded-2xl shadow border border-border p-4 h-full">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold">Preview</h3>
-        <div className="text-[11px] text-muted-foreground">Live rendering (not to scale)</div>
+        <div className="text-xs text-muted-foreground">Live rendering (not to scale)</div>
       </div>
 
       <div className="aspect-[16/9] w-full rounded-xl bg-slate-100 dark:bg-slate-900 border border-border grid place-items-center overflow-hidden">
@@ -116,7 +116,7 @@ export function PreviewPanel({ loa, beam, draft, cb, hullFamily }: PreviewPanelP
         </div>
       </div>
 
-      <p className="text-[11px] text-muted-foreground mt-3">
+      <p className="text-xs text-muted-foreground mt-3">
         Preview uses stylistic geometry for feedback only. Engineering outputs are in the Results
         panel.
       </p>

@@ -180,18 +180,15 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
           &#8203;
         </span>
 
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-7xl sm:w-full">
+        <div className="inline-block align-bottom bg-card rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-7xl sm:w-full">
           {/* Header */}
-          <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6">
+          <div className="bg-card px-4 pt-5 pb-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3
-                  className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
-                  id="modal-title"
-                >
+                <h3 className="text-lg leading-6 font-medium text-foreground" id="modal-title">
                   Offsets Grid Editor
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Edit half-breadth values for each station and waterline
                 </p>
               </div>
@@ -242,17 +239,17 @@ export function OffsetsGridEditor({ vesselId, isOpen, onClose }: OffsetsGridEdit
                         d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
                       />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <h3 className="mt-2 text-sm font-medium text-foreground">
                       No geometry data available
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Import stations and waterlines first using the CSV import wizard
                     </p>
                   </div>
                 ) : (
                   <>
                     {/* Debug Info */}
-                    <div className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mb-2 text-xs text-muted-foreground">
                       Rows: {rowData.length}, Columns: {columnDefs.length}
                     </div>
                     <div className="ag-theme-alpine" style={{ height: "500px", width: "100%" }}>

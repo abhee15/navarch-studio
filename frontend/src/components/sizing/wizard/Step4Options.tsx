@@ -13,7 +13,6 @@ import {
   Calculator,
   BarChart3,
   Bot,
-  Rocket,
   Lightbulb,
   Fuel,
   Zap,
@@ -445,7 +444,7 @@ export const Step4Options: React.FC<Step4Props> = ({
             </>
           ) : (
             <>
-              <Rocket className="mr-2 h-4 w-4" />
+              <Ship className="mr-2 h-4 w-4" />
               Generate Hulls
             </>
           )}

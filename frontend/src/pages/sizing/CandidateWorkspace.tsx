@@ -135,7 +135,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
         />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400">Loading candidate...</p>
+            <p className="text-muted-foreground">Loading candidate...</p>
           </div>
         </main>
         <Footer />
@@ -181,10 +181,10 @@ export const CandidateWorkspace: React.FC = observer(() => {
                   ← Back
                 </Button>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white capitalize">
+                  <h2 className="text-xl font-bold text-foreground capitalize">
                     {candidate.hullFamily.replace("_", " ")}
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     Rank #{candidate.rank} • Score: {(candidate.score * 100).toFixed(1)}%
                   </p>
                 </div>
@@ -242,12 +242,10 @@ export const CandidateWorkspace: React.FC = observer(() => {
           <main className="flex-1 min-w-0 overflow-y-auto">
             <div className="px-4 py-8 sm:px-6">
               {/* Viewports - Flexible Height */}
-              <div className="mb-6 rounded-lg bg-white shadow dark:bg-gray-800 overflow-hidden">
-                <div className="border-b border-gray-200 dark:border-gray-700 p-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Hull Visualization
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <div className="mb-6 rounded-lg bg-card shadow overflow-hidden">
+                <div className="border-b border-border p-4">
+                  <h3 className="font-semibold text-foreground">Hull Visualization</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
                     Click any viewport header to maximize. Adjust parameters on the left to see live
                     updates.
                   </p>

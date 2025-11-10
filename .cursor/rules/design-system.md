@@ -274,7 +274,43 @@ Defined in `frontend/src/index.css` using HSL values with CSS variables.
 
 **Note:** CollapsibleSection now includes subtle borders (`mx-2 my-1.5 border border-border/50 rounded-md`)
 
-#### Modal Dialog
+#### Modal Dialog (NEW - Use Dialog Component)
+
+**Recommended:** Use the reusable `Dialog` component with semantic tokens:
+
+```tsx
+import { Dialog, DialogHeader, DialogDescription, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+<Dialog isOpen={isOpen} onClose={onClose} maxWidth="lg">
+  <DialogHeader icon={<Icon className="h-6 w-6 text-primary" />}>
+    Dialog Title
+  </DialogHeader>
+  <DialogDescription>
+    Optional description text
+  </DialogDescription>
+  <DialogContent>
+    {/* Your form or content */}
+  </DialogContent>
+  <DialogFooter>
+    <Button variant="default" onClick={handleSubmit}>
+      Confirm
+    </Button>
+    <Button variant="outline" onClick={onClose}>
+      Cancel
+    </Button>
+  </DialogFooter>
+</Dialog>
+```
+
+**Features:**
+- Uses semantic color tokens (`bg-card`, `text-foreground`)
+- Backdrop blur effect
+- Configurable max-width (sm to 7xl)
+- Optional close-on-overlay-click
+- Consistent styling across all dialogs
+
+**Legacy Pattern (Avoid in New Code):**
 ```tsx
 <div className="inline-block align-bottom bg-card rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
   <h3 className="text-lg leading-6 font-medium text-foreground">
@@ -497,6 +533,42 @@ Center container with large icon and descriptive text:
 - Maintain sufficient color contrast (WCAG AA minimum)
 - Focus states must be clearly visible
 
+### Scrollbar Styling
+
+Custom scrollbars are implemented globally to match the theme:
+
+**Implementation:**
+```css
+/* In index.css - Applied globally */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+  border: 2px solid hsl(var(--muted));
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+```
+
+**Features:**
+- Theme-aware colors using CSS variables
+- Smooth hover transitions to primary color
+- Consistent 10px width across desktop
+- Firefox support via `scrollbar-width: thin`
+
+**Plugin:** Uses `tailwind-scrollbar` v3.1.0
+
 ### Performance
 
 - Use `transition-all` sparingly (prefer specific properties)
@@ -507,17 +579,69 @@ Center container with large icon and descriptive text:
 
 ## Migration Guide
 
+### Phase 1: Semantic Token Migration (COMPLETED)
+
+**✅ Color Tokens - Migrate hardcoded colors to semantic tokens:**
+
+| Old Pattern | New Pattern | Notes |
+|------------|-------------|-------|
+| `bg-white dark:bg-gray-800` | `bg-card` | Card/panel backgrounds |
+| `bg-gray-50 dark:bg-gray-900` | `bg-muted` | Muted backgrounds |
+| `border-gray-200 dark:border-gray-700` | `border-border` | Standard borders |
+| `border-gray-300 dark:border-gray-600` | `border-input` | Input borders |
+| `text-gray-900 dark:text-gray-100` | `text-foreground` | Primary text |
+| `text-gray-900 dark:text-white` | `text-foreground` | Primary text |
+| `text-gray-700 dark:text-gray-300` | `text-foreground` | Primary text |
+| `text-gray-500 dark:text-gray-400` | `text-muted-foreground` | Secondary text |
+| `text-gray-600 dark:text-gray-400` | `text-muted-foreground` | Secondary text |
+
+**✅ Font Sizes - Replace arbitrary sizes:**
+- `text-[11px]` → `text-xs` (12px)
+- `text-[13px]` → `text-sm` (14px)
+- `text-[10px]` → Keep for badges only, or use `text-xs` with `scale-90`
+
+**✅ Dialog Components - Use new Dialog component:**
+- Replace inline modal markup with `<Dialog>` component
+- Use `<Button>` and `<Input>` components instead of inline styles
+- Ensures consistent theming and accessibility
+
+### Phase 2: Pattern Standardization (PENDING STAKEHOLDER DECISIONS)
+
+**Decision Needed:** Choose unified panel pattern:
+- **Option A:** Hull-sizing style (gradient headers, shadow-lg)
+- **Option B:** Hydrostatics style (collapsible, subtle borders)
+- **Option C:** Resistance style (collapsible + fullscreen)
+- **Option D:** New unified pattern
+
+**Decision Needed:** Gradient headers:
+- Keep and standardize across all modules, OR
+- Remove from hull-sizing for consistency
+
+### General Migration Checklist
+
 When refactoring existing components:
 
 1. **Font sizes:** Change `text-[11px]` → `text-xs`
-2. **Label-value pairs:** Change inline layout → flexbox with `justify-between`
-3. **Borders:** Ensure consistent use of `border-border` token
-4. **Spacing:** Align with scale (0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8)
-5. **Test both themes:** Verify appearance in light and dark modes
+2. **Color tokens:** Replace all hardcoded grays with semantic tokens
+3. **Dialog components:** Use `<Dialog>`, `<Button>`, `<Input>` components
+4. **Label-value pairs:** Change inline layout → flexbox with `justify-between`
+5. **Borders:** Ensure consistent use of `border-border` token
+6. **Spacing:** Align with scale (0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8)
+7. **Test both themes:** Verify appearance in light and dark modes
+8. **Scrollbars:** Automatically themed via global CSS (no action needed)
 
 ---
 
 ## Version History
+
+- **v1.1** (November 2025): UI/UX Consistency Improvements
+  - ✅ Implemented custom scrollbar styling with theme awareness
+  - ✅ Created reusable Dialog component with semantic tokens
+  - ✅ Migrated 20+ files from hardcoded colors to semantic tokens
+  - ✅ Standardized font sizes (removed arbitrary `text-[11px]`, `text-[13px]`)
+  - ✅ Fixed modal dialog inconsistencies and typos
+  - ⏳ Pending: Unified panel pattern decision
+  - ⏳ Pending: Gradient header standardization decision
 
 - **v1.0** (2025): Initial design system documentation
   - Established typography scale

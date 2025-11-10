@@ -211,12 +211,10 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
       {metrics.map((group) => (
         <div
           key={group.category}
-          className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow"
+          className="rounded-lg border border-border bg-card overflow-hidden shadow"
         >
-          <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
-              {group.category}
-            </h4>
+          <div className="bg-muted px-4 py-3 border-b border-border">
+            <h4 className="font-semibold text-foreground text-sm">{group.category}</h4>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {group.items.map((item) => (
@@ -237,8 +235,8 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
       ))}
 
       {/* Export Actions */}
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow">
-        <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-3">Quick Actions</h4>
+      <div className="rounded-lg border border-border bg-card p-4 shadow">
+        <h4 className="font-semibold text-foreground text-sm mb-3">Quick Actions</h4>
         <div className="grid grid-cols-2 gap-2">
           <button className="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -51,9 +51,9 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
 
   return (
     <div className="w-full overflow-auto">
-      <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg">
+      <div className="rounded-lg border border-border bg-card shadow-lg">
         {/* Header */}
-        <div className="border-b border-gray-300 dark:border-gray-600 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900 dark:to-gray-900 p-4">
+        <div className="border-b border-border bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900 dark:to-gray-900 p-4">
           <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Table className="h-4 w-4 text-primary" />
             Table of Offsets
@@ -68,7 +68,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
           <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 border-r-2 border-gray-300 dark:border-gray-600">
+                <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 border-r-2 border-border">
                   WL (m)
                 </th>
                 {stationLabels.map((station) => (
@@ -87,7 +87,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-card">
               {offsets.map((row, wlIdx) => (
                 <tr
                   key={wlIdx}
@@ -97,7 +97,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
                       : ""
                   }`}
                 >
-                  <td className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm font-bold text-gray-900 dark:text-white border-r-2 border-gray-300 dark:border-gray-600">
+                  <td className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm font-bold text-gray-900 dark:text-white border-r-2 border-border">
                     {wlIdx === waterlineCount - 1 ? (
                       <span className="text-cyan-600 dark:text-cyan-400">
                         DWL: {waterlineLabels[wlIdx]}
@@ -125,7 +125,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
         </div>
 
         {/* Footer Legend */}
-        <div className="border-t border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-3">
+        <div className="border-t border-border bg-gray-50 dark:bg-gray-900 p-3">
           <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
               <span className="font-bold">AP</span> = Aft Perpendicular
