@@ -245,7 +245,7 @@ export function CsvImportWizard({
                     CSV Format
                   </label>
                   <div className="space-y-2">
-                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-700/50">
                       <input
                         type="radio"
                         name="format"
@@ -261,7 +261,7 @@ export function CsvImportWizard({
                         </p>
                       </div>
                     </label>
-                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <label className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-gray-700/50">
                       <input
                         type="radio"
                         name="format"
@@ -378,7 +378,7 @@ export function CsvImportWizard({
             <button
               onClick={step > 1 && step < 3 ? () => setStep((step - 1) as 1 | 2 | 3) : handleClose}
               disabled={importing}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-muted/50 dark:hover:bg-gray-600 disabled:opacity-50"
             >
               {step === 3 ? "Close" : step === 1 ? "Cancel" : "Back"}
             </button>

@@ -443,7 +443,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         <div className="absolute top-6 right-6">
           <button
             onClick={() => setShowLegend(!showLegend)}
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-card transition-colors flex items-center gap-1.5"
           >
             {showLegend ? "▼" : "▶"} Legend
           </button>
@@ -452,21 +452,21 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
                 Legend
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
                 <div className="w-5 h-1 bg-gradient-to-r from-gray-800 to-gray-600 rounded"></div>
                 <span className="text-gray-700 dark:text-gray-300">Sheerline (Deck)</span>
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
                 <div className="w-5 h-0.5 bg-blue-600 shadow-sm"></div>
                 <span className="text-gray-700 dark:text-gray-300">Centerline Buttock</span>
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
                 <div className="w-5 h-0.5 bg-blue-300"></div>
                 <span className="text-gray-700 dark:text-gray-300">
                   Buttocks (0-{(candidate.beamM / 2).toFixed(1)}m)
                 </span>
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
                 <div
                   className="w-5 h-0.5 bg-cyan-600"
                   style={{
@@ -487,7 +487,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         <div className="absolute bottom-6 left-6">
           <button
             onClick={() => setShowDimensionsPanel(!showDimensionsPanel)}
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-card transition-colors flex items-center gap-1.5"
           >
             {showDimensionsPanel ? "▼" : "▶"} Dimensions
           </button>

@@ -160,7 +160,7 @@ export function ManageLoadcasesDialog({
                 </div>
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                  className="text-gray-400 hover:text-foreground dark:hover:text-foreground"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -371,7 +371,7 @@ function LoadcaseRow({
               </button>
               <button
                 onClick={onDeleteCancel}
-                className="px-3 py-1 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+                className="px-3 py-1 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-muted/500 rounded"
               >
                 Cancel
               </button>
@@ -383,7 +383,7 @@ function LoadcaseRow({
   }
 
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+    <tr className="hover:bg-muted/50 dark:hover:bg-gray-700">
       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-foreground">
         {loadcase.name}
       </td>
@@ -489,7 +489,7 @@ function EditLoadcaseRow({ loadcase, onSave, onCancel }: EditLoadcaseRowProps) {
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-3 py-1.5 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+                className="px-3 py-1.5 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-muted/500 rounded"
               >
                 Cancel
               </button>
@@ -544,7 +544,7 @@ function LoadcaseCard({
           </button>
           <button
             onClick={onDeleteCancel}
-            className="flex-1 px-3 py-2 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+            className="flex-1 px-3 py-2 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-muted/500 rounded"
           >
             Cancel
           </button>
@@ -683,7 +683,7 @@ function EditLoadcaseCard({ loadcase, onSave, onCancel }: EditLoadcaseCardProps)
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
+            className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-muted/500 rounded"
           >
             Cancel
           </button>

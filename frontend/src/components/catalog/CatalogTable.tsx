@@ -112,7 +112,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                       key={header.id}
                       className={`
                         px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider
-                        ${canSort ? "cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700" : ""}
+                        ${canSort ? "cursor-pointer select-none hover:bg-muted/50" : ""}
                       `}
                       style={{ width: header.getSize() }}
                       onClick={header.column.getToggleSortingHandler()}
@@ -154,7 +154,7 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
                   onClick={() => onRowClick?.(row.original)}
                   className="
                     transition-all duration-150
-                    hover:bg-gray-50 dark:hover:bg-gray-800
+                    hover:bg-muted/50 dark:hover:bg-gray-800
                     hover:border-l-4 hover:border-l-blue-500
                     cursor-pointer
                     border-b border-gray-200 dark:border-gray-700

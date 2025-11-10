@@ -234,7 +234,7 @@ export const ResistanceCurvePanel: React.FC<ResistanceCurvePanelProps> = ({ cand
         <div className="mt-4">
           <button
             onClick={() => setShowLegend(!showLegend)}
-            className="text-xs font-medium text-muted-foreground hover:text-gray-900 dark:hover:text-gray-100 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded hover:bg-muted dark:hover:bg-card transition-colors"
           >
             {showLegend ? "▼" : "▶"} Legend
           </button>

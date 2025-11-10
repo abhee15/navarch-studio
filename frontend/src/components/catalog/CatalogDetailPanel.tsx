@@ -51,7 +51,7 @@ export const CatalogDetailPanel: React.FC<CatalogDetailPanelProps> = ({
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Vessel Details</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-1 rounded hover:bg-muted dark:hover:bg-card transition-colors"
             aria-label="Close panel"
           >
             <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />

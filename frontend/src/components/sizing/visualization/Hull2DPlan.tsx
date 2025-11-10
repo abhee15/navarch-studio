@@ -500,28 +500,28 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
                 Legend
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
                 <div className="w-5 h-0.5 bg-gradient-to-r from-blue-600 to-blue-400 shadow-sm"></div>
                 <span className="text-gray-700 dark:text-gray-300">
                   Design Waterline (T={candidate.draftM.toFixed(1)}m)
                 </span>
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
                 <div className="w-5 h-0.5 bg-blue-400"></div>
                 <span className="text-gray-700 dark:text-gray-300">
                   Waterlines (surface to keel)
                 </span>
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
                 <div className="w-5 h-0.5 bg-red-600"></div>
                 <span className="text-gray-700 dark:text-gray-300">AP (Aft Perpendicular)</span>
               </div>
-              <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
                 <div className="w-5 h-0.5 bg-green-600"></div>
                 <span className="text-gray-700 dark:text-gray-300">FP (Forward Perpendicular)</span>
               </div>
               {candidate.lcbPctLpp && (
-                <div className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
+                <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
                   <div className="w-3 h-3 rounded-full bg-red-500 shadow-md animate-pulse"></div>
                   <span className="text-gray-700 dark:text-gray-300 font-medium">
                     LCB ({candidate.lcbPctLpp.toFixed(1)}% Lpp)

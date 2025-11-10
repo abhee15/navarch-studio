@@ -102,7 +102,7 @@ export function GeometryManagementDialog({
                 </div>
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                  className="text-gray-400 hover:text-foreground dark:hover:text-foreground focus:outline-none"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -123,7 +123,7 @@ export function GeometryManagementDialog({
                     className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
                       activeTab === "import"
                         ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-foreground hover:border-border"
                     }`}
                   >
                     <svg
@@ -149,7 +149,7 @@ export function GeometryManagementDialog({
                         ? "border-transparent text-gray-400 dark:text-gray-600 cursor-not-allowed"
                         : activeTab === "grid"
                           ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                          : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                          : "border-transparent text-gray-500 dark:text-gray-400 hover:text-foreground hover:border-border"
                     }`}
                   >
                     <svg

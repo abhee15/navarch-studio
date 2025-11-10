@@ -223,7 +223,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
                   mode === "real"
                     ? "bg-white dark:bg-gray-700 shadow text-blue-700 dark:text-blue-400 font-semibold"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                    : "text-gray-600 dark:text-gray-400 hover:text-foreground"
                 }`}
               >
                 <Ship className="h-4 w-4" />
@@ -234,7 +234,7 @@ export const UnifiedCatalogBrowser: React.FC = observer(() => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${
                   mode === "ml"
                     ? "bg-white dark:bg-gray-700 shadow text-purple-700 dark:text-purple-400 font-semibold"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                    : "text-gray-600 dark:text-gray-400 hover:text-foreground"
                 }`}
               >
                 <Cpu className="h-4 w-4" />

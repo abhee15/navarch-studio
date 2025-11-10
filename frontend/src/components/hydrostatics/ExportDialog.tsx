@@ -101,7 +101,7 @@ export function ExportDialog({
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="text-gray-400 hover:text-foreground"
               disabled={exporting}
               aria-label="Close"
             >

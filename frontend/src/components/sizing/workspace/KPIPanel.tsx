@@ -220,7 +220,7 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
             {group.items.map((item) => (
               <div
                 key={item.label}
-                className="px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                className="px-4 py-3 flex items-center justify-between hover:bg-muted/50 dark:hover:bg-gray-700/50 transition-colors"
               >
                 <span className="text-sm text-gray-600 dark:text-gray-400">{item.label}</span>
                 <span

@@ -91,7 +91,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             {localSearchText && (
               <button
                 onClick={() => setLocalSearchText("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
