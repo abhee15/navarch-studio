@@ -10,6 +10,7 @@ import { SeaStatePanel } from "../../components/seakeeping/panels/SeaStatePanel"
 import { MotionResponsePanel } from "../../components/seakeeping/panels/MotionResponsePanel";
 import { ExceedancePanel } from "../../components/seakeeping/panels/ExceedancePanel";
 import { Enhanced3DPanel } from "../../components/seakeeping/panels/Enhanced3DPanel";
+import { VesselSelectionDialog } from "../../components/seakeeping/VesselSelectionDialog";
 
 type TabType = "raos" | "motion" | "exceedance" | "3d";
 
@@ -18,6 +19,7 @@ export const SeakeepingWorkspace = observer(() => {
   const { vesselId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("raos");
+  const [showVesselPicker, setShowVesselPicker] = useState(false);
 
   useEffect(() => {
     // Load vessel snapshot from routing state or fetch by ID
@@ -38,15 +40,46 @@ export const SeakeepingWorkspace = observer(() => {
 
   if (!vessel) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <h2 className="text-2xl font-semibold">No Vessel Selected</h2>
-          <p className="text-muted-foreground">
-            Please select a vessel from Hydrostatics to analyze
-          </p>
-          <Button onClick={() => navigate("/hydrostatics")}>Go to Hydrostatics</Button>
+      <>
+        <div className="flex h-screen items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <svg
+              className="mx-auto h-16 w-16 text-cyan-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h2 className="text-2xl font-semibold">Seakeeping Analysis</h2>
+            <p className="text-muted-foreground">
+              Select a vessel from Hydrostatics to analyze its seakeeping performance
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+              <Button onClick={() => setShowVesselPicker(true)} size="lg">
+                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
+                Select Vessel
+              </Button>
+              <Button onClick={() => navigate("/hydrostatics")} variant="outline" size="lg">
+                Go to Hydrostatics
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+        {showVesselPicker && <VesselSelectionDialog onClose={() => setShowVesselPicker(false)} />}
+      </>
     );
   }
 

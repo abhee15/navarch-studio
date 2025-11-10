@@ -363,6 +363,42 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
               />
             )}
 
+            {/* Seakeeping Button */}
+            {results.length > 0 && (
+              <button
+                onClick={() => {
+                  // Pass vessel snapshot to seakeeping
+                  const vesselSnapshot = {
+                    id: vesselId,
+                    name: vessel.name,
+                    lpp: vessel.lpp,
+                    beam: vessel.beam,
+                    draft: vessel.designDraft,
+                    displacement: results[results.length - 1]?.dispWeight || 0,
+                    units: vessel.units || "SI",
+                  };
+                  navigate(`/seakeeping/${vesselId}`, { state: { vesselSnapshot } });
+                }}
+                className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded text-cyan-600 hover:bg-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                title="Analyze vessel seakeeping"
+              >
+                <svg
+                  className="h-3.5 w-3.5 mr-1.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Seakeeping
+              </button>
+            )}
+
             {/* Compare Button */}
             {results.length > 0 && (
               <button
