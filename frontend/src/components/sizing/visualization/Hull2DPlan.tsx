@@ -36,7 +36,15 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
   ) => {
     const [hoveredWaterline, setHoveredWaterline] = useState<number | null>(null);
     const [hoveredStation, setHoveredStation] = useState<number | null>(null);
-    const [showLegend, setShowLegend] = useState(false);
+    const [showDimensionsState, setShowDimensionsState] = useState(showDimensions);
+    const [visibility, setVisibility] = useState({
+      waterlines: true,
+      stations: true,
+      centerline: true,
+      perpendiculars: true,
+      lcb: true,
+    });
+    const [hoveredLegendItem, setHoveredLegendItem] = useState<string | null>(null);
 
     // Generate vessel-type-specific waterline curves
     const waterlines = useMemo(() => {
@@ -109,14 +117,15 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     };
 
     return (
-      <div className="w-full h-full bg-gradient-to-b from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 relative">
-        <svg
-          ref={ref}
-          width="100%"
-          height="100%"
-          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-          className="border border-gray-300 dark:border-gray-600 rounded-lg shadow-inner"
-        >
+      <div className="w-full h-full p-4 relative flex flex-col">
+        <div className="flex-1 bg-gradient-to-b from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-600 rounded-t-lg shadow-inner flex flex-col">
+          <svg
+            ref={ref}
+            width="100%"
+            height="100%"
+            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+            className="flex-1"
+          >
           {/* Gradient definitions for professional look */}
           <defs>
             <linearGradient id="waterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -188,7 +197,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
           </text>
 
           {/* Centerline */}
-          {showCenterline && (
+          {showCenterline && visibility.centerline && (
             <line
               x1={toSVG(-lpp / 2, 0)[0]}
               y1={toSVG(-lpp / 2, 0)[1]}
@@ -197,12 +206,13 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               stroke="#9ca3af"
               strokeWidth="1"
               strokeDasharray="5,5"
-              opacity="0.6"
+              opacity={hoveredLegendItem && hoveredLegendItem !== 'centerline' ? 0.3 : 0.6}
+              style={{ transition: 'all 0.3s ease' }}
             />
           )}
 
           {/* Perpendiculars */}
-          {showStations && (
+          {showStations && visibility.perpendiculars && (
             <>
               <line
                 x1={toSVG(-lpp / 2, -beam / 2)[0]}
@@ -212,6 +222,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                 stroke="#ef4444"
                 strokeWidth="2.5"
                 filter="url(#dropShadow)"
+                opacity={hoveredLegendItem && hoveredLegendItem !== 'perpendiculars' ? 0.3 : 1}
+                style={{ transition: 'all 0.3s ease' }}
               />
               <text
                 x={toSVG(-lpp / 2, -beam / 2 - 5)[0]}
@@ -231,6 +243,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                 stroke="#10b981"
                 strokeWidth="2.5"
                 filter="url(#dropShadow)"
+                opacity={hoveredLegendItem && hoveredLegendItem !== 'perpendiculars' ? 0.3 : 1}
+                style={{ transition: 'all 0.3s ease' }}
               />
               <text
                 x={toSVG(lpp / 2, -beam / 2 - 5)[0]}
@@ -256,10 +270,11 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
           )}
 
           {/* Station markers with hover effects */}
-          {showStations &&
+          {showStations && visibility.stations &&
             stations.map((station) => {
               const [sx] = toSVG(station.x, 0);
               const isHovered = hoveredStation === station.number;
+              const dimmed = hoveredLegendItem && hoveredLegendItem !== 'stations';
 
               return (
                 <g
@@ -276,7 +291,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                     stroke={isHovered ? "#3b82f6" : "#d1d5db"}
                     strokeWidth={isHovered ? "1.5" : "0.5"}
                     strokeDasharray="2,2"
-                    style={{ transition: "all 0.2s ease" }}
+                    opacity={dimmed ? 0.3 : 1}
+                    style={{ transition: "all 0.3s ease" }}
                   />
                   <text
                     x={sx}
@@ -316,9 +332,10 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             })}
 
           {/* Waterlines with gradient strokes and animations */}
-          {showWaterlines &&
+          {showWaterlines && visibility.waterlines &&
             waterlines.map((wl, idx) => {
               const paths = waterlinePath(wl.points);
+              const dimmed = hoveredLegendItem && hoveredLegendItem !== 'waterlines';
               const isHovered = hoveredWaterline === idx;
               const baseColor = wl.isDesignWaterline ? "#3b82f6" : "#60a5fa";
               const hoverColor = wl.isDesignWaterline ? "#2563eb" : "#3b82f6";
@@ -330,8 +347,9 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                   onMouseEnter={() => setHoveredWaterline(idx)}
                   onMouseLeave={() => setHoveredWaterline(null)}
                   style={{
-                    opacity: 0,
+                    opacity: dimmed ? 0.3 : 0,
                     animation: `fadeIn 0.4s ease-in forwards ${idx * 0.08}s`,
+                    transition: 'opacity 0.3s ease',
                   }}
                 >
                   {/* Starboard */}
@@ -390,7 +408,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             })}
 
           {/* Dimensions */}
-          {showDimensions && (
+          {showDimensionsState && (
             <>
               <line
                 x1={toSVG(-lpp / 2, -beam / 2 - 8)[0]}
@@ -455,8 +473,11 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
           )}
 
           {/* LCB marker with glow effect */}
-          {candidate.lcbPctLpp && (
-            <g>
+          {candidate.lcbPctLpp && visibility.lcb && (
+            <g
+              opacity={hoveredLegendItem && hoveredLegendItem !== 'lcb' ? 0.3 : 1}
+              style={{ transition: 'opacity 0.3s ease' }}
+            >
               <circle
                 cx={toSVG((candidate.lcbPctLpp / 100 - 0.5) * lpp, 0)[0]}
                 cy={toSVG((candidate.lcbPctLpp / 100 - 0.5) * lpp, 0)[1]}
@@ -486,53 +507,130 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             Scale 1:{Math.round(1 / scale)}
           </text>
         </svg>
+        </div>
 
-        {/* Collapsible Legend */}
-        <div className="absolute top-6 right-6">
-          <button
-            onClick={() => setShowLegend(!showLegend)}
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-          >
-            {showLegend ? "▼" : "▶"} Legend
-          </button>
-          {showLegend && (
-            <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
-              <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
-                Legend
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-                <div className="w-5 h-0.5 bg-gradient-to-r from-blue-600 to-blue-400 shadow-sm"></div>
-                <span className="text-gray-700 dark:text-gray-300">
-                  Design Waterline (T={candidate.draftM.toFixed(1)}m)
-                </span>
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-                <div className="w-5 h-0.5 bg-blue-400"></div>
-                <span className="text-gray-700 dark:text-gray-300">
-                  Waterlines (surface to keel)
-                </span>
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-                <div className="w-5 h-0.5 bg-red-600"></div>
-                <span className="text-gray-700 dark:text-gray-300">AP (Aft Perpendicular)</span>
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-                <div className="w-5 h-0.5 bg-green-600"></div>
-                <span className="text-gray-700 dark:text-gray-300">FP (Forward Perpendicular)</span>
-              </div>
-              {candidate.lcbPctLpp && (
-                <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-gray-700 p-1 rounded transition-colors">
-                  <div className="w-3 h-3 rounded-full bg-red-500 shadow-md animate-pulse"></div>
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">
-                    LCB ({candidate.lcbPctLpp.toFixed(1)}% Lpp)
-                  </span>
+        {/* Integrated Info Bar - Part of the same panel */}
+        <div className="bg-white dark:bg-gray-800 border-t-0 border-l border-r border-b border-gray-300 dark:border-gray-600 rounded-b-lg shadow-lg p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          {/* Left: Interactive legend items */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setVisibility(prev => ({ ...prev, waterlines: !prev.waterlines }))}
+              onMouseEnter={() => setHoveredLegendItem('waterlines')}
+              onMouseLeave={() => setHoveredLegendItem(null)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                visibility.waterlines
+                  ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+              }`}
+            >
+              <div className="w-5 h-0.5 bg-gradient-to-r from-blue-600 to-blue-400"></div>
+              <span>Waterlines</span>
+            </button>
+
+            <button
+              onClick={() => setVisibility(prev => ({ ...prev, stations: !prev.stations }))}
+              onMouseEnter={() => setHoveredLegendItem('stations')}
+              onMouseLeave={() => setHoveredLegendItem(null)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                visibility.stations
+                  ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+              }`}
+            >
+              <div className="w-5 h-0.5 bg-gray-400"></div>
+              <span>Stations</span>
+            </button>
+
+            <button
+              onClick={() => setVisibility(prev => ({ ...prev, perpendiculars: !prev.perpendiculars }))}
+              onMouseEnter={() => setHoveredLegendItem('perpendiculars')}
+              onMouseLeave={() => setHoveredLegendItem(null)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                visibility.perpendiculars
+                  ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+              }`}
+            >
+              <div className="w-5 h-0.5 bg-gradient-to-r from-red-500 to-green-500"></div>
+              <span>Perpendiculars</span>
+            </button>
+
+            <button
+              onClick={() => setVisibility(prev => ({ ...prev, centerline: !prev.centerline }))}
+              onMouseEnter={() => setHoveredLegendItem('centerline')}
+              onMouseLeave={() => setHoveredLegendItem(null)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                visibility.centerline
+                  ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+              }`}
+            >
+              <div className="w-5 h-0.5 bg-gray-500"></div>
+              <span>Centerline</span>
+            </button>
+
+            {candidate.lcbPctLpp && (
+              <button
+                onClick={() => setVisibility(prev => ({ ...prev, lcb: !prev.lcb }))}
+                onMouseEnter={() => setHoveredLegendItem('lcb')}
+                onMouseLeave={() => setHoveredLegendItem(null)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                  visibility.lcb
+                    ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                }`}
+              >
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span>LCB</span>
+              </button>
+            )}
+          </div>
+
+          {/* Separator */}
+          <div className="hidden md:block h-6 w-px bg-border"></div>
+
+          {/* Right: Dimensions dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowDimensionsState(!showDimensionsState)}
+              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-sm px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+            >
+              {showDimensionsState ? "▼" : "▶"} Dimensions
+            </button>
+            {showDimensionsState && (
+              <div className="absolute bottom-full right-0 mb-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs border border-gray-200 dark:border-gray-700 min-w-[200px]">
+                <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
+                  Dimensions
                 </div>
-              )}
-              <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600 text-[10px] text-gray-500 dark:text-gray-400">
-                Hover over waterlines and stations for details
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {lpp.toFixed(2)} m
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400">Lwl:</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {candidate.lwlM.toFixed(2)} m
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400">LOA:</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {candidate.loaM.toFixed(2)} m
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400">Beam:</span>
+                  <span className="font-semibold text-blue-700 dark:text-blue-400">
+                    {beam.toFixed(2)} m
+                  </span>
+                  {candidate.lcbPctLpp && (
+                    <>
+                      <span className="text-gray-600 dark:text-gray-400">LCB:</span>
+                      <span className="font-semibold text-red-700 dark:text-red-400">
+                        {candidate.lcbPctLpp.toFixed(1)}% Lpp
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Add keyframes for animations */}
