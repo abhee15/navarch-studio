@@ -65,85 +65,85 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
     <div className="w-full h-full p-4 relative flex flex-col">
       <div className="flex-1 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-600 rounded-t-lg shadow-lg relative">
         <Canvas
-        camera={{
-          position: [cameraDistance, cameraDistance * 0.6, cameraDistance * 0.8],
-          fov: 50,
-        }}
-        shadows
-      >
-        <Suspense fallback={null}>
-          {/* Lighting */}
-          <ambientLight intensity={0.5} />
-          <directionalLight
-            position={[10, 10, 5]}
-            intensity={1}
-            castShadow
-            shadow-mapSize-width={1024}
-            shadow-mapSize-height={1024}
-          />
-          <pointLight position={[-10, -10, -5]} intensity={0.3} />
-
-          {/* Environment (realistic reflections) */}
-          <Environment preset="city" />
-
-          {/* Hull */}
-          <ParametricHull3D
-            candidate={candidate}
-            showWaterplane={showWaterplane && visibility.waterplane}
-            showCenters={showCenters && visibility.centers}
-          />
-
-          {/* Grid helper */}
-          {showGrid && visibility.grid && (
-            <Grid
-              args={[candidate.lppM * 1.5, candidate.lppM * 1.5]}
-              cellSize={1}
-              cellThickness={0.5}
-              cellColor="#6b7280"
-              sectionSize={5}
-              sectionThickness={1}
-              sectionColor="#3b82f6"
-              fadeDistance={100}
-              fadeStrength={1}
-              position={[0, 0, 0]}
+          camera={{
+            position: [cameraDistance, cameraDistance * 0.6, cameraDistance * 0.8],
+            fov: 50,
+          }}
+          shadows
+        >
+          <Suspense fallback={null}>
+            {/* Lighting */}
+            <ambientLight intensity={0.5} />
+            <directionalLight
+              position={[10, 10, 5]}
+              intensity={1}
+              castShadow
+              shadow-mapSize-width={1024}
+              shadow-mapSize-height={1024}
             />
-          )}
+            <pointLight position={[-10, -10, -5]} intensity={0.3} />
 
-          {/* Orbit controls */}
-          <OrbitControls
-            ref={controlsRef}
-            enableDamping
-            dampingFactor={0.05}
-            rotateSpeed={0.8}
-            zoomSpeed={1.2}
-            minDistance={cameraDistance * 0.5}
-            maxDistance={cameraDistance * 3}
-            maxPolarAngle={Math.PI / 1.8} // Prevent extreme angles
-          />
-        </Suspense>
-      </Canvas>
+            {/* Environment (realistic reflections) */}
+            <Environment preset="city" />
 
-      {/* Auto-hide Rotation Hint */}
-      {showHint && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="bg-black/70 text-white px-6 py-3 rounded-xl backdrop-blur-sm shadow-2xl animate-pulse">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Move3D className="h-5 w-5" />
-              <span>Drag to rotate • Scroll to zoom</span>
+            {/* Hull */}
+            <ParametricHull3D
+              candidate={candidate}
+              showWaterplane={showWaterplane && visibility.waterplane}
+              showCenters={showCenters && visibility.centers}
+            />
+
+            {/* Grid helper */}
+            {showGrid && visibility.grid && (
+              <Grid
+                args={[candidate.lppM * 1.5, candidate.lppM * 1.5]}
+                cellSize={1}
+                cellThickness={0.5}
+                cellColor="#6b7280"
+                sectionSize={5}
+                sectionThickness={1}
+                sectionColor="#3b82f6"
+                fadeDistance={100}
+                fadeStrength={1}
+                position={[0, 0, 0]}
+              />
+            )}
+
+            {/* Orbit controls */}
+            <OrbitControls
+              ref={controlsRef}
+              enableDamping
+              dampingFactor={0.05}
+              rotateSpeed={0.8}
+              zoomSpeed={1.2}
+              minDistance={cameraDistance * 0.5}
+              maxDistance={cameraDistance * 3}
+              maxPolarAngle={Math.PI / 1.8} // Prevent extreme angles
+            />
+          </Suspense>
+        </Canvas>
+
+        {/* Auto-hide Rotation Hint */}
+        {showHint && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <div className="bg-black/70 text-white px-6 py-3 rounded-xl backdrop-blur-sm shadow-2xl animate-pulse">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Move3D className="h-5 w-5" />
+                <span>Drag to rotate • Scroll to zoom</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Reset Camera Button */}
-      <button
-        onClick={resetCamera}
-        className="absolute top-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-        title="Reset View"
-      >
-        <Home className="h-3 w-3" />
-        <span>Reset</span>
-      </button>
+        {/* Reset Camera Button */}
+        <button
+          onClick={resetCamera}
+          className="absolute top-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+          title="Reset View"
+        >
+          <Home className="h-3 w-3" />
+          <span>Reset</span>
+        </button>
       </div>
 
       {/* Integrated Info Bar - Part of the same panel */}
@@ -151,11 +151,11 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
         {/* Left: Interactive legend items */}
         <div className="flex items-center gap-3 flex-wrap">
           <button
-            onClick={() => setVisibility(prev => ({ ...prev, waterplane: !prev.waterplane }))}
+            onClick={() => setVisibility((prev) => ({ ...prev, waterplane: !prev.waterplane }))}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
               visibility.waterplane
-                ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
             }`}
           >
             <div className="w-5 h-0.5 bg-cyan-500"></div>
@@ -163,11 +163,11 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
           </button>
 
           <button
-            onClick={() => setVisibility(prev => ({ ...prev, grid: !prev.grid }))}
+            onClick={() => setVisibility((prev) => ({ ...prev, grid: !prev.grid }))}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
               visibility.grid
-                ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
             }`}
           >
             <div className="w-5 h-0.5 bg-gray-400"></div>
@@ -175,11 +175,11 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
           </button>
 
           <button
-            onClick={() => setVisibility(prev => ({ ...prev, centers: !prev.centers }))}
+            onClick={() => setVisibility((prev) => ({ ...prev, centers: !prev.centers }))}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
               visibility.centers
-                ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
             }`}
           >
             <div className="flex items-center gap-2">

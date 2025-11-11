@@ -11,6 +11,8 @@ import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
 import { Home } from "lucide-react";
+import { inferProblematicStep } from "../../utils/diagnosticHelpers";
+import { missionCaseToDto } from "../../utils/missionHelpers";
 
 export const SizingRunResults: React.FC = observer(() => {
   const { runId } = useParams<{ runId: string }>();
@@ -124,7 +126,31 @@ export const SizingRunResults: React.FC = observer(() => {
                 // Navigate back to wizard with the mission case to edit
                 if (sizingStore.currentRun) {
                   await sizingStore.selectMission(sizingStore.currentRun.missionCaseId);
-                  navigate(`/sizing/wizard`);
+
+                  if (sizingStore.selectedMission) {
+                    // Infer which step is likely causing issues
+                    const initialStep = inferProblematicStep(sizingStore.currentRun.diagnostics);
+
+                    // Convert mission case to DTO for form editing
+                    const missionData = missionCaseToDto(sizingStore.selectedMission);
+
+                    // Serialize diagnostics to avoid DataCloneError with complex objects
+                    const diagnosticsData = sizingStore.currentRun.diagnostics
+                      ? JSON.parse(JSON.stringify(sizingStore.currentRun.diagnostics))
+                      : null;
+
+                    // Navigate with state to restore form and context
+                    navigate(`/sizing/wizard`, {
+                      state: {
+                        editingMission: missionData,
+                        missionCaseId: sizingStore.currentRun.missionCaseId, // Pass the ID to reuse the mission
+                        solverMode: sizingStore.currentRun.mode,
+                        initialStep,
+                        diagnostics: diagnosticsData,
+                        isAdjustingAfterFailure: true,
+                      },
+                    });
+                  }
                 }
               }}
               onCloneBrief={async () => {

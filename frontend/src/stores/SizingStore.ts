@@ -101,6 +101,33 @@ export class SizingStore {
     }
   }
 
+  async updateMissionCase(id: string, dto: Partial<CreateMissionCaseDto>) {
+    this.isLoading = true;
+    this.error = null;
+    try {
+      const updatedMission = await sizingApi.updateMissionCase(id, dto);
+      runInAction(() => {
+        // Update in the list
+        const index = this.missionCases.findIndex((m) => m.id === id);
+        if (index >= 0) {
+          this.missionCases[index] = updatedMission;
+        }
+        // Update selected if it's the same one
+        if (this.selectedMission?.id === id) {
+          this.selectedMission = updatedMission;
+        }
+        this.isLoading = false;
+      });
+      return updatedMission;
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : "Failed to update mission case";
+        this.isLoading = false;
+      });
+      throw error;
+    }
+  }
+
   async cloneMissionCase(id: string, newName: string) {
     this.isLoading = true;
     this.error = null;

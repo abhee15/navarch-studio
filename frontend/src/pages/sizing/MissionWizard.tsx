@@ -12,21 +12,42 @@ import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
 import { Button } from "../../components/ui/button";
-import { Home, Sparkles } from "lucide-react";
+import { Home, Sparkles, AlertTriangle } from "lucide-react";
+import { getStepInferenceReason } from "../../utils/diagnosticHelpers";
 
 export const MissionWizard: React.FC = observer(() => {
   const navigate = useNavigate();
   const location = useLocation();
   const { sizingStore, authStore } = useStore();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   // Check if coming from AI Copilot with pre-filled data
   const aiGeneratedMission = location.state?.aiGeneratedMission;
   const isAIGenerated = !!aiGeneratedMission;
 
+  // Check if adjusting parameters after a failed solver run
+  const editingMission = location.state?.editingMission;
+  const isAdjustingAfterFailure = location.state?.isAdjustingAfterFailure;
+  const diagnostics = location.state?.diagnostics;
+  const existingMissionCaseId = location.state?.missionCaseId; // Store the ID of the mission being edited
+
+  const [currentStep, setCurrentStep] = useState(() => {
+    // If adjusting after failure, start at the inferred problematic step
+    if (isAdjustingAfterFailure && location.state?.initialStep) {
+      return location.state.initialStep;
+    }
+    return 1;
+  });
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
   const [formData, setFormData] = useState<Partial<CreateMissionCaseDto>>(() => {
+    // Priority 1: Editing an existing mission after failure
+    if (editingMission) {
+      return editingMission;
+    }
+
+    // Priority 2: AI-generated mission
     if (aiGeneratedMission) {
       return {
         name: aiGeneratedMission.name,
@@ -41,6 +62,8 @@ export const MissionWizard: React.FC = observer(() => {
         notes: aiGeneratedMission.notes,
       };
     }
+
+    // Default: Empty form with sensible defaults
     return {
       missionType: "commercial",
       cargoBasis: "teu",
@@ -48,9 +71,16 @@ export const MissionWizard: React.FC = observer(() => {
       seaMarginPct: 15,
     };
   });
+
   const [solverMode, setSolverMode] = useState<
     "first_principles" | "data_driven_real" | "data_driven_ml"
-  >("first_principles");
+  >(() => {
+    // Preserve solver mode if adjusting after failure
+    if (isAdjustingAfterFailure && location.state?.solverMode) {
+      return location.state.solverMode;
+    }
+    return "first_principles";
+  });
 
   const updateFormData = (data: Partial<CreateMissionCaseDto>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -80,11 +110,24 @@ export const MissionWizard: React.FC = observer(() => {
   const handleSubmit = async () => {
     setIsGenerating(true);
     try {
-      const mission = await sizingStore.createMissionCase(formData as CreateMissionCaseDto);
+      let missionCaseId: string;
 
-      // Automatically run solver with selected mode
+      // If editing an existing mission (adjusting after failure), update it with new values
+      if (existingMissionCaseId) {
+        await sizingStore.updateMissionCase(
+          existingMissionCaseId,
+          formData as CreateMissionCaseDto
+        );
+        missionCaseId = existingMissionCaseId;
+      } else {
+        // Create new mission case
+        const mission = await sizingStore.createMissionCase(formData as CreateMissionCaseDto);
+        missionCaseId = mission.id;
+      }
+
+      // Run solver with selected mode
       const run = await sizingStore.runSolver({
-        missionCaseId: mission.id,
+        missionCaseId,
         mode: solverMode,
         options: { maxCandidates: 5 },
       });
@@ -139,6 +182,24 @@ export const MissionWizard: React.FC = observer(() => {
                     Mission parameters pre-filled by AI Copilot. Review and adjust as needed before
                     generating candidates.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Adjusting After Failure Banner */}
+            {isAdjustingAfterFailure && (
+              <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-900 dark:text-yellow-300">
+                      Adjusting Parameters After Solver Failure
+                    </p>
+                    <p className="text-sm text-yellow-800 dark:text-yellow-400 mt-1">
+                      {getStepInferenceReason(diagnostics)}. Your previous values have been restored
+                      for editing.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
