@@ -68,7 +68,7 @@ public class DiagonalsServiceTests
                 decimal draft = 10m;
                 decimal zNorm = waterline.Z / draft;
                 decimal halfBreadth = (beam / 2m) * (decimal)Math.Sqrt((double)(1m - zNorm * zNorm));
-                
+
                 offsets.Add(new Offset
                 {
                     VesselId = vesselId,

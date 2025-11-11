@@ -84,7 +84,7 @@ public class FairingQualityServiceTests
         // Assert
         result.Should().NotBeNull();
         result.StationQualities.Should().HaveCount(11);
-        
+
         // Elliptical curves have varying curvature (tighter at ends, flatter at middle)
         // This is expected and doesn't indicate poor fairing, so score will be moderate
         result.OverallScore.Should().BeGreaterThan(20m, "smooth elliptical curve should have reasonable score");

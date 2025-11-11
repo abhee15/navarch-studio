@@ -59,13 +59,22 @@ public class CatalogHullsController : ControllerBase
         var result = vessels.Select(v => new RealVesselDto
         {
             Id = v.Id.ToString(),
-            Name = v.VesselId,
-            VesselType = v.VesselType,
+            Title = v.VesselId,
+            Slug = v.VesselId.ToLower()
+                .Replace(" ", "-")
+                .Replace("(", "")
+                .Replace(")", "")
+                .Replace(",", "")
+                .Trim('-'),
+            Description = v.Source,
+            HullType = v.VesselType,
             Lpp = v.LppM,
             Beam = v.BeamM,
             Draft = v.DraftM,
+            Cb = v.Cb,
             Displacement = v.DisplacementT,
-            BlockCoefficient = v.Cb
+            GeometryMissing = string.IsNullOrEmpty(v.HullGeometryFile),
+            Units = "SI"
         }).ToList();
 
         _logger.LogInformation("Returning {Count} vessels from real-world catalog", result.Count);
@@ -94,8 +103,15 @@ public class CatalogHullsController : ControllerBase
         var result = new RealVesselDetailsDto
         {
             Id = vessel.Id.ToString(),
-            Name = vessel.VesselId,
-            VesselType = vessel.VesselType,
+            Title = vessel.VesselId,
+            Slug = vessel.VesselId.ToLower()
+                .Replace(" ", "-")
+                .Replace("(", "")
+                .Replace(")", "")
+                .Replace(",", "")
+                .Trim('-'),
+            Description = vessel.Source,
+            HullType = vessel.VesselType,
             Lpp = vessel.LppM,
             Beam = vessel.BeamM,
             Draft = vessel.DraftM,
@@ -112,7 +128,9 @@ public class CatalogHullsController : ControllerBase
             Source = vessel.Source,
             DataQuality = vessel.DataQuality,
             HullGeometryFile = vessel.HullGeometryFile,
+            GeometryMissing = string.IsNullOrEmpty(vessel.HullGeometryFile),
             IsSystemData = vessel.IsSystemData,
+            Units = "SI",
             CreatedAt = vessel.CreatedAt,
             UpdatedAt = vessel.UpdatedAt
         };
@@ -257,13 +275,17 @@ public class CatalogHullsController : ControllerBase
     public class RealVesselDto
     {
         public required string Id { get; set; }
-        public required string Name { get; set; }
-        public string? VesselType { get; set; }
+        public required string Title { get; set; }
+        public required string Slug { get; set; }
+        public string? Description { get; set; }
+        public string? HullType { get; set; }
         public decimal? Lpp { get; set; }
         public decimal? Beam { get; set; }
         public decimal? Draft { get; set; }
+        public decimal? Cb { get; set; }
         public decimal? Displacement { get; set; }
-        public decimal? BlockCoefficient { get; set; }
+        public bool GeometryMissing { get; set; }
+        public required string Units { get; set; }
     }
 
     /// <summary>
@@ -272,8 +294,10 @@ public class CatalogHullsController : ControllerBase
     public class RealVesselDetailsDto
     {
         public required string Id { get; set; }
-        public required string Name { get; set; }
-        public required string VesselType { get; set; }
+        public required string Title { get; set; }
+        public required string Slug { get; set; }
+        public string? Description { get; set; }
+        public required string HullType { get; set; }
         public decimal Lpp { get; set; }
         public decimal Beam { get; set; }
         public decimal Draft { get; set; }
@@ -290,7 +314,9 @@ public class CatalogHullsController : ControllerBase
         public string? Source { get; set; }
         public string? DataQuality { get; set; }
         public string? HullGeometryFile { get; set; }
+        public bool GeometryMissing { get; set; }
         public bool IsSystemData { get; set; }
+        public required string Units { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

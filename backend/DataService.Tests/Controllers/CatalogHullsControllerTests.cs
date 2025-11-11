@@ -97,8 +97,8 @@ public class CatalogHullsControllerTests : IDisposable
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         var vessels = okResult.Value.Should().BeAssignableTo<List<CatalogHullsController.RealVesselDto>>().Subject;
         vessels.Should().HaveCount(2);
-        vessels.Should().Contain(v => v.Name == "test-hull");
-        vessels.Should().Contain(v => v.Name == "container-vessel");
+        vessels.Should().Contain(v => v.Title == "test-hull");
+        vessels.Should().Contain(v => v.Title == "container-vessel");
     }
 
     [Fact]
@@ -111,8 +111,8 @@ public class CatalogHullsControllerTests : IDisposable
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         var hulls = okResult.Value.Should().BeAssignableTo<List<CatalogHullsController.RealVesselDto>>().Subject;
         hulls.Should().HaveCount(1);
-        hulls.First().Name.Should().Be("test-hull");
-        hulls.First().VesselType.Should().Be("Template");
+        hulls.First().Title.Should().Be("test-hull");
+        hulls.First().HullType.Should().Be("Template");
     }
 
     [Fact]
@@ -126,8 +126,8 @@ public class CatalogHullsControllerTests : IDisposable
         var vessel = okResult.Value.Should().BeAssignableTo<CatalogHullsController.RealVesselDetailsDto>().Subject;
 
         vessel.Id.Should().Be(_testVessel.Id.ToString());
-        vessel.Name.Should().Be("test-hull");
-        vessel.VesselType.Should().Be("Template");
+        vessel.Title.Should().Be("test-hull");
+        vessel.HullType.Should().Be("Template");
         vessel.Lpp.Should().Be(100m);
         vessel.Beam.Should().Be(20m);
         vessel.Draft.Should().Be(10m);

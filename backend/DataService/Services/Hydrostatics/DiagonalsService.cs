@@ -119,17 +119,17 @@ public class DiagonalsService : IDigonalsService
                     // Check if diagonal intersects hull within this waterline segment
                     // For diagonal: Z = Y + intercept
                     // Hull constraint: Y <= hullY at each Z
-                    
+
                     // Check if diagonal passes through or touches the hull boundary
                     bool diagonalBelowHull1 = diagonalY1 <= hullY1;
                     bool diagonalBelowHull2 = diagonalY2 <= hullY2;
-                    
+
                     // Intersection occurs if:
                     // 1. Diagonal crosses the hull surface (one side below, one above)
                     // 2. OR diagonal is very close to the hull surface (within tolerance)
                     bool crosses = diagonalBelowHull1 != diagonalBelowHull2;
                     bool nearBoundary = Math.Abs(diagonalY1 - hullY1) < 0.1m || Math.Abs(diagonalY2 - hullY2) < 0.1m;
-                    
+
                     if ((crosses || nearBoundary) && diagonalY1 >= 0 && diagonalY2 >= 0)
                     {
                         // Linear interpolation to find exact intersection point

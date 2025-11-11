@@ -24,17 +24,8 @@ public class CreateSizingRunDtoValidator : AbstractValidator<CreateSizingRunDto>
 
     private bool BeValidMode(string mode)
     {
-        return mode == "first_principles" || 
-               mode == "data_driven_real" || 
+        return mode == "first_principles" ||
+               mode == "data_driven_real" ||
                mode == "data_driven_ml";
     }
 }
-
-
-
-
-
-
-
-
-
