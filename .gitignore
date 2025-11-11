@@ -65,6 +65,7 @@ dist/
 build/
 out/
 coverage/
+*.tsbuildinfo
 
 # Secrets
 secrets/
