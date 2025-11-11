@@ -289,11 +289,11 @@ public class DataDrivenParametricSolver
     private decimal CalculateTargetDisplacement(MissionCase mission)
     {
         // Calculate cargo mass based on input type
-        decimal cargoMass = mission.CargoBasis switch
+        decimal cargoMass = mission.CargoBasis.ToLower() switch
         {
-            "Volume" => (mission.CargoVolumeM3 ?? mission.CargoValue ?? 0) * (mission.CargoDensityTPerM3 ?? 1.0m),
-            "Weight" => mission.CargoValue ?? 0,
-            "TEU" => (mission.TeuCount ?? 0) * 14.0m,  // Typical 14t per TEU
+            "volume" => (mission.CargoVolumeM3 ?? mission.CargoValue ?? 0) * (mission.CargoDensityTPerM3 ?? 1.0m),
+            "weight" => mission.CargoValue ?? 0,
+            "teu" => (mission.TeuCount ?? 0) * 14.0m,  // Typical 14t per TEU
             _ => mission.CargoValue ?? 0
         };
 

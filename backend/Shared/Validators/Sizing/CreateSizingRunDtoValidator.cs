@@ -12,7 +12,7 @@ public class CreateSizingRunDtoValidator : AbstractValidator<CreateSizingRunDto>
 
         RuleFor(x => x.Mode)
             .NotEmpty()
-            .Must(BeValidMode).WithMessage("Mode must be 'first_principles' or 'data_driven'");
+            .Must(BeValidMode).WithMessage("Mode must be 'first_principles', 'data_driven_real', or 'data_driven_ml'");
 
         When(x => x.Options != null, () =>
         {
@@ -24,7 +24,9 @@ public class CreateSizingRunDtoValidator : AbstractValidator<CreateSizingRunDto>
 
     private bool BeValidMode(string mode)
     {
-        return mode == "first_principles" || mode == "data_driven";
+        return mode == "first_principles" || 
+               mode == "data_driven_real" || 
+               mode == "data_driven_ml";
     }
 }
 
