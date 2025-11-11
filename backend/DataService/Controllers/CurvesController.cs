@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using DataService.Services.Hydrostatics;
 using Microsoft.AspNetCore.Mvc;
+using Shared.DTOs;
 
 namespace DataService.Controllers;
 
@@ -13,13 +14,19 @@ namespace DataService.Controllers;
 public class CurvesController : ControllerBase
 {
     private readonly ICurvesGenerator _curvesGenerator;
+    private readonly ISectionAreaCurveService _sectionAreaCurveService;
+    private readonly IFairingQualityService _fairingQualityService;
     private readonly ILogger<CurvesController> _logger;
 
     public CurvesController(
         ICurvesGenerator curvesGenerator,
+        ISectionAreaCurveService sectionAreaCurveService,
+        IFairingQualityService fairingQualityService,
         ILogger<CurvesController> logger)
     {
         _curvesGenerator = curvesGenerator;
+        _sectionAreaCurveService = sectionAreaCurveService;
+        _fairingQualityService = fairingQualityService;
         _logger = logger;
     }
 
@@ -115,6 +122,51 @@ public class CurvesController : ControllerBase
             return StatusCode(500, new { error = "An unexpected error occurred", details = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Gets section area curve (volume distribution along hull length)
+    /// </summary>
+    /// <param name="vesselId">Vessel ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Section area curve data</returns>
+    [HttpGet("section-area-curve")]
+    [ProducesResponseType(typeof(SectionAreaCurveDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SectionAreaCurveDto>> GetSectionAreaCurve(
+        Guid vesselId,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Getting section area curve for vessel {VesselId}", vesselId);
+
+        var result = await _sectionAreaCurveService.GetSectionAreaCurveAsync(vesselId, cancellationToken);
+
+        if (result.StationPositions.Count == 0)
+        {
+            return NotFound(new { message = "No geometry data found for vessel. Import stations, waterlines, and offsets first." });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets fairing quality analysis for all stations
+    /// </summary>
+    /// <param name="vesselId">Vessel ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Fairing quality analysis</returns>
+    [HttpGet("fairing-quality")]
+    [ProducesResponseType(typeof(FairingQualityDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<FairingQualityDto>> GetFairingQuality(
+        Guid vesselId,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Getting fairing quality for vessel {VesselId}", vesselId);
+
+        var result = await _fairingQualityService.AnalyzeFairingQualityAsync(vesselId, cancellationToken);
+
+        return Ok(result);
+    }
 }
 
 /// <summary>
@@ -128,4 +180,3 @@ public record GenerateCurvesRequest
     public decimal MaxDraft { get; init; }
     public int Points { get; init; } = 100;
 }
-

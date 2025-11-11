@@ -36,18 +36,8 @@ export function useWorkspaceLayout(
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored) as WorkspaceLayout;
-        // Validate that all required panels exist
-        const panelIds: PanelId[] = [
-          "kpis",
-          "curves",
-          "hull",
-          "table",
-          "geometry",
-          "parameters",
-          "status",
-        ];
-        const hasAllPanels = panelIds.every((id) => id in parsed.panelStates);
-        if (hasAllPanels) {
+        // Validate that layout has basic structure (removed strict panel validation to allow new panels)
+        if (parsed.gridLayouts && parsed.panelStates && parsed.mode) {
           return parsed;
         }
       }

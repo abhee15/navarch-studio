@@ -191,6 +191,13 @@ try
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IStabilityCriteriaChecker, DataService.Services.Hydrostatics.StabilityCriteriaChecker>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.IHullProjectionsService, DataService.Services.Hydrostatics.HullProjectionsService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.SampleVesselSeedService>();
+
+    // Lines Plan Services
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IDigonalsService, DataService.Services.Hydrostatics.DiagonalsService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.ISectionAreaCurveService, DataService.Services.Hydrostatics.SectionAreaCurveService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IFairingQualityService, DataService.Services.Hydrostatics.FairingQualityService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.ILinesPlanPdfService, DataService.Services.Hydrostatics.LinesPlanPdfService>();
+    builder.Services.AddScoped<DataService.Services.Hydrostatics.IIgesExportService, DataService.Services.Hydrostatics.IgesExportService>();
     builder.Services.AddScoped<DataService.Services.Hydrostatics.ITemplateVesselSeeder, DataService.Services.Hydrostatics.TemplateVesselSeeder>();
 
     // Resistance calculation services

@@ -19,6 +19,13 @@ import type {
   WaterlinesDto,
   ButtocksDto,
 } from "../types/hydrostatics";
+import type {
+  DiagonalsData,
+  SectionAreaCurve,
+  FairingQuality,
+  LinesPlanExportOptions,
+  IgesExportOptions,
+} from "../types/linesplan";
 
 // Use shared API client which includes auth headers and interceptors
 // Routes to API Gateway which proxies to Data Service
@@ -192,6 +199,16 @@ export const curvesApi = {
     const response = await api.get(`/hydrostatics/vessels/${vesselId}/curves/bonjean`);
     return response.data;
   },
+
+  async getSectionAreaCurve(vesselId: string): Promise<SectionAreaCurve> {
+    const response = await api.get(`/hydrostatics/vessels/${vesselId}/curves/section-area-curve`);
+    return response.data;
+  },
+
+  async getFairingQuality(vesselId: string): Promise<FairingQuality> {
+    const response = await api.get(`/hydrostatics/vessels/${vesselId}/curves/fairing-quality`);
+    return response.data;
+  },
 };
 
 // Hull Projections API
@@ -204,6 +221,14 @@ export const projectionsApi = {
   async getButtocks(vesselId: string, numButtocks?: number): Promise<ButtocksDto> {
     const params = numButtocks ? { numButtocks } : {};
     const response = await api.get(`/hydrostatics/vessels/${vesselId}/projections/buttocks`, {
+      params,
+    });
+    return response.data;
+  },
+
+  async getDiagonals(vesselId: string, numDiagonals?: number): Promise<DiagonalsData> {
+    const params = numDiagonals ? { numDiagonals } : {};
+    const response = await api.get(`/hydrostatics/vessels/${vesselId}/projections/diagonals`, {
       params,
     });
     return response.data;
@@ -256,6 +281,26 @@ export const exportApi = {
         responseType: "blob",
       }
     );
+    return response.data;
+  },
+
+  async exportLinesPlanPdf(vesselId: string, options: LinesPlanExportOptions): Promise<Blob> {
+    const response = await api.post(
+      `/hydrostatics/vessels/${vesselId}/export/lines-plan-pdf`,
+      options,
+      {
+        responseType: "blob",
+        timeout: 30000, // 30 second timeout for PDF generation
+      }
+    );
+    return response.data;
+  },
+
+  async exportIges(vesselId: string, options: IgesExportOptions): Promise<Blob> {
+    const response = await api.post(`/hydrostatics/vessels/${vesselId}/export/iges`, options, {
+      responseType: "blob",
+      timeout: 15000, // 15 second timeout for IGES generation
+    });
     return response.data;
   },
 };

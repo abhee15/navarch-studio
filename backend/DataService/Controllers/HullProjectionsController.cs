@@ -14,13 +14,16 @@ namespace DataService.Controllers;
 public class HullProjectionsController : ControllerBase
 {
     private readonly IHullProjectionsService _projectionsService;
+    private readonly IDigonalsService _diagonalsService;
     private readonly ILogger<HullProjectionsController> _logger;
 
     public HullProjectionsController(
         IHullProjectionsService projectionsService,
+        IDigonalsService diagonalsService,
         ILogger<HullProjectionsController> logger)
     {
         _projectionsService = projectionsService;
+        _diagonalsService = diagonalsService;
         _logger = logger;
     }
 
@@ -69,6 +72,33 @@ public class HullProjectionsController : ControllerBase
         var result = await _projectionsService.GetButtocksAsync(vesselId, numButtocks, cancellationToken);
 
         if (result.Buttocks.Count == 0)
+        {
+            return NotFound(new { message = "No geometry data found for vessel. Import stations, waterlines, and offsets first." });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Get diagonal curves for hull form (45° lines from baseline for fairing validation)
+    /// </summary>
+    /// <param name="vesselId">Vessel ID</param>
+    /// <param name="numDiagonals">Number of diagonal curves to generate (default: 3)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Diagonal curves</returns>
+    [HttpGet("diagonals")]
+    [ProducesResponseType(typeof(DiagonalsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DiagonalsDto>> GetDiagonals(
+        Guid vesselId,
+        CancellationToken cancellationToken,
+        [FromQuery] int numDiagonals = 3)
+    {
+        _logger.LogInformation("Getting {NumDiagonals} diagonals for vessel {VesselId}", numDiagonals, vesselId);
+
+        var result = await _diagonalsService.GetDiagonalsAsync(vesselId, numDiagonals, cancellationToken);
+
+        if (result.Diagonals.Count == 0)
         {
             return NotFound(new { message = "No geometry data found for vessel. Import stations, waterlines, and offsets first." });
         }

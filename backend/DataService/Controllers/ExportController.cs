@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Asp.Versioning;
 using DataService.Services.Hydrostatics;
 using Microsoft.AspNetCore.Mvc;
+using Shared.DTOs;
 
 namespace DataService.Controllers;
 
@@ -16,17 +17,23 @@ public class ExportController : ControllerBase
     private readonly IExportService _exportService;
     private readonly IHydroCalculator _hydroCalculator;
     private readonly ICurvesGenerator _curvesGenerator;
+    private readonly ILinesPlanPdfService _linesPlanPdfService;
+    private readonly IIgesExportService _igesExportService;
     private readonly ILogger<ExportController> _logger;
 
     public ExportController(
         IExportService exportService,
         IHydroCalculator hydroCalculator,
         ICurvesGenerator curvesGenerator,
+        ILinesPlanPdfService linesPlanPdfService,
+        IIgesExportService igesExportService,
         ILogger<ExportController> logger)
     {
         _exportService = exportService;
         _hydroCalculator = hydroCalculator;
         _curvesGenerator = curvesGenerator;
+        _linesPlanPdfService = linesPlanPdfService;
+        _igesExportService = igesExportService;
         _logger = logger;
     }
 
@@ -302,6 +309,96 @@ public class ExportController : ControllerBase
         return curves;
     }
 
+    /// <summary>
+    /// Exports lines plan as PDF with traditional 3-view layout
+    /// </summary>
+    /// <param name="vesselId">Vessel ID</param>
+    /// <param name="request">Export configuration</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>PDF file</returns>
+    [HttpPost("lines-plan-pdf")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ExportLinesPlanPdf(
+        Guid vesselId,
+        [FromBody] LinesPlanExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            var pdfBytes = await _linesPlanPdfService.GenerateLinesPlanPdfAsync(
+                vesselId,
+                request,
+                cancellationToken);
+
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "Exported lines plan PDF for vessel {VesselId} ({Size} bytes, {ElapsedMs}ms)",
+                vesselId, pdfBytes.Length, stopwatch.ElapsedMilliseconds);
+
+            var filename = $"lines_plan_{vesselId:N}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.pdf";
+            return File(pdfBytes, "application/pdf", filename);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid request for lines plan PDF export");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting lines plan PDF for vessel {VesselId}", vesselId);
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Exports hull geometry as IGES file (universal CAD format)
+    /// </summary>
+    /// <param name="vesselId">Vessel ID</param>
+    /// <param name="request">Export configuration</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>IGES file</returns>
+    [HttpPost("iges")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ExportIges(
+        Guid vesselId,
+        [FromBody] IgesExportRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            var igesBytes = await _igesExportService.ExportToIgesAsync(
+                vesselId,
+                request,
+                cancellationToken);
+
+            stopwatch.Stop();
+
+            _logger.LogInformation(
+                "Exported IGES file for vessel {VesselId} ({Size} bytes, {ElapsedMs}ms)",
+                vesselId, igesBytes.Length, stopwatch.ElapsedMilliseconds);
+
+            var filename = $"hull_{vesselId:N}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.igs";
+            return File(igesBytes, "application/iges", filename);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid request for IGES export");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting IGES file for vessel {VesselId}", vesselId);
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
 }
 
 /// <summary>
@@ -333,4 +430,3 @@ public record ExportReportRequest
     public Guid? LoadcaseId { get; init; }
     public bool IncludeCurves { get; init; }
 }
-

@@ -17,6 +17,7 @@ import { Vessel3DPanel } from "./panels/Vessel3DPanel";
 import { AnimatedWaterplane3DPanel } from "./panels/AnimatedWaterplane3DPanel";
 import { BonjeanCurvesPanel } from "./panels/BonjeanCurvesPanel";
 import { WaterlinesButtocksPanel } from "./panels/WaterlinesButtocksPanel";
+import { LinesPlanPanel } from "./panels/LinesPlanPanel";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -283,6 +284,9 @@ export function ViewModeLayout({
           />
         );
 
+      case "lines-plan":
+        return vessel ? <LinesPlanPanel vesselId={vessel.id} vessel={vessel} /> : null;
+
       case "table":
         return (
           <HydrostaticsTablePanel
@@ -350,6 +354,7 @@ export function ViewModeLayout({
       bodyplan: "Body Plan (2D Sections)",
       bonjean: "Bonjean Curves",
       "waterlines-buttocks": "Waterlines & Buttocks",
+      "lines-plan": "Lines Plan",
       table: "Hydrostatics Table",
       geometry: "Geometry Editor",
       parameters: "Parameters Summary",
