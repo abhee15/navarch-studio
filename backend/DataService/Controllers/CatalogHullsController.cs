@@ -150,37 +150,26 @@ public class CatalogHullsController : ControllerBase
         [FromBody] CloneHullRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        // Get the catalog hull
-        var catalogHull = await _context.BenchmarkCases
-            .Include(h => h.Geometries)
-            .FirstOrDefaultAsync(h => h.Id == id, cancellationToken);
+        // Get the catalog vessel from real-world catalog
+        var catalogVessel = await _context.CatalogVesselsReal
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
-        if (catalogHull == null)
+        if (catalogVessel == null)
         {
-            return NotFound(new { error = $"Catalog hull with ID {id} not found" });
+            return NotFound(new { error = $"Catalog vessel with ID {id} not found" });
         }
 
-        if (catalogHull.GeometryMissing)
-        {
-            return BadRequest(new
-            {
-                error = "Cannot clone: catalog hull geometry is missing",
-                slug = catalogHull.Slug
-            });
-        }
-
-        // TODO: Parse geometry from BenchmarkGeometry and populate vessel
-        // For now, create vessel with principal particulars only
+        // Create vessel with principal particulars
         var vesselDto = new Shared.DTOs.VesselDto
         {
-            Name = request.VesselName ?? $"{catalogHull.Title} (Cloned)",
-            Description = $"Cloned from catalog hull: {catalogHull.Slug}",
-            Lpp = catalogHull.Lpp_m ?? 100m,
-            Beam = catalogHull.B_m ?? 20m,
-            DesignDraft = catalogHull.T_m ?? 5m
+            Name = request.VesselName ?? $"{catalogVessel.VesselId} (Cloned)",
+            Description = $"Cloned from real-world catalog: {catalogVessel.VesselId}. Source: {catalogVessel.Source}",
+            Lpp = catalogVessel.LppM,
+            Beam = catalogVessel.BeamM,
+            DesignDraft = catalogVessel.DraftM
         };
 
-        // Get or create user
+        // Get user ID from claims or use provided userId
         var userId = request.UserId ?? Guid.Parse("00000000-0000-0000-0000-000000000001"); // Default dev user
 
         var vessel = await _vesselService.CreateVesselAsync(vesselDto, userId, cancellationToken);
@@ -188,17 +177,38 @@ public class CatalogHullsController : ControllerBase
         // Set source catalog reference
         vessel.SourceCatalogHullId = id;
         _context.Vessels.Update(vessel);
+
+        // Add metadata if available
+        if (!string.IsNullOrEmpty(catalogVessel.VesselType))
+        {
+            var metadata = new VesselMetadata
+            {
+                VesselId = vessel.Id,
+                VesselType = catalogVessel.VesselType switch
+                {
+                    "Container" => "Ship",
+                    "Tanker" => "Ship",
+                    "Bulk carrier" => "Ship",
+                    "Cruise ship" => "Ship",
+                    "Naval combatant" => "Ship",
+                    _ => "Ship"
+                },
+                BlockCoefficient = catalogVessel.Cb
+            };
+            _context.VesselMetadata.Add(metadata);
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Cloned catalog hull {Slug} to vessel {VesselId} for user {UserId}",
-            catalogHull.Slug, vessel.Id, userId);
+            "Cloned catalog vessel {VesselId} ({VesselType}) to vessel {NewVesselId} for user {UserId}",
+            catalogVessel.VesselId, catalogVessel.VesselType, vessel.Id, userId);
 
         return Ok(new CloneHullResponseDto
         {
             VesselId = vessel.Id,
             VesselName = vessel.Name,
-            Message = $"Successfully cloned {catalogHull.Title} to your vessels"
+            Message = $"Successfully cloned {catalogVessel.VesselId} to your vessels"
         });
     }
 

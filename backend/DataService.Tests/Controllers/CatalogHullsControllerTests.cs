@@ -152,18 +152,23 @@ public class CatalogHullsControllerTests : IDisposable
         // Arrange
         var userId = Guid.NewGuid();
 
-        // Create a benchmark hull for cloning (CloneHull queries BenchmarkCases, not CatalogVesselsReal)
-        var benchmarkHull = new BenchmarkCase
+        // Create a catalog vessel for cloning (CloneHull now queries CatalogVesselsReal)
+        var catalogVessel = new CatalogVesselReal
         {
             Id = Guid.NewGuid(),
-            Slug = "test-benchmark",
-            Title = "Test Benchmark Hull",
-            Lpp_m = 100m,
-            B_m = 20m,
-            T_m = 10m,
-            GeometryMissing = false
+            VesselId = "Test Catalog Vessel",
+            VesselType = "Container",
+            LppM = 100m,
+            BeamM = 20m,
+            DraftM = 10m,
+            DisplacementT = 5000m,
+            Cb = 0.7m,
+            Source = "Test Source",
+            IsSystemData = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
-        _context.BenchmarkCases.Add(benchmarkHull);
+        _context.CatalogVesselsReal.Add(catalogVessel);
         _context.SaveChanges();
 
         var expectedVessel = new Vessel
@@ -198,7 +203,7 @@ public class CatalogHullsControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CloneHull(benchmarkHull.Id, request);
+        var result = await _controller.CloneHull(catalogVessel.Id, request);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -221,7 +226,12 @@ public class CatalogHullsControllerTests : IDisposable
         // Verify the vessel was updated with catalog reference
         var updatedVessel = await _context.Vessels.FindAsync(expectedVessel.Id);
         updatedVessel.Should().NotBeNull();
-        updatedVessel!.SourceCatalogHullId.Should().Be(benchmarkHull.Id);
+        updatedVessel!.SourceCatalogHullId.Should().Be(catalogVessel.Id);
+
+        // Verify metadata was created
+        var metadata = await _context.VesselMetadata.FirstOrDefaultAsync(m => m.VesselId == expectedVessel.Id);
+        metadata.Should().NotBeNull();
+        metadata!.BlockCoefficient.Should().Be(0.7m);
     }
 
     [Fact]
