@@ -14,16 +14,16 @@ namespace HullSizingService.Services;
 public class DesignSpaceExplorationService : IDesignSpaceExplorationService
 {
     private readonly SizingDbContext _context;
-    private readonly Solver.IFirstPrinciplesSolver _solver;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DesignSpaceExplorationService> _logger;
 
     public DesignSpaceExplorationService(
         SizingDbContext context,
-        Solver.IFirstPrinciplesSolver solver,
+        IServiceScopeFactory scopeFactory,
         ILogger<DesignSpaceExplorationService> logger)
     {
         _context = context;
-        _solver = solver;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -121,13 +121,19 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
         _logger.LogInformation("[EXPLORATION] Fetching results for batch {BatchId}", batchId);
 
         // Find all sizing runs with this batch ID in their options
-        var runs = await _context.SizingRuns
+        // Load all runs for this tenant, then filter in memory (JSONB queries are problematic in PostgreSQL)
+        var batchIdString = batchId.ToString();
+        var allRuns = await _context.SizingRuns
             .Include(sr => sr.MissionCase)
             .Where(sr =>
                 sr.MissionCase.TenantId == tenantId &&
-                sr.OptionsJson != null &&
-                sr.OptionsJson.Contains(batchId.ToString()))
+                sr.OptionsJson != null)
             .ToListAsync(cancellationToken);
+
+        // Filter in memory to check if options contains batchId
+        var runs = allRuns
+            .Where(sr => sr.OptionsJson!.Contains(batchIdString))
+            .ToList();
 
         if (runs.Count == 0)
         {
@@ -264,6 +270,7 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
 
     /// <summary>
     /// Generates a single variant by running the solver with modified mission parameters
+    /// Uses scoped DbContext to avoid threading issues when running in parallel
     /// </summary>
     private async Task<Guid?> GenerateVariantAsync(
         MissionCase baseMission,
@@ -273,6 +280,12 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
         string? hullFamily,
         CancellationToken cancellationToken)
     {
+        // Create a new scope to get a fresh DbContext instance for this parallel task
+        // This prevents "A second operation was started on this context" errors
+        using var scope = _scopeFactory.CreateScope();
+        var scopedContext = scope.ServiceProvider.GetRequiredService<SizingDbContext>();
+        var scopedSolver = scope.ServiceProvider.GetRequiredService<Solver.IFirstPrinciplesSolver>();
+
         try
         {
             // Create a temporary mission case with modified constraints
@@ -322,8 +335,8 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
                 Options: options
             );
 
-            // Run solver
-            var (candidates, diagnostics) = await _solver.SolveAsync(solverRequest, cancellationToken);
+            // Run solver (using scoped solver with its own dependencies)
+            var (candidates, diagnostics) = await scopedSolver.SolveAsync(solverRequest, cancellationToken);
 
             if (candidates.Count == 0)
             {
@@ -333,7 +346,7 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
                 return null;
             }
 
-            // Create sizing run record
+            // Create sizing run record (using scoped DbContext)
             var run = new SizingRun
             {
                 Id = Guid.NewGuid(),
@@ -352,7 +365,7 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.SizingRuns.Add(run);
+            scopedContext.SizingRuns.Add(run);
 
             // Add candidate
             var candidate = candidates[0];
@@ -386,8 +399,8 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.CandidateDesigns.Add(candidateEntity);
-            await _context.SaveChangesAsync(cancellationToken);
+            scopedContext.CandidateDesigns.Add(candidateEntity);
+            await scopedContext.SaveChangesAsync(cancellationToken);
 
             return run.Id;
         }
