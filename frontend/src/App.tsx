@@ -13,11 +13,8 @@ import { VesselResistanceWorkspace } from "./pages/resistance/VesselResistanceWo
 import { SeakeepingWorkspace } from "./pages/seakeeping/SeakeepingWorkspace";
 import { BenchmarksList } from "./pages/benchmarks/BenchmarksList";
 import { BenchmarkDetail } from "./pages/benchmarks/BenchmarkDetail";
-import { CatalogBrowser } from "./pages/catalog/CatalogBrowser";
 import { CatalogBrowserV2 } from "./pages/catalog/CatalogBrowserV2";
 import { HullDetailPage } from "./pages/catalog/HullDetailPage";
-import { MLHullBrowser } from "./pages/catalog/MLHullBrowser";
-import { UnifiedCatalogBrowser } from "./pages/catalog/UnifiedCatalogBrowser";
 import { MissionCasesList } from "./pages/sizing/MissionCasesList";
 import { MissionWizard } from "./pages/sizing/MissionWizard";
 import { SizingRunResults } from "./pages/sizing/SizingRunResults";
@@ -210,7 +207,7 @@ export const App: React.FC = observer(() => (
                   path="/catalog"
                   element={
                     <ProtectedRoute>
-                      <UnifiedCatalogBrowser />
+                      <CatalogBrowserV2 />
                     </ProtectedRoute>
                   }
                 />
@@ -219,14 +216,6 @@ export const App: React.FC = observer(() => (
                   element={
                     <ProtectedRoute>
                       <CatalogBrowserV2 />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/catalog/legacy"
-                  element={
-                    <ProtectedRoute>
-                      <CatalogBrowser />
                     </ProtectedRoute>
                   }
                 />
@@ -287,14 +276,6 @@ export const App: React.FC = observer(() => (
                   element={
                     <ProtectedRoute>
                       <CandidateWorkspace />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/catalog/ml-hulls"
-                  element={
-                    <ProtectedRoute>
-                      <MLHullBrowser />
                     </ProtectedRoute>
                   }
                 />

@@ -182,17 +182,35 @@ export const CatalogTable: React.FC<CatalogTableProps> = ({
 
       {/* Results Count & Scroll Position */}
       <div className="mt-4 flex items-center justify-between text-sm text-gray-700 dark:text-gray-300">
-        <div>
-          Showing <span className="font-medium">{table.getFilteredRowModel().rows.length}</span>{" "}
-          vessels
+        <div className="flex items-center gap-2">
+          <span>
+            Showing <span className="font-medium">{table.getFilteredRowModel().rows.length}</span>{" "}
+            vessels
+          </span>
+          {table.getFilteredRowModel().rows.length > 20 && (
+            <span className="text-xs text-muted-foreground">(scroll for more)</span>
+          )}
         </div>
         {virtualRows.length > 0 && (
           <div className="text-gray-500 dark:text-gray-400">
-            Rows {virtualRows[0].index + 1} - {virtualRows[virtualRows.length - 1].index + 1}{" "}
-            visible
+            Viewing rows {virtualRows[0].index + 1} -{" "}
+            {virtualRows[virtualRows.length - 1].index + 1} of {rows.length}
           </div>
         )}
       </div>
+
+      {/* Scroll to Top Button */}
+      {virtualRows.length > 0 && virtualRows[0].index > 10 && (
+        <button
+          onClick={() => {
+            tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 z-50"
+          title="Scroll to top"
+        >
+          <ChevronUp className="h-5 w-5" />
+        </button>
+      )}
     </div>
   );
 };
