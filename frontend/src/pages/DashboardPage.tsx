@@ -163,12 +163,12 @@ export const DashboardPage: React.FC = observer(() => {
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={2}
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M20 7c-2 0-4 2-4 4s2 4 4 4M4 7c2 0 4 2 4 4s-2 4-4 4M12 3v6M12 15v6M9 12h6"
                       />
                     </svg>
                   </div>

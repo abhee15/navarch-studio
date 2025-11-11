@@ -309,7 +309,6 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </span>
             </div>
           )}
-
         </div>
       </div>
 

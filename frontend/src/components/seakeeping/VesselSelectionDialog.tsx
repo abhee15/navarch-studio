@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { vesselsApi } from "../../services/hydrostaticsApi";
+import { vesselsApi, geometryApi, loadcasesApi } from "../../services/hydrostaticsApi";
 import { getErrorMessage } from "../../types/errors";
 import type { Vessel } from "../../types/hydrostatics";
 import { Button } from "../ui/button";
 import { settingsStore } from "../../stores/SettingsStore";
 import { getUnitSymbol } from "../../utils/unitSymbols";
+import toast from "react-hot-toast";
 
 interface VesselSelectionDialogProps {
   onClose: () => void;
@@ -35,18 +36,32 @@ export function VesselSelectionDialog({ onClose }: VesselSelectionDialogProps) {
     }
   };
 
-  const handleVesselSelect = (vessel: Vessel) => {
-    // Create vessel snapshot for seakeeping
-    const vesselSnapshot = {
-      id: vessel.id,
-      name: vessel.name,
-      lpp: vessel.lpp,
-      beam: vessel.beam,
-      draft: vessel.designDraft,
-      displacement: 0, // Will be calculated in seakeeping if needed
-      units: vessel.units || "SI",
-    };
-    navigate(`/seakeeping/${vessel.id}`, { state: { vesselSnapshot } });
+  const handleVesselSelect = async (vessel: Vessel) => {
+    try {
+      // Fetch offsets grid for seakeeping analysis
+      const offsetsGrid = await geometryApi.getOffsetsGrid(vessel.id);
+
+      // Fetch loadcases and use the first one
+      const loadcasesData = await loadcasesApi.list(vessel.id);
+      if (loadcasesData.loadcases.length === 0) {
+        toast.error("No loadcases found. Please create a loadcase in Hydrostatics first.");
+        return;
+      }
+
+      // Create vessel snapshot for seakeeping
+      const vesselSnapshot = {
+        id: vessel.id,
+        name: vessel.name,
+        lpp: vessel.lpp,
+        beam: vessel.beam,
+        draft: vessel.designDraft,
+        offsetsGrid,
+        loadcase: loadcasesData.loadcases[0],
+      };
+      navigate(`/seakeeping/${vessel.id}`, { state: { vesselSnapshot } });
+    } catch (err) {
+      toast.error(`Failed to load vessel data: ${getErrorMessage(err)}`);
+    }
   };
 
   return (

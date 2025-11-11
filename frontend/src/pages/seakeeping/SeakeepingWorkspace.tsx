@@ -173,51 +173,51 @@ export const SeakeepingWorkspace = observer(() => {
             </div>
           </div>
 
-        {/* Setup Panels */}
-        <div className="flex-1 overflow-y-auto">
-          <RaoSetupPanel />
-          <SeaStatePanel />
-        </div>
-      </div>
-
-      {/* Main workspace */}
-      <div className="flex-1 flex flex-col">
-        {/* Tab Navigation */}
-        <div className="border-b border-border bg-card">
-          <div className="flex space-x-1 p-2">
-            <TabButton
-              label="RAOs"
-              active={activeTab === "raos"}
-              onClick={() => setActiveTab("raos")}
-            />
-            <TabButton
-              label="Motion Response"
-              active={activeTab === "motion"}
-              onClick={() => setActiveTab("motion")}
-              disabled={!seakeepingStore.raoResults}
-            />
-            <TabButton
-              label="Exceedance"
-              active={activeTab === "exceedance"}
-              onClick={() => setActiveTab("exceedance")}
-              disabled={!seakeepingStore.motionResponse}
-            />
-            <TabButton
-              label="3D View"
-              active={activeTab === "3d"}
-              onClick={() => setActiveTab("3d")}
-            />
+          {/* Setup Panels */}
+          <div className="flex-1 overflow-y-auto">
+            <RaoSetupPanel />
+            <SeaStatePanel />
           </div>
         </div>
 
-        {/* Tab Content */}
-        <div className="flex-1 overflow-auto p-6">
-          {activeTab === "raos" && <RaoChartsPanel />}
-          {activeTab === "motion" && <MotionResponsePanel />}
-          {activeTab === "exceedance" && <ExceedancePanel />}
-          {activeTab === "3d" && <Enhanced3DPanel />}
+        {/* Main workspace */}
+        <div className="flex-1 flex flex-col">
+          {/* Tab Navigation */}
+          <div className="border-b border-border bg-card">
+            <div className="flex space-x-1 p-2">
+              <TabButton
+                label="RAOs"
+                active={activeTab === "raos"}
+                onClick={() => setActiveTab("raos")}
+              />
+              <TabButton
+                label="Motion Response"
+                active={activeTab === "motion"}
+                onClick={() => setActiveTab("motion")}
+                disabled={!seakeepingStore.raoResults}
+              />
+              <TabButton
+                label="Exceedance"
+                active={activeTab === "exceedance"}
+                onClick={() => setActiveTab("exceedance")}
+                disabled={!seakeepingStore.motionResponse}
+              />
+              <TabButton
+                label="3D View"
+                active={activeTab === "3d"}
+                onClick={() => setActiveTab("3d")}
+              />
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-auto p-6">
+            {activeTab === "raos" && <RaoChartsPanel />}
+            {activeTab === "motion" && <MotionResponsePanel />}
+            {activeTab === "exceedance" && <ExceedancePanel />}
+            {activeTab === "3d" && <Enhanced3DPanel />}
+          </div>
         </div>
-      </div>
       </div>
 
       {/* Settings Dialog */}

@@ -9,7 +9,12 @@ import { useWorkspaceLayout } from "../../../hooks/useWorkspaceLayout";
 import { ModeToggle } from "./ModeToggle";
 import { ViewModeLayout } from "./ViewModeLayout";
 import { EditModeLayout } from "./EditModeLayout";
-import { loadcasesApi, hydrostaticsApi, curvesApi } from "../../../services/hydrostaticsApi";
+import {
+  loadcasesApi,
+  hydrostaticsApi,
+  curvesApi,
+  geometryApi,
+} from "../../../services/hydrostaticsApi";
 // TODO: Re-enable when comparison feature is ready
 // import { comparisonApi } from "../../../services/comparisonApi";
 import { GeometryManagementDialog } from "../GeometryManagementDialog";
@@ -374,18 +379,33 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
             {/* Seakeeping Button */}
             {results.length > 0 && (
               <button
-                onClick={() => {
-                  // Pass vessel snapshot to seakeeping
-                  const vesselSnapshot = {
-                    id: vesselId,
-                    name: vessel.name,
-                    lpp: vessel.lpp,
-                    beam: vessel.beam,
-                    draft: vessel.designDraft,
-                    displacement: results[results.length - 1]?.dispWeight || 0,
-                    units: vessel.units || "SI",
-                  };
-                  navigate(`/seakeeping/${vesselId}`, { state: { vesselSnapshot } });
+                onClick={async () => {
+                  try {
+                    // Fetch offsets grid for seakeeping analysis
+                    const offsetsGrid = await geometryApi.getOffsetsGrid(vesselId);
+
+                    // Get the selected loadcase
+                    const selectedLoadcase = loadcases.find((lc) => lc.id === selectedLoadcaseId);
+                    if (!selectedLoadcase) {
+                      toast.error("Please select a loadcase first");
+                      return;
+                    }
+
+                    // Pass complete vessel snapshot to seakeeping
+                    const vesselSnapshot = {
+                      id: vesselId,
+                      name: vessel.name,
+                      lpp: vessel.lpp,
+                      beam: vessel.beam,
+                      draft: vessel.designDraft,
+                      offsetsGrid,
+                      loadcase: selectedLoadcase,
+                      hydrostatics: results[results.length - 1],
+                    };
+                    navigate(`/seakeeping/${vesselId}`, { state: { vesselSnapshot } });
+                  } catch (err) {
+                    toast.error(`Failed to load vessel data: ${getErrorMessage(err)}`);
+                  }
                 }}
                 className="inline-flex items-center px-3 py-1.5 border border-border text-xs font-medium rounded text-cyan-600 hover:bg-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
                 title="Analyze vessel seakeeping"
@@ -395,12 +415,12 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  strokeWidth={2}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    d="M20 7c-2 0-4 2-4 4s2 4 4 4M4 7c2 0 4 2 4 4s-2 4-4 4M12 3v6M12 15v6M9 12h6"
                   />
                 </svg>
                 Seakeeping
