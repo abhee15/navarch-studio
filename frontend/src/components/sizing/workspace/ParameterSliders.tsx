@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Label } from "../../ui/label";
 import type { CandidateDesign } from "../../../types/sizing";
-import { Sliders, Lightbulb, Ruler, BarChart2, Triangle } from "lucide-react";
+import { Sliders, Ruler, BarChart2, Triangle } from "lucide-react";
 
 interface ParameterSlidersProps {
   candidate: CandidateDesign;
@@ -175,6 +175,14 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                       className={`text-sm md:text-xs lg:text-sm font-bold tabular-nums text-${slider.color}-600 dark:text-${slider.color}-400`}
                     >
                       {slider.value.toFixed(slider.step >= 1 ? 1 : 2)} {slider.unit}
+                      <span className="text-[10px] ml-1 text-muted-foreground font-normal">
+                        (±
+                        {(
+                          ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
+                          100
+                        ).toFixed(0)}
+                        %)
+                      </span>
                     </span>
                   </div>
 
@@ -194,30 +202,8 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                       onMouseUp={() => handleSliderRelease(slider.id as keyof typeof localValues)}
                       onTouchEnd={() => handleSliderRelease(slider.id as keyof typeof localValues)}
                       disabled={isUpdating}
-                      className={`w-full h-2 rounded-lg appearance-none cursor-pointer
-                        bg-gradient-to-r from-gray-200 via-${slider.color}-200 to-${slider.color}-400
-                        dark:from-gray-700 dark:via-${slider.color}-900 dark:to-${slider.color}-700
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        slider-thumb-${slider.color}
-                      `}
-                      style={{
-                        background: `linear-gradient(to right,
-                          rgb(229, 231, 235) 0%,
-                          var(--${slider.color}-200) 50%,
-                          var(--${slider.color}-400) 100%)`,
-                      }}
+                      className="w-full h-2.5 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 dark:bg-gray-700"
                     />
-                    {/* ±% badge overlay */}
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
-                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        ±
-                        {(
-                          ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
-                          100
-                        ).toFixed(0)}
-                        %
-                      </span>
-                    </div>
                   </div>
 
                   <div className="flex justify-between text-xs text-muted-foreground">
@@ -275,6 +261,14 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                       className={`text-sm md:text-xs lg:text-sm font-bold tabular-nums text-${slider.color}-600 dark:text-${slider.color}-400`}
                     >
                       {slider.value.toFixed(slider.step >= 1 ? 1 : 2)} {slider.unit}
+                      <span className="text-[10px] ml-1 text-muted-foreground font-normal">
+                        (±
+                        {(
+                          ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
+                          100
+                        ).toFixed(0)}
+                        %)
+                      </span>
                     </span>
                   </div>
 
@@ -294,30 +288,8 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
                       onMouseUp={() => handleSliderRelease(slider.id as keyof typeof localValues)}
                       onTouchEnd={() => handleSliderRelease(slider.id as keyof typeof localValues)}
                       disabled={isUpdating}
-                      className={`w-full h-2 rounded-lg appearance-none cursor-pointer
-                        bg-gradient-to-r from-gray-200 via-${slider.color}-200 to-${slider.color}-400
-                        dark:from-gray-700 dark:via-${slider.color}-900 dark:to-${slider.color}-700
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        slider-thumb-${slider.color}
-                      `}
-                      style={{
-                        background: `linear-gradient(to right,
-                          rgb(229, 231, 235) 0%,
-                          var(--${slider.color}-200) 50%,
-                          var(--${slider.color}-400) 100%)`,
-                      }}
+                      className="w-full h-2.5 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 dark:bg-gray-700"
                     />
-                    {/* ±% badge overlay */}
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none">
-                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                        ±
-                        {(
-                          ((slider.max - slider.min) / ((2 * (slider.max + slider.min)) / 2)) *
-                          100
-                        ).toFixed(0)}
-                        %
-                      </span>
-                    </div>
                   </div>
 
                   <div className="flex justify-between text-xs text-muted-foreground">
@@ -338,22 +310,11 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
             </div>
           )}
 
-          <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 p-4 text-xs text-yellow-800 dark:text-yellow-400">
-            <p className="font-medium mb-1 flex items-center gap-1">
-              <Lightbulb className="h-3 w-3" />
-              How it works:
-            </p>
-            <ul className="space-y-1 ml-4">
-              <li>• Drag sliders to adjust dimensions</li>
-              <li>• Hull updates in real-time (visual preview)</li>
-              <li>• Release to trigger solver re-computation</li>
-              <li>• Solver maintains constraints and ratios</li>
-            </ul>
-          </div>
         </div>
       </div>
 
       <style>{`
+        /* Webkit (Chrome, Safari, Edge) */
         input[type="range"]::-webkit-slider-thumb {
           appearance: none;
           width: 20px;
@@ -361,33 +322,52 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
           border-radius: 50%;
           background: linear-gradient(135deg, #3b82f6, #06b6d4);
           border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
           cursor: pointer;
-          transition: transform 0.2s;
+          transition: transform 0.2s, box-shadow 0.2s;
         }
 
         input[type="range"]::-webkit-slider-thumb:hover {
-          transform: scale(1.2);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          transform: scale(1.15);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
         input[type="range"]::-webkit-slider-thumb:active {
-          transform: scale(1.1);
+          transform: scale(1.05);
         }
 
+        /* Firefox */
         input[type="range"]::-moz-range-thumb {
           width: 20px;
           height: 20px;
           border-radius: 50%;
           background: linear-gradient(135deg, #3b82f6, #06b6d4);
           border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
           cursor: pointer;
-          transition: transform 0.2s;
+          transition: transform 0.2s, box-shadow 0.2s;
         }
 
         input[type="range"]::-moz-range-thumb:hover {
-          transform: scale(1.2);
+          transform: scale(1.15);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb:active {
+          transform: scale(1.05);
+        }
+
+        /* Ensure track is visible in both light and dark modes */
+        input[type="range"]::-webkit-slider-runnable-track {
+          width: 100%;
+          height: 10px;
+          border-radius: 5px;
+        }
+
+        input[type="range"]::-moz-range-track {
+          width: 100%;
+          height: 10px;
+          border-radius: 5px;
         }
       `}</style>
     </div>

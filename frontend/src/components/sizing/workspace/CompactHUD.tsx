@@ -14,7 +14,7 @@ interface CompactHUDProps {
  * Inspired by Hydrostatics HUD design
  */
 export const CompactHUD: React.FC<CompactHUDProps> = ({ candidate }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Parse flags
   let flags: string[] = [];

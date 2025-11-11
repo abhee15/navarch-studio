@@ -33,8 +33,15 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
     ref
   ) => {
     const [hoveredButtock, setHoveredButtock] = useState<number | null>(null);
-    const [showLegend, setShowLegend] = useState(false);
-    const [showDimensionsPanel, setShowDimensionsPanel] = useState(true);
+    const [showDimensionsPanel, setShowDimensionsPanel] = useState(false);
+    const [visibility, setVisibility] = useState({
+      sheerline: true,
+      buttocks: true,
+      waterline: true,
+      baseline: true,
+      perpendiculars: true,
+    });
+    const [hoveredLegendItem, setHoveredLegendItem] = useState<string | null>(null);
 
     const buttocks = useMemo(() => {
       const lpp = candidate.lppM;
@@ -101,7 +108,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 
     const padding = 80;
     const svgWidth = 900;
-    const svgHeight = 400;
+    const svgHeight = 520;
     const lpp = candidate.lppM;
     const depth = candidate.depthM;
     const scaleX = (svgWidth - 2 * padding) / lpp;
@@ -122,14 +129,15 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         .join(" ");
 
     return (
-      <div className="w-full h-full bg-gradient-to-b from-sky-100 via-blue-50 to-cyan-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 relative">
-        <svg
-          ref={ref}
-          width="100%"
-          height="100%"
-          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-          className="border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
-        >
+      <div className="w-full h-full p-4 relative flex flex-col">
+        <div className="flex-1 bg-gradient-to-b from-sky-100 via-blue-50 to-cyan-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-600 rounded-t-lg shadow-lg flex flex-col">
+          <svg
+            ref={ref}
+            width="100%"
+            height="100%"
+            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+            className="flex-1"
+          >
           <defs>
             <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#e0f2fe" stopOpacity="0.3" />
@@ -171,7 +179,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
           </text>
 
           {/* Baseline */}
-          {showBaseline && (
+          {showBaseline && visibility.baseline && (
             <line
               x1={toSVG(-lpp / 2, -candidate.draftM)[0]}
               y1={toSVG(-lpp / 2, -candidate.draftM)[1]}
@@ -180,31 +188,41 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               stroke="#6b7280"
               strokeWidth="2"
               strokeDasharray="10,5"
+              opacity={hoveredLegendItem && hoveredLegendItem !== 'baseline' ? 0.3 : 1}
+              style={{ transition: 'all 0.3s ease' }}
             />
           )}
 
           {/* Perpendiculars */}
-          <line
-            x1={toSVG(-lpp / 2, -candidate.draftM)[0]}
-            y1={toSVG(-lpp / 2, -candidate.draftM)[1]}
-            x2={toSVG(-lpp / 2, candidate.depthM - candidate.draftM)[0]}
-            y2={toSVG(-lpp / 2, candidate.depthM - candidate.draftM)[1]}
-            stroke="#ef4444"
-            strokeWidth="3"
-            filter="url(#shadow)"
-          />
-          <line
-            x1={toSVG(lpp / 2, -candidate.draftM)[0]}
-            y1={toSVG(lpp / 2, -candidate.draftM)[1]}
-            x2={toSVG(lpp / 2, candidate.depthM - candidate.draftM)[0]}
-            y2={toSVG(lpp / 2, candidate.depthM - candidate.draftM)[1]}
-            stroke="#10b981"
-            strokeWidth="3"
-            filter="url(#shadow)"
-          />
+          {visibility.perpendiculars && (
+            <>
+              <line
+                x1={toSVG(-lpp / 2, -candidate.draftM)[0]}
+                y1={toSVG(-lpp / 2, -candidate.draftM)[1]}
+                x2={toSVG(-lpp / 2, candidate.depthM - candidate.draftM)[0]}
+                y2={toSVG(-lpp / 2, candidate.depthM - candidate.draftM)[1]}
+                stroke="#ef4444"
+                strokeWidth="3"
+                filter="url(#shadow)"
+                opacity={hoveredLegendItem && hoveredLegendItem !== 'perpendiculars' ? 0.3 : 1}
+                style={{ transition: 'all 0.3s ease' }}
+              />
+              <line
+                x1={toSVG(lpp / 2, -candidate.draftM)[0]}
+                y1={toSVG(lpp / 2, -candidate.draftM)[1]}
+                x2={toSVG(lpp / 2, candidate.depthM - candidate.draftM)[0]}
+                y2={toSVG(lpp / 2, candidate.depthM - candidate.draftM)[1]}
+                stroke="#10b981"
+                strokeWidth="3"
+                filter="url(#shadow)"
+                opacity={hoveredLegendItem && hoveredLegendItem !== 'perpendiculars' ? 0.3 : 1}
+                style={{ transition: 'all 0.3s ease' }}
+              />
+            </>
+          )}
 
           {/* Waterline */}
-          {showWaterline && (
+          {showWaterline && visibility.waterline && (
             <line
               x1={toSVG(-lpp / 2, 0)[0]}
               y1={toSVG(-lpp / 2, 0)[1]}
@@ -214,18 +232,24 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               strokeWidth="2.5"
               strokeDasharray="10,5"
               filter="url(#glow)"
+              opacity={hoveredLegendItem && hoveredLegendItem !== 'waterline' ? 0.3 : 1}
+              style={{ transition: 'all 0.3s ease' }}
             />
           )}
 
           {/* Sheerline (deck) with gradient */}
-          <path
-            d={generatePath(sheerline)}
-            fill="none"
-            stroke="url(#deckGradient)"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-            filter="url(#shadow)"
-          />
+          {visibility.sheerline && (
+            <path
+              d={generatePath(sheerline)}
+              fill="none"
+              stroke="url(#deckGradient)"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              filter="url(#shadow)"
+              opacity={hoveredLegendItem && hoveredLegendItem !== 'sheerline' ? 0.3 : 1}
+              style={{ transition: 'all 0.3s ease' }}
+            />
+          )}
 
           <defs>
             <linearGradient id="deckGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -237,10 +261,12 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 
           {/* Buttocks with animations */}
           {showButtocks &&
+            visibility.buttocks &&
             buttocks.map((buttock, idx) => {
               const isHovered = hoveredButtock === idx;
               const color = buttock.isCenterline ? "#3b82f6" : isHovered ? "#60a5fa" : "#93c5fd";
               const strokeWidth = buttock.isCenterline ? 2.5 : isHovered ? 2 : 1.2;
+              const dimmed = hoveredLegendItem && hoveredLegendItem !== 'buttocks';
 
               return (
                 <g
@@ -248,7 +274,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                   onMouseEnter={() => setHoveredButtock(idx)}
                   onMouseLeave={() => setHoveredButtock(null)}
                   style={{
-                    opacity: 0,
+                    opacity: dimmed ? 0.3 : 0,
                     animation: `fadeIn 0.4s ease-in forwards ${idx * 0.1}s`,
                     cursor: "pointer",
                   }}
@@ -438,93 +464,129 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             Scale 1:{Math.round(1 / scale)}
           </text>
         </svg>
+        </div>
 
-        {/* Collapsible Legend */}
-        <div className="absolute top-6 right-6">
-          <button
-            onClick={() => setShowLegend(!showLegend)}
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-card transition-colors flex items-center gap-1.5"
-          >
-            {showLegend ? "▼" : "▶"} Legend
-          </button>
-          {showLegend && (
-            <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs space-y-2 border border-gray-200 dark:border-gray-700">
-              <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
-                Legend
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
+        {/* Integrated Info Bar - Part of the same panel */}
+        <div className="bg-white dark:bg-gray-800 border-t-0 border-l border-r border-b border-gray-300 dark:border-gray-600 rounded-b-lg shadow-lg p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            {/* Left: Interactive legend items */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => setVisibility(prev => ({ ...prev, sheerline: !prev.sheerline }))}
+                onMouseEnter={() => setHoveredLegendItem('sheerline')}
+                onMouseLeave={() => setHoveredLegendItem(null)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                  visibility.sheerline
+                    ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                }`}
+              >
                 <div className="w-5 h-1 bg-gradient-to-r from-gray-800 to-gray-600 rounded"></div>
-                <span className="text-gray-700 dark:text-gray-300">Sheerline (Deck)</span>
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
-                <div className="w-5 h-0.5 bg-blue-600 shadow-sm"></div>
-                <span className="text-gray-700 dark:text-gray-300">Centerline Buttock</span>
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
-                <div className="w-5 h-0.5 bg-blue-300"></div>
-                <span className="text-gray-700 dark:text-gray-300">
-                  Buttocks (0-{(candidate.beamM / 2).toFixed(1)}m)
-                </span>
-              </div>
-              <div className="flex items-center gap-2 hover:bg-muted/50 dark:hover:bg-muted p-1 rounded transition-colors">
-                <div
-                  className="w-5 h-0.5 bg-cyan-600"
-                  style={{
-                    backgroundImage: "linear-gradient(90deg, #06b6d4 50%, transparent 50%)",
-                    backgroundSize: "10px 1px",
-                  }}
-                ></div>
-                <span className="text-gray-700 dark:text-gray-300">Design Waterline</span>
-              </div>
-              <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-600 text-[10px] text-gray-500 dark:text-gray-400">
-                Hover buttocks for offset details
-              </div>
-            </div>
-          )}
-        </div>
+                <span>Sheerline</span>
+              </button>
 
-        {/* Collapsible Dimensions Panel */}
-        <div className="absolute bottom-6 left-6">
-          <button
-            onClick={() => setShowDimensionsPanel(!showDimensionsPanel)}
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-card transition-colors flex items-center gap-1.5"
-          >
-            {showDimensionsPanel ? "▼" : "▶"} Dimensions
-          </button>
-          {showDimensionsPanel && (
-            <div className="mt-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs border border-gray-200 dark:border-gray-700">
-              <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
-                Dimensions
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {lpp.toFixed(2)} m
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">Lwl:</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {candidate.lwlM.toFixed(2)} m
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">LOA:</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {candidate.loaM.toFixed(2)} m
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">Draft:</span>
-                <span className="font-semibold text-cyan-700 dark:text-cyan-400">
-                  {candidate.draftM.toFixed(2)} m
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">Depth:</span>
-                <span className="font-semibold text-purple-700 dark:text-purple-400">
-                  {candidate.depthM.toFixed(2)} m
-                </span>
-                <span className="text-gray-600 dark:text-gray-400">Freeboard:</span>
-                <span className="font-semibold text-green-700 dark:text-green-400">
-                  {(candidate.depthM - candidate.draftM).toFixed(2)} m
-                </span>
-              </div>
+              <button
+                onClick={() => setVisibility(prev => ({ ...prev, buttocks: !prev.buttocks }))}
+                onMouseEnter={() => setHoveredLegendItem('buttocks')}
+                onMouseLeave={() => setHoveredLegendItem(null)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                  visibility.buttocks
+                    ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                }`}
+              >
+                <div className="w-5 h-0.5 bg-blue-400"></div>
+                <span>Buttocks</span>
+              </button>
+
+              <button
+                onClick={() => setVisibility(prev => ({ ...prev, waterline: !prev.waterline }))}
+                onMouseEnter={() => setHoveredLegendItem('waterline')}
+                onMouseLeave={() => setHoveredLegendItem(null)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                  visibility.waterline
+                    ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                }`}
+              >
+                <div className="w-5 h-0.5 bg-cyan-500"></div>
+                <span>Waterline</span>
+              </button>
+
+              <button
+                onClick={() => setVisibility(prev => ({ ...prev, baseline: !prev.baseline }))}
+                onMouseEnter={() => setHoveredLegendItem('baseline')}
+                onMouseLeave={() => setHoveredLegendItem(null)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                  visibility.baseline
+                    ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                }`}
+              >
+                <div className="w-5 h-0.5 bg-gray-500"></div>
+                <span>Baseline</span>
+              </button>
+
+              <button
+                onClick={() => setVisibility(prev => ({ ...prev, perpendiculars: !prev.perpendiculars }))}
+                onMouseEnter={() => setHoveredLegendItem('perpendiculars')}
+                onMouseLeave={() => setHoveredLegendItem(null)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+                  visibility.perpendiculars
+                    ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through'
+                }`}
+              >
+                <div className="w-5 h-0.5 bg-gradient-to-r from-red-500 to-green-500"></div>
+                <span>Perpendiculars</span>
+              </button>
             </div>
-          )}
-        </div>
+
+            {/* Separator */}
+            <div className="hidden md:block h-6 w-px bg-border"></div>
+
+            {/* Right: Dimensions dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowDimensionsPanel(!showDimensionsPanel)}
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-sm px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+              >
+                {showDimensionsPanel ? "▼" : "▶"} Dimensions
+              </button>
+              {showDimensionsPanel && (
+                <div className="absolute bottom-full right-0 mb-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl shadow-2xl p-4 text-xs border border-gray-200 dark:border-gray-700 min-w-[200px]">
+                  <div className="font-bold text-gray-900 dark:text-gray-100 mb-3 text-sm border-b border-gray-200 dark:border-gray-600 pb-2">
+                    Dimensions
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    <span className="text-gray-600 dark:text-gray-400">Lpp:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      {lpp.toFixed(2)} m
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">Lwl:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      {candidate.lwlM.toFixed(2)} m
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">LOA:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      {candidate.loaM.toFixed(2)} m
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">Draft:</span>
+                    <span className="font-semibold text-cyan-700 dark:text-cyan-400">
+                      {candidate.draftM.toFixed(2)} m
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">Depth:</span>
+                    <span className="font-semibold text-purple-700 dark:text-purple-400">
+                      {candidate.depthM.toFixed(2)} m
+                    </span>
+                    <span className="text-gray-600 dark:text-gray-400">Freeboard:</span>
+                    <span className="font-semibold text-green-700 dark:text-green-400">
+                      {(candidate.depthM - candidate.draftM).toFixed(2)} m
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
         <style>{`
         @keyframes fadeIn {
