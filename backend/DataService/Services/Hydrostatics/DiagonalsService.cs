@@ -116,27 +116,43 @@ public class DiagonalsService : IDigonalsService
                     decimal hullY1 = offset1.HalfBreadthY;
                     decimal hullY2 = offset2.HalfBreadthY;
 
-                    // Check for intersection (diagonal crosses hull surface)
-                    bool intersects = (diagonalY1 <= hullY1 && diagonalY2 >= hullY2) ||
-                                     (diagonalY1 >= hullY1 && diagonalY2 <= hullY2);
-
-                    if (intersects && diagonalY1 >= 0 && diagonalY2 >= 0)
+                    // Check if diagonal intersects hull within this waterline segment
+                    // For diagonal: Z = Y + intercept
+                    // Hull constraint: Y <= hullY at each Z
+                    
+                    // Check if diagonal passes through or touches the hull boundary
+                    bool diagonalBelowHull1 = diagonalY1 <= hullY1;
+                    bool diagonalBelowHull2 = diagonalY2 <= hullY2;
+                    
+                    // Intersection occurs if:
+                    // 1. Diagonal crosses the hull surface (one side below, one above)
+                    // 2. OR diagonal is very close to the hull surface (within tolerance)
+                    bool crosses = diagonalBelowHull1 != diagonalBelowHull2;
+                    bool nearBoundary = Math.Abs(diagonalY1 - hullY1) < 0.1m || Math.Abs(diagonalY2 - hullY2) < 0.1m;
+                    
+                    if ((crosses || nearBoundary) && diagonalY1 >= 0 && diagonalY2 >= 0)
                     {
                         // Linear interpolation to find exact intersection point
-                        // Solve for where diagonal Y equals hull Y
-                        decimal t = 0.5m; // Default to midpoint if parallel
+                        decimal t = 0.5m; // Default to midpoint
 
                         decimal deltaHull = hullY2 - hullY1;
                         decimal deltaDiag = diagonalY2 - diagonalY1;
 
                         if (Math.Abs(deltaHull - deltaDiag) > 0.001m)
                         {
+                            // Solve: hullY1 + t * deltaHull = diagonalY1 + t * deltaDiag
                             t = (hullY1 - diagonalY1) / (deltaDiag - deltaHull);
                             t = Math.Max(0m, Math.Min(1m, t)); // Clamp to [0, 1]
                         }
 
                         decimal intersectionZ = wl1.Z + t * (wl2.Z - wl1.Z);
                         decimal intersectionY = intersectionZ - intercept;
+
+                        // For rectangular sections, if diagonal Y matches hull Y, use hull boundary
+                        if (Math.Abs(deltaHull) < 0.001m && Math.Abs(diagonalY1 - hullY1) < 0.1m)
+                        {
+                            intersectionY = hullY1;
+                        }
 
                         // Verify intersection is within hull bounds
                         if (intersectionY >= 0 && intersectionY <= maxHalfBreadth && intersectionZ >= 0 && intersectionZ <= maxZ)

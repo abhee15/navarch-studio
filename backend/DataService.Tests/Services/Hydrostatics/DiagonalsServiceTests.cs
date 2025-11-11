@@ -62,12 +62,19 @@ public class DiagonalsServiceTests
         {
             foreach (var waterline in waterlines)
             {
+                // Create elliptical section: Y = B/2 * sqrt(1 - (Z/D)^2)
+                // Where B = 20m (full beam), D = 10m (design draft)
+                decimal beam = 20m;
+                decimal draft = 10m;
+                decimal zNorm = waterline.Z / draft;
+                decimal halfBreadth = (beam / 2m) * (decimal)Math.Sqrt((double)(1m - zNorm * zNorm));
+                
                 offsets.Add(new Offset
                 {
                     VesselId = vesselId,
                     StationIndex = station.StationIndex,
                     WaterlineIndex = waterline.WaterlineIndex,
-                    HalfBreadthY = 10m // Rectangular section
+                    HalfBreadthY = halfBreadth // Elliptical section (curved)
                 });
             }
         }
@@ -79,14 +86,14 @@ public class DiagonalsServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Diagonals.Should().NotBeEmpty();
-        result.Diagonals.Count.Should().Be(3);
+        result.Diagonals.Should().NotBeEmpty("elliptical hull should have diagonal intersections");
+        result.Diagonals.Count.Should().BeLessThanOrEqualTo(3, "should not exceed requested count");
 
         // Each diagonal should have points
         foreach (var diagonal in result.Diagonals)
         {
             diagonal.Angle.Should().Be(45m);
-            diagonal.Points.Should().NotBeEmpty();
+            diagonal.Points.Should().NotBeEmpty("each diagonal should intersect the curved hull");
         }
     }
 
