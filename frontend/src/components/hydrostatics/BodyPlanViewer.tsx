@@ -258,60 +258,104 @@ export const BodyPlanViewer = observer(
 
     // Export as DXF
     const exportAsDXF = useCallback(() => {
+      // Validate that we have data to export
+      const validCurves = stationCurves.filter((curve) => curve.points.length > 1);
+      if (validCurves.length === 0) {
+        alert("No valid station curves to export. Please ensure the body plan has data.");
+        return;
+      }
+
       // Generate DXF file content
-      let dxfContent = "0\nSECTION\n2\nHEADER\n";
-      dxfContent += "9\n$ACADVER\n1\nAC1015\n"; // AutoCAD 2000 format
+      let dxfContent = "";
+
+      // Section: HEADER
+      dxfContent += "0\nSECTION\n";
+      dxfContent += "2\nHEADER\n";
+      dxfContent += "9\n$ACADVER\n";
+      dxfContent += "1\nAC1015\n"; // AutoCAD 2000 format
+      dxfContent += "9\n$INSUNITS\n";
+      dxfContent += "70\n6\n"; // Units: Meters
       dxfContent += "0\nENDSEC\n";
 
-      // TABLES section
-      dxfContent += "0\nSECTION\n2\nTABLES\n";
+      // Section: TABLES
+      dxfContent += "0\nSECTION\n";
+      dxfContent += "2\nTABLES\n";
 
-      // Layer table
-      dxfContent += "0\nTABLE\n2\nLAYER\n70\n" + stationCurves.length + "\n";
+      // Layer table - calculate total layers needed
+      const totalLayers = viewOptions.showMirrored ? validCurves.length * 2 : validCurves.length;
 
-      stationCurves.forEach((curve) => {
-        dxfContent += "0\nLAYER\n2\nSTATION_" + curve.stationIndex + "\n";
-        dxfContent += "70\n0\n62\n";
+      dxfContent += "0\nTABLE\n";
+      dxfContent += "2\nLAYER\n";
+      dxfContent += `70\n${totalLayers}\n`; // Layer count
+
+      // Define layers for starboard side
+      validCurves.forEach((curve) => {
+        dxfContent += "0\nLAYER\n";
+        dxfContent += `2\nSTATION_${curve.stationIndex}\n`;
+        dxfContent += "70\n0\n"; // Standard layer flag
         // Color codes: 5=blue (forward), 3=green (midship), 1=red (aft)
         const colorCode = curve.region === "forward" ? "5" : curve.region === "midship" ? "3" : "1";
-        dxfContent += colorCode + "\n";
-        dxfContent += "6\nCONTINUOUS\n";
+        dxfContent += `62\n${colorCode}\n`; // Color
+        dxfContent += "6\nCONTINUOUS\n"; // Linetype
       });
 
-      dxfContent += "0\nENDTAB\n0\nENDSEC\n";
+      // Define layers for port side (if mirrored)
+      if (viewOptions.showMirrored) {
+        validCurves.forEach((curve) => {
+          dxfContent += "0\nLAYER\n";
+          dxfContent += `2\nSTATION_${curve.stationIndex}_PORT\n`;
+          dxfContent += "70\n0\n"; // Standard layer flag
+          const colorCode =
+            curve.region === "forward" ? "5" : curve.region === "midship" ? "3" : "1";
+          dxfContent += `62\n${colorCode}\n`; // Color
+          dxfContent += "6\nCONTINUOUS\n"; // Linetype
+        });
+      }
 
-      // ENTITIES section
-      dxfContent += "0\nSECTION\n2\nENTITIES\n";
+      dxfContent += "0\nENDTAB\n";
+      dxfContent += "0\nENDSEC\n";
 
-      stationCurves.forEach((curve) => {
-        // Starboard side
+      // Section: ENTITIES
+      dxfContent += "0\nSECTION\n";
+      dxfContent += "2\nENTITIES\n";
+
+      validCurves.forEach((curve) => {
+        // Starboard side polyline
         if (curve.points.length > 1) {
-          dxfContent += "0\nLWPOLYLINE\n8\nSTATION_" + curve.stationIndex + "\n";
-          dxfContent += "90\n" + curve.points.length + "\n";
-          dxfContent += "70\n0\n"; // Not closed
+          dxfContent += "0\nLWPOLYLINE\n";
+          dxfContent += `8\nSTATION_${curve.stationIndex}\n`; // Layer
+          dxfContent += `90\n${curve.points.length}\n`; // Number of vertices
+          dxfContent += "70\n0\n"; // Polyline flag (0 = open polyline)
 
+          // Add vertex coordinates
           curve.points.forEach((point) => {
-            // In DXF: X = half-breadth, Y = waterline height
-            dxfContent += "10\n" + point.y.toFixed(4) + "\n";
-            dxfContent += "20\n" + point.z.toFixed(4) + "\n";
+            // In DXF: X = half-breadth, Y = waterline height (Z)
+            dxfContent += `10\n${point.y.toFixed(6)}\n`; // X coordinate
+            dxfContent += `20\n${point.z.toFixed(6)}\n`; // Y coordinate
           });
         }
 
-        // Port side (mirrored)
+        // Port side polyline (mirrored)
         if (viewOptions.showMirrored && curve.points.length > 1) {
-          dxfContent += "0\nLWPOLYLINE\n8\nSTATION_" + curve.stationIndex + "_PORT\n";
-          dxfContent += "90\n" + curve.points.length + "\n";
-          dxfContent += "70\n0\n";
+          dxfContent += "0\nLWPOLYLINE\n";
+          dxfContent += `8\nSTATION_${curve.stationIndex}_PORT\n`; // Layer
+          dxfContent += `90\n${curve.points.length}\n`; // Number of vertices
+          dxfContent += "70\n0\n"; // Polyline flag (0 = open polyline)
 
+          // Add vertex coordinates (mirrored)
           curve.points.forEach((point) => {
-            dxfContent += "10\n" + (-point.y).toFixed(4) + "\n";
-            dxfContent += "20\n" + point.z.toFixed(4) + "\n";
+            dxfContent += `10\n${(-point.y).toFixed(6)}\n`; // X coordinate (negated for mirror)
+            dxfContent += `20\n${point.z.toFixed(6)}\n`; // Y coordinate (same Z)
           });
         }
       });
 
-      dxfContent += "0\nENDSEC\n0\nEOF\n";
+      dxfContent += "0\nENDSEC\n";
 
+      // End of file
+      dxfContent += "0\nEOF\n";
+
+      // Create and download the file
       const blob = new Blob([dxfContent], { type: "application/dxf" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

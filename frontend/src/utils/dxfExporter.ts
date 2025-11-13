@@ -27,6 +27,11 @@ export function generateDXF(candidate: CandidateDesign): string {
   const beam = candidate.beamM;
   const draft = candidate.draftM;
 
+  // Validate input
+  if (!lpp || lpp <= 0 || !beam || beam <= 0 || !draft || draft <= 0) {
+    throw new Error("Invalid hull dimensions: LPP, beam, and draft must be positive numbers");
+  }
+
   // DXF Header
   let dxf = "";
 
@@ -42,9 +47,6 @@ export function generateDXF(candidate: CandidateDesign): string {
   dxf += "2\nTABLES\n";
 
   // Layer Table
-  dxf += "0\nTABLE\n";
-  dxf += "2\nLAYER\n";
-
   const layers: DXFLayer[] = [
     { name: "HULL_OUTLINE", color: 1, lineType: "CONTINUOUS" },
     { name: "WATERLINES", color: 5, lineType: "CONTINUOUS" },
@@ -54,12 +56,16 @@ export function generateDXF(candidate: CandidateDesign): string {
     { name: "DIMENSIONS", color: 8, lineType: "CONTINUOUS" },
   ];
 
+  dxf += "0\nTABLE\n";
+  dxf += "2\nLAYER\n";
+  dxf += `70\n${layers.length}\n`; // Layer count
+
   layers.forEach((layer) => {
     dxf += "0\nLAYER\n";
     dxf += `2\n${layer.name}\n`;
-    dxf += `70\n0\n`;
-    dxf += `62\n${layer.color}\n`;
-    dxf += `6\n${layer.lineType}\n`;
+    dxf += `70\n0\n`; // Standard layer flag
+    dxf += `62\n${layer.color}\n`; // Color
+    dxf += `6\n${layer.lineType}\n`; // Linetype
   });
 
   dxf += "0\nENDTAB\n";
@@ -221,18 +227,28 @@ function text(
  * Trigger browser download of DXF file
  */
 export function downloadDXF(candidate: CandidateDesign, filename?: string): void {
-  const dxfContent = generateDXF(candidate);
-  const blob = new Blob([dxfContent], { type: "application/dxf" });
-  const url = URL.createObjectURL(blob);
+  try {
+    const dxfContent = generateDXF(candidate);
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.download =
-    filename || `hull_${candidate.hullFamily}_${candidate.lppM.toFixed(0)}m_${Date.now()}.dxf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    if (!dxfContent || dxfContent.trim().length === 0) {
+      throw new Error("Generated DXF content is empty");
+    }
+
+    const blob = new Blob([dxfContent], { type: "application/dxf" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download =
+      filename || `hull_${candidate.hullFamily}_${candidate.lppM.toFixed(0)}m_${Date.now()}.dxf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error generating DXF file:", error);
+    alert(`Failed to export DXF file: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 }
 
 /**
