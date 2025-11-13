@@ -66,7 +66,12 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             stationPositions?: number[];
           };
 
-          if (sections && sections.stations && Array.isArray(sections.stations) && sections.stations.length > 0) {
+          if (
+            sections &&
+            sections.stations &&
+            Array.isArray(sections.stations) &&
+            sections.stations.length > 0
+          ) {
             console.log("[Hull2DPlan] Using ShipD geometry from backend", {
               stationCount: sections.stations.length,
               hasBulb: sections.stations.some((s) => s.hasBulb),
@@ -91,7 +96,12 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               (_, i) => (i / (waterlineCount - 1)) * maxDraft
             );
 
-            const result = extractWaterlinesFromShipD(shipdSections, candidate.lppM, waterlineHeights, candidate.draftM);
+            const result = extractWaterlinesFromShipD(
+              shipdSections,
+              candidate.lppM,
+              waterlineHeights,
+              candidate.draftM
+            );
             console.log("[Hull2DPlan] Extracted waterlines from ShipD geometry", {
               waterlineCount: result.length,
               designWaterlineIndex: result.findIndex((wl) => wl.isDesignWaterline),
@@ -101,7 +111,10 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             console.warn("[Hull2DPlan] ShipD geometry has no stations, falling back");
           }
         } catch (error) {
-          console.error("[Hull2DPlan] Failed to parse ShipD geometry, falling back to parametric:", error);
+          console.error(
+            "[Hull2DPlan] Failed to parse ShipD geometry, falling back to parametric:",
+            error
+          );
         }
       }
 
@@ -118,14 +131,17 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
-            const sections = generateShipDSections({
-              shipdVector,
-              lppM: candidate.lppM,
-              beamM: candidate.beamM,
-              draftM: candidate.draftM,
-              metadata: sizingStore.shipdParameters,
-              resolution: 1.0,
-            }, 20);
+            const sections = generateShipDSections(
+              {
+                shipdVector,
+                lppM: candidate.lppM,
+                beamM: candidate.beamM,
+                draftM: candidate.draftM,
+                metadata: sizingStore.shipdParameters,
+                resolution: 1.0,
+              },
+              20
+            );
 
             // Heights should be from 0 (keel) to draft (waterline)
             const maxDraft = candidate.draftM || 5;
@@ -134,7 +150,12 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               (_, i) => (i / (waterlineCount - 1)) * maxDraft
             );
 
-            const result = extractWaterlinesFromShipD(sections, candidate.lppM, waterlineHeights, candidate.draftM);
+            const result = extractWaterlinesFromShipD(
+              sections,
+              candidate.lppM,
+              waterlineHeights,
+              candidate.draftM
+            );
             console.log("[Hull2DPlan] Generated waterlines from ShipD parameters", {
               waterlineCount: result.length,
             });
@@ -146,7 +167,10 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             });
           }
         } catch (error) {
-          console.error("[Hull2DPlan] Failed to generate ShipD geometry, falling back to parametric:", error);
+          console.error(
+            "[Hull2DPlan] Failed to generate ShipD geometry, falling back to parametric:",
+            error
+          );
         }
       } else {
         console.log("[Hull2DPlan] No ShipD data available", {

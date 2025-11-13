@@ -16,7 +16,11 @@ export function extractWaterlinesFromShipD(
   waterlineHeights: number[] = [],
   designDraft?: number
 ): Array<{ depth: number; points: Array<[number, number]>; isDesignWaterline: boolean }> {
-  const waterlines: Array<{ depth: number; points: Array<[number, number]>; isDesignWaterline: boolean }> = [];
+  const waterlines: Array<{
+    depth: number;
+    points: Array<[number, number]>;
+    isDesignWaterline: boolean;
+  }> = [];
 
   // If no heights specified, generate default waterlines
   if (waterlineHeights.length === 0) {
@@ -27,7 +31,7 @@ export function extractWaterlinesFromShipD(
   }
 
   // Debug: Log station positions to verify we have bow, midship, and stern
-  const stationPositions = sections.stations.map(s => s.position).sort((a, b) => a - b);
+  const stationPositions = sections.stations.map((s) => s.position).sort((a, b) => a - b);
   console.log("[extractWaterlinesFromShipD] Station positions:", {
     count: sections.stations.length,
     min: stationPositions[0],
@@ -70,7 +74,8 @@ export function extractWaterlinesFromShipD(
             const h2 = heights[i + 1];
             const y1 = offsets[h1];
             const y2 = offsets[h2];
-            if (h2 - h1 > 0.001) { // Avoid division by zero
+            if (h2 - h1 > 0.001) {
+              // Avoid division by zero
               const t = (height - h1) / (h2 - h1);
               halfBreadth = y1 + t * (y2 - y1);
             } else {
@@ -108,9 +113,10 @@ export function extractWaterlinesFromShipD(
       // For plan view, we show depth below waterline, so depth = draft - height
       const depth = height; // Height from keel (0 = keel, draft = waterline)
       // Design waterline is at the draft level
-      const isDesignWaterline = designDraft !== undefined
-        ? Math.abs(height - designDraft) < 0.01
-        : height >= (waterlineHeights[waterlineHeights.length - 1] || 0) * 0.95;
+      const isDesignWaterline =
+        designDraft !== undefined
+          ? Math.abs(height - designDraft) < 0.01
+          : height >= (waterlineHeights[waterlineHeights.length - 1] || 0) * 0.95;
 
       // Debug: Log first and last points to verify bow/stern representation
       if (points.length > 0) {
@@ -118,7 +124,7 @@ export function extractWaterlinesFromShipD(
           pointCount: points.length,
           sternPoint: points[0], // Should be at x ≈ -lppM/2 (aft)
           bowPoint: points[points.length - 1], // Should be at x ≈ +lppM/2 (forward)
-          maxHalfBreadth: Math.max(...points.map(p => p[1])),
+          maxHalfBreadth: Math.max(...points.map((p) => p[1])),
           isDesignWaterline,
         });
       }
@@ -143,13 +149,15 @@ export function extractButtocksFromShipD(
   draftM: number,
   buttockOffsets: number[] = []
 ): Array<{ transverseOffset: number; points: Array<[number, number]>; isCenterline: boolean }> {
-  const buttocks: Array<{ transverseOffset: number; points: Array<[number, number]>; isCenterline: boolean }> = [];
+  const buttocks: Array<{
+    transverseOffset: number;
+    points: Array<[number, number]>;
+    isCenterline: boolean;
+  }> = [];
 
   // If no offsets specified, generate default buttocks
   if (buttockOffsets.length === 0) {
-    const maxHalfBreadth = Math.max(
-      ...sections.stations.flatMap((s) => Object.values(s.offsets))
-    );
+    const maxHalfBreadth = Math.max(...sections.stations.flatMap((s) => Object.values(s.offsets)));
     buttockOffsets = Array.from({ length: 5 }, (_, i) => (i / 4) * maxHalfBreadth);
   }
 
@@ -220,12 +228,18 @@ export function extractSectionsFromShipD(
   sections: ShipDHullSections,
   stationIndices: number[] = []
 ): Array<{ station: number; points: Array<[number, number]>; isAft: boolean; hasBulb: boolean }> {
-  const result: Array<{ station: number; points: Array<[number, number]>; isAft: boolean; hasBulb: boolean }> = [];
+  const result: Array<{
+    station: number;
+    points: Array<[number, number]>;
+    isAft: boolean;
+    hasBulb: boolean;
+  }> = [];
 
   // If no indices specified, use all stations
-  const stationsToUse = stationIndices.length > 0
-    ? sections.stations.filter((_s, idx) => stationIndices.includes(idx))
-    : sections.stations;
+  const stationsToUse =
+    stationIndices.length > 0
+      ? sections.stations.filter((_s, idx) => stationIndices.includes(idx))
+      : sections.stations;
 
   for (const station of stationsToUse) {
     const points: Array<[number, number]> = [];

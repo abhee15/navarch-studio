@@ -3,14 +3,7 @@ import type { CreateMissionCaseDto } from "../../../types/sizing";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
-import {
-  Calculator,
-  BarChart3,
-  Bot,
-  Lightbulb,
-  Ship,
-  Zap,
-} from "lucide-react";
+import { Calculator, BarChart3, Bot, Lightbulb, Ship, Zap } from "lucide-react";
 
 interface Step4Props {
   formData: Partial<CreateMissionCaseDto>;

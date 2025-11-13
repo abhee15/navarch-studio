@@ -67,7 +67,12 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
             stationPositions?: number[];
           };
 
-          if (sectionsData && sectionsData.stations && Array.isArray(sectionsData.stations) && sectionsData.stations.length > 0) {
+          if (
+            sectionsData &&
+            sectionsData.stations &&
+            Array.isArray(sectionsData.stations) &&
+            sectionsData.stations.length > 0
+          ) {
             console.log("[Hull2DSections] Using ShipD geometry from backend", {
               stationCount: sectionsData.stations.length,
               hasBulb: sectionsData.stations.some((s) => s.hasBulb),
@@ -95,7 +100,10 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
             console.warn("[Hull2DSections] ShipD geometry has no stations, falling back");
           }
         } catch (error) {
-          console.error("[Hull2DSections] Failed to parse ShipD geometry, falling back to parametric:", error);
+          console.error(
+            "[Hull2DSections] Failed to parse ShipD geometry, falling back to parametric:",
+            error
+          );
         }
       }
 
@@ -112,14 +120,17 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
-            const shipdSections = generateShipDSections({
-              shipdVector,
-              lppM: candidate.lppM,
-              beamM: beam,
-              draftM: draft,
-              metadata: sizingStore.shipdParameters,
-              resolution: 1.0,
-            }, stationCount + 1);
+            const shipdSections = generateShipDSections(
+              {
+                shipdVector,
+                lppM: candidate.lppM,
+                beamM: beam,
+                draftM: draft,
+                metadata: sizingStore.shipdParameters,
+                resolution: 1.0,
+              },
+              stationCount + 1
+            );
 
             const stationIndices = Array.from({ length: stationCount + 1 }, (_, i) => i);
             const result = extractSectionsFromShipD(shipdSections, stationIndices);
@@ -134,7 +145,10 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
             });
           }
         } catch (error) {
-          console.error("[Hull2DSections] Failed to generate ShipD geometry, falling back to parametric:", error);
+          console.error(
+            "[Hull2DSections] Failed to generate ShipD geometry, falling back to parametric:",
+            error
+          );
         }
       } else {
         console.log("[Hull2DSections] No ShipD data available", {
@@ -362,8 +376,20 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                     {/* Bulb indicator (if present) - overlay on main section */}
                     {section.hasBulb && (
                       <circle
-                        cx={toSVG(section.points[section.points.length - 1]?.[0] || 0, section.points[section.points.length - 1]?.[1] || -draft, section.isAft)[0]}
-                        cy={toSVG(section.points[section.points.length - 1]?.[0] || 0, section.points[section.points.length - 1]?.[1] || -draft, section.isAft)[1]}
+                        cx={
+                          toSVG(
+                            section.points[section.points.length - 1]?.[0] || 0,
+                            section.points[section.points.length - 1]?.[1] || -draft,
+                            section.isAft
+                          )[0]
+                        }
+                        cy={
+                          toSVG(
+                            section.points[section.points.length - 1]?.[0] || 0,
+                            section.points[section.points.length - 1]?.[1] || -draft,
+                            section.isAft
+                          )[1]
+                        }
                         r="4"
                         fill="#f59e0b"
                         stroke="#ffffff"

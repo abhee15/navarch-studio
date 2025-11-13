@@ -434,9 +434,10 @@ function generateHull3DFromSections(
   const keelVertices: number[] = [];
   for (const station of sections.stations) {
     // At height=0, both port and starboard reference the same keel vertex
-    const keelVertex = vertexMap.get(`${station.position}-0-keel`) ||
-                       vertexMap.get(`${station.position}-0-port`) ||
-                       vertexMap.get(`${station.position}-0-starboard`);
+    const keelVertex =
+      vertexMap.get(`${station.position}-0-keel`) ||
+      vertexMap.get(`${station.position}-0-port`) ||
+      vertexMap.get(`${station.position}-0-starboard`);
     if (keelVertex !== undefined && !keelVertices.includes(keelVertex)) {
       keelVertices.push(keelVertex);
     }
@@ -453,11 +454,7 @@ function generateHull3DFromSections(
 
     // Create triangles along the keel (forming a continuous bottom surface)
     for (let i = 0; i < sortedKeelVertices.length - 2; i++) {
-      indices.push(
-        sortedKeelVertices[i],
-        sortedKeelVertices[i + 1],
-        sortedKeelVertices[i + 2]
-      );
+      indices.push(sortedKeelVertices[i], sortedKeelVertices[i + 1], sortedKeelVertices[i + 2]);
     }
   }
 

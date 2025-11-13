@@ -1,7 +1,13 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
-import { extractButtocksFromShipD, extractSheerlineFromShipD } from "../../../utils/shipd2DGeometry";
-import { generateShipDSections, type ShipDHullStation } from "../../../utils/shipdGeometryGenerator";
+import {
+  extractButtocksFromShipD,
+  extractSheerlineFromShipD,
+} from "../../../utils/shipd2DGeometry";
+import {
+  generateShipDSections,
+  type ShipDHullStation,
+} from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
 
 interface Hull2DProfileProps {
@@ -65,7 +71,12 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             stationPositions?: number[];
           };
 
-          if (sections && sections.stations && Array.isArray(sections.stations) && sections.stations.length > 0) {
+          if (
+            sections &&
+            sections.stations &&
+            Array.isArray(sections.stations) &&
+            sections.stations.length > 0
+          ) {
             console.log("[Hull2DProfile] Using ShipD geometry from backend", {
               stationCount: sections.stations.length,
             });
@@ -96,7 +107,10 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             console.warn("[Hull2DProfile] ShipD geometry has no stations, falling back");
           }
         } catch (error) {
-          console.error("[Hull2DProfile] Failed to parse ShipD geometry, falling back to parametric:", error);
+          console.error(
+            "[Hull2DProfile] Failed to parse ShipD geometry, falling back to parametric:",
+            error
+          );
         }
       }
 
@@ -113,14 +127,17 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
-            const sections = generateShipDSections({
-              shipdVector,
-              lppM: lpp,
-              beamM: beam,
-              draftM: draft,
-              metadata: sizingStore.shipdParameters,
-              resolution: 1.0,
-            }, 20);
+            const sections = generateShipDSections(
+              {
+                shipdVector,
+                lppM: lpp,
+                beamM: beam,
+                draftM: draft,
+                metadata: sizingStore.shipdParameters,
+                resolution: 1.0,
+              },
+              20
+            );
 
             const buttockOffsets = Array.from(
               { length: buttockCount + 1 },
@@ -139,7 +156,10 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             });
           }
         } catch (error) {
-          console.error("[Hull2DProfile] Failed to generate ShipD geometry, falling back to parametric:", error);
+          console.error(
+            "[Hull2DProfile] Failed to generate ShipD geometry, falling back to parametric:",
+            error
+          );
         }
       } else {
         console.log("[Hull2DProfile] No ShipD data available", {

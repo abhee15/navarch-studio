@@ -21,4 +21,3 @@ export function AppHeader({ left, right, className }: AppHeaderProps) {
     </header>
   );
 }
-

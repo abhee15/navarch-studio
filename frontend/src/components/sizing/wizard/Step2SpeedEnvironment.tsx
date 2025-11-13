@@ -122,4 +122,3 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
     </div>
   );
 };
-
