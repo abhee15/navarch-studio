@@ -1,0 +1,1495 @@
+[
+  {
+    "category": "Commercial",
+    "type": "general_cargo",
+    "displayName": "Commercial \u2013 General Cargo",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "straight_raked",
+      "fine_entry"
+    ],
+    "midshipFamilies": [
+      "full_midship",
+      "fine_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "cruiser_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Commercial",
+    "type": "bulk_carrier",
+    "displayName": "Commercial \u2013 Bulk Carrier",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "straight_raked"
+    ],
+    "midshipFamilies": [
+      "full_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "cruiser_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Commercial",
+    "type": "container",
+    "displayName": "Commercial \u2013 Container Ship",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "axe_bow"
+    ],
+    "midshipFamilies": [
+      "fine_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "twin_skeg"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Commercial",
+    "type": "fishing",
+    "displayName": "Commercial \u2013 Fishing Vessel",
+    "description": null,
+    "bowFamilies": [
+      "fine_entry",
+      "wave_piercing"
+    ],
+    "midshipFamilies": [
+      "deep_v_midship",
+      "fine_midship"
+    ],
+    "sternFamilies": [
+      "canoe_stern",
+      "wedge_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Commercial",
+    "type": "tanker",
+    "displayName": "Commercial \u2013 Tanker",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "straight_raked"
+    ],
+    "midshipFamilies": [
+      "full_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "cruiser_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Commercial",
+    "type": "lng_carrier",
+    "displayName": "Commercial \u2013 LNG Carrier",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "wave_piercing"
+    ],
+    "midshipFamilies": [
+      "full_midship",
+      "fine_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "twin_skeg"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Commercial",
+    "type": "cruise_vessel",
+    "displayName": "Commercial \u2013 Cruise Vessel",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "fine_entry"
+    ],
+    "midshipFamilies": [
+      "full_midship"
+    ],
+    "sternFamilies": [
+      "cruiser_stern",
+      "transom_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Commercial",
+    "type": "passenger_vessel",
+    "displayName": "Commercial \u2013 Passenger Vessel",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "fine_entry"
+    ],
+    "midshipFamilies": [
+      "full_midship",
+      "fine_midship"
+    ],
+    "sternFamilies": [
+      "cruiser_stern",
+      "transom_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Government",
+    "type": "cutters",
+    "displayName": "Government \u2013 Cutter",
+    "description": null,
+    "bowFamilies": [
+      "fine_entry",
+      "axe_bow"
+    ],
+    "midshipFamilies": [
+      "deep_v_midship",
+      "fine_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "canoe_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Government",
+    "type": "medical_ship",
+    "displayName": "Government \u2013 Medical Ship",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "straight_raked"
+    ],
+    "midshipFamilies": [
+      "full_midship"
+    ],
+    "sternFamilies": [
+      "cruiser_stern",
+      "transom_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Government",
+    "type": "general_military",
+    "displayName": "Government \u2013 General Military",
+    "description": null,
+    "bowFamilies": [
+      "fine_entry",
+      "axe_bow"
+    ],
+    "midshipFamilies": [
+      "deep_v_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "skeg_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Recreational",
+    "type": "yacht",
+    "displayName": "Recreational \u2013 Yacht",
+    "description": null,
+    "bowFamilies": [
+      "wave_piercing",
+      "fine_entry"
+    ],
+    "midshipFamilies": [
+      "deep_v_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "canoe_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Recreational",
+    "type": "fishing_recreational",
+    "displayName": "Recreational \u2013 Fishing",
+    "description": null,
+    "bowFamilies": [
+      "fine_entry",
+      "straight_raked"
+    ],
+    "midshipFamilies": [
+      "deep_v_midship",
+      "barge_midship"
+    ],
+    "sternFamilies": [
+      "wedge_stern",
+      "transom_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Recreational",
+    "type": "high_speed_craft",
+    "displayName": "Recreational \u2013 High Speed Craft",
+    "description": null,
+    "bowFamilies": [
+      "axe_bow",
+      "wave_piercing"
+    ],
+    "midshipFamilies": [
+      "deep_v_midship"
+    ],
+    "sternFamilies": [
+      "transom_stern",
+      "twin_skeg"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  },
+  {
+    "category": "Research",
+    "type": "research_vessel",
+    "displayName": "Research \u2013 Oceanographic Research Vessel",
+    "description": null,
+    "bowFamilies": [
+      "bulbous_bow",
+      "wave_piercing"
+    ],
+    "midshipFamilies": [
+      "fine_midship",
+      "full_midship"
+    ],
+    "sternFamilies": [
+      "cruiser_stern",
+      "transom_stern"
+    ],
+    "maskVersion": 1,
+    "additionalParameters": {
+      "conditionalInputs": {
+        "bow": {
+          "bulbous_bow": [
+            "bit_BB",
+            "Lbb",
+            "Hbb",
+            "Bbb",
+            "Lbbm",
+            "Rbb"
+          ],
+          "wave_piercing": [
+            "Beta",
+            "Rc",
+            "Rk"
+          ],
+          "fine_entry": [
+            "Beta",
+            "Rc"
+          ],
+          "axe_bow": [
+            "Beta",
+            "Rk"
+          ]
+        },
+        "midship": {
+          "deep_v_midship": [
+            "Adrft",
+            "Bdrft",
+            "Cdrft"
+          ],
+          "barge_midship": [
+            "bit_EP_S"
+          ],
+          "fine_midship": [
+            "bit_EP_T"
+          ]
+        },
+        "stern": {
+          "transom_stern": [
+            "Atrans",
+            "Beta_trans",
+            "Bc_trans",
+            "Rc_trans",
+            "Rk_trans"
+          ],
+          "twin_skeg": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "Hsb",
+            "Bsb"
+          ],
+          "skeg_stern": [
+            "SK_z",
+            "Kappa_stern",
+            "Lsb",
+            "HSBOA"
+          ],
+          "canoe_stern": [
+            "Adel_stern",
+            "Bdel_stern"
+          ]
+        }
+      },
+      "familyDefaults": {
+        "bulbous_bow": {
+          "bit_BB": 1
+        },
+        "wave_piercing": {
+          "bit_BB": 0,
+          "Beta": 5
+        },
+        "transom_stern": {
+          "Atrans": 0.5
+        },
+        "twin_skeg": {
+          "bit_SB": 1
+        }
+      }
+    }
+  }
+]

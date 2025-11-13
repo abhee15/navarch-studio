@@ -1,0 +1,633 @@
+[
+  {
+    "parameterIndex": 0,
+    "label": "LOA",
+    "group": "principal_dimensions",
+    "description": "Baseline length parameter used for ShipD normalization",
+    "unit": null,
+    "min": 10.0,
+    "max": 10.0,
+    "mean": 10.0,
+    "stdDev": 0.0,
+    "metadata": {
+      "normalized": false,
+      "constant": true
+    }
+  },
+  {
+    "parameterIndex": 1,
+    "label": "Lb",
+    "group": "principal_dimensions",
+    "description": "Bow length ratio relative to LOA",
+    "unit": null,
+    "min": 0.050034,
+    "max": 0.899679,
+    "mean": 0.31607,
+    "stdDev": 0.19205,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 2,
+    "label": "Ls",
+    "group": "principal_dimensions",
+    "description": "Stern length ratio relative to LOA",
+    "unit": null,
+    "min": 0.003731,
+    "max": 0.89978,
+    "mean": 0.419778,
+    "stdDev": 0.207796,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 3,
+    "label": "Bd",
+    "group": "principal_dimensions",
+    "description": "Design beam ratio at midship",
+    "unit": null,
+    "min": 0.083351,
+    "max": 0.332988,
+    "mean": 0.224154,
+    "stdDev": 0.06966,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 4,
+    "label": "Dd",
+    "group": "principal_dimensions",
+    "description": "Design draft ratio at midship",
+    "unit": null,
+    "min": 0.050003,
+    "max": 0.249991,
+    "mean": 0.159692,
+    "stdDev": 0.05439,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 5,
+    "label": "Bs",
+    "group": "principal_dimensions",
+    "description": "Bulb scaling coefficient controlling bow volume",
+    "unit": null,
+    "min": 9.1e-05,
+    "max": 0.999992,
+    "mean": 0.476249,
+    "stdDev": 0.283354,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 6,
+    "label": "WL",
+    "group": "principal_dimensions",
+    "description": "Waterline length ratio",
+    "unit": null,
+    "min": 0.050025,
+    "max": 0.79995,
+    "mean": 0.393125,
+    "stdDev": 0.214108,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 7,
+    "label": "Bc",
+    "group": "principal_dimensions",
+    "description": "Beam at chine relative to design beam",
+    "unit": null,
+    "min": 0.050002,
+    "max": 0.49999,
+    "mean": 0.261348,
+    "stdDev": 0.119467,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 8,
+    "label": "Beta",
+    "group": "bow",
+    "description": "Bow flare angle measured in degrees",
+    "unit": "deg",
+    "min": 0.0,
+    "max": 44.994361,
+    "mean": 14.307295,
+    "stdDev": 14.490381,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 9,
+    "label": "Rc",
+    "group": "bow",
+    "description": "Bow curvature coefficient",
+    "unit": null,
+    "min": 3e-05,
+    "max": 0.999894,
+    "mean": 0.410454,
+    "stdDev": 0.27158,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 10,
+    "label": "Rk",
+    "group": "bow",
+    "description": "Bow knuckle curvature coefficient",
+    "unit": null,
+    "min": -0.99944,
+    "max": 0.999886,
+    "mean": 0.34541,
+    "stdDev": 0.417268,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 11,
+    "label": "Abow",
+    "group": "bow",
+    "description": "Primary bow area spline coefficient",
+    "unit": null,
+    "min": -3.99983,
+    "max": 3.999316,
+    "mean": 0.272184,
+    "stdDev": 2.21203,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 12,
+    "label": "Bbow",
+    "group": "bow",
+    "description": "Secondary bow area spline coefficient",
+    "unit": null,
+    "min": -3.999356,
+    "max": 3.999777,
+    "mean": -0.237424,
+    "stdDev": 2.264825,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 13,
+    "label": "BK_z",
+    "group": "bow",
+    "description": "Bow knuckle vertical location control",
+    "unit": null,
+    "min": 9e-06,
+    "max": 0.999991,
+    "mean": 0.515702,
+    "stdDev": 0.2911,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 14,
+    "label": "Kappa_bow",
+    "group": "bow",
+    "description": "Bow sectional curvature parameter",
+    "unit": null,
+    "min": 4e-06,
+    "max": 0.999922,
+    "mean": 0.474204,
+    "stdDev": 0.252446,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 15,
+    "label": "Adel_bow",
+    "group": "bow",
+    "description": "Forward sheer/delta coefficient A",
+    "unit": null,
+    "min": -3.999979,
+    "max": 3.999643,
+    "mean": 0.38857,
+    "stdDev": 2.203062,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 16,
+    "label": "Bdel_bow",
+    "group": "bow",
+    "description": "Forward sheer/delta coefficient B",
+    "unit": null,
+    "min": -3.999733,
+    "max": 3.999983,
+    "mean": -0.45257,
+    "stdDev": 2.240023,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 17,
+    "label": "Adrft",
+    "group": "bow",
+    "description": "Bow draft rocker coefficient A",
+    "unit": null,
+    "min": -3.999915,
+    "max": 3.986352,
+    "mean": -0.624908,
+    "stdDev": 1.953151,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 18,
+    "label": "Bdrft",
+    "group": "bow",
+    "description": "Bow draft rocker coefficient B",
+    "unit": null,
+    "min": -3.981324,
+    "max": 3.999895,
+    "mean": 0.733312,
+    "stdDev": 1.935015,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 19,
+    "label": "Cdrft",
+    "group": "bow",
+    "description": "Forward deadrise / flare control angle",
+    "unit": "deg",
+    "min": 0.010776,
+    "max": 59.999478,
+    "mean": 32.641421,
+    "stdDev": 16.44855,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 20,
+    "label": "bit_EP_S",
+    "group": "midship",
+    "description": "Midship sheer extrusion toggle",
+    "unit": null,
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.497867,
+    "stdDev": 0.499995,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 21,
+    "label": "bit_EP_T",
+    "group": "midship",
+    "description": "Midship tumblehome toggle",
+    "unit": null,
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.496933,
+    "stdDev": 0.499991,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 22,
+    "label": "Atrans",
+    "group": "stern",
+    "description": "Transom area coefficient",
+    "unit": null,
+    "min": -2.999687,
+    "max": 4.997124,
+    "mean": -0.040188,
+    "stdDev": 1.77236,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 23,
+    "label": "SK_z",
+    "group": "stern",
+    "description": "Skeg vertical offset control",
+    "unit": null,
+    "min": 1.7e-05,
+    "max": 0.997469,
+    "mean": 0.477592,
+    "stdDev": 0.247824,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 24,
+    "label": "Kappa_stern",
+    "group": "stern",
+    "description": "Stern sectional curvature parameter",
+    "unit": null,
+    "min": 5.7e-05,
+    "max": 0.999919,
+    "mean": 0.512123,
+    "stdDev": 0.259396,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 25,
+    "label": "Adel_stern",
+    "group": "stern",
+    "description": "Aft sheer/delta coefficient A",
+    "unit": null,
+    "min": -3.999967,
+    "max": 3.99891,
+    "mean": -0.49521,
+    "stdDev": 2.160727,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 26,
+    "label": "Bdel_stern",
+    "group": "stern",
+    "description": "Aft sheer/delta coefficient B",
+    "unit": null,
+    "min": -3.999205,
+    "max": 3.999957,
+    "mean": 0.560869,
+    "stdDev": 2.186946,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 27,
+    "label": "Beta_trans",
+    "group": "stern",
+    "description": "Transom rake angle in degrees",
+    "unit": "deg",
+    "min": 0.000238,
+    "max": 59.999538,
+    "mean": 23.547834,
+    "stdDev": 16.242139,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 28,
+    "label": "Bc_trans",
+    "group": "stern",
+    "description": "Transom beam coefficient",
+    "unit": null,
+    "min": 0.000255,
+    "max": 0.463976,
+    "mean": 0.109606,
+    "stdDev": 0.067919,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 29,
+    "label": "Rc_trans",
+    "group": "stern",
+    "description": "Transom curvature coefficient",
+    "unit": null,
+    "min": 6e-06,
+    "max": 0.499987,
+    "mean": 0.236096,
+    "stdDev": 0.14342,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 30,
+    "label": "Rk_trans",
+    "group": "stern",
+    "description": "Transom knuckle curvature coefficient",
+    "unit": null,
+    "min": -0.999742,
+    "max": 0.499976,
+    "mean": -0.062163,
+    "stdDev": 0.351683,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 31,
+    "label": "bit_BB",
+    "group": "appendages",
+    "description": "Bulbous bow activation toggle",
+    "unit": null,
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.214133,
+    "stdDev": 0.41022,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 32,
+    "label": "bit_SB",
+    "group": "appendages",
+    "description": "Skeg/bilge keel activation toggle",
+    "unit": null,
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.218933,
+    "stdDev": 0.413523,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 33,
+    "label": "Lbb",
+    "group": "appendages",
+    "description": "Bulb length ratio",
+    "unit": null,
+    "min": 1e-06,
+    "max": 0.199996,
+    "mean": 0.099315,
+    "stdDev": 0.057773,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 34,
+    "label": "Hbb",
+    "group": "appendages",
+    "description": "Bulb height ratio",
+    "unit": null,
+    "min": 2.7e-05,
+    "max": 0.999998,
+    "mean": 0.499516,
+    "stdDev": 0.288899,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 35,
+    "label": "Bbb",
+    "group": "appendages",
+    "description": "Bulb beam ratio",
+    "unit": null,
+    "min": 4e-06,
+    "max": 0.999994,
+    "mean": 0.496382,
+    "stdDev": 0.287775,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 36,
+    "label": "Lbbm",
+    "group": "appendages",
+    "description": "Bulb longitudinal moment coefficient",
+    "unit": null,
+    "min": -0.999783,
+    "max": 0.999864,
+    "mean": 0.013882,
+    "stdDev": 0.575103,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 37,
+    "label": "Rbb",
+    "group": "appendages",
+    "description": "Bulb radius coefficient",
+    "unit": null,
+    "min": 0.050022,
+    "max": 0.329993,
+    "mean": 0.190013,
+    "stdDev": 0.080697,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 38,
+    "label": "Kappa_SB",
+    "group": "appendages",
+    "description": "Skeg/bilge keel curvature parameter",
+    "unit": null,
+    "min": 3.3e-05,
+    "max": 1.0,
+    "mean": 0.517176,
+    "stdDev": 0.284656,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 39,
+    "label": "Lsb",
+    "group": "appendages",
+    "description": "Skeg length ratio",
+    "unit": null,
+    "min": 1e-05,
+    "max": 0.199998,
+    "mean": 0.100181,
+    "stdDev": 0.057544,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 40,
+    "label": "HSBOA",
+    "group": "appendages",
+    "description": "Skeg height to breadth ratio",
+    "unit": null,
+    "min": 2e-06,
+    "max": 0.999988,
+    "mean": 0.487799,
+    "stdDev": 0.28993,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 41,
+    "label": "Hsb",
+    "group": "appendages",
+    "description": "Skeg height ratio",
+    "unit": null,
+    "min": 9.3e-05,
+    "max": 0.999904,
+    "mean": 0.496874,
+    "stdDev": 0.289452,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 42,
+    "label": "Bsb",
+    "group": "appendages",
+    "description": "Skeg breadth ratio",
+    "unit": null,
+    "min": 7e-06,
+    "max": 0.999929,
+    "mean": 0.496778,
+    "stdDev": 0.28748,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 43,
+    "label": "Lsbm",
+    "group": "appendages",
+    "description": "Skeg longitudinal moment coefficient",
+    "unit": null,
+    "min": -0.999968,
+    "max": 0.999922,
+    "mean": 0.028226,
+    "stdDev": 0.576118,
+    "metadata": {
+      "normalized": true
+    }
+  },
+  {
+    "parameterIndex": 44,
+    "label": "Rsb",
+    "group": "appendages",
+    "description": "Skeg radius coefficient",
+    "unit": null,
+    "min": 0.050005,
+    "max": 0.329999,
+    "mean": 0.190094,
+    "stdDev": 0.080647,
+    "metadata": {
+      "normalized": true
+    }
+  }
+]
