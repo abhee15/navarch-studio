@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using HullSizingService.Services.Integration;
+using Shared.DTOs.ShipD;
 using Shared.DTOs.Sizing;
 using Shared.Models.Sizing;
-using Shared.DTOs.ShipD;
 
 namespace HullSizingService.Services.ShipD;
 

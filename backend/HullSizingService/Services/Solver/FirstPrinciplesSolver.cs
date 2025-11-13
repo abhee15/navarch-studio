@@ -1,7 +1,7 @@
+using System.Linq;
 using HullSizingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models.Sizing;
-using System.Linq;
 
 namespace HullSizingService.Services.Solver;
 
