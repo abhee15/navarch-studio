@@ -1,6 +1,7 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 import { extractButtocksFromShipD, extractSheerlineFromShipD } from "../../../utils/shipd2DGeometry";
+import { generateShipDSections, type ShipDHullStation } from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
 
 interface Hull2DProfileProps {
@@ -70,11 +71,11 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             });
 
             const shipdSections = {
-              stations: sections.stations.map((s) => ({
+              stations: sections.stations.map((s: ShipDHullStation) => ({
                 position: s.position,
                 offsets: s.offsets,
-                hasBulb: (s as any).hasBulb || false,
-                bulbOffsets: (s as any).bulbOffsets,
+                hasBulb: s.hasBulb || false,
+                bulbOffsets: s.bulbOffsets,
               })),
               stationPositions: sections.stationPositions || [],
             };
@@ -112,7 +113,6 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
-            const { generateShipDSections } = require("../../../utils/shipdGeometryGenerator");
             const sections = generateShipDSections({
               shipdVector,
               lppM: lpp,

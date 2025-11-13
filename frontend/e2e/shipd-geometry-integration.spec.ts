@@ -32,7 +32,7 @@ test.describe("ShipD Geometry Integration", () => {
     try {
       await page.waitForURL(/\/dashboard|\/sizing|\/home/, { timeout: 30000 });
       await page.waitForTimeout(2000); // Wait after navigation to avoid rate limiting
-    } catch (e) {
+    } catch {
       // If URL doesn't change, check if we're already logged in or on a different page
       const currentUrl = page.url();
       console.log(`Login may have completed, current URL: ${currentUrl}`);

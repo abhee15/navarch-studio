@@ -23,7 +23,7 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, hei
   const lpp = candidate.lppM || 50;
   const beam = candidate.beamM || 10;
   const draft = candidate.draftM || 5;
-  
+
   // Camera distance should be enough to see the full hull
   // Use diagonal of bounding box: sqrt(L^2 + B^2 + T^2) * 1.5
   const diagonal = Math.sqrt(lpp * lpp + beam * beam + draft * draft);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import { BookOpen } from "lucide-react";
@@ -43,30 +43,7 @@ export const CatalogBrowserV2: React.FC = observer(() => {
     sternFamily: undefined,
   });
 
-  useEffect(() => {
-    loadHulls();
-  }, []);
-
-  // Reload hulls when taxonomy filters change (server-side filtering)
-  useEffect(() => {
-    if (
-      filters.vesselCategory ||
-      filters.shipdVesselType ||
-      filters.bowFamily ||
-      filters.midshipFamily ||
-      filters.sternFamily
-    ) {
-      loadHulls();
-    }
-  }, [
-    filters.vesselCategory,
-    filters.shipdVesselType,
-    filters.bowFamily,
-    filters.midshipFamily,
-    filters.sternFamily,
-  ]);
-
-  const loadHulls = async () => {
+  const loadHulls = useCallback(async () => {
     setLoading(true);
     try {
       // Build filters for API call
@@ -104,7 +81,31 @@ export const CatalogBrowserV2: React.FC = observer(() => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadHulls();
+  }, [loadHulls]);
+
+  // Reload hulls when taxonomy filters change (server-side filtering)
+  useEffect(() => {
+    if (
+      filters.vesselCategory ||
+      filters.shipdVesselType ||
+      filters.bowFamily ||
+      filters.midshipFamily ||
+      filters.sternFamily
+    ) {
+      loadHulls();
+    }
+  }, [
+    filters.vesselCategory,
+    filters.shipdVesselType,
+    filters.bowFamily,
+    filters.midshipFamily,
+    filters.sternFamily,
+    loadHulls,
+  ]);
 
   const handleRowClick = (hull: CatalogHullListItem) => {
     setSelectedHull(hull);

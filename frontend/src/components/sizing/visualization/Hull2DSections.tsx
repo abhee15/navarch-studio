@@ -1,6 +1,7 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 import { extractSectionsFromShipD } from "../../../utils/shipd2DGeometry";
+import { generateShipDSections } from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
 
 interface Hull2DSectionsProps {
@@ -111,7 +112,6 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
-            const { generateShipDSections } = require("../../../utils/shipdGeometryGenerator");
             const shipdSections = generateShipDSections({
               shipdVector,
               lppM: candidate.lppM,

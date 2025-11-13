@@ -138,15 +138,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
       return new THREE.BufferGeometry();
     }
   }, [
-    candidate.hullFamily,
-    candidate.lppM,
-    candidate.beamM,
-    candidate.draftM,
-    candidate.cb,
-    candidate.cp,
-    candidate.cwp,
-    candidate.cm,
-    candidate.lcbPctLpp,
+    candidate,
     candidate.geometryJson,
     candidate.shipdParametersJson,
     sizingStore.shipdParameters,

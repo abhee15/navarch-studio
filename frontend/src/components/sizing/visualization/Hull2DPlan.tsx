@@ -2,6 +2,7 @@ import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 import { generateHullWaterlines } from "../../../utils/hullShapeGenerator";
 import { extractWaterlinesFromShipD } from "../../../utils/shipd2DGeometry";
+import { generateShipDSections } from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
 
 interface Hull2DPlanProps {
@@ -117,8 +118,6 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
-            // Import generateShipDSections dynamically to avoid circular dependency
-            const { generateShipDSections } = require("../../../utils/shipdGeometryGenerator");
             const sections = generateShipDSections({
               shipdVector,
               lppM: candidate.lppM,
