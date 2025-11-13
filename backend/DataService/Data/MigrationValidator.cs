@@ -61,14 +61,14 @@ public class MigrationValidator
         _logger.LogInformation("[VALIDATION] Checking critical schema elements...");
 
         // Critical tables that must exist
-        // NOTE: Only check for columns that actually exist in the current migrations
+        // NOTE: Column names must match exactly what's in the migrations (snake_case)
         // If new columns are added in future migrations, update this list accordingly
         var criticalTables = new Dictionary<string, List<string>>
         {
             ["vessels"] = new List<string>
             {
                 "id", "user_id", "name", "lpp", "beam", "design_draft"
-                // Note: units_system column not in current migrations - removed from validation
+                // Note: units_system was never added - unit conversion uses User.PreferredUnits instead
             },
             ["loadcases"] = new List<string>
             {
@@ -85,9 +85,18 @@ public class MigrationValidator
             ["offsets"] = new List<string>
             {
                 "id", "vessel_id", "station_index", "waterline_index", "half_breadth_y"
+            },
+            // Seakeeping tables (exist in InitialCreate migration)
+            ["sea_states"] = new List<string>
+            {
+                "id", "vessel_id", "name", "wave_height", "wave_period", "wave_direction"
+                // Note: Actual columns are wave_height (not significant_wave_height) and wave_period (not wave_spectrum_type)
+            },
+            ["rao_results"] = new List<string>
+            {
+                "id", "vessel_id", "loadcase_id", "frequency"
+                // Note: Actual column is frequency (not wave_frequency), and there's no wave_heading column
             }
-            // Note: sea_states and rao_results tables not in current migrations - removed from validation
-            // These will be validated when their migrations are added
         };
 
         foreach (var (tableName, expectedColumns) in criticalTables)
