@@ -33,6 +33,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "raw" {
     id     = "transition-std-ia"
     status = "Enabled"
 
+    filter {}
+
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
@@ -46,6 +48,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "curated" {
   rule {
     id     = "transition-std-ia"
     status = "Enabled"
+
+    filter {}
 
     transition {
       days          = 30
