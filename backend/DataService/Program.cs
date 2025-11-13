@@ -644,10 +644,22 @@ try
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[MIGRATION] ERROR: Migration check failed: {ex.Message}");
+            Console.WriteLine($"[MIGRATION] ❌ ERROR: Migration check failed: {ex.Message}");
             Console.WriteLine($"[MIGRATION] Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"[MIGRATION] ⚠️  Service will start but database may be incomplete!");
             Log.Error(ex, "[MIGRATION] Migration check failed: {Message}", ex.Message);
-            // Don't throw - let the app start and health checks will catch the issue
+            
+            // In production/staging, fail startup if migrations fail
+            // This ensures we catch schema issues immediately
+            if (!app.Environment.IsDevelopment())
+            {
+                Console.WriteLine($"[MIGRATION] ❌ CRITICAL: Failing service startup due to migration failure");
+                Log.Fatal("[MIGRATION] CRITICAL: Failing service startup - migrations must succeed in {Environment}", app.Environment.EnvironmentName);
+                throw new InvalidOperationException(
+                    $"Database migrations failed in {app.Environment.EnvironmentName} environment. " +
+                    $"Service cannot start with incomplete schema. Error: {ex.Message}", ex);
+            }
+            // In development, allow startup to continue (developer can fix manually)
         }
     }
 
