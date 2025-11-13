@@ -10,9 +10,9 @@ interface ShipDParameterChartProps {
 }
 
 /**
- * ShipD Parameter Chart Component
+ * Hull Form Parameters Chart Component
  *
- * Visualizes ShipD 45-parameter vector vs typical ranges.
+ * Visualizes 45-parameter hull form vector vs typical ranges.
  * Color-coded bars: green (within range), yellow (near limits), red (out of range).
  * Grouped by category: Principal, Bow, Midship, Stern, Appendages.
  */
@@ -84,7 +84,7 @@ export const ShipDParameterChart: React.FC<ShipDParameterChartProps> = ({
       <div
         className={`rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 ${className}`}
       >
-        No ShipD parameters available for this candidate
+        No hull form parameters available for this candidate
       </div>
     );
   }

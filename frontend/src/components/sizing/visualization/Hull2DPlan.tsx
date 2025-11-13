@@ -366,7 +366,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               {candidate.geometryJson && (
                 <tspan className="fill-green-600 dark:fill-green-400" style={{ fontSize: "10px" }}>
                   {" "}
-                  · ShipD
+                  · Hull Form Parameters
                 </tspan>
               )}
             </text>

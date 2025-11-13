@@ -277,7 +277,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               {candidate.geometryJson && (
                 <tspan className="fill-green-600 dark:fill-green-400" style={{ fontSize: "9px" }}>
                   {" "}
-                  · ShipD
+                  · Hull Form Parameters
                 </tspan>
               )}
             </text>

@@ -340,7 +340,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               {candidate.geometryJson && (
                 <tspan className="fill-green-600 dark:fill-green-400" style={{ fontSize: "10px" }}>
                   {" "}
-                  · ShipD
+                  · Hull Form Parameters
                 </tspan>
               )}
             </text>

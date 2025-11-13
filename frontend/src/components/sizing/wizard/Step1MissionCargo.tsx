@@ -53,7 +53,7 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({
         </p>
         {metadataLoading && (
           <p className="mt-2 text-xs text-blue-600 dark:text-blue-300">
-            Loading ShipD taxonomy metadata…
+            Loading hull form parameters taxonomy metadata…
           </p>
         )}
         {metadataError && (

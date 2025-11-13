@@ -92,7 +92,7 @@ export class SizingStore {
     } catch (error) {
       runInAction(() => {
         this.shipdMetadataError =
-          error instanceof Error ? error.message : "Failed to load ShipD metadata";
+          error instanceof Error ? error.message : "Failed to load hull form parameters metadata";
         this.isShipdMetadataLoading = false;
       });
     }
