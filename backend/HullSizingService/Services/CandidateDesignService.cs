@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using HullSizingService.Data;
+using HullSizingService.Services.Geometry;
+using HullSizingService.Services.Integration;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs.Sizing;
 using Shared.Models.Sizing;
@@ -11,13 +13,19 @@ public class CandidateDesignService : ICandidateDesignService
 {
     private readonly SizingDbContext _context;
     private readonly ILogger<CandidateDesignService> _logger;
+    private readonly IShipDHullGeometryService? _shipdGeometryService;
+    private readonly IDataServiceClient? _dataServiceClient;
 
     public CandidateDesignService(
         SizingDbContext context,
-        ILogger<CandidateDesignService> logger)
+        ILogger<CandidateDesignService> logger,
+        IShipDHullGeometryService? shipdGeometryService = null,
+        IDataServiceClient? dataServiceClient = null)
     {
         _context = context;
         _logger = logger;
+        _shipdGeometryService = shipdGeometryService;
+        _dataServiceClient = dataServiceClient;
     }
 
     public async Task<CandidateDesignDto?> GetByIdAsync(Guid id, string tenantId, CancellationToken cancellationToken = default)
@@ -218,13 +226,50 @@ public class CandidateDesignService : ICandidateDesignService
         var wavelength = 1.56m * (speedMs * speedMs) / 9.81m;
         candidate.LwlOverLambda = candidate.LwlM / wavelength;
 
+        // Regenerate ShipD geometry if parameters are available
+        if (_shipdGeometryService != null && _dataServiceClient != null && !string.IsNullOrEmpty(candidate.ShipdParametersJson))
+        {
+            try
+            {
+                var shipdVector = JsonSerializer.Deserialize<decimal[]>(candidate.ShipdParametersJson);
+                if (shipdVector != null && shipdVector.Length == 45)
+                {
+                    // Get ShipD metadata
+                    var shipdMetadata = await _dataServiceClient.GetShipDParameterMetadataAsync(cancellationToken);
+
+                    // Regenerate hull sections with updated dimensions
+                    var sections = await _shipdGeometryService.GenerateSectionsAsync(
+                        shipdVector,
+                        candidate.LppM,
+                        candidate.BM,
+                        candidate.TM,
+                        shipdMetadata,
+                        stationCount: 20,
+                        cancellationToken);
+
+                    // Update geometry JSON
+                    candidate.GeometryJson = JsonSerializer.Serialize(sections);
+                    _logger.LogInformation(
+                        "[CANDIDATE_ADJUST] Regenerated ShipD geometry for candidate {Id} after {Parameter} adjustment",
+                        candidate.Id, dto.Parameter);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "[CANDIDATE_ADJUST] Failed to regenerate ShipD geometry for candidate {Id} after {Parameter} adjustment. Geometry may be out of sync.",
+                    candidate.Id, dto.Parameter);
+                // Continue without geometry update - don't fail the adjustment
+            }
+        }
+
         // NOTE: For full physics recomputation (resistance, stability), would need to:
         // - Re-run Holtrop method for EHP/SHP
         // - Re-run stability estimates for KB/LCB/GM
         // Currently preserving original values to maintain fast response time (<300ms target)
 
         _logger.LogInformation(
-            "Parameter adjusted for candidate {Id}: {Parameter}={Value}, New Δ={Disp}t, Fn={Fn}",
+            "[CANDIDATE_ADJUST] Parameter adjusted for candidate {Id}: {Parameter}={Value}, New Δ={Disp}t, Fn={Fn}",
             candidate.Id, dto.Parameter, dto.Value, candidate.DisplacementT, candidate.Fn);
 
         // Save changes
