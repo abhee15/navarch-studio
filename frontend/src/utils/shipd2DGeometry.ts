@@ -50,7 +50,7 @@ export function extractWaterlinesFromShipD(
     // Ensure we have points at extreme positions (stern and bow) for proper closure
     // Naval architecture standard: Plan View shows waterlines from AP (aft perpendicular) to FP (forward perpendicular)
     // Waterlines must be closed curves: stern centerline → starboard → bow centerline → port → stern centerline
-    
+
     // First, collect all starboard side points (half-breadth > 0)
     for (const station of sortedStations) {
       // Find closest offset at this height (interpolate if needed)
@@ -111,13 +111,13 @@ export function extractWaterlinesFromShipD(
 
       // Sort points by longitudinal position (x) to ensure proper ordering
       points.sort((a, b) => a[0] - b[0]);
-      
+
       // Ensure we have centerline points at bow and stern for proper closure
       // Stern centerline: x = -lpp/2, y = 0
       // Bow centerline: x = +lpp/2, y = 0
       const sternX = -lppM / 2;
       const bowX = lppM / 2;
-      
+
       // Add stern centerline point if not present (or if first point is not at stern)
       if (points.length === 0 || Math.abs(points[0][0] - sternX) > 0.01) {
         points.unshift([sternX, 0]);
@@ -125,7 +125,7 @@ export function extractWaterlinesFromShipD(
         // If first point is at stern but not on centerline, add centerline point
         points.unshift([sternX, 0]);
       }
-      
+
       // Add bow centerline point if not present (or if last point is not at bow)
       if (points.length === 0 || Math.abs(points[points.length - 1][0] - bowX) > 0.01) {
         points.push([bowX, 0]);
@@ -133,7 +133,7 @@ export function extractWaterlinesFromShipD(
         // If last point is at bow but not on centerline, add centerline point
         points.push([bowX, 0]);
       }
-      
+
       // Ensure stern and bow points are exactly at centerline (y = 0)
       if (points.length > 0) {
         if (Math.abs(points[0][0] - sternX) < 0.01) {
