@@ -77,7 +77,12 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         {
             _logger.LogWarning("[SOLVER] No applicable families found for mission type '{Type}'", mission.MissionType);
             diagnostics.FailureReasons.Add("no_applicable_families");
-            families = await _context.HullFamilyPresets.Where(f => f.IsActive).Take(3).ToListAsync(cancellationToken);
+            // Use deterministic ordering to ensure consistent results across runs
+            families = await _context.HullFamilyPresets
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.Family)
+                .Take(3)
+                .ToListAsync(cancellationToken);
             diagnostics.TotalFamiliesConsidered = families.Count;
             diagnostics.FamiliesAfterFnFiltering = families.Count;
         }
