@@ -28,7 +28,9 @@ public class ShipDController : ControllerBase
             var response = await _httpClientService.GetAsync("data", $"api/v1/shipd/{targetPath}", cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return StatusCode((int)response.StatusCode, content);
+            // Return raw content to avoid double JSON encoding
+            // Use Content() to preserve the content type from the downstream service
+            return Content(content, response.Content.Headers.ContentType?.ToString() ?? "application/json");
         }
         catch (Exception ex)
         {

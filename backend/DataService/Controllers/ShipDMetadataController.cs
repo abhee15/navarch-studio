@@ -29,8 +29,20 @@ public class ShipDMetadataController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<ShipDVesselTaxonomyDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<ShipDVesselTaxonomyDto>>> GetTaxonomy(CancellationToken cancellationToken)
     {
-        var taxonomy = await _service.GetVesselTaxonomyAsync(cancellationToken);
-        return Ok(taxonomy);
+        try
+        {
+            var taxonomy = await _service.GetVesselTaxonomyAsync(cancellationToken);
+            _logger.LogInformation("[SHIPD_CONTROLLER] Returning {Count} taxonomy entries", taxonomy.Count);
+            
+            // Always return 200 OK, even if empty (allows frontend to use fallback)
+            return Ok(taxonomy);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[SHIPD_CONTROLLER] Error retrieving taxonomy");
+            // Return empty array instead of error to allow frontend fallback
+            return Ok(Array.Empty<ShipDVesselTaxonomyDto>());
+        }
     }
 }
 

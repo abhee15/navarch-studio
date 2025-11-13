@@ -44,26 +44,39 @@ public class ShipDMetadataService : IShipDMetadataService
 
     public async Task<IReadOnlyList<ShipDVesselTaxonomyDto>> GetVesselTaxonomyAsync(CancellationToken cancellationToken = default)
     {
-        var taxonomyEntities = await _context.ShipDVesselTaxonomies
-            .OrderBy(t => t.Category)
-            .ThenBy(t => t.DisplayName)
-            .ToListAsync(cancellationToken);
+        try
+        {
+            var taxonomyEntities = await _context.ShipDVesselTaxonomies
+                .OrderBy(t => t.Category)
+                .ThenBy(t => t.DisplayName)
+                .ToListAsync(cancellationToken);
 
-        var records = taxonomyEntities
-            .Select(t => new ShipDVesselTaxonomyDto(
-                t.Id,
-                t.Category,
-                t.Type,
-                t.DisplayName,
-                t.Description,
-                string.IsNullOrWhiteSpace(t.BowFamiliesJson) ? Array.Empty<string>() : JsonSerializer.Deserialize<List<string>>(t.BowFamiliesJson) ?? new List<string>(),
-                string.IsNullOrWhiteSpace(t.MidshipFamiliesJson) ? Array.Empty<string>() : JsonSerializer.Deserialize<List<string>>(t.MidshipFamiliesJson) ?? new List<string>(),
-                string.IsNullOrWhiteSpace(t.SternFamiliesJson) ? Array.Empty<string>() : JsonSerializer.Deserialize<List<string>>(t.SternFamiliesJson) ?? new List<string>(),
-                t.MaskVersion,
-                t.AdditionalParametersJson))
-            .ToList();
+            if (taxonomyEntities.Count == 0)
+            {
+                _logger.LogWarning("[SHIPD_METADATA] No taxonomy entries found in database. This may indicate that seeding has not run.");
+            }
 
-        _logger.LogDebug("[SHIPD_METADATA] Returning {Count} vessel taxonomy rows", records.Count);
-        return records;
+            var records = taxonomyEntities
+                .Select(t => new ShipDVesselTaxonomyDto(
+                    t.Id,
+                    t.Category,
+                    t.Type,
+                    t.DisplayName,
+                    t.Description,
+                    string.IsNullOrWhiteSpace(t.BowFamiliesJson) ? Array.Empty<string>() : JsonSerializer.Deserialize<List<string>>(t.BowFamiliesJson) ?? new List<string>(),
+                    string.IsNullOrWhiteSpace(t.MidshipFamiliesJson) ? Array.Empty<string>() : JsonSerializer.Deserialize<List<string>>(t.MidshipFamiliesJson) ?? new List<string>(),
+                    string.IsNullOrWhiteSpace(t.SternFamiliesJson) ? Array.Empty<string>() : JsonSerializer.Deserialize<List<string>>(t.SternFamiliesJson) ?? new List<string>(),
+                    t.MaskVersion,
+                    t.AdditionalParametersJson))
+                .ToList();
+
+            _logger.LogInformation("[SHIPD_METADATA] Returning {Count} vessel taxonomy rows", records.Count);
+            return records;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[SHIPD_METADATA] Error retrieving vessel taxonomy");
+            throw;
+        }
     }
 }
