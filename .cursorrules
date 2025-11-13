@@ -92,6 +92,38 @@ This is a full-stack template project with:
 - Use records for DTOs
 - Always pass CancellationToken
 
+### Database Naming Conventions (CRITICAL)
+
+**ALWAYS use snake_case for database column and table names:**
+
+- ✅ **Correct:** `wave_height`, `vessel_id`, `created_at`
+- ❌ **Wrong:** `WaveHeight`, `VesselId`, `CreatedAt` (PascalCase)
+- ❌ **Wrong:** `significant_wave_height` (if actual column is `wave_height`)
+
+**When writing validators, migrations, or SQL queries:**
+
+1. **NEVER use model property names (PascalCase)** - EF Core converts these to snake_case
+2. **ALWAYS check actual migration files** to verify exact column names
+3. **ALWAYS use snake_case** matching what's in the migrations
+4. **Verify column names exist** before adding to validators
+
+**Example - MigrationValidator:**
+```csharp
+// ❌ WRONG - Using model property names
+["sea_states"] = new List<string> { "significant_wave_height", "wave_spectrum_type" }
+
+// ✅ CORRECT - Check migration file first, use actual column names
+["sea_states"] = new List<string> { "wave_height", "wave_period", "wave_direction" }
+```
+
+**Before writing any database validation code:**
+1. Open the actual migration file (e.g., `20251110203038_InitialCreate.cs`)
+2. Find the `CreateTable` statement for the table
+3. Copy the exact column names from the migration (they're in snake_case)
+4. Use those exact names in your validator
+
+**Rule**: If you're unsure about a column name, **ALWAYS check the migration file first**. Never guess or use model property names.
+
 ### Terraform
 
 - Use Terraform 1.5+
@@ -194,6 +226,33 @@ This is a full-stack template project with:
 - Blocking calls (.Result, .Wait())
 - SQL injection-prone code
 - Unhandled exceptions
+
+### When Working with Database Validators
+
+**CRITICAL RULES:**
+
+1. **NEVER use model property names** (PascalCase like `WaveHeight`) in validators
+2. **ALWAYS check migration files** to get exact column names (snake_case like `wave_height`)
+3. **Verify column exists** in the migration before adding to validator
+4. **Test locally** before committing - run integration tests that exercise the validator
+
+**Example Workflow:**
+```bash
+# 1. Before writing validator, check migration:
+cat backend/DataService/Migrations/20251110203038_InitialCreate.cs | grep -A 20 "sea_states"
+
+# 2. Copy exact column names from migration (they're in snake_case)
+# 3. Use those exact names in validator
+# 4. Test the validator:
+cd backend/DataService.Tests && dotnet test --filter "MigrationValidator"
+```
+
+**If you're adding a new validator or modifying an existing one:**
+- Open the migration file first
+- Find the `CreateTable` statement
+- Copy the exact column names (they're already in snake_case)
+- Use those exact names in your validator
+- Add a comment with the migration file name for reference
 
 ## Code Formatting (CRITICAL)
 
@@ -311,9 +370,18 @@ These placeholders are replaced by the clone script:
    cd backend && dotnet build                       # Verify build succeeds
    ```
 
-3. **If any check fails:**
+3. **Verify database column names** (if you modified validators or migrations):
+   ```bash
+   # If you modified MigrationValidator or any database validation code:
+   # 1. Check that column names match actual migration files (snake_case)
+   # 2. Run integration tests to verify schema validation passes
+   cd backend/DataService.Tests && dotnet test --filter "MigrationValidator"
+   ```
+
+4. **If any check fails:**
    - **DO NOT commit or push** until all checks pass
    - Fix formatting issues using the auto-fix commands above
+   - Fix column name mismatches by checking actual migration files
    - Re-run verification checks
    - Only commit/push when all checks pass
 
