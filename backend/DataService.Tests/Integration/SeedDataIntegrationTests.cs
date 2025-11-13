@@ -266,7 +266,7 @@ public class SeedDataIntegrationTests : IAsyncLifetime
         var propellerCount = await _context!.CatalogPropellerSeries.CountAsync();
         var benchmarkCount = await _context!.BenchmarkCases.CountAsync();
         var wigleyGeometry = await _context!.BenchmarkGeometries
-            .AnyAsync(g => g.Case.Slug == "wigley-hull");
+            .AnyAsync(g => g.Case != null && g.Case.Slug == "wigley-hull");
 
         var errors = new List<string>();
 

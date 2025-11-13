@@ -17,7 +17,6 @@ public class StripTheoryEngineTests
     private readonly Mock<IGeometryService> _mockGeometry;
     private readonly Mock<IIntegrationEngine> _mockIntegration;
     private readonly Mock<ILogger<StripTheoryEngine>> _mockLogger;
-    private readonly StripTheoryEngine? _sut; // Nullable since we can't properly initialize without real DbContext
 
     public StripTheoryEngineTests()
     {
@@ -26,9 +25,6 @@ public class StripTheoryEngineTests
         _mockGeometry = new Mock<IGeometryService>();
         _mockIntegration = new Mock<IIntegrationEngine>();
         _mockLogger = new Mock<ILogger<StripTheoryEngine>>();
-
-        // _sut would need real DbContext - skip unit tests and use integration tests instead
-        _sut = null;
     }
 
     [Fact(Skip = "Requires real DataDbContext - convert to integration test with in-memory database")]

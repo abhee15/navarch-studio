@@ -263,15 +263,26 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     ];
 
     const waterlinePath = (points: [number, number][]) => {
-      const svgPoints = points.map(([x, y]) => toSVG(x, y));
-      const path = svgPoints
+      // Naval architecture Plan View: waterlines should be closed curves
+      // Path: stern centerline → starboard side → bow centerline → port side → stern centerline
+      
+      // Starboard side: points from stern to bow (x from -lpp/2 to +lpp/2, y >= 0)
+      const starboardPoints = points.map(([x, y]) => toSVG(x, y));
+      const starboardPath = starboardPoints
         .map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`)
         .join(" ");
-      const mirroredPoints = points.map(([x, y]) => toSVG(x, -y));
-      const mirrorPath = mirroredPoints
-        .map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`)
+      
+      // Port side: reverse the points and negate y to create closed loop
+      // We reverse so the path goes: bow centerline → port side → stern centerline
+      const portPoints = [...points].reverse().map(([x, y]) => toSVG(x, -y));
+      const portPath = portPoints
+        .map(([x, y], i) => `${i === 0 ? "L" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`)
         .join(" ");
-      return { starboard: path, port: mirrorPath };
+      
+      // Close the path by connecting back to stern centerline
+      const closedPath = `${starboardPath} ${portPath} Z`;
+      
+      return { starboard: starboardPath, port: portPath, closed: closedPath };
     };
 
     return (
@@ -518,26 +529,14 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                       transition: "opacity 0.3s ease",
                     }}
                   >
-                    {/* Starboard */}
+                    {/* Closed waterline path (naval architecture standard) */}
                     <path
-                      d={paths.starboard}
+                      d={paths.closed}
                       fill="none"
                       stroke={isHovered ? hoverColor : baseColor}
                       strokeWidth={strokeWidth}
                       strokeLinecap="round"
-                      filter={wl.isDesignWaterline ? "url(#dropShadow)" : undefined}
-                      style={{
-                        transition: "all 0.3s ease",
-                        cursor: "pointer",
-                      }}
-                    />
-                    {/* Port */}
-                    <path
-                      d={paths.port}
-                      fill="none"
-                      stroke={isHovered ? hoverColor : baseColor}
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       filter={wl.isDesignWaterline ? "url(#dropShadow)" : undefined}
                       style={{
                         transition: "all 0.3s ease",

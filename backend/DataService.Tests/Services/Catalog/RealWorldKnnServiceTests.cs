@@ -16,6 +16,7 @@ public class RealWorldKnnServiceTests : IDisposable
     private readonly IMemoryCache _cache;
     private readonly RealWorldKnnService _service;
     private readonly Mock<ILogger<RealWorldKnnService>> _loggerMock;
+    private readonly Mock<IVesselTypeMapper> _vesselTypeMapperMock;
 
     public RealWorldKnnServiceTests()
     {
@@ -26,7 +27,8 @@ public class RealWorldKnnServiceTests : IDisposable
         _context = new DataDbContext(options);
         _cache = new MemoryCache(new MemoryCacheOptions());
         _loggerMock = new Mock<ILogger<RealWorldKnnService>>();
-        _service = new RealWorldKnnService(_context, _cache, _loggerMock.Object);
+        _vesselTypeMapperMock = new Mock<IVesselTypeMapper>();
+        _service = new RealWorldKnnService(_context, _cache, _vesselTypeMapperMock.Object, _loggerMock.Object);
 
         // Seed test data
         SeedTestCatalog();
