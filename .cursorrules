@@ -195,6 +195,23 @@ This is a full-stack template project with:
 - SQL injection-prone code
 - Unhandled exceptions
 
+## Code Formatting (CRITICAL)
+
+**BEFORE committing or pushing ANY code changes:**
+
+1. **ALWAYS run auto-format commands first:**
+   - Frontend: `cd frontend && npm run format` (fixes Prettier issues)
+   - Backend: `cd backend && dotnet format` (fixes C# formatting)
+   - Terraform: `cd terraform && terraform fmt -recursive` (fixes Terraform formatting)
+
+2. **ALWAYS verify formatting passes:**
+   - Frontend: `cd frontend && npm run format-check` (MUST pass)
+   - Backend: `cd backend && dotnet format --verify-no-changes` (MUST pass)
+
+3. **NEVER push code that fails formatting checks** - CI/CD will fail and block deployment
+
+**Rule**: If you edit frontend files, run `npm run format` before committing. If you edit backend files, run `dotnet format` before committing. If you edit Terraform files, run `terraform fmt` before committing.
+
 ## API Design
 
 - Use RESTful conventions
@@ -263,23 +280,51 @@ These placeholders are replaced by the clone script:
 
 ## Pre-Commit Checks
 
-**ALWAYS** run these checks before committing code:
+**CRITICAL: ALWAYS run these checks before committing AND pushing to remote:**
 
-```bash
-# Backend checks (from backend/ directory)
-cd backend && dotnet format --verify-no-changes  # Check formatting
-cd backend && dotnet format                      # Fix formatting (if needed)
-cd backend && dotnet build                       # Verify build succeeds
+### Mandatory Pre-Push Checks
 
-# Frontend checks (from frontend/ directory)
-cd frontend && npm run lint                      # Check linting
-cd frontend && npm run type-check                # Check TypeScript types
-cd frontend && npm run format-check              # Check Prettier formatting
-cd frontend && npm run build                     # Verify build succeeds
+**Before ANY commit/push, you MUST:**
 
-# Terraform checks (from terraform/ directory)
-cd terraform && terraform fmt -recursive         # Format code
-```
+1. **Auto-fix formatting issues** (run these first):
+   ```bash
+   # Frontend - Auto-fix Prettier formatting
+   cd frontend && npm run format
+   
+   # Backend - Auto-fix .NET formatting
+   cd backend && dotnet format
+   
+   # Terraform - Auto-fix formatting
+   cd terraform && terraform fmt -recursive
+   ```
+
+2. **Verify formatting is correct** (after auto-fix):
+   ```bash
+   # Frontend checks (from frontend/ directory)
+   cd frontend && npm run format-check              # MUST pass before push
+   cd frontend && npm run lint                      # Check linting
+   cd frontend && npm run type-check                # Check TypeScript types
+   cd frontend && npm run build                     # Verify build succeeds
+   
+   # Backend checks (from backend/ directory)
+   cd backend && dotnet format --verify-no-changes  # MUST pass before push
+   cd backend && dotnet build                       # Verify build succeeds
+   ```
+
+3. **If any check fails:**
+   - **DO NOT commit or push** until all checks pass
+   - Fix formatting issues using the auto-fix commands above
+   - Re-run verification checks
+   - Only commit/push when all checks pass
+
+### Workflow
+
+**When making code changes:**
+1. Make your code changes
+2. **IMMEDIATELY run auto-fix commands** (`npm run format`, `dotnet format`, `terraform fmt`)
+3. Run verification checks (`npm run format-check`, `dotnet format --verify-no-changes`)
+4. If checks pass → commit and push
+5. If checks fail → fix issues and repeat from step 2
 
 **These checks prevent CI/CD failures and maintain code quality.**
 
