@@ -23,7 +23,16 @@ export const SizingRunResults: React.FC = observer(() => {
 
   useEffect(() => {
     if (runId) {
-      sizingStore.loadCandidates(runId);
+      // Check if currentRun is set and matches the runId
+      // If not, load both the run and candidates
+      if (!sizingStore.currentRun || sizingStore.currentRun.id !== runId) {
+        sizingStore.loadRunAndCandidates(runId);
+      } else {
+        // If run is already loaded, just ensure candidates are loaded
+        if (sizingStore.candidates.length === 0) {
+          sizingStore.loadCandidates(runId);
+        }
+      }
     }
   }, [runId, sizingStore]);
 

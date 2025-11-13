@@ -257,8 +257,34 @@ export class SizingStore {
     }
   }
 
-  async loadCandidates(runId: string) {
-    this.isLoading = true;
+  async loadSizingRun(runId: string, skipLoadingState = false) {
+    if (!skipLoadingState) {
+      this.isLoading = true;
+    }
+    this.error = null;
+    try {
+      const run = await sizingApi.getSizingRun(runId);
+      runInAction(() => {
+        this.currentRun = run;
+        if (!skipLoadingState) {
+          this.isLoading = false;
+        }
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : "Failed to load sizing run";
+        if (!skipLoadingState) {
+          this.isLoading = false;
+        }
+      });
+      throw error;
+    }
+  }
+
+  async loadCandidates(runId: string, skipLoadingState = false) {
+    if (!skipLoadingState) {
+      this.isLoading = true;
+    }
     this.error = null;
     try {
       const candidates = await sizingApi.getRunCandidates(runId);
@@ -280,11 +306,36 @@ export class SizingStore {
         } else {
           console.warn("[SizingStore] getRunCandidates returned non-array:", candidates);
         }
-        this.isLoading = false;
+        if (!skipLoadingState) {
+          this.isLoading = false;
+        }
       });
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to load candidates";
+        if (!skipLoadingState) {
+          this.isLoading = false;
+        }
+      });
+      throw error;
+    }
+  }
+
+  async loadRunAndCandidates(runId: string) {
+    // Load both run and candidates in parallel, managing loading state centrally
+    this.isLoading = true;
+    this.error = null;
+    try {
+      await Promise.all([
+        this.loadSizingRun(runId, true), // Skip individual loading state
+        this.loadCandidates(runId, true), // Skip individual loading state
+      ]);
+      runInAction(() => {
+        this.isLoading = false;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.error = error instanceof Error ? error.message : "Failed to load run and candidates";
         this.isLoading = false;
       });
     }
