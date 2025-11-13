@@ -638,14 +638,14 @@ jobs:
         id: verify-images
         run: |
           echo "🔍 Verifying required ECR images exist..."
-          
+
           # Extract repository name from ECR URL (format: account.dkr.ecr.region.amazonaws.com/repo-name)
           extract_repo_name() {
             echo "$1" | sed 's/.*\///'
           }
-          
+
           MISSING_IMAGES=()
-          
+
           # Check Data Service image
           DATA_REPO=$(extract_repo_name "${{ secrets.ECR_DATA_SERVICE_URL }}")
           if aws ecr describe-images --repository-name "$DATA_REPO" --image-ids imageTag=latest --region "${{ env.AWS_REGION }}" 2>/dev/null | grep -q "imageTags"; then
@@ -654,7 +654,7 @@ jobs:
             echo "❌ Data Service image NOT found (latest tag)"
             MISSING_IMAGES+=("Data Service")
           fi
-          
+
           # Check Identity Service image
           IDENTITY_REPO=$(extract_repo_name "${{ secrets.ECR_IDENTITY_SERVICE_URL }}")
           if aws ecr describe-images --repository-name "$IDENTITY_REPO" --image-ids imageTag=latest --region "${{ env.AWS_REGION }}" 2>/dev/null | grep -q "imageTags"; then
@@ -663,7 +663,7 @@ jobs:
             echo "❌ Identity Service image NOT found (latest tag)"
             MISSING_IMAGES+=("Identity Service")
           fi
-          
+
           # Check API Gateway image
           GATEWAY_REPO=$(extract_repo_name "${{ secrets.ECR_API_GATEWAY_URL }}")
           if aws ecr describe-images --repository-name "$GATEWAY_REPO" --image-ids imageTag=latest --region "${{ env.AWS_REGION }}" 2>/dev/null | grep -q "imageTags"; then
@@ -672,7 +672,7 @@ jobs:
             echo "❌ API Gateway image NOT found (latest tag)"
             MISSING_IMAGES+=("API Gateway")
           fi
-          
+
           # Check Hull Sizing Service image
           HULLSIZING_REPO=$(extract_repo_name "${{ secrets.ECR_HULL_SIZING_SERVICE_URL }}")
           if aws ecr describe-images --repository-name "$HULLSIZING_REPO" --image-ids imageTag=latest --region "${{ env.AWS_REGION }}" 2>/dev/null | grep -q "imageTags"; then
@@ -680,7 +680,7 @@ jobs:
           else
             echo "⚠️  Hull Sizing Service image NOT found (latest tag) - may be optional"
           fi
-          
+
           if [ ${#MISSING_IMAGES[@]} -gt 0 ]; then
             echo ""
             echo "❌ ERROR: Required images are missing:"
@@ -695,7 +695,7 @@ jobs:
             echo "   4. Or manually trigger a build for the missing services"
             exit 1
           fi
-          
+
           echo ""
           echo "✅ All required ECR images verified"
 

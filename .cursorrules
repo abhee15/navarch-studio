@@ -253,6 +253,8 @@ cd backend/DataService.Tests && dotnet test --filter "MigrationValidator"
 - Copy the exact column names (they're already in snake_case)
 - Use those exact names in your validator
 - Add a comment with the migration file name for reference
+- **Run tests locally** to ensure the validator works: `dotnet test --filter "MigrationValidator"`
+- **If tests require a real database**, mark them with `[Fact(Skip = "...")]` or `[Trait("Category", "Integration")]` and document why
 
 ## Code Formatting (CRITICAL)
 
@@ -370,7 +372,15 @@ These placeholders are replaced by the clone script:
    cd backend && dotnet build                       # Verify build succeeds
    ```
 
-3. **Verify database column names** (if you modified validators or migrations):
+3. **Run unit tests** (MUST pass before push):
+   ```bash
+   # Backend tests (from backend/ directory)
+   cd backend && dotnet test --no-build --verbosity normal --filter "Category!=Integration&Category!=Architecture"
+   # OR if you need to build first:
+   cd backend && dotnet test --verbosity normal --filter "Category!=Integration&Category!=Architecture"
+   ```
+
+4. **Verify database column names** (if you modified validators or migrations):
    ```bash
    # If you modified MigrationValidator or any database validation code:
    # 1. Check that column names match actual migration files (snake_case)
@@ -378,7 +388,7 @@ These placeholders are replaced by the clone script:
    cd backend/DataService.Tests && dotnet test --filter "MigrationValidator"
    ```
 
-4. **If any check fails:**
+5. **If any check fails:**
    - **DO NOT commit or push** until all checks pass
    - Fix formatting issues using the auto-fix commands above
    - Fix column name mismatches by checking actual migration files
@@ -391,10 +401,13 @@ These placeholders are replaced by the clone script:
 1. Make your code changes
 2. **IMMEDIATELY run auto-fix commands** (`npm run format`, `dotnet format`, `terraform fmt`)
 3. Run verification checks (`npm run format-check`, `dotnet format --verify-no-changes`)
-4. If checks pass → commit and push
-5. If checks fail → fix issues and repeat from step 2
+4. **Run unit tests** (`dotnet test --filter "Category!=Integration&Category!=Architecture"`)
+5. If checks pass → commit and push
+6. If checks fail → fix issues and repeat from step 2
 
 **These checks prevent CI/CD failures and maintain code quality.**
+
+**CRITICAL**: If you add or modify tests, you MUST run them locally before committing. Tests that fail in CI/CD will block deployment.
 
 ## Common Commands
 
