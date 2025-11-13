@@ -219,7 +219,9 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="shipdInputVectorJson">Custom Hull Form Parameters Vector (optional)</Label>
+          <Label htmlFor="shipdInputVectorJson">
+            Custom Hull Form Parameters Vector (optional)
+          </Label>
           <textarea
             id="shipdInputVectorJson"
             rows={4}

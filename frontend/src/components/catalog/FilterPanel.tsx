@@ -315,7 +315,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {!loadingTaxonomy && taxonomy.length > 0 && (
             <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
               <div>
-                <Label className="text-sm font-semibold mb-2 block">Hull Form Parameters Taxonomy</Label>
+                <Label className="text-sm font-semibold mb-2 block">
+                  Hull Form Parameters Taxonomy
+                </Label>
                 <div className="space-y-3">
                   {/* Vessel Category */}
                   <div>
