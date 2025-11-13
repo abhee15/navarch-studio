@@ -31,8 +31,11 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         // Check if device is mobile based on screen width and touch capability
         const isMobileDevice =
           window.innerWidth < 768 ||
-          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-          ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          ) ||
+          "ontouchstart" in window ||
+          navigator.maxTouchPoints > 0;
         setIsMobile(isMobileDevice);
       };
 

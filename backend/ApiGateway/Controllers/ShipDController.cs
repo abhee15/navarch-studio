@@ -17,11 +17,10 @@ public class ShipDController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet]
     [HttpGet("{**path}")]
-    public async Task<IActionResult> GetProxy(string? path, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetProxy(string path, CancellationToken cancellationToken)
     {
-        var targetPath = string.IsNullOrWhiteSpace(path) ? string.Empty : path;
+        var targetPath = path ?? string.Empty;
         try
         {
             _logger.LogInformation("Proxying GET /shipd/{Path} to DataService", targetPath);
@@ -39,4 +38,3 @@ public class ShipDController : ControllerBase
         }
     }
 }
-

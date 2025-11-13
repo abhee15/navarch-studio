@@ -1,6 +1,6 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Data;
 
 namespace DataService.Data;
 
@@ -134,12 +134,12 @@ public class MigrationValidator
         // Use EF Core's connection management
         var connection = _context.Database.GetDbConnection();
         var wasOpen = connection.State == System.Data.ConnectionState.Open;
-        
+
         if (!wasOpen)
         {
             await connection.OpenAsync(cancellationToken);
         }
-        
+
         try
         {
             using var command = connection.CreateCommand();
@@ -174,12 +174,12 @@ public class MigrationValidator
 
         var connection = _context.Database.GetDbConnection();
         var wasOpen = connection.State == System.Data.ConnectionState.Open;
-        
+
         if (!wasOpen)
         {
             await connection.OpenAsync(cancellationToken);
         }
-        
+
         try
         {
             using var command = connection.CreateCommand();
@@ -218,6 +218,3 @@ public class ValidationResult
     public void AddError(string error) => Errors.Add(error);
     public void AddWarning(string warning) => Warnings.Add(warning);
 }
-
-
-

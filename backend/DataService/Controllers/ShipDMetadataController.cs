@@ -33,7 +33,7 @@ public class ShipDMetadataController : ControllerBase
         {
             var taxonomy = await _service.GetVesselTaxonomyAsync(cancellationToken);
             _logger.LogInformation("[SHIPD_CONTROLLER] Returning {Count} taxonomy entries", taxonomy.Count);
-            
+
             // Always return 200 OK, even if empty (allows frontend to use fallback)
             return Ok(taxonomy);
         }
@@ -45,4 +45,3 @@ public class ShipDMetadataController : ControllerBase
         }
     }
 }
-

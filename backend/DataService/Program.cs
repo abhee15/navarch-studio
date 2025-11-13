@@ -648,7 +648,7 @@ try
             Console.WriteLine($"[MIGRATION] Stack trace: {ex.StackTrace}");
             Console.WriteLine($"[MIGRATION] ⚠️  Service will start but database may be incomplete!");
             Log.Error(ex, "[MIGRATION] Migration check failed: {Message}", ex.Message);
-            
+
             // In production/staging, fail startup if migrations fail
             // This ensures we catch schema issues immediately
             if (!app.Environment.IsDevelopment())
