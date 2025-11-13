@@ -23,6 +23,23 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     const [isOpen, setIsOpen] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const listRef = React.useRef<HTMLUListElement>(null);
+    const [isMobile, setIsMobile] = React.useState(false);
+
+    // Detect mobile devices
+    React.useEffect(() => {
+      const checkMobile = () => {
+        // Check if device is mobile based on screen width and touch capability
+        const isMobileDevice =
+          window.innerWidth < 768 ||
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+          ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+        setIsMobile(isMobileDevice);
+      };
+
+      checkMobile();
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
+    }, []);
 
     const selectedOption = options.find((opt) => opt.value === value);
 
@@ -81,6 +98,37 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       setIsOpen(false);
     };
 
+    // On mobile, use native select for better UX
+    if (isMobile) {
+      return (
+        <select
+          id={id}
+          name={name}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className={cn(
+            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background",
+            "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            className
+          )}
+        >
+          {placeholder && (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          )}
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // On desktop, use custom dropdown
     return (
       <div ref={containerRef} className={cn("relative", className)}>
         {/* Hidden native select for form compatibility */}
