@@ -141,3 +141,6 @@ public class ValidationResult
     public void AddError(string error) => Errors.Add(error);
     public void AddWarning(string warning) => Warnings.Add(warning);
 }
+
+
+

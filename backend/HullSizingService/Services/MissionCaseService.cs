@@ -1,5 +1,7 @@
+using System;
 using HullSizingService.Data;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Shared.DTOs.Sizing;
 using Shared.Models.Sizing;
 
@@ -39,16 +41,44 @@ public class MissionCaseService : IMissionCaseService
 
     public async Task<MissionCaseDto> CreateAsync(CreateMissionCaseDto dto, Guid userId, string tenantId, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("[MISSION_SERVICE] Creating mission case '{Name}' for tenant {TenantId}", dto.Name, tenantId);
+        if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+        var trimmedName = dto.Name?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedName))
+        {
+            throw new ArgumentException("Brief name is required", nameof(dto.Name));
+        }
+        if (trimmedName.Length > 255)
+        {
+            throw new ArgumentException("Brief name cannot exceed 255 characters", nameof(dto.Name));
+        }
+
+        _logger.LogInformation("[MISSION_SERVICE] Creating mission case '{Name}' for tenant {TenantId}", trimmedName, tenantId);
+
+        var nameExists = await _context.MissionCases
+            .Where(mc => mc.DeletedAt == null && mc.TenantId == tenantId)
+            .AnyAsync(mc => EF.Functions.ILike(mc.Name, trimmedName), cancellationToken);
+
+        if (nameExists)
+        {
+            throw new InvalidOperationException(
+                $"A brief named '{trimmedName}' already exists for this workspace. Please choose a different name.");
+        }
 
         var missionCase = new MissionCase
         {
             Id = Guid.NewGuid(),
             UserId = userId,
             TenantId = tenantId,
-            Name = dto.Name,
+            Name = trimmedName,
+            MissionCategory = dto.MissionCategory.ToLower(),
             MissionType = dto.MissionType.ToLower(),
             CargoBasis = dto.CargoBasis.ToLower(),
+            BowFamily = dto.BowFamily,
+            MidshipFamily = dto.MidshipFamily,
+            SternFamily = dto.SternFamily,
+            FamilyMaskVersion = dto.FamilyMaskVersion,
+            ShipdInputsJson = dto.ShipdInputsJson,
             CargoValue = dto.CargoValue,
             CargoDensityTPerM3 = dto.CargoDensityTPerM3,
             CargoVolumeM3 = dto.CargoVolumeM3,
@@ -68,11 +98,31 @@ public class MissionCaseService : IMissionCaseService
         };
 
         _context.MissionCases.Add(missionCase);
-        await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            _logger.LogWarning(ex, "[MISSION_SERVICE] Duplicate mission case name detected for tenant {TenantId}", tenantId);
+            throw new InvalidOperationException(
+                $"A brief named '{trimmedName}' already exists for this workspace. Please choose a different name.");
+        }
 
         _logger.LogInformation("[MISSION_SERVICE] Created mission case {Id}", missionCase.Id);
 
         return MapToDto(missionCase);
+    }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException exception)
+    {
+        if (exception.InnerException is PostgresException postgresException)
+        {
+            return postgresException.SqlState == PostgresErrorCodes.UniqueViolation;
+        }
+
+        return false;
     }
 
     public async Task<MissionCaseDto?> UpdateAsync(Guid id, UpdateMissionCaseDto dto, string tenantId, CancellationToken cancellationToken = default)
@@ -84,8 +134,14 @@ public class MissionCaseService : IMissionCaseService
         if (missionCase == null) return null;
 
         if (dto.Name != null) missionCase.Name = dto.Name;
+        if (dto.MissionCategory != null) missionCase.MissionCategory = dto.MissionCategory.ToLower();
         if (dto.MissionType != null) missionCase.MissionType = dto.MissionType.ToLower();
         if (dto.CargoBasis != null) missionCase.CargoBasis = dto.CargoBasis.ToLower();
+        if (dto.BowFamily != null) missionCase.BowFamily = dto.BowFamily;
+        if (dto.MidshipFamily != null) missionCase.MidshipFamily = dto.MidshipFamily;
+        if (dto.SternFamily != null) missionCase.SternFamily = dto.SternFamily;
+        if (dto.FamilyMaskVersion.HasValue) missionCase.FamilyMaskVersion = dto.FamilyMaskVersion;
+        if (dto.ShipdInputsJson != null) missionCase.ShipdInputsJson = dto.ShipdInputsJson;
         if (dto.CargoValue.HasValue) missionCase.CargoValue = dto.CargoValue;
         if (dto.CargoDensityTPerM3.HasValue) missionCase.CargoDensityTPerM3 = dto.CargoDensityTPerM3;
         if (dto.CargoVolumeM3.HasValue) missionCase.CargoVolumeM3 = dto.CargoVolumeM3;
@@ -144,8 +200,14 @@ public class MissionCaseService : IMissionCaseService
             UserId = userId,
             TenantId = tenantId,
             Name = trimmedName,
+            MissionCategory = original.MissionCategory,
             MissionType = original.MissionType,
             CargoBasis = original.CargoBasis,
+            BowFamily = original.BowFamily,
+            MidshipFamily = original.MidshipFamily,
+            SternFamily = original.SternFamily,
+            FamilyMaskVersion = original.FamilyMaskVersion,
+            ShipdInputsJson = original.ShipdInputsJson,
             CargoValue = original.CargoValue,
             CargoDensityTPerM3 = original.CargoDensityTPerM3,
             CargoVolumeM3 = original.CargoVolumeM3,
@@ -193,6 +255,12 @@ public class MissionCaseService : IMissionCaseService
             Id = entity.Id,
             Name = entity.Name,
             MissionType = entity.MissionType,
+            MissionCategory = entity.MissionCategory,
+            BowFamily = entity.BowFamily,
+            MidshipFamily = entity.MidshipFamily,
+            SternFamily = entity.SternFamily,
+            FamilyMaskVersion = entity.FamilyMaskVersion,
+            ShipdInputsJson = entity.ShipdInputsJson,
             CargoBasis = entity.CargoBasis,
             CargoValue = entity.CargoValue ?? 0m,
             CargoDensityTPerM3 = entity.CargoDensityTPerM3,

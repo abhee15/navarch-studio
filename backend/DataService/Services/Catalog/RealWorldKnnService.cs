@@ -14,6 +14,7 @@ public class RealWorldKnnService
 {
     private readonly DataDbContext _context;
     private readonly IMemoryCache _cache;
+    private readonly IVesselTypeMapper _vesselTypeMapper;
     private readonly ILogger<RealWorldKnnService> _logger;
     private const string CacheKey = "RealWorldCatalog_All";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
@@ -21,10 +22,12 @@ public class RealWorldKnnService
     public RealWorldKnnService(
         DataDbContext context,
         IMemoryCache cache,
+        IVesselTypeMapper vesselTypeMapper,
         ILogger<RealWorldKnnService> logger)
     {
         _context = context;
         _cache = cache;
+        _vesselTypeMapper = vesselTypeMapper;
         _logger = logger;
     }
 
@@ -47,14 +50,41 @@ public class RealWorldKnnService
             return new List<SimilarVessel>();
         }
 
-        // 2. Filter by vessel type (strict match first)
-        var sameType = catalog
-            .Where(v => v.VesselType.Equals(criteria.VesselType, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        // 2. Filter by vessel type using mapper (handles ShipD taxonomy -> catalog mapping)
+        // Map ShipD taxonomy type to catalog types (e.g., "bulk_carrier" -> ["Bulk carrier", "Bulk"])
+        var catalogTypes = _vesselTypeMapper.MapToCatalogTypes(criteria.VesselType);
 
-        _logger.LogDebug(
-            "Filtered catalog: {Total} vessels, {SameType} matching type '{Type}'",
-            catalog.Count, sameType.Count, criteria.VesselType);
+        List<CatalogVesselReal> sameType;
+        if (catalogTypes.Any())
+        {
+            // Normalize catalog types for comparison
+            var normalizedCatalogTypes = catalogTypes
+                .Select(t => _vesselTypeMapper.NormalizeVesselType(t))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // Filter by mapped catalog types (OR logic - match any of the mapped types)
+            sameType = catalog
+                .Where(v => normalizedCatalogTypes.Contains(
+                    _vesselTypeMapper.NormalizeVesselType(v.VesselType)))
+                .ToList();
+
+            _logger.LogDebug(
+                "Filtered catalog: {Total} vessels, {SameType} matching ShipD type '{ShipDType}' " +
+                "(mapped to catalog types: {CatalogTypes})",
+                catalog.Count, sameType.Count, criteria.VesselType, string.Join(", ", catalogTypes));
+        }
+        else
+        {
+            // Fallback: try direct match (for backward compatibility with old MissionType values)
+            sameType = catalog
+                .Where(v => v.VesselType.Equals(criteria.VesselType, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            _logger.LogDebug(
+                "No catalog mapping found for '{Type}'. Using direct match. " +
+                "Filtered catalog: {Total} vessels, {SameType} matching type",
+                criteria.VesselType, catalog.Count, sameType.Count);
+        }
 
         // 3. Calculate target feature vector
         var targetVector = ExtractFeatures(criteria);
@@ -316,4 +346,3 @@ internal class FeatureStatistics
     public double[] Max { get; set; } = Array.Empty<double>();
     public double MaxDistance { get; set; }
 }
-

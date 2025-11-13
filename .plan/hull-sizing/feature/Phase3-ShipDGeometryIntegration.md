@@ -470,3 +470,4 @@ interface ShipDParameterChartProps {
 3. Import ShipD geometry from external sources
 4. AI suggestions for optimal ShipD parameter combinations
 5. Visual diff tool showing geometry changes between parameter sets
+

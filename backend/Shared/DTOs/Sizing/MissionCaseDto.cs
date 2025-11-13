@@ -8,6 +8,12 @@ public record MissionCaseDto
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string MissionType { get; init; } = string.Empty;
+    public string? MissionCategory { get; init; }
+    public string? BowFamily { get; init; }
+    public string? MidshipFamily { get; init; }
+    public string? SternFamily { get; init; }
+    public int? FamilyMaskVersion { get; init; }
+    public string? ShipdInputsJson { get; init; }
 
     // Cargo basis
     public string CargoBasis { get; init; } = string.Empty;
@@ -48,6 +54,12 @@ public record CreateMissionCaseDto
 {
     public string Name { get; init; } = string.Empty;
     public string MissionType { get; init; } = string.Empty;
+    public string MissionCategory { get; init; } = string.Empty;
+    public string? BowFamily { get; init; }
+    public string? MidshipFamily { get; init; }
+    public string? SternFamily { get; init; }
+    public int? FamilyMaskVersion { get; init; }
+    public string? ShipdInputsJson { get; init; }
 
     public string CargoBasis { get; init; } = string.Empty;
     public decimal CargoValue { get; init; }
@@ -77,6 +89,12 @@ public record UpdateMissionCaseDto
 {
     public string? Name { get; init; }
     public string? MissionType { get; init; }
+    public string? MissionCategory { get; init; }
+    public string? BowFamily { get; init; }
+    public string? MidshipFamily { get; init; }
+    public string? SternFamily { get; init; }
+    public int? FamilyMaskVersion { get; init; }
+    public string? ShipdInputsJson { get; init; }
 
     public string? CargoBasis { get; init; }
     public decimal? CargoValue { get; init; }

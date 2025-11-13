@@ -1,5 +1,7 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
+import { extractButtocksFromShipD, extractSheerlineFromShipD } from "../../../utils/shipd2DGeometry";
+import { useStore } from "../../../stores";
 
 interface Hull2DProfileProps {
   candidate: CandidateDesign;
@@ -43,10 +45,110 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
     });
     const [hoveredLegendItem, setHoveredLegendItem] = useState<string | null>(null);
 
+    const { sizingStore } = useStore();
+
+    // Generate buttocks - prioritize ShipD geometry if available
     const buttocks = useMemo(() => {
       const lpp = candidate.lppM;
       const beam = candidate.beamM;
       const draft = candidate.draftM;
+
+      // Check if ShipD geometry is available (from backend)
+      if (candidate.geometryJson) {
+        try {
+          const sections = JSON.parse(candidate.geometryJson) as {
+            stations?: Array<{
+              position: number;
+              offsets: Record<number, number>;
+            }>;
+            stationPositions?: number[];
+          };
+
+          if (sections && sections.stations && Array.isArray(sections.stations) && sections.stations.length > 0) {
+            console.log("[Hull2DProfile] Using ShipD geometry from backend", {
+              stationCount: sections.stations.length,
+            });
+
+            const shipdSections = {
+              stations: sections.stations.map((s) => ({
+                position: s.position,
+                offsets: s.offsets,
+                hasBulb: (s as any).hasBulb || false,
+                bulbOffsets: (s as any).bulbOffsets,
+              })),
+              stationPositions: sections.stationPositions || [],
+            };
+
+            // Generate buttock offsets
+            const buttockOffsets = Array.from(
+              { length: buttockCount + 1 },
+              (_, i) => (i / buttockCount) * (beam / 2)
+            );
+
+            const result = extractButtocksFromShipD(shipdSections, lpp, draft, buttockOffsets);
+            console.log("[Hull2DProfile] Extracted buttocks from ShipD geometry", {
+              buttockCount: result.length,
+              centerlineIndex: result.findIndex((b) => b.isCenterline),
+            });
+            return result;
+          } else {
+            console.warn("[Hull2DProfile] ShipD geometry has no stations, falling back");
+          }
+        } catch (error) {
+          console.error("[Hull2DProfile] Failed to parse ShipD geometry, falling back to parametric:", error);
+        }
+      }
+
+      // Check if ShipD parameters are available (generate from vector)
+      if (
+        candidate.shipdParametersJson &&
+        sizingStore.shipdParameters &&
+        sizingStore.shipdParameters.length > 0
+      ) {
+        try {
+          const shipdVector = JSON.parse(candidate.shipdParametersJson);
+          if (Array.isArray(shipdVector) && shipdVector.length === 45) {
+            console.log("[Hull2DProfile] Generating ShipD geometry from parameters", {
+              hasMetadata: sizingStore.shipdParameters.length > 0,
+            });
+
+            const { generateShipDSections } = require("../../../utils/shipdGeometryGenerator");
+            const sections = generateShipDSections({
+              shipdVector,
+              lppM: lpp,
+              beamM: beam,
+              draftM: draft,
+              metadata: sizingStore.shipdParameters,
+              resolution: 1.0,
+            }, 20);
+
+            const buttockOffsets = Array.from(
+              { length: buttockCount + 1 },
+              (_, i) => (i / buttockCount) * (beam / 2)
+            );
+
+            const result = extractButtocksFromShipD(sections, lpp, draft, buttockOffsets);
+            console.log("[Hull2DProfile] Generated buttocks from ShipD parameters", {
+              buttockCount: result.length,
+            });
+            return result;
+          } else {
+            console.warn("[Hull2DProfile] Invalid ShipD vector format", {
+              isArray: Array.isArray(shipdVector),
+              length: Array.isArray(shipdVector) ? shipdVector.length : 0,
+            });
+          }
+        } catch (error) {
+          console.error("[Hull2DProfile] Failed to generate ShipD geometry, falling back to parametric:", error);
+        }
+      } else {
+        console.log("[Hull2DProfile] No ShipD data available", {
+          hasParametersJson: !!candidate.shipdParametersJson,
+          hasMetadata: !!(sizingStore.shipdParameters && sizingStore.shipdParameters.length > 0),
+        });
+      }
+
+      // Fallback: Use parametric generation
       const lines = [];
 
       for (let i = 0; i <= buttockCount; i++) {
@@ -84,12 +186,51 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
       }
 
       return lines;
-    }, [candidate.lppM, candidate.beamM, candidate.draftM, buttockCount]);
+    }, [
+      candidate.lppM,
+      candidate.beamM,
+      candidate.draftM,
+      candidate.geometryJson,
+      candidate.shipdParametersJson,
+      sizingStore.shipdParameters,
+      buttockCount,
+    ]);
 
+    // Generate sheerline - prioritize ShipD geometry if available
     const sheerline = useMemo(() => {
       const lpp = candidate.lppM;
       const depth = candidate.depthM;
       const draft = candidate.draftM;
+
+      // Check if ShipD geometry is available
+      if (candidate.geometryJson) {
+        try {
+          const sections = JSON.parse(candidate.geometryJson) as {
+            stations?: Array<{
+              position: number;
+              offsets: Record<number, number>;
+            }>;
+          };
+
+          if (sections && sections.stations && Array.isArray(sections.stations)) {
+            const shipdSections = {
+              stations: sections.stations.map((s) => ({
+                position: s.position,
+                offsets: s.offsets,
+                hasBulb: false,
+                bulbOffsets: undefined,
+              })),
+              stationPositions: [],
+            };
+
+            return extractSheerlineFromShipD(shipdSections, lpp, depth, draft);
+          }
+        } catch (error) {
+          console.warn("[Hull2DProfile] Failed to parse ShipD geometry for sheerline:", error);
+        }
+      }
+
+      // Fallback: Use parametric generation
       const freeboard = depth - draft;
       const points: [number, number][] = [];
       const numPoints = 60;
@@ -104,7 +245,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
       }
 
       return points;
-    }, [candidate.lppM, candidate.depthM, candidate.draftM]);
+    }, [candidate.lppM, candidate.depthM, candidate.draftM, candidate.geometryJson]);
 
     const padding = 80;
     const svgWidth = 900;
@@ -176,6 +317,12 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             >
               {candidate.hullFamily.replace("_", " ").toUpperCase()} · T{" "}
               {candidate.draftM.toFixed(2)}m × D {candidate.depthM.toFixed(2)}m
+              {candidate.geometryJson && (
+                <tspan className="fill-green-600 dark:fill-green-400" style={{ fontSize: "10px" }}>
+                  {" "}
+                  · ShipD
+                </tspan>
+              )}
             </text>
 
             {/* Baseline */}

@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using HullSizingService.Data;
+using HullSizingService.Services.Geometry;
+using HullSizingService.Services.ShipD;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -145,6 +147,12 @@ try
         new NavArch.UnitConversion.Services.UnitConverter(null));
     Log.Information("Unit conversion service registered with default config path");
 
+    // ShipD adapter & validation services
+    builder.Services.AddScoped<IShipDParameterAdapter, ShipDParameterAdapter>();
+    builder.Services.AddScoped<IShipDConstraintValidator, ShipDConstraintValidator>();
+    builder.Services.AddScoped<IShipDHullGeometryService, ShipDHullGeometryService>();
+    Log.Information("ShipD parameterization and geometry services registered");
+
     // Mission Case Service
     builder.Services.AddScoped<HullSizingService.Services.IMissionCaseService, HullSizingService.Services.MissionCaseService>();
     Log.Information("Mission case service registered");
@@ -269,6 +277,12 @@ try
     // Rate Limiting
     builder.Services.AddRateLimiter(options =>
     {
+        // Adjust rate limits based on environment
+        // Development: Very high limits to avoid issues during testing
+        // Production: Standard limits for protection
+        var isDevelopment = builder.Environment.IsDevelopment();
+        var permitLimit = isDevelopment ? 10000 : 100; // Much higher limit for development
+
         options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
         {
             var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -276,7 +290,7 @@ try
                 partitionKey: clientIp,
                 factory: _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 100,
+                    PermitLimit = permitLimit,
                     Window = TimeSpan.FromMinutes(1),
                     QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0

@@ -214,3 +214,4 @@ export const EmptyResultsPanel: React.FC<EmptyResultsPanelProps> = ({
     </div>
   );
 };
+

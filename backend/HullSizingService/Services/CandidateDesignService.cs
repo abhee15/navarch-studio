@@ -263,7 +263,7 @@ public class CandidateDesignService : ICandidateDesignService
             Score = entity.Score,
             Rank = entity.Rank,
             IsSelected = entity.IsSelected,
-            GeomParamsJson = entity.GeometryJson,
+            GeometryJson = entity.GeometryJson,
             CreatedAt = entity.CreatedAt
         };
     }

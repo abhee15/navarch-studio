@@ -129,7 +129,14 @@ try
     // Rate Limiting (built into .NET 8)
     builder.Services.AddRateLimiter(options =>
     {
-        // Global rate limit: 100 requests per minute per IP
+        // Adjust rate limits based on environment
+        // Development: Very high limits to avoid issues during testing
+        // Production: Standard limits for protection
+        var isDevelopment = builder.Environment.IsDevelopment();
+        var permitLimit = isDevelopment ? 10000 : 100; // Much higher limit for development
+        var windowMinutes = isDevelopment ? 1 : 1;
+
+        // Global rate limit: 100 requests per minute per IP (or 10000 in dev)
         options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
         {
             var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -138,8 +145,8 @@ try
                 partitionKey: clientIp,
                 factory: _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 100,
-                    Window = TimeSpan.FromMinutes(1),
+                    PermitLimit = permitLimit,
+                    Window = TimeSpan.FromMinutes(windowMinutes),
                     QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0  // Don't queue requests, reject immediately
                 });

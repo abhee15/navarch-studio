@@ -1,0 +1,53 @@
+<testsuites id="" name="" tests="4" failures="1" skipped="0" errors="0" time="156.341377">
+<testsuite name="shipd-geometry-integration.spec.ts" timestamp="2025-11-13T03:54:52.351Z" hostname="chromium" tests="4" failures="1" skipped="0" time="150.167" errors="0">
+<testcase name="ShipD Geometry Integration › should create mission case with ShipD taxonomy and geometry details" classname="shipd-geometry-integration.spec.ts" time="60.044">
+<failure message="shipd-geometry-integration.spec.ts:61:3 should create mission case with ShipD taxonomy and geometry details" type="FAILURE">
+<![CDATA[  [chromium] › shipd-geometry-integration.spec.ts:61:3 › ShipD Geometry Integration › should create mission case with ShipD taxonomy and geometry details 
+
+    TimeoutError: locator.waitFor: Timeout 15000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: /New Brief|Create Brief|New/i }).first() to be visible
+
+
+      68 |     // Look for "New Brief" button - try multiple selectors
+      69 |     const newBriefButton = page.getByRole("button", { name: /New Brief|Create Brief|New/i }).first();
+    > 70 |     await newBriefButton.waitFor({ state: "visible", timeout: 15000 });
+         |                          ^
+      71 |     await newBriefButton.click();
+      72 |
+      73 |     // Wait for wizard to appear
+        at C:\Abhi\Projects\Sri\navarch-studio\frontend\e2e\shipd-geometry-integration.spec.ts:70:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\shipd-geometry-integration-7f89f-xonomy-and-geometry-details-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\shipd-geometry-integration-7f89f-xonomy-and-geometry-details-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[Login may have completed, current URL: http://localhost:3000/login
+
+[[ATTACHMENT|shipd-geometry-integration-7f89f-xonomy-and-geometry-details-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|shipd-geometry-integration-7f89f-xonomy-and-geometry-details-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="ShipD Geometry Integration › should display ShipD features in candidate card" classname="shipd-geometry-integration.spec.ts" time="61.33">
+<system-out>
+<![CDATA[Login may have completed, current URL: http://localhost:3000/login
+ℹ No candidate cards found - skipping test
+]]>
+</system-out>
+</testcase>
+<testcase name="ShipD Geometry Integration › should show ShipD tab and panels in candidate workspace" classname="shipd-geometry-integration.spec.ts" time="15.734">
+<system-out>
+<![CDATA[ℹ On mission cases list - need existing run with candidates to test workspace
+]]>
+</system-out>
+</testcase>
+<testcase name="ShipD Geometry Integration › should verify 3D visualization uses ShipD geometry" classname="shipd-geometry-integration.spec.ts" time="13.059">
+</testcase>
+</testsuite>
+</testsuites>

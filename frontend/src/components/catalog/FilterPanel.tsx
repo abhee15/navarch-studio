@@ -3,6 +3,9 @@ import { Search, Filter, X, ChevronDown } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
+import { Select } from "../ui/select";
+import { getShipDVesselTaxonomy } from "../../services/catalogApi";
+import type { ShipDVesselTaxonomy } from "../../types/sizing";
 
 export interface CatalogFilters {
   searchText: string;
@@ -10,6 +13,12 @@ export interface CatalogFilters {
   statuses: string[];
   lppRange: [number, number];
   cbRange: [number, number];
+  // ShipD taxonomy filters
+  vesselCategory?: string;
+  shipdVesselType?: string;
+  bowFamily?: string;
+  midshipFamily?: string;
+  sternFamily?: string;
 }
 
 interface FilterPanelProps {
@@ -28,6 +37,44 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localSearchText, setLocalSearchText] = useState(filters.searchText);
+  const [taxonomy, setTaxonomy] = useState<ShipDVesselTaxonomy[]>([]);
+  const [loadingTaxonomy, setLoadingTaxonomy] = useState(false);
+
+  // Load ShipD taxonomy on mount
+  useEffect(() => {
+    const loadTaxonomy = async () => {
+      setLoadingTaxonomy(true);
+      try {
+        const data = await getShipDVesselTaxonomy();
+        setTaxonomy(data);
+      } catch (error) {
+        console.error("Failed to load ShipD taxonomy:", error);
+      } finally {
+        setLoadingTaxonomy(false);
+      }
+    };
+    loadTaxonomy();
+  }, []);
+
+  // Get unique categories from taxonomy
+  const categories = Array.from(new Set(taxonomy.map((t) => t.category))).sort();
+
+  // Get vessel types for selected category
+  const vesselTypesForCategory = filters.vesselCategory
+    ? taxonomy
+        .filter((t) => t.category === filters.vesselCategory)
+        .map((t) => ({ value: t.type, label: t.displayName }))
+    : [];
+
+  // Get taxonomy entry for selected vessel type
+  const selectedTaxonomyEntry = filters.shipdVesselType
+    ? taxonomy.find((t) => t.type === filters.shipdVesselType)
+    : null;
+
+  // Get families from selected taxonomy entry
+  const bowFamilies = selectedTaxonomyEntry?.bowFamilies || [];
+  const midshipFamilies = selectedTaxonomyEntry?.midshipFamilies || [];
+  const sternFamilies = selectedTaxonomyEntry?.sternFamilies || [];
 
   // Debounce search text
   useEffect(() => {
@@ -62,6 +109,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       statuses: [],
       lppRange: [0, 500],
       cbRange: [0.3, 1.0],
+      vesselCategory: undefined,
+      shipdVesselType: undefined,
+      bowFamily: undefined,
+      midshipFamily: undefined,
+      sternFamily: undefined,
     });
   };
 
@@ -72,7 +124,12 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.lppRange[0] > 0 ||
     filters.lppRange[1] < 500 ||
     filters.cbRange[0] > 0.3 ||
-    filters.cbRange[1] < 1.0;
+    filters.cbRange[1] < 1.0 ||
+    filters.vesselCategory ||
+    filters.shipdVesselType ||
+    filters.bowFamily ||
+    filters.midshipFamily ||
+    filters.sternFamily;
 
   return (
     <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -253,6 +310,164 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               </div>
             </div>
           </div>
+
+          {/* ShipD Taxonomy Filters */}
+          {!loadingTaxonomy && taxonomy.length > 0 && (
+            <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">ShipD Taxonomy</Label>
+                <div className="space-y-3">
+                  {/* Vessel Category */}
+                  <div>
+                    <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
+                      Category
+                    </Label>
+                    <Select
+                      value={filters.vesselCategory || ""}
+                      onChange={(value: string) =>
+                        onFiltersChange({
+                          ...filters,
+                          vesselCategory: value || undefined,
+                          shipdVesselType: undefined, // Reset vessel type when category changes
+                          bowFamily: undefined,
+                          midshipFamily: undefined,
+                          sternFamily: undefined,
+                        })
+                      }
+                      options={[
+                        { value: "", label: "All Categories" },
+                        ...categories.map((cat) => ({ value: cat, label: cat })),
+                      ]}
+                      placeholder="All Categories"
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Vessel Type (filtered by category) */}
+                  {filters.vesselCategory && vesselTypesForCategory.length > 0 && (
+                    <div>
+                      <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
+                        Vessel Type
+                      </Label>
+                      <Select
+                        value={filters.shipdVesselType || ""}
+                        onChange={(value: string) =>
+                          onFiltersChange({
+                            ...filters,
+                            shipdVesselType: value || undefined,
+                            bowFamily: undefined,
+                            midshipFamily: undefined,
+                            sternFamily: undefined,
+                          })
+                        }
+                        options={[
+                          { value: "", label: "All Types" },
+                          ...vesselTypesForCategory.map((vt) => ({
+                            value: vt.value,
+                            label: vt.label,
+                          })),
+                        ]}
+                        placeholder="All Types"
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+
+                  {/* Hull Families (shown when vessel type is selected) */}
+                  {selectedTaxonomyEntry && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Bow Family */}
+                      {bowFamilies.length > 0 && (
+                        <div>
+                          <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
+                            Bow Family
+                          </Label>
+                          <Select
+                            value={filters.bowFamily || ""}
+                            onChange={(value: string) =>
+                              onFiltersChange({
+                                ...filters,
+                                bowFamily: value || undefined,
+                              })
+                            }
+                            options={[
+                              { value: "", label: "All" },
+                              ...bowFamilies.map((family) => ({
+                                value: family,
+                                label: family
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase()),
+                              })),
+                            ]}
+                            placeholder="All"
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+
+                      {/* Midship Family */}
+                      {midshipFamilies.length > 0 && (
+                        <div>
+                          <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
+                            Midship Family
+                          </Label>
+                          <Select
+                            value={filters.midshipFamily || ""}
+                            onChange={(value: string) =>
+                              onFiltersChange({
+                                ...filters,
+                                midshipFamily: value || undefined,
+                              })
+                            }
+                            options={[
+                              { value: "", label: "All" },
+                              ...midshipFamilies.map((family) => ({
+                                value: family,
+                                label: family
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase()),
+                              })),
+                            ]}
+                            placeholder="All"
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+
+                      {/* Stern Family */}
+                      {sternFamilies.length > 0 && (
+                        <div>
+                          <Label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
+                            Stern Family
+                          </Label>
+                          <Select
+                            value={filters.sternFamily || ""}
+                            onChange={(value: string) =>
+                              onFiltersChange({
+                                ...filters,
+                                sternFamily: value || undefined,
+                              })
+                            }
+                            options={[
+                              { value: "", label: "All" },
+                              ...sternFamilies.map((family) => ({
+                                value: family,
+                                label: family
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase()),
+                              })),
+                            ]}
+                            placeholder="All"
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Quick Filters */}
           <div>

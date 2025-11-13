@@ -40,6 +40,56 @@ export const catalogColumns = [
     },
   }),
 
+  // ShipD Taxonomy (if available)
+  columnHelper.display({
+    id: "shipdTaxonomy",
+    size: 180,
+    header: () => <div className="text-center">ShipD Taxonomy</div>,
+    cell: ({ row }) => {
+      const hull = row.original;
+      if (!hull.vesselCategory && !hull.shipdVesselType) {
+        return <span className="text-gray-400 dark:text-gray-500 text-xs">—</span>;
+      }
+
+      return (
+        <div className="flex flex-col gap-1 text-xs">
+          {hull.vesselCategory && (
+            <span className="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium">
+              {hull.vesselCategory}
+            </span>
+          )}
+          {hull.shipdVesselType && (
+            <span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+              {hull.shipdVesselType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+            </span>
+          )}
+          {(hull.bowFamily || hull.midshipFamily || hull.sternFamily) && (
+            <div className="flex gap-1 flex-wrap">
+              {hull.bowFamily && (
+                <span className="px-1 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[10px]">
+                  B: {hull.bowFamily.split("_")[0]}
+                </span>
+              )}
+              {hull.midshipFamily && (
+                <span className="px-1 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-[10px]">
+                  M: {hull.midshipFamily.split("_")[0]}
+                </span>
+              )}
+              {hull.sternFamily && (
+                <span className="px-1 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px]">
+                  S: {hull.sternFamily.split("_")[0]}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    },
+    meta: {
+      hideBelow: "lg", // Hide on smaller screens
+    },
+  }),
+
   // Lpp (m)
   columnHelper.accessor("lpp", {
     id: "lpp",

@@ -3,6 +3,8 @@ import * as THREE from "three";
 import type { CandidateDesign } from "../../../types/sizing";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { generateHull3DGeometry } from "../../../utils/hullShapeGenerator";
+import { generateShipDHull3D } from "../../../utils/shipdGeometryGenerator";
+import { useStore } from "../../../stores";
 
 interface ParametricHull3DProps {
   candidate: CandidateDesign;
@@ -39,6 +41,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
   // Dark mode: brighter blue (blue-400) for contrast against dark gray background
   const hullColor = color || (theme === "dark" ? "#60a5fa" : "#1e40af");
 
+  const { sizingStore } = useStore();
+
   // Generate vessel-type-specific hull geometry
   const hullGeometry = useMemo(() => {
     const lpp = candidate.lppM || 50;
@@ -52,7 +56,64 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
       return new THREE.BufferGeometry();
     }
 
-    // Use vessel-type-specific hull shape generator
+    // Check if ShipD geometry is available (from backend)
+    if (candidate.geometryJson) {
+      try {
+        const sections = JSON.parse(candidate.geometryJson) as {
+          stations?: Array<{
+            position: number;
+            offsets: Record<number, number>;
+            hasBulb?: boolean;
+            bulbOffsets?: Record<number, number>;
+          }>;
+          stationPositions?: number[];
+        };
+        if (sections && sections.stations && Array.isArray(sections.stations)) {
+          // Use ShipD geometry from backend
+          return generateShipDHull3D({
+            sections: {
+              stations: sections.stations,
+              stationPositions: sections.stationPositions || [],
+            },
+            lppM: lpp,
+          });
+        }
+      } catch (error) {
+        console.warn(
+          "[ParametricHull3D] Failed to parse ShipD geometry, falling back to parametric:",
+          error
+        );
+      }
+    }
+
+    // Check if ShipD parameters are available (generate from vector)
+    if (
+      candidate.shipdParametersJson &&
+      sizingStore.shipdParameters &&
+      sizingStore.shipdParameters.length > 0
+    ) {
+      try {
+        const shipdVector = JSON.parse(candidate.shipdParametersJson);
+        if (Array.isArray(shipdVector) && shipdVector.length === 45) {
+          // Generate ShipD geometry from vector
+          return generateShipDHull3D({
+            shipdVector,
+            lppM: lpp,
+            beamM: beam,
+            draftM: draft,
+            metadata: sizingStore.shipdParameters,
+            resolution,
+          });
+        }
+      } catch (error) {
+        console.warn(
+          "[ParametricHull3D] Failed to generate ShipD geometry from vector, falling back to parametric:",
+          error
+        );
+      }
+    }
+
+    // Fallback: Use vessel-type-specific hull shape generator
     // Adjust resolution based on prop (thumbnails use lower resolution)
     const longitudinalSegments = Math.max(10, Math.floor(60 * resolution));
     const verticalSegments = Math.max(8, Math.floor(40 * resolution));
@@ -86,6 +147,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
     candidate.cwp,
     candidate.cm,
     candidate.lcbPctLpp,
+    candidate.geometryJson,
+    candidate.shipdParametersJson,
+    sizingStore.shipdParameters,
     resolution,
   ]);
 

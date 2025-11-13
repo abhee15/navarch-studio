@@ -4,6 +4,7 @@ using System.Text.Json;
 using HullSizingService.Services.Integration;
 using Shared.DTOs.Sizing;
 using Shared.Models.Sizing;
+using Shared.DTOs.ShipD;
 
 namespace HullSizingService.Services.ShipD;
 
@@ -121,6 +122,16 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             warnings.Add("One or more hull families were not specified; using defaults during ShipD processing.");
         }
 
+        // Apply conditional parameters from AdditionalParameters
+        ApplyConditionalParameters(
+            vector,
+            runRequest.Options?.AdditionalParameters,
+            bowFamily,
+            midshipFamily,
+            sternFamily,
+            parameterMetadata,
+            warnings);
+
         IDictionary<string, object>? additional = null;
         if (runRequest.Options?.AdditionalParameters != null && runRequest.Options.AdditionalParameters.Count > 0)
         {
@@ -180,5 +191,297 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             Warnings: warnings);
 
         return result;
+    }
+
+    /// <summary>
+    /// Applies conditional parameters from AdditionalParameters to the ShipD vector.
+    /// Maps user inputs to ShipD parameter indices based on selected families.
+    /// </summary>
+    private void ApplyConditionalParameters(
+        decimal[] vector,
+        IDictionary<string, object>? additionalParameters,
+        string? bowFamily,
+        string? midshipFamily,
+        string? sternFamily,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata,
+        List<string> warnings)
+    {
+        if (additionalParameters == null || additionalParameters.Count == 0)
+        {
+            return;
+        }
+
+        // Try to deserialize as ShipDAdditionalParameters
+        ShipDAdditionalParameters? additional = null;
+        try
+        {
+            var json = JsonSerializer.Serialize(additionalParameters);
+            additional = JsonSerializer.Deserialize<ShipDAdditionalParameters>(json);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to deserialize AdditionalParameters as ShipDAdditionalParameters. Attempting manual mapping.");
+        }
+
+        if (additional == null)
+        {
+            // Fallback: try manual mapping from dictionary
+            ApplyConditionalParametersFromDictionary(vector, additionalParameters, bowFamily, midshipFamily, sternFamily, metadata, warnings);
+            return;
+        }
+
+        // Section Geometry (Image 1)
+        if (additional.FlareAngleDeg.HasValue)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 8); // Beta
+            if (param != null)
+            {
+                vector[8] = NormalizeValue(additional.FlareAngleDeg.Value, param.Min, param.Max, param.Mean, param.StdDev);
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied flare angle: {Flare}° (normalized: {Normalized})", additional.FlareAngleDeg.Value, vector[8]);
+            }
+        }
+
+        if (additional.DeadriseAngleDeg.HasValue)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 19); // Cdrft
+            if (param != null)
+            {
+                vector[19] = NormalizeValue(additional.DeadriseAngleDeg.Value, param.Min, param.Max, param.Mean, param.StdDev);
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied deadrise angle: {Deadrise}° (normalized: {Normalized})", additional.DeadriseAngleDeg.Value, vector[19]);
+            }
+        }
+
+        // Chine type affects Rc (index 9) and Rk (index 10)
+        if (!string.IsNullOrEmpty(additional.ChineType))
+        {
+            if (additional.ChineType.Equals("hard", StringComparison.OrdinalIgnoreCase))
+            {
+                // Hard chine: sharper transition, lower Rc, higher Rk
+                vector[9] = 0.2m;  // Lower curvature
+                vector[10] = 0.8m; // Higher knuckle
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied hard chine: Rc=0.2, Rk=0.8");
+            }
+            else if (additional.ChineType.Equals("soft", StringComparison.OrdinalIgnoreCase))
+            {
+                // Soft chine: rounded transition, higher Rc, lower Rk
+                vector[9] = 0.6m;  // Higher curvature
+                vector[10] = 0.3m; // Lower knuckle
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied soft chine: Rc=0.6, Rk=0.3");
+            }
+        }
+
+        // Tumblehome toggle (bit_EP_T, index 21)
+        if (additional.TumblehomeEnabled == true && midshipFamily == "fine_midship")
+        {
+            vector[21] = 1.0m;
+            _logger.LogDebug("[SHIPD_ADAPTER] Enabled tumblehome for fine_midship");
+        }
+
+        // Longitudinal Segmentation (Image 2)
+        if (additional.BowLengthRatio.HasValue)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 1); // Lb
+            if (param != null)
+            {
+                vector[1] = Math.Clamp(additional.BowLengthRatio.Value, param.Min ?? 0m, param.Max ?? 1m);
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied bow length ratio: {Ratio}", vector[1]);
+            }
+        }
+
+        if (additional.SternLengthRatio.HasValue)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 2); // Ls
+            if (param != null)
+            {
+                vector[2] = Math.Clamp(additional.SternLengthRatio.Value, param.Min ?? 0m, param.Max ?? 1m);
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied stern length ratio: {Ratio}", vector[2]);
+            }
+        }
+
+        // Validate Lb + Ls < 1.0 (to ensure Lm > 0)
+        if (vector[1] + vector[2] >= 1.0m)
+        {
+            var excess = vector[1] + vector[2] - 0.99m;
+            vector[1] = Math.Max(0.05m, vector[1] - excess / 2);
+            vector[2] = Math.Max(0.05m, vector[2] - excess / 2);
+            warnings.Add($"Adjusted Lb and Ls to ensure Lm > 0 (Lb={vector[1]:F3}, Ls={vector[2]:F3})");
+        }
+
+        if (additional.BowRakeAngleDeg.HasValue)
+        {
+            // Bow rake uses same Beta parameter (index 8) as flare
+            // If flare is already set, use the average or prefer rake
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 8);
+            if (param != null)
+            {
+                if (vector[8] == 0m || !additional.FlareAngleDeg.HasValue)
+                {
+                    vector[8] = NormalizeValue(additional.BowRakeAngleDeg.Value, param.Min, param.Max, param.Mean, param.StdDev);
+                }
+                else
+                {
+                    // Both flare and rake specified - use average
+                    var flareNorm = NormalizeValue(additional.FlareAngleDeg.Value, param.Min, param.Max, param.Mean, param.StdDev);
+                    var rakeNorm = NormalizeValue(additional.BowRakeAngleDeg.Value, param.Min, param.Max, param.Mean, param.StdDev);
+                    vector[8] = (flareNorm + rakeNorm) / 2m;
+                }
+            }
+        }
+
+        if (additional.SternRakeAngleDeg.HasValue)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 27); // Beta_trans
+            if (param != null)
+            {
+                vector[27] = NormalizeValue(additional.SternRakeAngleDeg.Value, param.Min, param.Max, param.Mean, param.StdDev);
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied stern rake angle: {Rake}° (normalized: {Normalized})", additional.SternRakeAngleDeg.Value, vector[27]);
+            }
+        }
+
+        // Bulb Geometry (Image 3) - only if bulbous_bow selected
+        if (bowFamily == "bulbous_bow")
+        {
+            // Enable bulb
+            vector[31] = 1.0m; // bit_BB
+
+            if (additional.BulbLengthRatio.HasValue)
+            {
+                var param = metadata.FirstOrDefault(m => m.ParameterIndex == 33); // Lbb
+                if (param != null)
+                {
+                    vector[33] = Math.Clamp(additional.BulbLengthRatio.Value, param.Min ?? 0m, param.Max ?? 0.2m);
+                }
+            }
+
+            if (additional.BulbWidthRatio.HasValue)
+            {
+                var param = metadata.FirstOrDefault(m => m.ParameterIndex == 35); // Bbb
+                if (param != null)
+                {
+                    vector[35] = Math.Clamp(additional.BulbWidthRatio.Value, param.Min ?? 0m, param.Max ?? 1m);
+                }
+            }
+
+            if (additional.BulbHeightRatio.HasValue)
+            {
+                var param = metadata.FirstOrDefault(m => m.ParameterIndex == 34); // Hbb
+                if (param != null)
+                {
+                    vector[34] = Math.Clamp(additional.BulbHeightRatio.Value, param.Min ?? 0m, param.Max ?? 1m);
+                }
+            }
+
+            if (additional.BulbAsymmetryFactor.HasValue)
+            {
+                var param = metadata.FirstOrDefault(m => m.ParameterIndex == 36); // Lbbm
+                if (param != null)
+                {
+                    vector[36] = Math.Clamp(additional.BulbAsymmetryFactor.Value, param.Min ?? -1m, param.Max ?? 1m);
+                }
+            }
+
+            if (additional.BulbFilletRadius.HasValue)
+            {
+                var param = metadata.FirstOrDefault(m => m.ParameterIndex == 37); // Rbb
+                if (param != null)
+                {
+                    vector[37] = Math.Clamp(additional.BulbFilletRadius.Value, param.Min ?? 0.05m, param.Max ?? 0.33m);
+                }
+            }
+
+            _logger.LogDebug("[SHIPD_ADAPTER] Applied bulb geometry for bulbous_bow");
+        }
+    }
+
+    /// <summary>
+    /// Fallback method to apply conditional parameters from dictionary when ShipDAdditionalParameters deserialization fails.
+    /// </summary>
+    private void ApplyConditionalParametersFromDictionary(
+        decimal[] vector,
+        IDictionary<string, object> additionalParameters,
+        string? bowFamily,
+        string? midshipFamily,
+        string? sternFamily,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata,
+        List<string> warnings)
+    {
+        // Try to extract common parameter names from dictionary
+        foreach (var kvp in additionalParameters)
+        {
+            try
+            {
+                var key = kvp.Key.ToLowerInvariant();
+                var value = Convert.ToDecimal(kvp.Value);
+
+                // Map common parameter names to indices
+                switch (key)
+                {
+                    case "flareangledeg":
+                    case "flare_angle_deg":
+                    case "flare":
+                        var flareParam = metadata.FirstOrDefault(m => m.ParameterIndex == 8);
+                        if (flareParam != null)
+                        {
+                            vector[8] = NormalizeValue(value, flareParam.Min, flareParam.Max, flareParam.Mean, flareParam.StdDev);
+                        }
+                        break;
+
+                    case "deadriseangledeg":
+                    case "deadrise_angle_deg":
+                    case "deadrise":
+                        var deadriseParam = metadata.FirstOrDefault(m => m.ParameterIndex == 19);
+                        if (deadriseParam != null)
+                        {
+                            vector[19] = NormalizeValue(value, deadriseParam.Min, deadriseParam.Max, deadriseParam.Mean, deadriseParam.StdDev);
+                        }
+                        break;
+
+                    case "bowlengthratio":
+                    case "bow_length_ratio":
+                    case "lb":
+                        var lbParam = metadata.FirstOrDefault(m => m.ParameterIndex == 1);
+                        if (lbParam != null)
+                        {
+                            vector[1] = Math.Clamp(value, lbParam.Min ?? 0m, lbParam.Max ?? 1m);
+                        }
+                        break;
+
+                    case "sternlengthratio":
+                    case "stern_length_ratio":
+                    case "ls":
+                        var lsParam = metadata.FirstOrDefault(m => m.ParameterIndex == 2);
+                        if (lsParam != null)
+                        {
+                            vector[2] = Math.Clamp(value, lsParam.Min ?? 0m, lsParam.Max ?? 1m);
+                        }
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to apply parameter {Key} from AdditionalParameters", kvp.Key);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Normalizes a physical value to ShipD's 0-1 range using min/max bounds.
+    /// </summary>
+    private decimal NormalizeValue(decimal physicalValue, decimal? min, decimal? max, decimal? mean, decimal? stdDev)
+    {
+        if (!min.HasValue || !max.HasValue || min.Value >= max.Value)
+        {
+            // Fallback: use mean and stdDev if available
+            if (mean.HasValue && stdDev.HasValue && stdDev.Value > 0)
+            {
+                var normalizedValue = (physicalValue - mean.Value) / (3 * stdDev.Value) + 0.5m;
+                return Math.Clamp(normalizedValue, 0m, 1m);
+            }
+            return 0.5m; // Default to middle
+        }
+
+        // Linear normalization: (value - min) / (max - min)
+        var normalizedResult = (physicalValue - min.Value) / (max.Value - min.Value);
+        return Math.Clamp(normalizedResult, 0m, 1m);
     }
 }

@@ -23,6 +23,149 @@ namespace DataService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DataService.Data.ShipD.ShipDParameterMetadata", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Group")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("group");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("label");
+
+                    b.Property<decimal?>("Max")
+                        .HasColumnType("numeric(12,6)")
+                        .HasColumnName("max");
+
+                    b.Property<decimal?>("Mean")
+                        .HasColumnType("numeric(12,6)")
+                        .HasColumnName("mean");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata_json");
+
+                    b.Property<decimal?>("Min")
+                        .HasColumnType("numeric(12,6)")
+                        .HasColumnName("min");
+
+                    b.Property<int>("ParameterIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("parameter_index");
+
+                    b.Property<decimal?>("StdDev")
+                        .HasColumnType("numeric(12,6)")
+                        .HasColumnName("std_dev");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("unit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_shipd_parameter_metadata");
+
+                    b.HasIndex("ParameterIndex")
+                        .IsUnique()
+                        .HasDatabaseName("ix_shipd_parameter_metadata_parameter_index");
+
+                    b.ToTable("shipd_parameter_metadata", "data");
+                });
+
+            modelBuilder.Entity("DataService.Data.ShipD.ShipDVesselTaxonomy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AdditionalParametersJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("additional_parameters_json");
+
+                    b.Property<string>("BowFamiliesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("bow_families_json");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("category");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("display_name");
+
+                    b.Property<int>("MaskVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("mask_version");
+
+                    b.Property<string>("MidshipFamiliesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("midship_families_json");
+
+                    b.Property<string>("SternFamiliesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("stern_families_json");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_shipd_vessel_taxonomy");
+
+                    b.HasIndex("Category", "Type")
+                        .IsUnique()
+                        .HasDatabaseName("ix_shipd_vessel_taxonomy_category_type");
+
+                    b.ToTable("shipd_vessel_taxonomy", "data");
+                });
+
             modelBuilder.Entity("NavArch.Shared.Models.MotionResponse", b =>
                 {
                     b.Property<Guid>("Id")
@@ -744,6 +887,11 @@ namespace DataService.Migrations
                         .HasColumnType("decimal(10,3)")
                         .HasColumnName("beam_m");
 
+                    b.Property<string>("BowFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bow_family");
+
                     b.Property<decimal>("Cb")
                         .HasColumnType("decimal(5,4)")
                         .HasColumnName("cb");
@@ -794,6 +942,10 @@ namespace DataService.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("engine_type");
 
+                    b.Property<int?>("FamilyMaskVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("family_mask_version");
+
                     b.Property<string>("HullGeometryFile")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -807,6 +959,11 @@ namespace DataService.Migrations
                         .HasColumnType("decimal(10,3)")
                         .HasColumnName("lpp_m");
 
+                    b.Property<string>("MidshipFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("midship_family");
+
                     b.Property<string>("ResistanceCurve")
                         .HasColumnType("jsonb")
                         .HasColumnName("resistance_curve");
@@ -815,14 +972,33 @@ namespace DataService.Migrations
                         .HasColumnType("decimal(6,3)")
                         .HasColumnName("service_speed_ms");
 
+                    b.Property<string>("ShipdParametersJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("shipd_parameters_json");
+
+                    b.Property<string>("ShipdVesselType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("shipd_vessel_type");
+
                     b.Property<string>("Source")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("source");
 
+                    b.Property<string>("SternFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("stern_family");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<string>("VesselCategory")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("vessel_category");
 
                     b.Property<string>("VesselId")
                         .IsRequired()
@@ -848,6 +1024,9 @@ namespace DataService.Migrations
 
                     b.HasIndex("VesselType")
                         .HasDatabaseName("ix_vessels_real_vessel_type");
+
+                    b.HasIndex("VesselCategory", "ShipdVesselType")
+                        .HasDatabaseName("ix_vessels_real_shipd_taxonomy");
 
                     b.HasIndex("LppM", "BeamM", "Cb")
                         .HasDatabaseName("ix_vessels_real_lpp_m_beam_m_cb");

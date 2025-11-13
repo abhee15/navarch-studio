@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Shared.DTOs.Sizing;
 
 /// <summary>
@@ -10,6 +12,13 @@ public record SizingRunDto
     public string Mode { get; init; } = string.Empty;
     public string? LocksJson { get; init; }
     public string? OptionsJson { get; init; }
+    public string? VesselCategory { get; init; }
+    public string? VesselType { get; init; }
+    public string? BowFamily { get; init; }
+    public string? MidshipFamily { get; init; }
+    public string? SternFamily { get; init; }
+    public int? FamilyMaskVersion { get; init; }
+    public string? ShipdInputVectorJson { get; init; }
     public string RunStatus { get; init; } = string.Empty;
     public int? ComputeTimeMs { get; init; }
     public string? ErrorMessage { get; init; }
@@ -49,6 +58,13 @@ public record CreateSizingRunDto
     public string Mode { get; init; } = "first_principles";
     public SizingLocksDto? Locks { get; init; }
     public SizingOptionsDto? Options { get; init; }
+    public string? VesselCategory { get; init; }
+    public string? VesselType { get; init; }
+    public string? BowFamily { get; init; }
+    public string? MidshipFamily { get; init; }
+    public string? SternFamily { get; init; }
+    public int? FamilyMaskVersion { get; init; }
+    public string? ShipdInputVectorJson { get; init; }
 }
 
 /// <summary>
@@ -73,4 +89,5 @@ public record SizingOptionsDto
     public decimal? MinFn { get; init; }
     public decimal? MaxFn { get; init; }
     public bool IncludeGeometry { get; init; } = false;
+    public Dictionary<string, object>? AdditionalParameters { get; init; }
 }

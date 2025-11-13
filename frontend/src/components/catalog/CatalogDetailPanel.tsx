@@ -85,24 +85,106 @@ export const CatalogDetailPanel: React.FC<CatalogDetailPanelProps> = ({
                 )}
 
                 {/* Metadata */}
-                {hull.hullType && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                      Metadata
-                    </h4>
-                    <div className="space-y-2 text-sm">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    Metadata
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    {hull.hullType && (
                       <div className="flex justify-between">
                         <span className="text-gray-500 dark:text-gray-400">Type:</span>
                         <span className="font-medium text-gray-900 dark:text-white">
                           {hull.hullType}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Units:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {hull.units}
-                        </span>
-                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 dark:text-gray-400">Units:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {hull.units}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ShipD Taxonomy */}
+                {(hull.vesselCategory ||
+                  hull.shipdVesselType ||
+                  hull.bowFamily ||
+                  hull.midshipFamily ||
+                  hull.sternFamily) && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                      ShipD Taxonomy
+                    </h4>
+                    <div className="space-y-3">
+                      {hull.vesselCategory && (
+                        <div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                            Category
+                          </span>
+                          <span className="inline-block px-2 py-1 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium">
+                            {hull.vesselCategory}
+                          </span>
+                        </div>
+                      )}
+                      {hull.shipdVesselType && (
+                        <div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">
+                            Vessel Type
+                          </span>
+                          <span className="inline-block px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium">
+                            {hull.shipdVesselType
+                              .replace(/_/g, " ")
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </span>
+                        </div>
+                      )}
+                      {(hull.bowFamily || hull.midshipFamily || hull.sternFamily) && (
+                        <div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 block mb-2">
+                            Hull Families
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {hull.bowFamily && (
+                              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-green-100 dark:bg-green-900/30">
+                                <span className="text-xs font-semibold text-green-700 dark:text-green-300">
+                                  Bow:
+                                </span>
+                                <span className="text-xs text-green-700 dark:text-green-300">
+                                  {hull.bowFamily
+                                    .replace(/_/g, " ")
+                                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                                </span>
+                              </div>
+                            )}
+                            {hull.midshipFamily && (
+                              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-900/30">
+                                <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-300">
+                                  Midship:
+                                </span>
+                                <span className="text-xs text-yellow-700 dark:text-yellow-300">
+                                  {hull.midshipFamily
+                                    .replace(/_/g, " ")
+                                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                                </span>
+                              </div>
+                            )}
+                            {hull.sternFamily && (
+                              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-orange-100 dark:bg-orange-900/30">
+                                <span className="text-xs font-semibold text-orange-700 dark:text-orange-300">
+                                  Stern:
+                                </span>
+                                <span className="text-xs text-orange-700 dark:text-orange-300">
+                                  {hull.sternFamily
+                                    .replace(/_/g, " ")
+                                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

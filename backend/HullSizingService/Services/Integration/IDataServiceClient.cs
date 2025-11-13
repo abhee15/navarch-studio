@@ -1,4 +1,5 @@
 using Shared.DTOs.Catalog;
+using Shared.DTOs.ShipD;
 
 namespace HullSizingService.Services.Integration;
 
@@ -26,6 +27,16 @@ public interface IDataServiceClient
     /// Search for similar parametric hulls in the ML catalog using KNN
     /// </summary>
     Task<ParametricSearchResponse> SearchSimilarParametricHullsAsync(ParametricSearchRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetch ShipD parameter metadata (45 canonical parameters).
+    /// </summary>
+    Task<IReadOnlyList<ShipDParameterMetadataDto>> GetShipDParameterMetadataAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetch ShipD vessel taxonomy mappings.
+    /// </summary>
+    Task<IReadOnlyList<ShipDVesselTaxonomyDto>> GetShipDVesselTaxonomyAsync(CancellationToken cancellationToken = default);
 }
 
 public record WaterPropertiesResponse(

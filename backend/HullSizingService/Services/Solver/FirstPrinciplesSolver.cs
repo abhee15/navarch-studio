@@ -1,6 +1,7 @@
 using HullSizingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models.Sizing;
+using System.Linq;
 
 namespace HullSizingService.Services.Solver;
 
@@ -43,7 +44,7 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
     {
         var mission = request.MissionCase;
         var locks = request.Locks ?? new SizingLocksDto(false, false, false, false, false);
-        var options = request.Options ?? new SizingOptionsDto(null, 5, null, null);
+        var options = request.Options ?? new SizingOptionsDto(null, 5, null, null, null);
 
         // Initialize diagnostics
         var diagnostics = new SolverDiagnostics
@@ -62,10 +63,9 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         // Step 2: Get water properties (cached)
         var waterProps = await _waterService.GetWaterPropertiesAsync(15.0m, 35.0m, cancellationToken);
 
-        // Step 3: Get applicable hull families
         var families = await _familyService.GetApplicableFamiliesAsync(
             mission.MissionType,
-            null, // We'll calculate Fn per family
+            null,
             mission.CapDraftM,
             mission.CapBeamM,
             cancellationToken);
@@ -82,23 +82,28 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             diagnostics.FamiliesAfterFnFiltering = families.Count;
         }
 
-        // Filter by family hints if provided
         if (options.FamilyHints != null && options.FamilyHints.Any())
         {
+            var hintOrder = options.FamilyHints
+                .Select((hint, index) => new { hint, index })
+                .ToDictionary(x => x.hint, x => x.index, StringComparer.OrdinalIgnoreCase);
+
             var beforeHints = families.Count;
-            families = families.Where(f => options.FamilyHints.Contains(f.Family)).ToList();
+            families = families
+                .Where(f => hintOrder.ContainsKey(f.Family))
+                .OrderBy(f => hintOrder[f.Family])
+                .ToList();
             if (families.Count == 0)
             {
                 diagnostics.FailureReasons.Add($"family_hints_filtered_all_{beforeHints}_families");
             }
         }
+        else
+        {
+            families = families.OrderBy(f => f.Family).ToList();
+        }
 
         diagnostics.FamiliesAfterHintsFiltering = families.Count;
-
-        // Limit to max candidates
-        families = families.Take(options.MaxCandidates).ToList();
-
-        _logger.LogInformation("[SOLVER] Generating candidates for {Count} families", families.Count);
 
         if (families.Count == 0)
         {
@@ -107,16 +112,31 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             return (new List<SolverCandidate>(), diagnostics);
         }
 
-        // Step 4: Generate candidates for each family (in parallel)
-        var candidateTasks = families.Select(family => GenerateCandidateAsync(
-            family,
+        var primaryFamily = families.First();
+        if (families.Count > 1)
+        {
+            _logger.LogInformation("[SOLVER] Multiple families matched filters; using primary family '{Family}' for variant sweep.", primaryFamily.Family);
+        }
+
+        var variantCount = Math.Max(1, options.MaxCandidates);
+        diagnostics.FamiliesAfterHintsFiltering = 1;
+        var variantPlan = Enumerable.Range(0, variantCount)
+            .Select(index => (family: primaryFamily, variantIndex: index, variantCount: variantCount))
+            .ToList();
+
+        _logger.LogInformation("[SOLVER] Generating {VariantCount} candidate variants for family '{Family}'", variantCount, primaryFamily.Family);
+
+        // Step 4: Generate candidates for each variant (in parallel)
+        var candidateTasks = variantPlan.Select(plan => GenerateCandidateAsync(
+            plan.family,
             mission,
             targetDisplacementT,
             waterProps,
             locks,
             options,
-            cancellationToken
-        ));
+            plan.variantIndex,
+            plan.variantCount,
+            cancellationToken));
 
         var allCandidates = await Task.WhenAll(candidateTasks);
         var nullCount = allCandidates.Count(c => c == null);
@@ -177,20 +197,40 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         Services.Integration.WaterPropertiesResponse waterProps,
         SizingLocksDto locks,
         SizingOptionsDto options,
+        int variantIndex,
+        int variantCount,
         CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogDebug("[SOLVER] Generating candidate for family '{Family}'", family.Family);
+            _logger.LogDebug("[SOLVER] Generating candidate variant {Variant}/{VariantCount} for family '{Family}'", variantIndex + 1, variantCount, family.Family);
 
-            // Step 1: Pick Froude number from family band
-            var fnTarget = PickFroudeNumber(family, mission.ServiceSpeedKn, options);
+            // Step 1: Pick Froude number from family band, biasing by variant index
+            var variantFraction = variantCount <= 1
+                ? 0.5m
+                : (variantIndex + 1m) / (variantCount + 1m); // Distribute variants through range
 
-            // Step 2: Initial ratios from family midpoints
-            var lOverB = (family.LOverBMin + family.LOverBMax) / 2.0m;
-            var bOverT = (family.BOverTMin + family.BOverTMax) / 2.0m;
-            var dOverT = (family.DOverTMin + family.DOverTMax) / 2.0m;
-            var cb = (family.CbMin + family.CbMax) / 2.0m;
+            var fnTarget = PickFroudeNumber(family, mission.ServiceSpeedKn, options, variantFraction);
+
+            // Step 2: Interpolate geometric ratios within family bounds
+            static decimal Interpolate(decimal min, decimal max, decimal fraction)
+            {
+                if (max <= min)
+                {
+                    return min;
+                }
+                return min + (max - min) * fraction;
+            }
+
+            var lOverBFraction = variantFraction;
+            var bOverTFraction = variantCount <= 1 ? 0.5m : Math.Clamp(variantFraction + 0.15m, 0m, 1m);
+            var dOverTFraction = variantCount <= 1 ? 0.5m : Math.Clamp(variantFraction - 0.15m, 0m, 1m);
+            var cbFraction = variantFraction;
+
+            var lOverB = Interpolate(family.LOverBMin, family.LOverBMax, lOverBFraction);
+            var bOverT = Interpolate(family.BOverTMin, family.BOverTMax, bOverTFraction);
+            var dOverT = Interpolate(family.DOverTMin, family.DOverTMax, dOverTFraction);
+            var cb = Interpolate(family.CbMin, family.CbMax, cbFraction);
 
             // Step 3: Displacement closure
             var closureRequest = new ClosureRequest(
@@ -311,18 +351,19 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         }
     }
 
-    private decimal PickFroudeNumber(HullFamilyPreset family, decimal serviceSpeedKn, SizingOptionsDto options)
+    private decimal PickFroudeNumber(
+        HullFamilyPreset family,
+        decimal serviceSpeedKn,
+        SizingOptionsDto options,
+        decimal variantFraction)
     {
-        // Use user-specified range if provided
         var fnMin = options.MinFn ?? family.FnMin ?? 0.15m;
         var fnMax = options.MaxFn ?? family.FnMax ?? 0.30m;
 
-        // Pick Fn from band based on speed
-        // Higher speeds → upper band, lower speeds → lower band
-        var speedFactor = Math.Clamp(serviceSpeedKn / 25.0m, 0.0m, 1.0m); // Normalize 0-25 knots
-        var fnTarget = fnMin + (fnMax - fnMin) * speedFactor;
+        var speedFactor = Math.Clamp(serviceSpeedKn / 25.0m, 0.0m, 1.0m);
+        var fnBlend = Math.Clamp((speedFactor + variantFraction) / 2.0m, 0.0m, 1.0m);
 
-        return fnTarget;
+        return fnMin + (fnMax - fnMin) * fnBlend;
     }
 
     private async Task<decimal> EstimateTargetDisplacementAsync(MissionCase mission)
@@ -382,10 +423,18 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         MissionCase mission,
         CancellationToken cancellationToken)
     {
-        // Get KPI weights from database (system defaults)
-        var weights = await _context.KpiWeights
+        // Get KPI weights from database (system defaults). The table may contain multiple rows per metric if
+        // we have reseeded defaults in development. Collapse duplicates by taking the most recently inserted value.
+        var weightRecords = await _context.KpiWeights
             .Where(w => w.UserId == null) // System defaults
-            .ToDictionaryAsync(w => w.Metric, w => w.Weight, cancellationToken);
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        var weights = weightRecords
+            .GroupBy(w => w.Metric.ToLowerInvariant())
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(w => w.Id).First().Weight);
 
         // Default weights if not found
         var deltaWeight = weights.GetValueOrDefault("delta_balance", 0.35m);

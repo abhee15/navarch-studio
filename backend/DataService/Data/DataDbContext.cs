@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NavArch.Shared.Models;
+using DataService.Data.ShipD;
 using Shared.Models;
 
 namespace DataService.Data;
@@ -55,6 +56,9 @@ public class DataDbContext : DbContext
     public DbSet<EngineCurve> EngineCurves => Set<EngineCurve>();
     public DbSet<EnginePoint> EnginePoints => Set<EnginePoint>();
     public DbSet<SeaState> SeaStates => Set<SeaState>();
+
+    public DbSet<ShipDParameterMetadata> ShipDParameterMetadata => Set<ShipDParameterMetadata>();
+    public DbSet<ShipDVesselTaxonomy> ShipDVesselTaxonomies => Set<ShipDVesselTaxonomy>();
 
     // Seakeeping entities
     public DbSet<RaoResult> RaoResults => Set<RaoResult>();
@@ -643,9 +647,49 @@ public class DataDbContext : DbContext
             entity.Property(e => e.VesselId).IsRequired().HasMaxLength(200);
             entity.Property(e => e.VesselType).IsRequired().HasMaxLength(100);
 
+            // ShipD taxonomy fields
+            entity.Property(e => e.VesselCategory).HasMaxLength(50);
+            entity.Property(e => e.ShipdVesselType).HasMaxLength(50);
+            entity.Property(e => e.BowFamily).HasMaxLength(50);
+            entity.Property(e => e.MidshipFamily).HasMaxLength(50);
+            entity.Property(e => e.SternFamily).HasMaxLength(50);
+            entity.Property(e => e.ShipdParametersJson).HasColumnType("jsonb");
+
             entity.HasIndex(e => e.VesselType);
             entity.HasIndex(e => e.VesselId);
             entity.HasIndex(e => new { e.LppM, e.BeamM, e.Cb });
+
+            // Index for ShipD taxonomy filtering
+            entity.HasIndex(e => new { e.VesselCategory, e.ShipdVesselType })
+                .HasDatabaseName("ix_vessels_real_shipd_taxonomy");
+        });
+
+        // ShipD metadata
+        modelBuilder.Entity<ShipDParameterMetadata>(entity =>
+        {
+            entity.ToTable("shipd_parameter_metadata");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ParameterIndex).IsUnique();
+            entity.Property(e => e.Label).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Group).HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Unit).HasMaxLength(50);
+            entity.Property(e => e.Min).HasColumnType("numeric(12,6)");
+            entity.Property(e => e.Max).HasColumnType("numeric(12,6)");
+            entity.Property(e => e.Mean).HasColumnType("numeric(12,6)");
+            entity.Property(e => e.StdDev).HasColumnType("numeric(12,6)");
+        });
+
+        modelBuilder.Entity<ShipDVesselTaxonomy>(entity =>
+        {
+            entity.ToTable("shipd_vessel_taxonomy");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.Category, e.Type }).IsUnique();
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DisplayName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.MaskVersion).HasDefaultValue(1);
         });
 
         // BenchmarkTestCondition configuration - Test conditions in catalog_real schema

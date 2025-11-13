@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Shared.DTOs.Catalog;
+using Shared.DTOs.ShipD;
 
 namespace HullSizingService.Services.Integration;
 
@@ -162,6 +163,56 @@ public class DataServiceClient : IDataServiceClient
         {
             _logger.LogError(ex, "[DATA_CLIENT] Failed to search parametric hulls");
             return new ParametricSearchResponse { SimilarHulls = new List<SimilarParametricHullDto>() };
+        }
+    }
+
+    public async Task<IReadOnlyList<ShipDParameterMetadataDto>> GetShipDParameterMetadataAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("/api/v1/shipd/parameters", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[DATA_CLIENT] ShipD parameter metadata request failed: {StatusCode}", response.StatusCode);
+                return Array.Empty<ShipDParameterMetadataDto>();
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var payload = JsonSerializer.Deserialize<List<ShipDParameterMetadataDto>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            return payload ?? new List<ShipDParameterMetadataDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[DATA_CLIENT] Failed to fetch ShipD parameter metadata");
+            return Array.Empty<ShipDParameterMetadataDto>();
+        }
+    }
+
+    public async Task<IReadOnlyList<ShipDVesselTaxonomyDto>> GetShipDVesselTaxonomyAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("/api/v1/shipd/taxonomy", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[DATA_CLIENT] ShipD taxonomy request failed: {StatusCode}", response.StatusCode);
+                return Array.Empty<ShipDVesselTaxonomyDto>();
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var payload = JsonSerializer.Deserialize<List<ShipDVesselTaxonomyDto>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            return payload ?? new List<ShipDVesselTaxonomyDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[DATA_CLIENT] Failed to fetch ShipD taxonomy metadata");
+            return Array.Empty<ShipDVesselTaxonomyDto>();
         }
     }
 }

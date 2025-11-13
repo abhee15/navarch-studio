@@ -1,5 +1,7 @@
 using DataService.Data;
+using DataService.Data.Seeds;
 using DataService.Services;
+using DataService.Services.ShipD;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -222,14 +224,18 @@ try
 
     // Catalog services
     builder.Services.AddScoped<DataService.Data.Seeds.CatalogSeeder>();
+    builder.Services.AddScoped<ShipDMetadataSeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.CatalogWaterService>();
     builder.Services.AddScoped<DataService.Services.Catalog.VesselCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.CatalogVesselSeeder>();
+    builder.Services.AddScoped<DataService.Services.Catalog.IVesselTypeMapper, DataService.Services.Catalog.VesselTypeMapper>();
     builder.Services.AddScoped<DataService.Services.Catalog.RealWorldKnnService>();
+    builder.Services.AddScoped<DataService.Services.Catalog.CatalogTaxonomySeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricCatalogSeeder>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricDemoDataGenerator>();
     builder.Services.AddScoped<DataService.Services.Catalog.ParametricKnnService>();
+    builder.Services.AddScoped<IShipDMetadataService, ShipDMetadataService>();
     builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkHullImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkTestImporter>();
     builder.Services.AddSingleton<DataService.Services.Catalog.WageningenBSeriesService>();
@@ -299,7 +305,13 @@ try
     // Rate Limiting
     builder.Services.AddRateLimiter(options =>
     {
-        // Global rate limit: 100 requests per minute per IP
+        // Adjust rate limits based on environment
+        // Development: Very high limits to avoid issues during testing
+        // Production: Standard limits for protection
+        var isDevelopment = builder.Environment.IsDevelopment();
+        var permitLimit = isDevelopment ? 10000 : 100; // Much higher limit for development
+
+        // Global rate limit: 100 requests per minute per IP (or 10000 in dev)
         options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
         {
             var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -307,7 +319,7 @@ try
                 partitionKey: clientIp,
                 factory: _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 100,
+                    PermitLimit = permitLimit,
                     Window = TimeSpan.FromMinutes(1),
                     QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0
@@ -494,6 +506,28 @@ try
                 Console.WriteLine($"[SEED] WARNING: Failed to seed template vessel: {seedEx.Message}");
                 Log.Warning(seedEx, "[SEED] Failed to seed template vessel: {Message}", seedEx.Message);
                 // Don't throw - seeding is optional, but log warning for monitoring
+            }
+
+            // Seed ShipD metadata (runs in all environments)
+            Console.WriteLine("[SEED] Checking for ShipD metadata...");
+            Log.Information("[SEED] Checking for ShipD metadata...");
+            try
+            {
+                var shipdSeeder = scope.ServiceProvider.GetRequiredService<ShipDMetadataSeeder>();
+                await shipdSeeder.SeedAsync(CancellationToken.None);
+                Console.WriteLine("[SEED] ShipD metadata seeding completed.");
+                Log.Information("[SEED] ShipD metadata seeding completed.");
+
+                // Seed catalog taxonomy after ShipD metadata is available
+                var catalogTaxonomySeeder = scope.ServiceProvider.GetRequiredService<DataService.Services.Catalog.CatalogTaxonomySeeder>();
+                await catalogTaxonomySeeder.SeedAsync(CancellationToken.None);
+                Console.WriteLine("[SEED] Catalog taxonomy seeding completed.");
+                Log.Information("[SEED] Catalog taxonomy seeding completed.");
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"[SEED] WARNING: Failed to seed ShipD metadata or catalog taxonomy: {seedEx.Message}");
+                Log.Warning(seedEx, "[SEED] Failed to seed ShipD metadata or catalog taxonomy: {Message}", seedEx.Message);
             }
 
             // Seed catalog data (runs in all environments)

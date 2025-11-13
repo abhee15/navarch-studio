@@ -8,8 +8,10 @@ import type {
   CandidateDesign,
   ExportFormat,
 } from "../types/sizing";
+import type { ShipDParameterMetadata, ShipDVesselTaxonomy } from "../types/sizing";
 
 const BASE_PATH = "/hull-sizing";
+const SHIPD_PATH = "/shipd";
 
 // Mission Cases
 export const createMissionCase = async (dto: CreateMissionCaseDto): Promise<MissionCase> => {
@@ -100,6 +102,17 @@ export const pushToResistance = async (candidateId: string): Promise<{ calculati
   const response = await api.post<{ calculationId: string }>(
     `${BASE_PATH}/candidates/${candidateId}/push-to-resistance`
   );
+  return response.data;
+};
+
+// ShipD Metadata
+export const getShipDParameterMetadata = async (): Promise<ShipDParameterMetadata[]> => {
+  const response = await api.get<ShipDParameterMetadata[]>(`${SHIPD_PATH}/parameters`);
+  return response.data;
+};
+
+export const getShipDVesselTaxonomy = async (): Promise<ShipDVesselTaxonomy[]> => {
+  const response = await api.get<ShipDVesselTaxonomy[]>(`${SHIPD_PATH}/taxonomy`);
   return response.data;
 };
 

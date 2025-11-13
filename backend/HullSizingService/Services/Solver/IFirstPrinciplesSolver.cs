@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Shared.Models.Sizing;
 
 namespace HullSizingService.Services.Solver;
@@ -42,7 +43,8 @@ public record SizingOptionsDto(
     List<string>? FamilyHints,
     int MaxCandidates,
     decimal? MinFn,
-    decimal? MaxFn
+    decimal? MaxFn,
+    IDictionary<string, object>? AdditionalParameters
 );
 
 /// <summary>

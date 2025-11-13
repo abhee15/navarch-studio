@@ -8,6 +8,13 @@ public record CandidateDesignDto
     public Guid Id { get; init; }
     public Guid SizingRunId { get; init; }
     public string HullFamily { get; init; } = string.Empty;
+    public string? VesselCategory { get; init; }
+    public string? VesselType { get; init; }
+    public string? BowFamily { get; init; }
+    public string? MidshipFamily { get; init; }
+    public string? SternFamily { get; init; }
+    public int? FamilyMaskVersion { get; init; }
+    public string? ShipdParametersJson { get; init; }
 
     // Principal dimensions
     public decimal LppM { get; init; }
@@ -45,7 +52,7 @@ public record CandidateDesignDto
     public bool IsSelected { get; init; }
 
     // Geometry (optional, large)
-    public string? GeomParamsJson { get; init; }
+    public string? GeometryJson { get; init; }
 
     public DateTime CreatedAt { get; init; }
 

@@ -27,6 +27,23 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
   metadataLoading,
   metadataError,
 }) => {
+  // Debug: Log taxonomy entry
+  React.useEffect(() => {
+    if (taxonomyEntry) {
+      console.log("[Step2HullFamilies] Taxonomy entry:", {
+        type: taxonomyEntry.type,
+        bowFamilies: taxonomyEntry.bowFamilies,
+        midshipFamilies: taxonomyEntry.midshipFamilies,
+        sternFamilies: taxonomyEntry.sternFamilies,
+      });
+    } else {
+      console.warn("[Step2HullFamilies] No taxonomy entry found for:", {
+        category: formData.missionCategory,
+        type: formData.missionType,
+      });
+    }
+  }, [taxonomyEntry, formData.missionCategory, formData.missionType]);
+
   const bowOptions = taxonomyEntry?.bowFamilies ?? [];
   const midshipOptions = taxonomyEntry?.midshipFamilies ?? [];
   const sternOptions = taxonomyEntry?.sternFamilies ?? [];
@@ -69,7 +86,10 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
     formData.familyMaskVersion,
   ]);
 
-  const handleFamilyChange = (key: "bowFamily" | "midshipFamily" | "sternFamily", value: string) => {
+  const handleFamilyChange = (
+    key: "bowFamily" | "midshipFamily" | "sternFamily",
+    value: string
+  ) => {
     updateFormData({
       [key]: value || undefined,
     });
@@ -203,7 +223,7 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
           <textarea
             id="shipdInputVectorJson"
             rows={4}
-            placeholder='Paste 45-value JSON array, e.g., [0.0, 0.12, ...]'
+            placeholder="Paste 45-value JSON array, e.g., [0.0, 0.12, ...]"
             value={formData.shipdInputVectorJson || ""}
             onChange={(e) => handleVectorChange(e.target.value)}
             className="font-mono text-xs"

@@ -161,7 +161,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(null, 3, null, null)
+            Options: new SizingOptionsDto(null, 3, null, null, null)
         );
 
         // Act
@@ -204,7 +204,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(null, 2, null, null)
+            Options: new SizingOptionsDto(null, 2, null, null, null)
         );
 
         // Act
@@ -243,7 +243,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(null, 2, null, null)
+            Options: new SizingOptionsDto(null, 2, null, null, null)
         );
 
         // Act
@@ -279,7 +279,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(null, 3, null, null) // 3 families in parallel
+            Options: new SizingOptionsDto(null, 3, null, null, null) // 3 families in parallel
         );
 
         // Act
@@ -315,7 +315,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(null, 3, null, null)
+            Options: new SizingOptionsDto(null, 3, null, null, null)
         );
 
         // Act
@@ -365,7 +365,8 @@ public class FirstPrinciplesSolverTests : IDisposable
                 FamilyHints: new List<string> { "tanker" }, // Only tanker
                 MaxCandidates: 5,
                 MinFn: null,
-                MaxFn: null
+                MaxFn: null,
+                null
             )
         );
 
@@ -404,7 +405,13 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(new List<string> { "container" }, 1, null, null)
+            Options: new SizingOptionsDto(
+                new List<string> { "container" },
+                1,
+                null,
+                null,
+                null
+            )
         );
 
         // Act
@@ -443,7 +450,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(null, 3, null, null)
+            Options: new SizingOptionsDto(null, 3, null, null, null)
         );
 
         // Act
@@ -482,7 +489,7 @@ public class FirstPrinciplesSolverTests : IDisposable
         var request = new SolverRequest(
             MissionCase: mission,
             Locks: null,
-            Options: new SizingOptionsDto(null, 3, null, null)
+            Options: new SizingOptionsDto(null, 3, null, null, null)
         );
 
         // Act

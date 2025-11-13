@@ -1,5 +1,7 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
+import { extractSectionsFromShipD } from "../../../utils/shipd2DGeometry";
+import { useStore } from "../../../stores";
 
 interface Hull2DSectionsProps {
   candidate: CandidateDesign;
@@ -44,9 +46,104 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
     });
     const [hoveredLegendItem, setHoveredLegendItem] = useState<string | null>(null);
 
+    const { sizingStore } = useStore();
+
+    // Generate sections - prioritize ShipD geometry if available
     const sections = useMemo(() => {
       const beam = candidate.beamM;
       const draft = candidate.draftM;
+
+      // Check if ShipD geometry is available (from backend)
+      if (candidate.geometryJson) {
+        try {
+          const sectionsData = JSON.parse(candidate.geometryJson) as {
+            stations?: Array<{
+              position: number;
+              offsets: Record<number, number>;
+              hasBulb?: boolean;
+              bulbOffsets?: Record<number, number>;
+            }>;
+            stationPositions?: number[];
+          };
+
+          if (sectionsData && sectionsData.stations && Array.isArray(sectionsData.stations) && sectionsData.stations.length > 0) {
+            console.log("[Hull2DSections] Using ShipD geometry from backend", {
+              stationCount: sectionsData.stations.length,
+              hasBulb: sectionsData.stations.some((s) => s.hasBulb),
+            });
+
+            const shipdSections = {
+              stations: sectionsData.stations.map((s) => ({
+                position: s.position,
+                offsets: s.offsets,
+                hasBulb: s.hasBulb || false,
+                bulbOffsets: s.bulbOffsets,
+              })),
+              stationPositions: sectionsData.stationPositions || [],
+            };
+
+            // Extract sections for body plan (use all stations or sample)
+            const stationIndices = Array.from({ length: stationCount + 1 }, (_, i) => i);
+            const result = extractSectionsFromShipD(shipdSections, stationIndices);
+            console.log("[Hull2DSections] Extracted sections from ShipD geometry", {
+              sectionCount: result.length,
+              hasBulb: result.some((s) => s.hasBulb),
+            });
+            return result;
+          } else {
+            console.warn("[Hull2DSections] ShipD geometry has no stations, falling back");
+          }
+        } catch (error) {
+          console.error("[Hull2DSections] Failed to parse ShipD geometry, falling back to parametric:", error);
+        }
+      }
+
+      // Check if ShipD parameters are available (generate from vector)
+      if (
+        candidate.shipdParametersJson &&
+        sizingStore.shipdParameters &&
+        sizingStore.shipdParameters.length > 0
+      ) {
+        try {
+          const shipdVector = JSON.parse(candidate.shipdParametersJson);
+          if (Array.isArray(shipdVector) && shipdVector.length === 45) {
+            console.log("[Hull2DSections] Generating ShipD geometry from parameters", {
+              hasMetadata: sizingStore.shipdParameters.length > 0,
+            });
+
+            const { generateShipDSections } = require("../../../utils/shipdGeometryGenerator");
+            const shipdSections = generateShipDSections({
+              shipdVector,
+              lppM: candidate.lppM,
+              beamM: beam,
+              draftM: draft,
+              metadata: sizingStore.shipdParameters,
+              resolution: 1.0,
+            }, stationCount + 1);
+
+            const stationIndices = Array.from({ length: stationCount + 1 }, (_, i) => i);
+            const result = extractSectionsFromShipD(shipdSections, stationIndices);
+            console.log("[Hull2DSections] Generated sections from ShipD parameters", {
+              sectionCount: result.length,
+            });
+            return result;
+          } else {
+            console.warn("[Hull2DSections] Invalid ShipD vector format", {
+              isArray: Array.isArray(shipdVector),
+              length: Array.isArray(shipdVector) ? shipdVector.length : 0,
+            });
+          }
+        } catch (error) {
+          console.error("[Hull2DSections] Failed to generate ShipD geometry, falling back to parametric:", error);
+        }
+      } else {
+        console.log("[Hull2DSections] No ShipD data available", {
+          hasParametersJson: !!candidate.shipdParametersJson,
+          hasMetadata: !!(sizingStore.shipdParameters && sizingStore.shipdParameters.length > 0),
+        });
+      }
+
+      // Fallback: Use parametric generation
       const sectionCurves = [];
 
       for (let i = 0; i <= stationCount; i++) {
@@ -59,6 +156,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
             station: stationNum,
             points: [[0, 0]],
             isAft: stationNum <= 5,
+            hasBulb: false,
           });
           continue;
         }
@@ -77,11 +175,20 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
           station: stationNum,
           points,
           isAft: stationNum <= 5,
+          hasBulb: false,
         });
       }
 
       return sectionCurves;
-    }, [candidate.beamM, candidate.draftM, stationCount]);
+    }, [
+      candidate.beamM,
+      candidate.draftM,
+      candidate.lppM,
+      candidate.geometryJson,
+      candidate.shipdParametersJson,
+      sizingStore.shipdParameters,
+      stationCount,
+    ]);
 
     const padding = 60;
     const svgWidth = 600;
@@ -153,6 +260,12 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               style={{ fontSize: "10px" }}
             >
               {candidate.hullFamily.replace("_", " ").toUpperCase()} · Stations 0-10
+              {candidate.geometryJson && (
+                <tspan className="fill-green-600 dark:fill-green-400" style={{ fontSize: "9px" }}>
+                  {" "}
+                  · ShipD
+                </tspan>
+              )}
             </text>
 
             {/* Centerline */}
@@ -233,15 +346,32 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                       cursor: "pointer",
                     }}
                   >
-                    <path
-                      d={generateSectionPath(section.points as [number, number][], section.isAft)}
-                      fill="none"
-                      stroke={color}
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
-                      filter={isEndStation ? "url(#sectionShadow)" : undefined}
-                      style={{ transition: "all 0.3s ease" }}
-                    />
+                    {/* Main hull section */}
+                    {section.points.length > 1 && (
+                      <path
+                        d={generateSectionPath(section.points as [number, number][], section.isAft)}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth={strokeWidth}
+                        strokeLinecap="round"
+                        filter={isEndStation ? "url(#sectionShadow)" : undefined}
+                        style={{ transition: "all 0.3s ease" }}
+                      />
+                    )}
+
+                    {/* Bulb indicator (if present) - overlay on main section */}
+                    {section.hasBulb && (
+                      <circle
+                        cx={toSVG(section.points[section.points.length - 1]?.[0] || 0, section.points[section.points.length - 1]?.[1] || -draft, section.isAft)[0]}
+                        cy={toSVG(section.points[section.points.length - 1]?.[0] || 0, section.points[section.points.length - 1]?.[1] || -draft, section.isAft)[1]}
+                        r="4"
+                        fill="#f59e0b"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                        opacity="0.9"
+                        filter="url(#sectionGlow)"
+                      />
+                    )}
 
                     {section.points.length > 1 && (
                       <g>
@@ -260,6 +390,12 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                           }}
                         >
                           {section.station}
+                          {section.hasBulb && (
+                            <tspan className="fill-orange-600" style={{ fontSize: "8px" }}>
+                              {" "}
+                              ●
+                            </tspan>
+                          )}
                         </text>
 
                         {isHovered && (
@@ -270,7 +406,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                                   section.points[0][0],
                                   section.points[0][1],
                                   section.isAft
-                                )[0] - 40
+                                )[0] - 50
                               }
                               y={
                                 toSVG(
@@ -279,7 +415,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                                   section.isAft
                                 )[1] - 30
                               }
-                              width="80"
+                              width={section.hasBulb ? "100" : "80"}
                               height="16"
                               rx="3"
                               fill="#1f2937"
@@ -301,6 +437,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                               style={{ fontSize: "9px" }}
                             >
                               Station {section.station} · {section.isAft ? "AFT" : "FWD"}
+                              {section.hasBulb && " · Bulb"}
                             </text>
                           </g>
                         )}

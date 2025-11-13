@@ -1,6 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using HullSizingService.Data;
+using HullSizingService.Services.Geometry;
+using HullSizingService.Services.Integration;
+using HullSizingService.Services.ShipD;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs.Sizing;
 using Shared.Models.Sizing;
@@ -15,21 +21,52 @@ public class SizingRunService : ISizingRunService
     private readonly DataDriven.DataDrivenParametricSolver? _parametricSolver;
     private readonly ILogger<SizingRunService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IShipDParameterAdapter _shipdAdapter;
+    private readonly IShipDConstraintValidator _shipdValidator;
+    private readonly IShipDHullGeometryService? _shipdGeometryService;
+    private readonly IDataServiceClient? _dataServiceClient;
+
+    private static readonly Dictionary<string, List<string>> VesselTypeFamilyHints = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["general_cargo"] = new() { "cargo", "container", "bulk", "roro", "osv" },
+        ["bulk_carrier"] = new() { "bulk", "tanker", "cargo", "lng", "barge" },
+        ["container"] = new() { "container", "roro", "cargo", "ferry_conv", "ferry_fast" },
+        ["fishing"] = new() { "fishing", "cargo", "osv", "patrol", "yacht_disp" },
+        ["tanker"] = new() { "tanker", "bulk", "lng", "cargo", "barge" },
+        ["lng_carrier"] = new() { "lng", "tanker", "cargo", "bulk", "roro" },
+        ["cruise_vessel"] = new() { "ferry_conv", "ferry_fast", "roro", "container", "cargo" },
+        ["passenger_vessel"] = new() { "ferry_conv", "ferry_fast", "roro", "container", "yacht_disp" },
+        ["cutters"] = new() { "patrol", "ferry_fast", "osv", "cargo", "yacht_disp" },
+        ["medical_ship"] = new() { "osv", "cargo", "ferry_conv", "research", "patrol" },
+        ["general_military"] = new() { "patrol", "ferry_fast", "osv", "cargo", "yacht_disp" },
+        ["yacht"] = new() { "yacht_disp", "ferry_fast", "patrol", "fishing", "research" },
+        ["fishing_recreational"] = new() { "fishing", "yacht_disp", "patrol", "cargo", "ferry_fast" },
+        ["high_speed_craft"] = new() { "ferry_fast", "patrol", "yacht_disp", "osv", "container" },
+        ["research_vessel"] = new() { "research", "cargo", "osv", "patrol", "ferry_conv" }
+    };
 
     public SizingRunService(
         SizingDbContext context,
         Solver.IFirstPrinciplesSolver firstPrinciplesSolver,
         ILogger<SizingRunService> logger,
         IConfiguration configuration,
+        IShipDParameterAdapter shipdAdapter,
+        IShipDConstraintValidator shipdValidator,
         DataDriven.DataDrivenRealWorldSolver? dataDrivenSolver = null,
-        DataDriven.DataDrivenParametricSolver? parametricSolver = null)
+        DataDriven.DataDrivenParametricSolver? parametricSolver = null,
+        IShipDHullGeometryService? shipdGeometryService = null,
+        IDataServiceClient? dataServiceClient = null)
     {
         _context = context;
         _firstPrinciplesSolver = firstPrinciplesSolver;
         _logger = logger;
         _configuration = configuration;
+        _shipdAdapter = shipdAdapter;
+        _shipdValidator = shipdValidator;
         _dataDrivenSolver = dataDrivenSolver;
         _parametricSolver = parametricSolver;
+        _shipdGeometryService = shipdGeometryService;
+        _dataServiceClient = dataServiceClient;
     }
 
     public async Task<List<SizingRunDto>> GetByMissionCaseIdAsync(Guid missionCaseId, string tenantId, CancellationToken cancellationToken = default)
@@ -94,13 +131,79 @@ public class SizingRunService : ISizingRunService
 
         var sw = Stopwatch.StartNew();
 
+        // Build ShipD parameterization
+        var shipdResult = await _shipdAdapter.BuildAsync(missionCase, dto, cancellationToken);
+        var validationResult = _shipdValidator.Validate(shipdResult);
+        if (!validationResult.IsValid)
+        {
+            throw new InvalidOperationException($"ShipD constraint validation failed: {string.Join("; ", validationResult.Errors)}");
+        }
+
+        var shipdPayloadJson = JsonSerializer.Serialize(shipdResult);
+        var shipdVectorJson = JsonSerializer.Serialize(shipdResult.ParameterVector);
+
+        missionCase.MissionCategory = shipdResult.VesselCategory;
+        missionCase.MissionType = shipdResult.VesselType;
+        missionCase.BowFamily = shipdResult.BowFamily;
+        missionCase.MidshipFamily = shipdResult.MidshipFamily;
+        missionCase.SternFamily = shipdResult.SternFamily;
+        missionCase.FamilyMaskVersion = shipdResult.MaskVersion;
+        missionCase.ShipdInputsJson = shipdPayloadJson;
+        missionCase.UpdatedAt = DateTime.UtcNow;
+
+        var familyHints = BuildFamilyHints(dto, shipdResult);
+        var mergedAdditionalParameters = MergeAdditionalParameters(dto.Options?.AdditionalParameters, shipdResult.AdditionalParameters);
+
+        var maxCandidates = dto.Options?.MaxCandidates ?? 5;
+        if (maxCandidates < 1)
+        {
+            maxCandidates = 1;
+        }
+
+        Dictionary<string, object>? effectiveAdditionalParameters = null;
+        if (mergedAdditionalParameters != null)
+        {
+            effectiveAdditionalParameters = mergedAdditionalParameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+        else if (dto.Options?.AdditionalParameters != null)
+        {
+            effectiveAdditionalParameters = new Dictionary<string, object>(dto.Options.AdditionalParameters, StringComparer.OrdinalIgnoreCase);
+        }
+
+        var effectiveRunOptionsDto = new Shared.DTOs.Sizing.SizingOptionsDto
+        {
+            FamilyHints = familyHints.Count > 0 ? new List<string>(familyHints) : dto.Options?.FamilyHints,
+            MaxCandidates = maxCandidates,
+            MinFn = dto.Options?.MinFn,
+            MaxFn = dto.Options?.MaxFn,
+            IncludeGeometry = dto.Options?.IncludeGeometry ?? false,
+            AdditionalParameters = effectiveAdditionalParameters
+        };
+
+        var runOptionsJson = JsonSerializer.Serialize(effectiveRunOptionsDto);
+
+        var solverOptions = new Solver.SizingOptionsDto(
+            FamilyHints: familyHints.Count > 0 ? familyHints : null,
+            MaxCandidates: maxCandidates,
+            MinFn: dto.Options?.MinFn,
+            MaxFn: dto.Options?.MaxFn,
+            AdditionalParameters: mergedAdditionalParameters
+        );
+
         var run = new SizingRun
         {
             Id = Guid.NewGuid(),
             MissionCaseId = dto.MissionCaseId,
             Mode = dto.Mode,
             LocksJson = dto.Locks != null ? JsonSerializer.Serialize(dto.Locks) : null,
-            OptionsJson = dto.Options != null ? JsonSerializer.Serialize(dto.Options) : null,
+            OptionsJson = runOptionsJson,
+            VesselCategory = shipdResult.VesselCategory,
+            VesselType = shipdResult.VesselType,
+            BowFamily = shipdResult.BowFamily,
+            MidshipFamily = shipdResult.MidshipFamily,
+            SternFamily = shipdResult.SternFamily,
+            FamilyMaskVersion = shipdResult.MaskVersion,
+            ShipdInputVectorJson = shipdVectorJson,
             Status = "running",
             CreatedAt = DateTime.UtcNow
         };
@@ -125,12 +228,7 @@ public class SizingRunService : ISizingRunService
                     dto.Locks.KeepDOverT,
                     dto.Locks.KeepCbBand
                 ) : null,
-                Options: dto.Options != null ? new Solver.SizingOptionsDto(
-                    dto.Options.FamilyHints,
-                    dto.Options.MaxCandidates,
-                    dto.Options.MinFn,
-                    dto.Options.MaxFn
-                ) : null
+                Options: solverOptions
             );
 
             // Route to appropriate solver based on mode
@@ -178,14 +276,68 @@ public class SizingRunService : ISizingRunService
 
             // Convert solver candidates to database entities
             var candidateEntities = new List<CandidateDesign>();
+
+            // Get ShipD metadata if geometry service is available
+            IReadOnlyList<Shared.DTOs.ShipD.ShipDParameterMetadataDto>? shipdMetadata = null;
+            if (_shipdGeometryService != null && _dataServiceClient != null && !string.IsNullOrEmpty(shipdVectorJson))
+            {
+                try
+                {
+                    shipdMetadata = await _dataServiceClient.GetShipDParameterMetadataAsync(cancellationToken);
+                    _logger.LogDebug("[SIZING_RUN] Retrieved ShipD metadata for geometry generation");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[SIZING_RUN] Failed to retrieve ShipD metadata for geometry generation");
+                }
+            }
+
             for (int i = 0; i < solverCandidates.Count; i++)
             {
                 var sc = solverCandidates[i];
+
+                // Generate ShipD geometry if parameters are available
+                string? geometryJson = null;
+                if (_shipdGeometryService != null && shipdMetadata != null && !string.IsNullOrEmpty(shipdVectorJson))
+                {
+                    try
+                    {
+                        var shipdVector = JsonSerializer.Deserialize<decimal[]>(shipdVectorJson);
+                        if (shipdVector != null && shipdVector.Length == 45)
+                        {
+                            // Generate hull sections
+                            var sections = await _shipdGeometryService.GenerateSectionsAsync(
+                                shipdVector,
+                                sc.LppM,
+                                sc.BeamM,
+                                sc.DraftM,
+                                shipdMetadata,
+                                stationCount: 20,
+                                cancellationToken);
+
+                            // Serialize sections to JSON
+                            geometryJson = JsonSerializer.Serialize(sections);
+                            _logger.LogDebug("[SIZING_RUN] Generated ShipD geometry for candidate {Rank}", i + 1);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate ShipD geometry for candidate {Rank}. Continuing without geometry.", i + 1);
+                    }
+                }
+
                 var entity = new CandidateDesign
                 {
                     Id = Guid.NewGuid(),
                     SizingRunId = run.Id,
                     HullFamily = sc.HullFamily,
+                    VesselCategory = run.VesselCategory,
+                    VesselType = run.VesselType,
+                    BowFamily = run.BowFamily ?? sc.HullFamily,
+                    MidshipFamily = run.MidshipFamily,
+                    SternFamily = run.SternFamily,
+                    FamilyMaskVersion = run.FamilyMaskVersion,
+                    ShipdParametersJson = shipdVectorJson,
                     LppM = sc.LppM,
                     LwlM = sc.LwlM,
                     LoaM = sc.LoaM,
@@ -208,7 +360,7 @@ public class SizingRunService : ISizingRunService
                     Score = sc.Score,
                     Rank = i + 1,
                     IsSelected = i == 0, // First candidate is selected by default
-                    GeometryJson = null, // Geometry generated on demand
+                    GeometryJson = geometryJson, // ShipD geometry if available
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -342,6 +494,13 @@ public class SizingRunService : ISizingRunService
             Mode = entity.Mode,
             LocksJson = entity.LocksJson,
             OptionsJson = entity.OptionsJson,
+            VesselCategory = entity.VesselCategory,
+            VesselType = entity.VesselType,
+            BowFamily = entity.BowFamily,
+            MidshipFamily = entity.MidshipFamily,
+            SternFamily = entity.SternFamily,
+            FamilyMaskVersion = entity.FamilyMaskVersion,
+            ShipdInputVectorJson = entity.ShipdInputVectorJson,
             RunStatus = entity.Status,
             ComputeTimeMs = entity.ComputeTimeMs,
             ErrorMessage = entity.ErrorMessage,
@@ -358,6 +517,13 @@ public class SizingRunService : ISizingRunService
             Id = entity.Id,
             SizingRunId = entity.SizingRunId,
             HullFamily = entity.HullFamily,
+            VesselCategory = entity.VesselCategory,
+            VesselType = entity.VesselType,
+            BowFamily = entity.BowFamily,
+            MidshipFamily = entity.MidshipFamily,
+            SternFamily = entity.SternFamily,
+            FamilyMaskVersion = entity.FamilyMaskVersion,
+            ShipdParametersJson = entity.ShipdParametersJson,
             LppM = entity.LppM,
             LwlM = entity.LwlM,
             LoaM = entity.LoaM,
@@ -381,7 +547,7 @@ public class SizingRunService : ISizingRunService
             Score = entity.Score,
             Rank = entity.Rank,
             IsSelected = entity.IsSelected,
-            GeomParamsJson = entity.GeometryJson,
+            GeometryJson = entity.GeometryJson,
             CreatedAt = entity.CreatedAt,
 
             // Provenance (Data-Driven Mode)
@@ -390,5 +556,75 @@ public class SizingRunService : ISizingRunService
             SimilarityScore = entity.SimilarityScore,
             SolverMode = entity.SolverMode
         };
+    }
+
+    private static List<string> BuildFamilyHints(CreateSizingRunDto dto, ShipDParameterizationResult shipdResult)
+    {
+        var orderedHints = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddHint(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
+            var normalized = value.Trim();
+            if (seen.Add(normalized))
+            {
+                orderedHints.Add(normalized);
+            }
+        }
+
+        if (dto.Options?.FamilyHints != null)
+        {
+            foreach (var hint in dto.Options.FamilyHints)
+            {
+                AddHint(hint);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(shipdResult.VesselType) &&
+            VesselTypeFamilyHints.TryGetValue(shipdResult.VesselType, out var mappedFamilies))
+        {
+            foreach (var family in mappedFamilies)
+            {
+                AddHint(family);
+            }
+        }
+
+        return orderedHints;
+    }
+
+    private static IDictionary<string, object>? MergeAdditionalParameters(
+        Dictionary<string, object>? requestParameters,
+        IDictionary<string, object>? shipdParameters)
+    {
+        if ((requestParameters == null || requestParameters.Count == 0) &&
+            (shipdParameters == null || shipdParameters.Count == 0))
+        {
+            return null;
+        }
+
+        var merged = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+        if (shipdParameters != null)
+        {
+            foreach (var kvp in shipdParameters)
+            {
+                merged[kvp.Key] = kvp.Value;
+            }
+        }
+
+        if (requestParameters != null)
+        {
+            foreach (var kvp in requestParameters)
+            {
+                merged[kvp.Key] = kvp.Value;
+            }
+        }
+
+        return merged;
     }
 }

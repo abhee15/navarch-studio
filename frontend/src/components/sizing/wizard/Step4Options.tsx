@@ -4,17 +4,11 @@ import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
 import {
-  Package,
-  Anchor,
-  Ship,
-  Fish,
-  Sailboat,
-  Waves,
   Calculator,
   BarChart3,
   Bot,
   Lightbulb,
-  Fuel,
+  Ship,
   Zap,
 } from "lucide-react";
 
@@ -50,25 +44,6 @@ export const Step4Options: React.FC<Step4Props> = ({
   const [keepDOverT, setKeepDOverT] = useState(false);
   const [keepCbBand, setKeepCbBand] = useState(false);
 
-  // Hull family hints
-  const [familyHints, setFamilyHints] = useState<string[]>([]);
-
-  const availableFamilies = [
-    { value: "container", label: "Container Ship", icon: Package },
-    { value: "tanker", label: "Tanker", icon: Fuel },
-    { value: "bulk", label: "Bulk Carrier", icon: Anchor },
-    { value: "general_cargo", label: "General Cargo", icon: Ship },
-    { value: "fishing", label: "Fishing Vessel", icon: Fish },
-    { value: "yacht_disp", label: "Displacement Yacht", icon: Sailboat },
-    { value: "yacht_planing", label: "Planing Yacht", icon: Waves },
-  ];
-
-  const toggleFamily = (family: string) => {
-    setFamilyHints((prev) =>
-      prev.includes(family) ? prev.filter((f) => f !== family) : [...prev, family]
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -85,6 +60,10 @@ export const Step4Options: React.FC<Step4Props> = ({
           <div>
             <dt className="font-medium text-blue-800 dark:text-blue-400">Name:</dt>
             <dd className="text-gray-700 dark:text-gray-300">{formData.name}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-blue-800 dark:text-blue-400">Category:</dt>
+            <dd className="text-gray-700 dark:text-gray-300">{formData.missionCategory}</dd>
           </div>
           <div>
             <dt className="font-medium text-blue-800 dark:text-blue-400">Type:</dt>
@@ -120,6 +99,67 @@ export const Step4Options: React.FC<Step4Props> = ({
               <dd className="text-gray-700 dark:text-gray-300">{formData.capDraftM} m</dd>
             </div>
           )}
+          {(formData.bowFamily || formData.midshipFamily || formData.sternFamily) && (
+            <div className="col-span-2 grid grid-cols-3 gap-3">
+              <div>
+                <dt className="font-medium text-blue-800 dark:text-blue-400">Bow Family:</dt>
+                <dd className="text-gray-700 dark:text-gray-300">{formData.bowFamily || "—"}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-blue-800 dark:text-blue-400">Midship Family:</dt>
+                <dd className="text-gray-700 dark:text-gray-300">
+                  {formData.midshipFamily || "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-medium text-blue-800 dark:text-blue-400">Stern Family:</dt>
+                <dd className="text-gray-700 dark:text-gray-300">{formData.sternFamily || "—"}</dd>
+              </div>
+            </div>
+          )}
+          {(() => {
+            try {
+              if (formData.shipdInputsJson) {
+                const parsed = JSON.parse(formData.shipdInputsJson);
+                const geom = parsed.additionalParameters;
+                if (geom && Object.keys(geom).length > 0) {
+                  const parts: string[] = [];
+                  if (geom.flareAngleDeg) parts.push(`Flare: ${geom.flareAngleDeg}°`);
+                  if (geom.deadriseAngleDeg) parts.push(`Deadrise: ${geom.deadriseAngleDeg}°`);
+                  if (geom.chineType)
+                    parts.push(
+                      `${geom.chineType.charAt(0).toUpperCase() + geom.chineType.slice(1)} Chine`
+                    );
+                  if (geom.bowLengthRatio || geom.sternLengthRatio) {
+                    const lb = geom.bowLengthRatio?.toFixed(3) || "0.316";
+                    const ls = geom.sternLengthRatio?.toFixed(3) || "0.420";
+                    const lm = (1 - parseFloat(lb) - parseFloat(ls)).toFixed(3);
+                    parts.push(`Longitudinal: Lb=${lb}, Lm=${lm}, Ls=${ls}`);
+                  }
+                  if (formData.bowFamily === "bulbous_bow" && geom.bulbLengthRatio) {
+                    parts.push(
+                      `Bulb: L=${geom.bulbLengthRatio.toFixed(2)}, W=${geom.bulbWidthRatio?.toFixed(2) || "0.50"}`
+                    );
+                  }
+                  if (parts.length > 0) {
+                    return (
+                      <div className="col-span-2">
+                        <dt className="font-medium text-blue-800 dark:text-blue-400">
+                          Geometry Details:
+                        </dt>
+                        <dd className="text-gray-700 dark:text-gray-300 text-xs mt-1">
+                          {parts.join(" | ")}
+                        </dd>
+                      </div>
+                    );
+                  }
+                }
+              }
+            } catch {
+              // Ignore parse errors
+            }
+            return null;
+          })()}
         </dl>
       </div>
 
@@ -282,37 +322,6 @@ export const Step4Options: React.FC<Step4Props> = ({
               Typical: 0.15-0.35 (displacement), 0.40+ (planing)
             </p>
           </div>
-        </div>
-
-        {/* Hull Family Hints */}
-        <div className="space-y-2">
-          <Label>Hull Family Hints (Optional)</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {availableFamilies.map((family) => {
-              const IconComponent = family.icon;
-              return (
-                <button
-                  key={family.value}
-                  type="button"
-                  onClick={() => toggleFamily(family.value)}
-                  className={`
-                  flex items-center justify-center space-x-2 rounded-lg border-2 p-3 transition-all
-                  ${
-                    familyHints.includes(family.value)
-                      ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                      : "border-gray-300 bg-white hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
-                  }
-                `}
-                >
-                  <IconComponent className="h-5 w-5" />
-                  <span className="text-xs font-medium">{family.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Select hull types to guide the solver (leave empty for automatic selection)
-          </p>
         </div>
 
         {/* Dimensional Locks */}

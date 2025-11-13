@@ -21,6 +21,41 @@ public class CandidateDesign
     public string HullFamily { get; set; } = null!;
 
     /// <summary>
+    /// Vessel category captured at generation time.
+    /// </summary>
+    public string? VesselCategory { get; set; }
+
+    /// <summary>
+    /// Vessel type slug captured at generation time.
+    /// </summary>
+    public string? VesselType { get; set; }
+
+    /// <summary>
+    /// Bow family used for this candidate.
+    /// </summary>
+    public string? BowFamily { get; set; }
+
+    /// <summary>
+    /// Midship family used for this candidate.
+    /// </summary>
+    public string? MidshipFamily { get; set; }
+
+    /// <summary>
+    /// Stern family used for this candidate.
+    /// </summary>
+    public string? SternFamily { get; set; }
+
+    /// <summary>
+    /// Version of the family mask / metadata applied.
+    /// </summary>
+    public int? FamilyMaskVersion { get; set; }
+
+    /// <summary>
+    /// ShipD canonical parameter vector (JSON) that produced this candidate.
+    /// </summary>
+    public string? ShipdParametersJson { get; set; }
+
+    /// <summary>
     /// Ranking within sizing run (1 = best by score)
     /// </summary>
     public int Rank { get; set; }

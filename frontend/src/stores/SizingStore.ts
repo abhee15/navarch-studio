@@ -10,6 +10,7 @@ import type {
   ExportFormat,
 } from "../types/sizing";
 import * as sizingApi from "../services/sizingApi";
+import type { ShipDParameterMetadata, ShipDVesselTaxonomy } from "../types/sizing";
 
 export class SizingStore {
   // Mission Cases
@@ -24,6 +25,13 @@ export class SizingStore {
   candidates: CandidateDesign[] = [];
   selectedCandidate: CandidateDesign | null = null;
   compareCandidates: CandidateDesign[] = [];
+
+  // ShipD metadata
+  shipdParameters: ShipDParameterMetadata[] = [];
+  shipdTaxonomy: ShipDVesselTaxonomy[] = [];
+  isShipdMetadataLoading = false;
+  shipdMetadataLoaded = false;
+  shipdMetadataError: string | null = null;
 
   // UI State
   isLoading = false;
@@ -62,6 +70,47 @@ export class SizingStore {
         this.isLoading = false;
       });
     }
+  }
+
+  async ensureShipDMetadataLoaded() {
+    if (this.shipdMetadataLoaded || this.isShipdMetadataLoading) {
+      return;
+    }
+    this.isShipdMetadataLoading = true;
+    this.shipdMetadataError = null;
+    try {
+      const [parameters, taxonomy] = await Promise.all([
+        sizingApi.getShipDParameterMetadata(),
+        sizingApi.getShipDVesselTaxonomy(),
+      ]);
+      runInAction(() => {
+        this.shipdParameters = parameters;
+        this.shipdTaxonomy = taxonomy;
+        this.shipdMetadataLoaded = true;
+        this.isShipdMetadataLoading = false;
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.shipdMetadataError =
+          error instanceof Error ? error.message : "Failed to load ShipD metadata";
+        this.isShipdMetadataLoading = false;
+      });
+    }
+  }
+
+  getVesselTypesForCategory(category: string): ShipDVesselTaxonomy[] {
+    if (!category) return [];
+    return this.shipdTaxonomy.filter(
+      (entry) => entry.category.toLowerCase() === category.toLowerCase()
+    );
+  }
+
+  getTaxonomyEntry(category: string, vesselType: string): ShipDVesselTaxonomy | undefined {
+    return this.shipdTaxonomy.find(
+      (entry) =>
+        entry.category.toLowerCase() === category.toLowerCase() &&
+        entry.type.toLowerCase() === vesselType.toLowerCase()
+    );
   }
 
   async createMissionCase(dto: CreateMissionCaseDto) {

@@ -228,6 +228,14 @@ export const App: React.FC = observer(() => (
                   }
                 />
                 <Route
+                  path="/sizing"
+                  element={
+                    <ProtectedRoute>
+                      <MissionCasesList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/sizing/missions"
                   element={
                     <ProtectedRoute>

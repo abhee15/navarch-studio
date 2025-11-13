@@ -36,16 +36,67 @@ export const CatalogBrowserV2: React.FC = observer(() => {
     statuses: [],
     lppRange: [0, 500],
     cbRange: [0.3, 1.0],
+    vesselCategory: undefined,
+    shipdVesselType: undefined,
+    bowFamily: undefined,
+    midshipFamily: undefined,
+    sternFamily: undefined,
   });
 
   useEffect(() => {
     loadHulls();
   }, []);
 
+  // Reload hulls when taxonomy filters change (server-side filtering)
+  useEffect(() => {
+    if (
+      filters.vesselCategory ||
+      filters.shipdVesselType ||
+      filters.bowFamily ||
+      filters.midshipFamily ||
+      filters.sternFamily
+    ) {
+      loadHulls();
+    }
+  }, [
+    filters.vesselCategory,
+    filters.shipdVesselType,
+    filters.bowFamily,
+    filters.midshipFamily,
+    filters.sternFamily,
+  ]);
+
   const loadHulls = async () => {
     setLoading(true);
     try {
-      const data = await getCatalogHulls();
+      // Build filters for API call
+      const apiFilters: Parameters<typeof getCatalogHulls>[0] = {};
+
+      // Legacy hull type filter
+      if (filters.hullTypes.length > 0) {
+        apiFilters.vesselType = filters.hullTypes[0]; // Use first selected type
+      }
+
+      // ShipD taxonomy filters
+      if (filters.vesselCategory) {
+        apiFilters.vesselCategory = filters.vesselCategory;
+      }
+      if (filters.shipdVesselType) {
+        apiFilters.shipdVesselType = filters.shipdVesselType;
+      }
+      if (filters.bowFamily) {
+        apiFilters.bowFamily = filters.bowFamily;
+      }
+      if (filters.midshipFamily) {
+        apiFilters.midshipFamily = filters.midshipFamily;
+      }
+      if (filters.sternFamily) {
+        apiFilters.sternFamily = filters.sternFamily;
+      }
+
+      const data = await getCatalogHulls(
+        Object.keys(apiFilters).length > 0 ? apiFilters : undefined
+      );
       setHulls(data);
     } catch (error) {
       console.error("Failed to load catalog:", error);

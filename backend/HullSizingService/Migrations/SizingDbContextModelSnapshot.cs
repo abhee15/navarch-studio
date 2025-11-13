@@ -34,6 +34,11 @@ namespace HullSizingService.Migrations
                         .HasColumnType("numeric(12,4)")
                         .HasColumnName("bm");
 
+                    b.Property<string>("BowFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bow_family");
+
                     b.Property<decimal>("Cb")
                         .HasColumnType("numeric(6,4)")
                         .HasColumnName("cb");
@@ -65,6 +70,10 @@ namespace HullSizingService.Migrations
                     b.Property<decimal?>("EhpKw")
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("ehp_kw");
+
+                    b.Property<int?>("FamilyMaskVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("family_mask_version");
 
                     b.Property<string>("FlagsJson")
                         .HasColumnType("jsonb")
@@ -116,6 +125,11 @@ namespace HullSizingService.Migrations
                         .HasColumnType("numeric(6,3)")
                         .HasColumnName("lwl_over_lambda");
 
+                    b.Property<string>("MidshipFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("midship_family");
+
                     b.Property<int>("Rank")
                         .HasColumnType("integer")
                         .HasColumnName("rank");
@@ -136,6 +150,10 @@ namespace HullSizingService.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("scores_json");
 
+                    b.Property<string>("ShipdParametersJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("shipd_parameters_json");
+
                     b.Property<decimal?>("ShpKw")
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("shp_kw");
@@ -152,9 +170,24 @@ namespace HullSizingService.Migrations
                         .HasColumnType("text")
                         .HasColumnName("solver_mode");
 
+                    b.Property<string>("SternFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("stern_family");
+
                     b.Property<decimal>("TM")
                         .HasColumnType("numeric(12,4)")
                         .HasColumnName("tm");
+
+                    b.Property<string>("VesselCategory")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("vessel_category");
+
+                    b.Property<string>("VesselType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("vessel_type");
 
                     b.HasKey("Id")
                         .HasName("pk_candidate_designs");
@@ -347,6 +380,11 @@ namespace HullSizingService.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BowFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bow_family");
+
                     b.Property<decimal?>("CapAirdraftM")
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("cap_airdraft_m");
@@ -401,6 +439,15 @@ namespace HullSizingService.Migrations
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("env_tz_s");
 
+                    b.Property<int?>("FamilyMaskVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("family_mask_version");
+
+                    b.Property<string>("MidshipFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("midship_family");
+
                     b.Property<string>("MissionCategory")
                         .HasColumnType("text")
                         .HasColumnName("mission_category");
@@ -432,6 +479,15 @@ namespace HullSizingService.Migrations
                     b.Property<decimal>("ServiceSpeedKn")
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("service_speed_kn");
+
+                    b.Property<string>("ShipdInputsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("shipd_inputs_json");
+
+                    b.Property<string>("SternFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("stern_family");
 
                     b.Property<string>("TenantId")
                         .IsRequired()
@@ -519,6 +575,11 @@ namespace HullSizingService.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BowFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("bow_family");
+
                     b.Property<int?>("ComputeTimeMs")
                         .HasColumnType("integer")
                         .HasColumnName("compute_time_ms");
@@ -535,9 +596,18 @@ namespace HullSizingService.Migrations
                         .HasColumnType("text")
                         .HasColumnName("error_message");
 
+                    b.Property<int?>("FamilyMaskVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("family_mask_version");
+
                     b.Property<string>("LocksJson")
                         .HasColumnType("jsonb")
                         .HasColumnName("locks_json");
+
+                    b.Property<string>("MidshipFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("midship_family");
 
                     b.Property<Guid>("MissionCaseId")
                         .HasColumnType("uuid")
@@ -553,11 +623,30 @@ namespace HullSizingService.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("options_json");
 
+                    b.Property<string>("ShipdInputVectorJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("shipd_input_vector_json");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("status");
+
+                    b.Property<string>("SternFamily")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("stern_family");
+
+                    b.Property<string>("VesselCategory")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("vessel_category");
+
+                    b.Property<string>("VesselType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("vessel_type");
 
                     b.HasKey("Id")
                         .HasName("pk_sizing_runs");

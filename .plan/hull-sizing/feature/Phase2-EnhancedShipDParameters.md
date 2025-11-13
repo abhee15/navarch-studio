@@ -467,3 +467,4 @@ const steps = [
 2. Preset geometry profiles for common vessel types
 3. Import/export geometry configurations
 4. AI suggestions for optimal parameter combinations
+

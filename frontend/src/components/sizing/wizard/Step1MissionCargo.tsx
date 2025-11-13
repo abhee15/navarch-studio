@@ -14,19 +14,64 @@ interface Step1Props {
   onSubmit: () => void;
   isFirstStep: boolean;
   isLastStep: boolean;
+  metadataLoading: boolean;
+  metadataError: string | null;
+  categoryOptions: { value: string; label: string }[];
+  vesselTypeOptions: { value: string; label: string; description?: string | null }[];
+  onReloadMetadata: () => void;
+  nameConflict: boolean;
+  nameConflictMessage?: string | null;
 }
 
-export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormData, onNext }) => {
+export const Step1MissionCargo: React.FC<Step1Props> = ({
+  formData,
+  updateFormData,
+  onNext,
+  metadataLoading,
+  metadataError,
+  categoryOptions,
+  vesselTypeOptions,
+  onReloadMetadata,
+  nameConflict,
+  nameConflictMessage,
+}) => {
   const navigate = useNavigate();
-  const isValid = formData.name && formData.cargoValue && formData.cargoValue > 0;
+  const trimmedName = formData.name?.trim() ?? "";
+  const isValid =
+    trimmedName.length > 0 &&
+    !!formData.missionCategory &&
+    !!formData.missionType &&
+    formData.cargoValue !== undefined &&
+    formData.cargoValue > 0;
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Vessel Requirements</h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Define your brief name and cargo requirements
+          Select vessel taxonomy and define cargo requirements
         </p>
+        {metadataLoading && (
+          <p className="mt-2 text-xs text-blue-600 dark:text-blue-300">
+            Loading ShipD taxonomy metadata…
+          </p>
+        )}
+        {metadataError && (
+          <div className="mt-2 rounded-md border border-yellow-400 bg-yellow-50 p-3 text-xs text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-200">
+            <p className="font-semibold">Metadata unavailable</p>
+            <p className="mt-1">
+              {metadataError}. You can continue with fallback taxonomy, or{" "}
+              <button
+                type="button"
+                className="underline decoration-dotted hover:text-yellow-900 dark:hover:text-yellow-100"
+                onClick={onReloadMetadata}
+              >
+                retry loading metadata
+              </button>
+              .
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -36,22 +81,67 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
           placeholder="e.g., 5000 TEU Feeder Container"
           value={formData.name || ""}
           onChange={(e) => updateFormData({ name: e.target.value })}
+          aria-invalid={nameConflict}
+          aria-describedby={nameConflict ? "mission-name-conflict" : undefined}
         />
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Use a unique brief name to help you find designs later.
+        </p>
+        {nameConflict && (
+          <p
+            id="mission-name-conflict"
+            className="text-xs font-medium text-red-600 dark:text-red-400"
+          >
+            {nameConflictMessage ||
+              "A brief with this name already exists. Choose a different name."}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="missionType">Type of Vessel *</Label>
+        <Label htmlFor="missionCategory">Category *</Label>
+        <Select
+          id="missionCategory"
+          value={formData.missionCategory || categoryOptions[0]?.value || ""}
+          onChange={(value) =>
+            updateFormData({
+              missionCategory: value,
+              missionType: vesselTypeOptions[0]?.value,
+              bowFamily: undefined,
+              midshipFamily: undefined,
+              sternFamily: undefined,
+            })
+          }
+          options={categoryOptions}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Select the primary mission category to filter applicable vessel types.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="missionType">Vessel Type *</Label>
         <Select
           id="missionType"
-          value={formData.missionType || "commercial"}
-          onChange={(value) => updateFormData({ missionType: value })}
-          options={[
-            { value: "commercial", label: "Commercial" },
-            { value: "government", label: "Government" },
-            { value: "pleasure", label: "Pleasure" },
-            { value: "research", label: "Research" },
-          ]}
+          value={formData.missionType || vesselTypeOptions[0]?.value || ""}
+          onChange={(value) =>
+            updateFormData({
+              missionType: value,
+              bowFamily: undefined,
+              midshipFamily: undefined,
+              sternFamily: undefined,
+            })
+          }
+          options={vesselTypeOptions.map((type) => ({
+            value: type.value,
+            label: type.label,
+          }))}
         />
+        {formData.missionType && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {vesselTypeOptions.find((option) => option.value === formData.missionType)?.description}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -170,8 +260,8 @@ export const Step1MissionCargo: React.FC<Step1Props> = ({ formData, updateFormDa
         <Button variant="outline" onClick={() => navigate("/sizing/missions")}>
           Cancel
         </Button>
-        <Button onClick={onNext} disabled={!isValid}>
-          Next: Speed & Environment →
+        <Button onClick={onNext} disabled={!isValid || nameConflict}>
+          Next: Hull Families →
         </Button>
       </div>
     </div>

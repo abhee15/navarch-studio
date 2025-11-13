@@ -43,6 +43,13 @@ export interface CatalogHullListItem {
   cb?: number;
   geometryMissing: boolean;
   units: string; // Unit system
+
+  // ShipD taxonomy fields
+  vesselCategory?: string; // Commercial, Government, Recreational, Research
+  shipdVesselType?: string; // e.g., "bulk_carrier", "container"
+  bowFamily?: string; // e.g., "bulbous_bow", "straight_raked"
+  midshipFamily?: string; // e.g., "full_midship", "fine_midship"
+  sternFamily?: string; // e.g., "transom_stern", "cruiser_stern"
 }
 
 export interface CatalogHull extends CatalogHullListItem {
@@ -54,6 +61,9 @@ export interface CatalogHull extends CatalogHullListItem {
   waterlinesCount?: number;
   offsetsCount?: number;
   createdAt: string;
+
+  // Additional ShipD taxonomy fields for detailed view
+  familyMaskVersion?: number;
 }
 
 export interface CloneHullRequest {

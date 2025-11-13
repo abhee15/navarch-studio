@@ -11,6 +11,7 @@ import type { MissionCase, CreateMissionCaseDto } from "../types/sizing";
 export function missionCaseToDto(missionCase: MissionCase): CreateMissionCaseDto {
   return {
     name: missionCase.name,
+    missionCategory: missionCase.missionCategory || "commercial",
     missionType: missionCase.missionType,
     cargoBasis: missionCase.cargoBasis,
     cargoValue: missionCase.cargoValue,
@@ -27,5 +28,11 @@ export function missionCaseToDto(missionCase: MissionCase): CreateMissionCaseDto
     capAirdraftM: missionCase.capAirdraftM,
     enduranceNm: missionCase.enduranceNm,
     notes: missionCase.notes,
+    bowFamily: missionCase.bowFamily,
+    midshipFamily: missionCase.midshipFamily,
+    sternFamily: missionCase.sternFamily,
+    familyMaskVersion: missionCase.familyMaskVersion,
+    shipdInputVectorJson: missionCase.shipdInputVectorJson,
+    shipdInputsJson: missionCase.shipdInputsJson,
   };
 }

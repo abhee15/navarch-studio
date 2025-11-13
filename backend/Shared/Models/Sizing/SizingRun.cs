@@ -33,6 +33,41 @@ public class SizingRun
     public string? OptionsJson { get; set; }
 
     /// <summary>
+    /// Vessel category selected for this run (Commercial, Government, etc.).
+    /// </summary>
+    public string? VesselCategory { get; set; }
+
+    /// <summary>
+    /// Vessel type slug selected for this run (e.g., general_cargo, bulk_carrier).
+    /// </summary>
+    public string? VesselType { get; set; }
+
+    /// <summary>
+    /// Bow family identifier applied for ShipD parameterization.
+    /// </summary>
+    public string? BowFamily { get; set; }
+
+    /// <summary>
+    /// Midship family identifier.
+    /// </summary>
+    public string? MidshipFamily { get; set; }
+
+    /// <summary>
+    /// Stern family identifier.
+    /// </summary>
+    public string? SternFamily { get; set; }
+
+    /// <summary>
+    /// Version of the family mask used to derive ShipD parameters.
+    /// </summary>
+    public int? FamilyMaskVersion { get; set; }
+
+    /// <summary>
+    /// ShipD input vector captured for auditing (JSON array of 45 parameters).
+    /// </summary>
+    public string? ShipdInputVectorJson { get; set; }
+
+    /// <summary>
     /// Execution status: pending, computing, completed, failed
     /// </summary>
     public string Status { get; set; } = "pending";

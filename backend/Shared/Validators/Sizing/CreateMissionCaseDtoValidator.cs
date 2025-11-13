@@ -1,7 +1,30 @@
+using System.Collections.Generic;
 using FluentValidation;
 using Shared.DTOs.Sizing;
 
 namespace Shared.Validators.Sizing;
+
+internal static class MissionCaseValidationHelper
+{
+    private static readonly HashSet<string> ValidCategories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "commercial",
+        "government",
+        "recreational",
+        "research"
+    };
+
+    private static readonly HashSet<string> ValidCargoBasis = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "volume",
+        "weight",
+        "teu"
+    };
+
+    public static bool IsValidMissionCategory(string category) => ValidCategories.Contains(category);
+
+    public static bool IsValidCargoBasis(string basis) => ValidCargoBasis.Contains(basis);
+}
 
 public class CreateMissionCaseDtoValidator : AbstractValidator<CreateMissionCaseDto>
 {
@@ -11,13 +34,26 @@ public class CreateMissionCaseDtoValidator : AbstractValidator<CreateMissionCase
             .NotEmpty().WithMessage("Mission case name is required")
             .MaximumLength(200);
 
+        RuleFor(x => x.MissionCategory)
+            .NotEmpty()
+            .Must(MissionCaseValidationHelper.IsValidMissionCategory).WithMessage("Must be one of: commercial, government, recreational, research");
+
         RuleFor(x => x.MissionType)
             .NotEmpty()
-            .Must(BeValidMissionType).WithMessage("Must be: commercial, government, pleasure, research, military");
+            .MaximumLength(100);
+
+        RuleFor(x => x.BowFamily)
+            .NotEmpty().WithMessage("Bow family selection is required");
+
+        RuleFor(x => x.MidshipFamily)
+            .NotEmpty().WithMessage("Midship family selection is required");
+
+        RuleFor(x => x.SternFamily)
+            .NotEmpty().WithMessage("Stern family selection is required");
 
         RuleFor(x => x.CargoBasis)
             .NotEmpty()
-            .Must(BeValidCargoBasis).WithMessage("Must be: volume, weight, teu");
+            .Must(MissionCaseValidationHelper.IsValidCargoBasis).WithMessage("Must be: volume, weight, teu");
 
         RuleFor(x => x.CargoValue)
             .GreaterThan(0);
@@ -41,18 +77,6 @@ public class CreateMissionCaseDtoValidator : AbstractValidator<CreateMissionCase
             .GreaterThanOrEqualTo(0)
             .LessThanOrEqualTo(50);
     }
-
-    private bool BeValidMissionType(string type)
-    {
-        var valid = new[] { "commercial", "government", "pleasure", "research", "military" };
-        return valid.Contains(type.ToLower());
-    }
-
-    private bool BeValidCargoBasis(string basis)
-    {
-        var valid = new[] { "volume", "weight", "teu" };
-        return valid.Contains(basis.ToLower());
-    }
 }
 
 public class UpdateMissionCaseDtoValidator : AbstractValidator<UpdateMissionCaseDto>
@@ -64,14 +88,36 @@ public class UpdateMissionCaseDtoValidator : AbstractValidator<UpdateMissionCase
             RuleFor(x => x.Name!).NotEmpty().MaximumLength(200);
         });
 
+        When(x => x.MissionCategory != null, () =>
+        {
+            RuleFor(x => x.MissionCategory!).Must(MissionCaseValidationHelper.IsValidMissionCategory);
+        });
+
         When(x => x.MissionType != null, () =>
         {
-            RuleFor(x => x.MissionType!).Must(BeValidMissionType);
+            RuleFor(x => x.MissionType!)
+                .NotEmpty()
+                .MaximumLength(100);
+        });
+
+        When(x => x.BowFamily != null, () =>
+        {
+            RuleFor(x => x.BowFamily!).NotEmpty();
+        });
+
+        When(x => x.MidshipFamily != null, () =>
+        {
+            RuleFor(x => x.MidshipFamily!).NotEmpty();
+        });
+
+        When(x => x.SternFamily != null, () =>
+        {
+            RuleFor(x => x.SternFamily!).NotEmpty();
         });
 
         When(x => x.CargoBasis != null, () =>
         {
-            RuleFor(x => x.CargoBasis!).Must(BeValidCargoBasis);
+            RuleFor(x => x.CargoBasis!).Must(MissionCaseValidationHelper.IsValidCargoBasis);
         });
 
         When(x => x.CargoValue.HasValue, () =>
@@ -83,17 +129,5 @@ public class UpdateMissionCaseDtoValidator : AbstractValidator<UpdateMissionCase
         {
             RuleFor(x => x.ServiceSpeedKn!.Value).GreaterThan(0).LessThan(50);
         });
-    }
-
-    private bool BeValidMissionType(string type)
-    {
-        var valid = new[] { "commercial", "government", "pleasure", "research", "military" };
-        return valid.Contains(type.ToLower());
-    }
-
-    private bool BeValidCargoBasis(string basis)
-    {
-        var valid = new[] { "volume", "weight", "teu" };
-        return valid.Contains(basis.ToLower());
     }
 }

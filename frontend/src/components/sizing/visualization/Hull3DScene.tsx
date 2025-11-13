@@ -58,55 +58,76 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
     }
   };
 
-  // Calculate camera distance based on hull size
-  const cameraDistance = Math.max(candidate.lppM, candidate.beamM, candidate.draftM) * 2;
+  // Calculate optimal camera distance based on hull dimensions
+  const lpp = candidate.lppM || 50;
+  const beam = candidate.beamM || 10;
+  const draft = candidate.draftM || 5;
+
+  // Camera distance should be enough to see the full hull
+  // Use diagonal of bounding box: sqrt(L^2 + B^2 + T^2) * 1.5
+  const diagonal = Math.sqrt(lpp * lpp + beam * beam + draft * draft);
+  const cameraDistance = diagonal * 1.8;
+
+  // Optimal viewing angle: isometric view showing bow, side, and top
+  // Position camera to see hull from 3/4 view (bow-left, starboard-right, top-up)
+  const cameraX = cameraDistance * 0.7; // Slightly forward of center
+  const cameraY = cameraDistance * 0.6; // Elevated view
+  const cameraZ = cameraDistance * 0.8; // Side view angle
 
   return (
     <div className="w-full h-full p-4 relative flex flex-col">
       <div className="flex-1 bg-gradient-to-b from-gray-100 via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-600 rounded-t-lg shadow-lg relative">
         <Canvas
           camera={{
-            position: [cameraDistance, cameraDistance * 0.6, cameraDistance * 0.8],
-            fov: 50,
+            position: [cameraX, cameraY, cameraZ],
+            fov: 50, // Slightly wider FOV for better hull visibility
+            near: 0.1,
+            far: cameraDistance * 5,
           }}
           shadows
         >
           <Suspense fallback={null}>
-            {/* Lighting */}
+            {/* Lighting - improved for better hull definition */}
             <ambientLight intensity={0.5} />
             <directionalLight
-              position={[10, 10, 5]}
-              intensity={1}
+              position={[lpp * 0.5, beam * 0.5, draft * 2]}
+              intensity={1.0}
               castShadow
-              shadow-mapSize-width={1024}
-              shadow-mapSize-height={1024}
+              shadow-mapSize-width={2048}
+              shadow-mapSize-height={2048}
             />
-            <pointLight position={[-10, -10, -5]} intensity={0.3} />
+            <directionalLight position={[-lpp * 0.3, -beam * 0.3, draft * 1.5]} intensity={0.4} />
+            <pointLight position={[0, 0, draft * 2]} intensity={0.3} />
 
             {/* Environment (realistic reflections) */}
             <Environment preset="city" />
 
-            {/* Hull */}
-            <ParametricHull3D
-              candidate={candidate}
-              showWaterplane={showWaterplane && visibility.waterplane}
-              showCenters={showCenters && visibility.centers}
-            />
-
-            {/* Grid helper */}
-            {showGrid && visibility.grid && (
-              <Grid
-                args={[candidate.lppM * 1.5, candidate.lppM * 1.5]}
-                cellSize={1}
-                cellThickness={0.5}
-                cellColor="#6b7280"
-                sectionSize={5}
-                sectionThickness={1}
-                sectionColor="#3b82f6"
-                fadeDistance={100}
-                fadeStrength={1}
-                position={[0, 0, 0]}
+            {/* Hull is already centered at origin by geometry generator */}
+            <group rotation={[0, Math.PI / 6, 0]}>
+              <ParametricHull3D
+                candidate={candidate}
+                showWaterplane={showWaterplane && visibility.waterplane}
+                showCenters={showCenters && visibility.centers}
               />
+            </group>
+
+            {/* Grid helper - aligned with hull coordinate system */}
+            {/* Grid is in XZ plane (horizontal), positioned at waterline level, rotated with hull */}
+            {showGrid && visibility.grid && (
+              <group rotation={[0, Math.PI / 6, 0]}>
+                <Grid
+                  args={[Math.max(lpp, beam) * 2, Math.max(lpp, beam) * 2]}
+                  cellSize={Math.max(lpp, beam) / 20}
+                  cellThickness={0.5}
+                  cellColor="#6b7280"
+                  sectionSize={Math.max(lpp, beam) / 4}
+                  sectionThickness={1}
+                  sectionColor="#3b82f6"
+                  fadeDistance={cameraDistance}
+                  fadeStrength={1}
+                  position={[0, draft, 0]} // Position at waterline (Y = draft)
+                />
+              </group>
             )}
 
             {/* Orbit controls */}
@@ -116,9 +137,10 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
               dampingFactor={0.05}
               rotateSpeed={0.8}
               zoomSpeed={1.2}
-              minDistance={cameraDistance * 0.5}
-              maxDistance={cameraDistance * 3}
-              maxPolarAngle={Math.PI / 1.8} // Prevent extreme angles
+              minDistance={cameraDistance * 0.4}
+              maxDistance={cameraDistance * 2.5}
+              maxPolarAngle={Math.PI / 1.8} // Allow slightly below horizon
+              target={[0, 0, 0]} // Focus on hull center (already centered)
             />
           </Suspense>
         </Canvas>

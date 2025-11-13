@@ -31,9 +31,34 @@ public class MissionCase
     public string? MissionCategory { get; set; }
 
     /// <summary>
-    /// Mission type: container, tanker, bulk, fishing, yacht_disp, hsc_planing, etc.
+    /// Mission type / vessel subtype: container, tanker, bulk, fishing, yacht_disp, hsc_planing, etc.
     /// </summary>
     public string MissionType { get; set; } = null!;
+
+    /// <summary>
+    /// Selected bow family identifier (ShipD taxonomy).
+    /// </summary>
+    public string? BowFamily { get; set; }
+
+    /// <summary>
+    /// Selected midship family identifier.
+    /// </summary>
+    public string? MidshipFamily { get; set; }
+
+    /// <summary>
+    /// Selected stern family identifier.
+    /// </summary>
+    public string? SternFamily { get; set; }
+
+    /// <summary>
+    /// Version of the ShipD family mask applied when this mission was last edited.
+    /// </summary>
+    public int? FamilyMaskVersion { get; set; }
+
+    /// <summary>
+    /// Optional JSON representing ShipD parameter overrides captured at mission-level.
+    /// </summary>
+    public string? ShipdInputsJson { get; set; }
 
     // Cargo Inputs
 
@@ -147,6 +172,7 @@ public class MissionCase
     /// </summary>
     public ICollection<SizingRun> SizingRuns { get; set; } = new List<SizingRun>();
 }
+
 
 
 

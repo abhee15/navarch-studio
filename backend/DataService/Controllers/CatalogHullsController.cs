@@ -42,13 +42,45 @@ public class CatalogHullsController : ControllerBase
     [ProducesResponseType(typeof(List<RealVesselDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<RealVesselDto>>> ListHulls(
         [FromQuery] string? vesselType = null,
+        [FromQuery] string? vesselCategory = null,
+        [FromQuery] string? shipdVesselType = null,
+        [FromQuery] string? bowFamily = null,
+        [FromQuery] string? midshipFamily = null,
+        [FromQuery] string? sternFamily = null,
         CancellationToken cancellationToken = default)
     {
         var query = _context.CatalogVesselsReal.AsQueryable();
 
+        // Filter by legacy vessel type (backward compatible)
         if (!string.IsNullOrEmpty(vesselType))
         {
             query = query.Where(v => v.VesselType == vesselType);
+        }
+
+        // Filter by ShipD taxonomy
+        if (!string.IsNullOrEmpty(vesselCategory))
+        {
+            query = query.Where(v => v.VesselCategory == vesselCategory);
+        }
+
+        if (!string.IsNullOrEmpty(shipdVesselType))
+        {
+            query = query.Where(v => v.ShipdVesselType == shipdVesselType);
+        }
+
+        if (!string.IsNullOrEmpty(bowFamily))
+        {
+            query = query.Where(v => v.BowFamily == bowFamily);
+        }
+
+        if (!string.IsNullOrEmpty(midshipFamily))
+        {
+            query = query.Where(v => v.MidshipFamily == midshipFamily);
+        }
+
+        if (!string.IsNullOrEmpty(sternFamily))
+        {
+            query = query.Where(v => v.SternFamily == sternFamily);
         }
 
         var vessels = await query
@@ -74,7 +106,12 @@ public class CatalogHullsController : ControllerBase
             Cb = v.Cb,
             Displacement = v.DisplacementT,
             GeometryMissing = string.IsNullOrEmpty(v.HullGeometryFile),
-            Units = "SI"
+            Units = "SI",
+            VesselCategory = v.VesselCategory,
+            ShipdVesselType = v.ShipdVesselType,
+            BowFamily = v.BowFamily,
+            MidshipFamily = v.MidshipFamily,
+            SternFamily = v.SternFamily
         }).ToList();
 
         _logger.LogInformation("Returning {Count} vessels from real-world catalog", result.Count);
@@ -132,7 +169,13 @@ public class CatalogHullsController : ControllerBase
             IsSystemData = vessel.IsSystemData,
             Units = "SI",
             CreatedAt = vessel.CreatedAt,
-            UpdatedAt = vessel.UpdatedAt
+            UpdatedAt = vessel.UpdatedAt,
+            VesselCategory = vessel.VesselCategory,
+            ShipdVesselType = vessel.ShipdVesselType,
+            BowFamily = vessel.BowFamily,
+            MidshipFamily = vessel.MidshipFamily,
+            SternFamily = vessel.SternFamily,
+            FamilyMaskVersion = vessel.FamilyMaskVersion
         };
 
         return Ok(result);
@@ -296,6 +339,13 @@ public class CatalogHullsController : ControllerBase
         public decimal? Displacement { get; set; }
         public bool GeometryMissing { get; set; }
         public required string Units { get; set; }
+
+        // ShipD taxonomy fields
+        public string? VesselCategory { get; set; }
+        public string? ShipdVesselType { get; set; }
+        public string? BowFamily { get; set; }
+        public string? MidshipFamily { get; set; }
+        public string? SternFamily { get; set; }
     }
 
     /// <summary>
@@ -329,5 +379,13 @@ public class CatalogHullsController : ControllerBase
         public required string Units { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        // ShipD taxonomy fields
+        public string? VesselCategory { get; set; }
+        public string? ShipdVesselType { get; set; }
+        public string? BowFamily { get; set; }
+        public string? MidshipFamily { get; set; }
+        public string? SternFamily { get; set; }
+        public int? FamilyMaskVersion { get; set; }
     }
 }

@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { CandidateDesign } from "../../types/sizing";
 import { Button } from "../ui/button";
 import { Hull3DThumbnail } from "./visualization/Hull3DThumbnail";
-import { AlertTriangle, Award, TrendingUp, Check, Database, Sparkles } from "lucide-react";
+import { AlertTriangle, Award, TrendingUp, Check, Database, Sparkles, Ship } from "lucide-react";
 
 interface CandidateCardProps {
   candidate: CandidateDesign;
@@ -29,8 +29,38 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
   const hasWarnings = flags.some((f) => f.includes("constrained") || f.includes("exceeded"));
 
+  // Check if ShipD parameters are available
+  const hasShipD = useMemo(() => {
+    return !!candidate.shipdParametersJson || !!candidate.geometryJson;
+  }, [candidate.shipdParametersJson, candidate.geometryJson]);
+
+  // Parse ShipD vector to extract key geometry info
+  const shipdGeometryInfo = useMemo(() => {
+    if (!candidate.shipdParametersJson) return null;
+    try {
+      const vector = JSON.parse(candidate.shipdParametersJson);
+      if (!Array.isArray(vector) || vector.length !== 45) return null;
+
+      return {
+        lb: vector[1], // Bow length ratio
+        ls: vector[2], // Stern length ratio
+        lm: 1 - vector[1] - vector[2], // Mid-body length ratio
+        hasBulb: vector[31] > 0.5, // bit_BB
+        beta: vector[8], // Flare angle (normalized)
+        cdrft: vector[19], // Deadrise angle (normalized)
+      };
+    } catch {
+      return null;
+    }
+  }, [candidate.shipdParametersJson]);
+
   return (
     <div
+      data-testid={`candidate-card-${rank}`}
+      data-hull-family={candidate.hullFamily}
+      data-bow-family={candidate.bowFamily ?? ""}
+      data-midship-family={candidate.midshipFamily ?? ""}
+      data-stern-family={candidate.sternFamily ?? ""}
       className={`rounded-lg bg-card border border-border shadow-sm transition-all hover:shadow-md hover:border-primary/50 ${
         isComparing ? "ring-2 ring-primary" : ""
       }`}
@@ -43,9 +73,17 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
               #{rank}
             </div>
             <div>
-              <h3 className="text-base font-semibold text-foreground capitalize">
-                {candidate.hullFamily.replace("_", " ")}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-semibold text-foreground capitalize">
+                  {candidate.hullFamily.replace("_", " ")}
+                </h3>
+                {hasShipD && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                    <Ship className="h-2.5 w-2.5" />
+                    ShipD
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Award className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground">
@@ -209,6 +247,32 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
             </div>
           </div>
         </div>
+
+        {/* ShipD Geometry Info (if available) */}
+        {hasShipD && shipdGeometryInfo && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+            <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-300 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <Ship className="h-3 w-3" />
+              ShipD Geometry
+            </h4>
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-blue-700 dark:text-blue-400">Longitudinal:</span>
+                <span className="font-mono font-semibold text-blue-900 dark:text-blue-200">
+                  Lb={(shipdGeometryInfo.lb * 100).toFixed(0)}% Lm=
+                  {(shipdGeometryInfo.lm * 100).toFixed(0)}% Ls=
+                  {(shipdGeometryInfo.ls * 100).toFixed(0)}%
+                </span>
+              </div>
+              {shipdGeometryInfo.hasBulb && (
+                <div className="flex justify-between">
+                  <span className="text-blue-700 dark:text-blue-400">Bulb:</span>
+                  <span className="font-semibold text-blue-900 dark:text-blue-200">Present</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Key Performance Indicators */}
         <div className="space-y-2">

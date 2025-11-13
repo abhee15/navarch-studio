@@ -56,6 +56,10 @@ public class SizingDbContext : DbContext
             entity.Property(e => e.TenantId).IsRequired().HasMaxLength(50);
             entity.Property(e => e.MissionType).IsRequired().HasMaxLength(50);
             entity.Property(e => e.CargoBasis).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.BowFamily).HasMaxLength(50);
+            entity.Property(e => e.MidshipFamily).HasMaxLength(50);
+            entity.Property(e => e.SternFamily).HasMaxLength(50);
+            entity.Property(e => e.ShipdInputsJson).HasColumnType("jsonb");
 
             // Numeric precision
             entity.Property(e => e.CargoValue).HasColumnType("numeric(12,2)");
@@ -104,6 +108,12 @@ public class SizingDbContext : DbContext
             entity.Property(e => e.Status).HasMaxLength(20);
             entity.Property(e => e.LocksJson).HasColumnType("jsonb");
             entity.Property(e => e.OptionsJson).HasColumnType("jsonb");
+            entity.Property(e => e.VesselCategory).HasMaxLength(50);
+            entity.Property(e => e.VesselType).HasMaxLength(50);
+            entity.Property(e => e.BowFamily).HasMaxLength(50);
+            entity.Property(e => e.MidshipFamily).HasMaxLength(50);
+            entity.Property(e => e.SternFamily).HasMaxLength(50);
+            entity.Property(e => e.ShipdInputVectorJson).HasColumnType("jsonb");
 
             // Indexes
             entity.HasIndex(e => e.MissionCaseId);
@@ -126,6 +136,12 @@ public class SizingDbContext : DbContext
             entity.HasKey(e => e.Id);
 
             entity.Property(e => e.HullFamily).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.VesselCategory).HasMaxLength(50);
+            entity.Property(e => e.VesselType).HasMaxLength(50);
+            entity.Property(e => e.BowFamily).HasMaxLength(50);
+            entity.Property(e => e.MidshipFamily).HasMaxLength(50);
+            entity.Property(e => e.SternFamily).HasMaxLength(50);
+            entity.Property(e => e.ShipdParametersJson).HasColumnType("jsonb");
 
             // Principal dimensions - numeric(12,4)
             entity.Property(e => e.LppM).HasColumnType("numeric(12,4)");

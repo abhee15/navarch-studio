@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using HullSizingService.Data;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs.Sizing;
@@ -298,6 +299,11 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
                 MissionCategory = baseMission.MissionCategory,
                 MissionType = baseMission.MissionType,
                 CargoBasis = baseMission.CargoBasis,
+                BowFamily = baseMission.BowFamily,
+                MidshipFamily = baseMission.MidshipFamily,
+                SternFamily = baseMission.SternFamily,
+                FamilyMaskVersion = baseMission.FamilyMaskVersion,
+                ShipdInputsJson = baseMission.ShipdInputsJson,
                 CargoValue = baseMission.CargoValue,
                 CargoVolumeM3 = baseMission.CargoVolumeM3,
                 CargoDensityTPerM3 = baseMission.CargoDensityTPerM3,
@@ -322,11 +328,33 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
             };
 
             // Create solver request with exploration metadata
+            // Preserve AdditionalParameters from base mission to maintain ShipD geometry details
+            Dictionary<string, object>? additionalParams = null;
+            if (!string.IsNullOrWhiteSpace(baseMission.ShipdInputsJson))
+            {
+                try
+                {
+                    var shipdInputs = JsonSerializer.Deserialize<Dictionary<string, object>>(baseMission.ShipdInputsJson);
+                    if (shipdInputs != null && shipdInputs.TryGetValue("AdditionalParameters", out var addlParamsObj))
+                    {
+                        if (addlParamsObj is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                        {
+                            additionalParams = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonElement.GetRawText());
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[EXPLORATION] Failed to parse AdditionalParameters from base mission");
+                }
+            }
+
             var options = new Solver.SizingOptionsDto(
                 FamilyHints: hullFamily != null ? new List<string> { hullFamily } : null,
                 MaxCandidates: 1, // Only need the best candidate
                 MinFn: null,
-                MaxFn: null
+                MaxFn: null,
+                AdditionalParameters: additionalParams  // Preserve ShipD AdditionalParameters
             );
 
             var solverRequest = new Solver.SolverRequest(
@@ -353,6 +381,12 @@ public class DesignSpaceExplorationService : IDesignSpaceExplorationService
                 MissionCaseId = baseMission.Id,
                 Mode = mode,
                 LocksJson = null,
+                VesselCategory = baseMission.MissionCategory,
+                VesselType = baseMission.MissionType,
+                BowFamily = baseMission.BowFamily ?? hullFamily,
+                MidshipFamily = baseMission.MidshipFamily,
+                SternFamily = baseMission.SternFamily,
+                FamilyMaskVersion = baseMission.FamilyMaskVersion,
                 OptionsJson = JsonSerializer.Serialize(new
                 {
                     batchId = batchId,

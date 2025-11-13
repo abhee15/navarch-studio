@@ -28,12 +28,14 @@ import {
   FileText,
 } from "lucide-react";
 import { downloadDXF } from "../../utils/dxfExporter";
+import { ShipDParameterChart } from "../../components/sizing/visualization/ShipDParameterChart";
+import { GeometryDetailsPanel } from "../../components/sizing/visualization/GeometryDetailsPanel";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
   const { sizingStore, authStore } = useStore();
-  const [activeTab, setActiveTab] = useState<"kpi" | "offsets" | "sensitivity">("kpi");
+  const [activeTab, setActiveTab] = useState<"kpi" | "offsets" | "sensitivity" | "shipd">("kpi");
   const [showSettings, setShowSettings] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
 
@@ -47,6 +49,10 @@ export const CandidateWorkspace: React.FC = observer(() => {
       if (found) {
         sizingStore.selectCandidate(candidateId);
       }
+    }
+    // Ensure ShipD metadata is loaded if candidate has ShipD parameters
+    if (candidate?.shipdParametersJson) {
+      sizingStore.ensureShipDMetadataLoaded();
     }
   }, [candidateId, candidate, sizingStore]);
 
@@ -294,6 +300,19 @@ export const CandidateWorkspace: React.FC = observer(() => {
                       <Activity className="h-4 w-4" />
                       <span className="hidden sm:inline">Sensitivity</span>
                     </button>
+                    {candidate.shipdParametersJson && (
+                      <button
+                        onClick={() => setActiveTab("shipd")}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                          activeTab === "shipd"
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <Ship className="h-4 w-4" />
+                        <span className="hidden sm:inline">ShipD</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Tab Content */}
@@ -301,6 +320,17 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     {activeTab === "kpi" && <CompactHUD candidate={candidate} />}
                     {activeTab === "offsets" && <OffsetsTable candidate={candidate} />}
                     {activeTab === "sensitivity" && <SensitivityPanel candidate={candidate} />}
+                    {activeTab === "shipd" && candidate.shipdParametersJson && (
+                      <div className="space-y-4">
+                        <GeometryDetailsPanel candidate={candidate} />
+                        {sizingStore.shipdParameters && sizingStore.shipdParameters.length > 0 && (
+                          <ShipDParameterChart
+                            candidate={candidate}
+                            metadata={sizingStore.shipdParameters}
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

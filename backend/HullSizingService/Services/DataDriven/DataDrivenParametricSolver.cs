@@ -191,6 +191,7 @@ public class DataDrivenParametricSolver
             {
                 // Create a solver request with scaled dimensions as starting point
                 // The First-Principles solver will validate and refine
+                // Preserve AdditionalParameters from original request to maintain ShipD geometry details
                 var refinementRequest = new SolverRequest(
                     MissionCase: originalRequest.MissionCase,
                     Locks: originalRequest.Locks,
@@ -198,7 +199,8 @@ public class DataDrivenParametricSolver
                         FamilyHints: null,
                         MaxCandidates: 1,  // Just need best refinement
                         MinFn: null,
-                        MaxFn: null
+                        MaxFn: null,
+                        AdditionalParameters: originalRequest.Options?.AdditionalParameters  // Preserve ShipD AdditionalParameters
                     )
                 );
 
