@@ -531,20 +531,55 @@ try
             }
 
             // Seed catalog data (runs in all environments)
+            // CRITICAL: This seeds water properties and benchmark cases required for health check
             Console.WriteLine("[SEED] Checking for catalog data...");
             Log.Information("[SEED] Checking for catalog data...");
             try
             {
                 var catalogSeeder = scope.ServiceProvider.GetRequiredService<DataService.Data.Seeds.CatalogSeeder>();
                 await catalogSeeder.SeedAllAsync();
-                Console.WriteLine("[SEED] Catalog seeding completed.");
-                Log.Information("[SEED] Catalog seeding completed.");
+
+                // Verify critical seed data was created
+                var waterCount = await dbContext.CatalogWaterProperties.CountAsync();
+                var benchmarkCount = await dbContext.BenchmarkCases.CountAsync();
+
+                if (waterCount < 6 || benchmarkCount < 6)
+                {
+                    var errorMsg = $"Critical seed data incomplete after seeding: water properties={waterCount}/6, benchmark cases={benchmarkCount}/6";
+                    Console.WriteLine($"[SEED] ERROR: {errorMsg}");
+                    Log.Error("[SEED] {Error}", errorMsg);
+
+                    // In production/staging, fail startup if critical seed data is missing
+                    if (!app.Environment.IsDevelopment())
+                    {
+                        throw new InvalidOperationException(
+                            $"Critical seed data incomplete. Service cannot start without water properties and benchmark cases. {errorMsg}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[SEED] ✅ Catalog seeding completed. Water properties: {waterCount}, Benchmark cases: {benchmarkCount}");
+                    Log.Information("[SEED] Catalog seeding completed. Water properties: {WaterCount}, Benchmark cases: {BenchmarkCount}",
+                        waterCount, benchmarkCount);
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                throw; // Re-throw critical failures
             }
             catch (Exception seedEx)
             {
                 Console.WriteLine($"[SEED] WARNING: Failed to seed catalog: {seedEx.Message}");
                 Log.Warning(seedEx, "[SEED] Failed to seed catalog: {Message}", seedEx.Message);
-                // Don't throw - seeding is optional, but log warning for monitoring
+
+                // In production/staging, fail startup if seeding fails
+                if (!app.Environment.IsDevelopment())
+                {
+                    throw new InvalidOperationException(
+                        $"Catalog seeding failed in {app.Environment.EnvironmentName} environment. " +
+                        $"Service cannot start without critical seed data. Error: {seedEx.Message}", seedEx);
+                }
+                // In development, allow startup to continue (developer can fix manually)
             }
 
             // Seed real-world vessel catalog (600 vessels for Data-Driven mode)
