@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Data;
 
 namespace DataService.Data;
 
@@ -123,33 +124,86 @@ public class MigrationValidator
 
     private async Task<bool> CheckTableExistsAsync(string tableName, CancellationToken cancellationToken)
     {
+        // Use raw SQL with parameterized query to check table existence
         var sql = @"
             SELECT COUNT(*)
             FROM information_schema.tables
             WHERE table_schema = 'data'
-              AND table_name = {0}";
+              AND table_name = @p0";
 
-        var count = await _context.Database
-            .SqlQueryRaw<int>(sql, tableName)
-            .FirstOrDefaultAsync(cancellationToken);
+        // Use EF Core's connection management
+        var connection = _context.Database.GetDbConnection();
+        var wasOpen = connection.State == System.Data.ConnectionState.Open;
+        
+        if (!wasOpen)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+        
+        try
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "@p0";
+            parameter.Value = tableName;
+            command.Parameters.Add(parameter);
 
-        return count > 0;
+            var result = await command.ExecuteScalarAsync(cancellationToken);
+            var count = Convert.ToInt32(result);
+            return count > 0;
+        }
+        finally
+        {
+            if (!wasOpen)
+            {
+                await connection.CloseAsync();
+            }
+        }
     }
 
     private async Task<List<string>> GetTableColumnsAsync(string tableName, CancellationToken cancellationToken)
     {
+        // Use raw SQL with parameterized query to get column names
         var sql = @"
             SELECT column_name
             FROM information_schema.columns
             WHERE table_schema = 'data'
-              AND table_name = {0}
+              AND table_name = @p0
             ORDER BY ordinal_position";
 
-        var columns = await _context.Database
-            .SqlQueryRaw<string>(sql, tableName)
-            .ToListAsync(cancellationToken);
+        var connection = _context.Database.GetDbConnection();
+        var wasOpen = connection.State == System.Data.ConnectionState.Open;
+        
+        if (!wasOpen)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+        
+        try
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "@p0";
+            parameter.Value = tableName;
+            command.Parameters.Add(parameter);
 
-        return columns;
+            var columns = new List<string>();
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                columns.Add(reader.GetString(0));
+            }
+            return columns;
+        }
+        finally
+        {
+            if (!wasOpen)
+            {
+                await connection.CloseAsync();
+            }
+        }
     }
 }
 
