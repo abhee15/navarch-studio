@@ -240,13 +240,11 @@ export function generateShipDBulb(
   _lppM: number,
   beamM: number,
   draftM: number,
-  metadata: ShipDParameterMetadata[]
+  _metadata: ShipDParameterMetadata[]
 ): THREE.BufferGeometry | null {
   if (shipdVector.length !== 45) {
     return null;
   }
-
-  const denormalized = denormalizeParameters(shipdVector, metadata);
 
   // Check if bulb is enabled
   if (shipdVector[31] <= 0.5) {

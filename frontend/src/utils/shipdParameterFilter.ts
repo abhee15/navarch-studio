@@ -73,30 +73,17 @@ interface ParameterVisibilityConfig {
 /**
  * Midship families that support tumblehome
  */
-const TUMBLEHOME_MIDSHIP_FAMILIES = new Set([
-  "fine_midship",
-  "fine",
-  "ultra_fine",
-]);
+const TUMBLEHOME_MIDSHIP_FAMILIES = new Set(["fine_midship", "fine", "ultra_fine"]);
 
 /**
  * Midship families that support sheer
  */
-const SHEER_MIDSHIP_FAMILIES = new Set([
-  "full_midship",
-  "full",
-  "moderate_midship",
-  "moderate",
-]);
+const SHEER_MIDSHIP_FAMILIES = new Set(["full_midship", "full", "moderate_midship", "moderate"]);
 
 /**
  * Stern families that support transom parameters
  */
-const TRANSOM_STERN_FAMILIES = new Set([
-  "transom_stern",
-  "transom",
-  "flat_stern",
-]);
+const TRANSOM_STERN_FAMILIES = new Set(["transom_stern", "transom", "flat_stern"]);
 
 /**
  * Vessel types that commonly have bulbous bows
@@ -116,12 +103,10 @@ export function isParameterVisible(
   parameterId: ParameterId,
   config: ParameterVisibilityConfig
 ): boolean {
-  const { candidate, vesselType, vesselCategory, maskVersion } = config;
+  const { candidate, vesselType } = config;
 
   // Core dimensions and coefficients are always visible
-  if (
-    ["lpp", "beam", "draft", "depth", "cb", "cp", "cwp"].includes(parameterId)
-  ) {
+  if (["lpp", "beam", "draft", "depth", "cb", "cp", "cwp"].includes(parameterId)) {
     return true;
   }
 
@@ -131,25 +116,12 @@ export function isParameterVisible(
   }
 
   // Bow parameters - always visible (all vessels have bows)
-  if (
-    [
-      "bowFlareAngle",
-      "bowCurvature",
-      "bowKnuckle",
-      "deadriseAngle",
-    ].includes(parameterId)
-  ) {
+  if (["bowFlareAngle", "bowCurvature", "bowKnuckle", "deadriseAngle"].includes(parameterId)) {
     return true;
   }
 
   // Stern parameters - always visible (all vessels have sterns)
-  if (
-    [
-      "sternRakeAngle",
-      "sternCurvature",
-      "sternKnuckle",
-    ].includes(parameterId)
-  ) {
+  if (["sternRakeAngle", "sternCurvature", "sternKnuckle"].includes(parameterId)) {
     return true;
   }
 
@@ -173,14 +145,9 @@ export function isParameterVisible(
 
   // Bulb parameters - only if bulb is enabled or vessel type supports it
   if (
-    [
-      "hasBulb",
-      "bulbLength",
-      "bulbHeight",
-      "bulbWidth",
-      "bulbAsymmetry",
-      "bulbFillet",
-    ].includes(parameterId)
+    ["hasBulb", "bulbLength", "bulbHeight", "bulbWidth", "bulbAsymmetry", "bulbFillet"].includes(
+      parameterId
+    )
   ) {
     // Show if bulb is currently enabled
     if (candidate.hasBulb) {
@@ -204,9 +171,7 @@ export function isParameterVisible(
 /**
  * Gets the list of visible parameters for a candidate
  */
-export function getVisibleParameters(
-  config: ParameterVisibilityConfig
-): Set<ParameterId> {
+export function getVisibleParameters(config: ParameterVisibilityConfig): Set<ParameterId> {
   const allParameters: ParameterId[] = [
     // Dimensions
     "lpp",
@@ -271,15 +236,9 @@ export function isParameterGroupVisible(
         visibleParams.has("depth")
       );
     case "coefficients":
-      return (
-        visibleParams.has("cb") ||
-        visibleParams.has("cp") ||
-        visibleParams.has("cwp")
-      );
+      return visibleParams.has("cb") || visibleParams.has("cp") || visibleParams.has("cwp");
     case "longitudinal":
-      return (
-        visibleParams.has("bowLength") || visibleParams.has("sternLength")
-      );
+      return visibleParams.has("bowLength") || visibleParams.has("sternLength");
     case "bow":
       return (
         visibleParams.has("bowFlareAngle") ||
