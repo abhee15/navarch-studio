@@ -170,7 +170,13 @@ function validateAndFixParameters(candidate: CandidateDesign): CandidateDesign {
   let ls = candidate.sternLengthRatio;
 
   // If parameters are missing or invalid, try to extract from vector
-  if (lb == null || ls == null || lb < MIN_BOW_LENGTH || ls < MIN_STERN_LENGTH || lb + ls > MAX_SUM) {
+  if (
+    lb == null ||
+    ls == null ||
+    lb < MIN_BOW_LENGTH ||
+    ls < MIN_STERN_LENGTH ||
+    lb + ls > MAX_SUM
+  ) {
     if (candidate.shipdParametersJson) {
       try {
         const vector = JSON.parse(candidate.shipdParametersJson);

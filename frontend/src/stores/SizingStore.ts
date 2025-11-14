@@ -338,7 +338,10 @@ export class SizingStore {
         if (Array.isArray(extractedCandidates)) {
           // DEBUG: Log first candidate to see property names
           if (extractedCandidates.length > 0) {
-            console.log("[SizingStore] Sample candidate properties:", Object.keys(extractedCandidates[0]));
+            console.log(
+              "[SizingStore] Sample candidate properties:",
+              Object.keys(extractedCandidates[0])
+            );
             console.log("[SizingStore] Sample candidate data:", extractedCandidates[0]);
           }
           extractedCandidates.forEach((c) => this.candidates.push(c));
