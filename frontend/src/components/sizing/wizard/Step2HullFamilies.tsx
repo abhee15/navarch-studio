@@ -103,10 +103,7 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
     });
   };
 
-  const isValid =
-    !!formData.bowFamily &&
-    !!formData.midshipFamily &&
-    !!formData.sternFamily;
+  const isValid = !!formData.bowFamily && !!formData.midshipFamily && !!formData.sternFamily;
 
   return (
     <div className="space-y-6">
