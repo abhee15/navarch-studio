@@ -123,7 +123,10 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
 
     const mappedKey = paramMap[param];
     if (mappedKey) {
-      (updates as any)[mappedKey] = localValues[param];
+      // Type-safe assignment to updates object
+      const value = localValues[param];
+      // Use Record type for type-safe dynamic property assignment
+      (updates as Record<string, number | boolean>)[mappedKey] = value;
     }
 
     onUpdate(updates);

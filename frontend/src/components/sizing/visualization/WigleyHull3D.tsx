@@ -137,13 +137,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
       // Return empty geometry on error
       return new THREE.BufferGeometry();
     }
-  }, [
-    candidate,
-    candidate.geometryJson,
-    candidate.shipdParametersJson,
-    sizingStore.shipdParameters,
-    resolution,
-  ]);
+  }, [candidate, sizingStore.shipdParameters, resolution]);
 
   // Cleanup hull geometry when component unmounts or geometry changes
   React.useEffect(() => {
