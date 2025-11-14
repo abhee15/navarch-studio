@@ -337,7 +337,13 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             if (param != null)
             {
                 vector[1] = Math.Clamp(additional.BowLengthRatio.Value, param.Min ?? 0m, param.Max ?? 1m);
-                _logger.LogDebug("[SHIPD_ADAPTER] Applied bow length ratio: {Ratio}", vector[1]);
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied bow length ratio: {Ratio} (clamped to metadata bounds)", vector[1]);
+            }
+            else
+            {
+                // Apply value even if metadata lookup fails (with basic validation)
+                vector[1] = Math.Clamp(additional.BowLengthRatio.Value, 0.05m, 0.9m);
+                _logger.LogWarning("[SHIPD_ADAPTER] Applied bow length ratio: {Ratio} (metadata lookup failed, using basic bounds)", vector[1]);
             }
         }
 
@@ -347,7 +353,13 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             if (param != null)
             {
                 vector[2] = Math.Clamp(additional.SternLengthRatio.Value, param.Min ?? 0m, param.Max ?? 1m);
-                _logger.LogDebug("[SHIPD_ADAPTER] Applied stern length ratio: {Ratio}", vector[2]);
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied stern length ratio: {Ratio} (clamped to metadata bounds)", vector[2]);
+            }
+            else
+            {
+                // Apply value even if metadata lookup fails (with basic validation)
+                vector[2] = Math.Clamp(additional.SternLengthRatio.Value, 0.05m, 0.9m);
+                _logger.LogWarning("[SHIPD_ADAPTER] Applied stern length ratio: {Ratio} (metadata lookup failed, using basic bounds)", vector[2]);
             }
         }
 
@@ -497,6 +509,12 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
                         {
                             vector[1] = Math.Clamp(value, lbParam.Min ?? 0m, lbParam.Max ?? 1m);
                         }
+                        else
+                        {
+                            // Apply value even if metadata lookup fails
+                            vector[1] = Math.Clamp(value, 0.05m, 0.9m);
+                            _logger.LogWarning("[SHIPD_ADAPTER] Applied bow length ratio from dictionary: {Ratio} (metadata lookup failed)", vector[1]);
+                        }
                         break;
 
                     case "sternlengthratio":
@@ -506,6 +524,12 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
                         if (lsParam != null)
                         {
                             vector[2] = Math.Clamp(value, lsParam.Min ?? 0m, lsParam.Max ?? 1m);
+                        }
+                        else
+                        {
+                            // Apply value even if metadata lookup fails
+                            vector[2] = Math.Clamp(value, 0.05m, 0.9m);
+                            _logger.LogWarning("[SHIPD_ADAPTER] Applied stern length ratio from dictionary: {Ratio} (metadata lookup failed)", vector[2]);
                         }
                         break;
                 }
