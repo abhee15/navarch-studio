@@ -156,11 +156,18 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             try
             {
                 var json = JsonSerializer.Serialize(runRequest.Options.AdditionalParameters);
-                additionalParsed = JsonSerializer.Deserialize<ShipDAdditionalParameters>(json);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                additionalParsed = JsonSerializer.Deserialize<ShipDAdditionalParameters>(json, options);
+                _logger.LogDebug("[SHIPD_ADAPTER] Parsed AdditionalParameters for defaults check. BowLengthRatio: {Bow}, SternLengthRatio: {Stern}",
+                    additionalParsed?.BowLengthRatio, additionalParsed?.SternLengthRatio);
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore parse errors, will try manual mapping in ApplyConditionalParameters
+                _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to parse AdditionalParameters for defaults check. Will try in ApplyConditionalParameters.");
             }
         }
 
@@ -265,11 +272,19 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
         }
 
         // Try to deserialize as ShipDAdditionalParameters
+        // Use camelCase naming policy to match frontend JSON
         ShipDAdditionalParameters? additional = null;
         try
         {
             var json = JsonSerializer.Serialize(additionalParameters);
-            additional = JsonSerializer.Deserialize<ShipDAdditionalParameters>(json);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            additional = JsonSerializer.Deserialize<ShipDAdditionalParameters>(json, options);
+            _logger.LogDebug("[SHIPD_ADAPTER] Successfully deserialized AdditionalParameters. BowLengthRatio: {Bow}, SternLengthRatio: {Stern}",
+                additional?.BowLengthRatio, additional?.SternLengthRatio);
         }
         catch (JsonException ex)
         {
