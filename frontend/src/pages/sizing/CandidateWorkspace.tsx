@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import axios from "axios";
 import { useStore } from "../../stores";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
@@ -200,23 +201,31 @@ export const CandidateWorkspace: React.FC = observer(() => {
         "t"
       );
       // Note: Background solver will re-run for accurate physics-based results
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to adjust parameter:", error);
       // Extract error message from various possible locations
       let errorMessage = "Unknown error";
-      if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (typeof error?.response?.data === "string") {
-        errorMessage = error.response.data;
-      } else if (error?.message) {
+      
+      // Handle axios errors
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (typeof error.response?.data === "string") {
+          errorMessage = error.response.data;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (error instanceof Error) {
         errorMessage = error.message;
       }
 
       console.error(`[Parameter Adjust Error] Parameter: ${parameter}, Value: ${value}`);
       console.error(`[Parameter Adjust Error] Full error object:`, JSON.stringify(error, null, 2));
-      console.error(`[Parameter Adjust Error] Error response:`, error?.response?.data);
+      if (axios.isAxiosError(error)) {
+        console.error(`[Parameter Adjust Error] Error response:`, error.response?.data);
+      }
       console.error(`[Parameter Adjust Error] Error message: ${errorMessage}`);
 
       toast.error(`Failed to update parameter: ${errorMessage}`);
