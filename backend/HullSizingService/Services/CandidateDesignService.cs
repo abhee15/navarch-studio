@@ -3,6 +3,7 @@ using System.Text.Json;
 using HullSizingService.Data;
 using HullSizingService.Services.Geometry;
 using HullSizingService.Services.Integration;
+using HullSizingService.Services.ShipD;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
 using Shared.DTOs.Hydrostatics;
@@ -16,6 +17,7 @@ public class CandidateDesignService : ICandidateDesignService
     private readonly SizingDbContext _context;
     private readonly ILogger<CandidateDesignService> _logger;
     private readonly IShipDHullGeometryService? _shipdGeometryService;
+    private readonly IShipDParameterAdapter? _shipdParameterAdapter;
     private readonly IDataServiceClient? _dataServiceClient;
     private readonly IShipDToHydroMapper _hydroMapper;
 
@@ -23,12 +25,14 @@ public class CandidateDesignService : ICandidateDesignService
         SizingDbContext context,
         ILogger<CandidateDesignService> logger,
         IShipDHullGeometryService? shipdGeometryService,
+        IShipDParameterAdapter? shipdParameterAdapter,
         IDataServiceClient? dataServiceClient,
         IShipDToHydroMapper hydroMapper)
     {
         _context = context;
         _logger = logger;
         _shipdGeometryService = shipdGeometryService;
+        _shipdParameterAdapter = shipdParameterAdapter;
         _dataServiceClient = dataServiceClient;
         _hydroMapper = hydroMapper;
     }
@@ -187,9 +191,19 @@ public class CandidateDesignService : ICandidateDesignService
 
         var mission = candidate.SizingRun.MissionCase;
 
+        // Store old values for ShipD vector adjustment
+        var oldLpp = candidate.LppM;
+        var oldBeam = candidate.BM;
+        var oldDraft = candidate.TM;
+        var oldCb = candidate.Cb;
+        var oldCp = candidate.Cp;
+        var oldCwp = candidate.Cwp;
+
         // Apply the parameter adjustment
         var adjustedValue = dto.Value;
-        switch (dto.Parameter.ToLower())
+        var paramLower = dto.Parameter.ToLower();
+
+        switch (paramLower)
         {
             case "lppm":
                 candidate.LppM = adjustedValue;
@@ -214,6 +228,28 @@ public class CandidateDesignService : ICandidateDesignService
             case "cwp":
                 candidate.Cwp = adjustedValue;
                 break;
+            // Direct ShipD parameter adjustments (handled below)
+            case "bowlengthratio":
+            case "sternlengthratio":
+            case "bowflareangle":
+            case "bowcurvature":
+            case "bowknuckle":
+            case "deadriseangle":
+            case "sternrakeangle":
+            case "sterncurvature":
+            case "sternknuckle":
+            case "transomarea":
+            case "transomwidth":
+            case "hassheer":
+            case "hastumblehome":
+            case "hasbulb":
+            case "bulblengthratio":
+            case "bulbheightratio":
+            case "bulbwidthratio":
+            case "bulbasymmetry":
+            case "bulbfilletradius":
+                // These are handled in ShipD vector update below
+                break;
             default:
                 throw new ArgumentException($"Parameter '{dto.Parameter}' is not adjustable");
         }
@@ -231,20 +267,129 @@ public class CandidateDesignService : ICandidateDesignService
         var wavelength = 1.56m * (speedMs * speedMs) / 9.81m;
         candidate.LwlOverLambda = candidate.LwlM / wavelength;
 
-        // Regenerate ShipD geometry if parameters are available
-        if (_shipdGeometryService != null && _dataServiceClient != null && !string.IsNullOrEmpty(candidate.ShipdParametersJson))
+        // Regenerate ShipD geometry with intelligent vector adjustment
+        if (_shipdGeometryService != null && _shipdParameterAdapter != null && _dataServiceClient != null && !string.IsNullOrEmpty(candidate.ShipdParametersJson))
         {
             try
             {
-                var shipdVector = JsonSerializer.Deserialize<decimal[]>(candidate.ShipdParametersJson);
-                if (shipdVector != null && shipdVector.Length == 45)
+                var originalVector = JsonSerializer.Deserialize<decimal[]>(candidate.ShipdParametersJson);
+                if (originalVector != null && originalVector.Length == 45)
                 {
                     // Get ShipD metadata
                     var shipdMetadata = await _dataServiceClient.GetShipDParameterMetadataAsync(cancellationToken);
 
-                    // Regenerate hull sections with updated dimensions
+                    decimal[] adjustedVector = originalVector;
+
+                    // Determine adjustment type and apply intelligent scaling
+                    switch (paramLower)
+                    {
+                        // Principal dimensions - scale vector to maintain form
+                        case "lppm":
+                        case "bm":
+                        case "tm":
+                        case "dm":
+                            adjustedVector = _shipdParameterAdapter.AdjustVectorForDimensionChange(
+                                originalVector,
+                                oldLpp, candidate.LppM,
+                                oldBeam, candidate.BM,
+                                oldDraft, candidate.TM,
+                                shipdMetadata);
+                            _logger.LogInformation(
+                                "[CANDIDATE_ADJUST] Applied dimension scaling: {Param} {Old}→{New}",
+                                dto.Parameter,
+                                paramLower == "lppm" ? oldLpp : paramLower == "bm" ? oldBeam : oldDraft,
+                                adjustedValue);
+                            break;
+
+                        // Form coefficients - adjust form parameters
+                        case "cb":
+                            adjustedVector = _shipdParameterAdapter.AdjustVectorForCoefficientChange(
+                                originalVector, "Cb", oldCb, candidate.Cb, shipdMetadata);
+                            _logger.LogInformation(
+                                "[CANDIDATE_ADJUST] Applied Cb adjustment: {Old}→{New}",
+                                oldCb, candidate.Cb);
+                            break;
+                        case "cp":
+                            adjustedVector = _shipdParameterAdapter.AdjustVectorForCoefficientChange(
+                                originalVector, "Cp", oldCp, candidate.Cp, shipdMetadata);
+                            _logger.LogInformation(
+                                "[CANDIDATE_ADJUST] Applied Cp adjustment: {Old}→{New}",
+                                oldCp, candidate.Cp);
+                            break;
+                        case "cwp":
+                            adjustedVector = _shipdParameterAdapter.AdjustVectorForCoefficientChange(
+                                originalVector, "Cwp", oldCwp, candidate.Cwp, shipdMetadata);
+                            _logger.LogInformation(
+                                "[CANDIDATE_ADJUST] Applied Cwp adjustment: {Old}→{New}",
+                                oldCwp, candidate.Cwp);
+                            break;
+
+                        // Direct ShipD parameter adjustments
+                        case "bowlengthratio":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 1, adjustedValue, shipdMetadata);
+                            break;
+                        case "sternlengthratio":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 2, adjustedValue, shipdMetadata);
+                            break;
+                        case "bowflareangle":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 8, adjustedValue, shipdMetadata);
+                            break;
+                        case "bowcurvature":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 9, adjustedValue, shipdMetadata);
+                            break;
+                        case "bowknuckle":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 10, adjustedValue, shipdMetadata);
+                            break;
+                        case "deadriseangle":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 19, adjustedValue, shipdMetadata);
+                            break;
+                        case "sternrakeangle":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 27, adjustedValue, shipdMetadata);
+                            break;
+                        case "sterncurvature":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 29, adjustedValue, shipdMetadata);
+                            break;
+                        case "sternknuckle":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 30, adjustedValue, shipdMetadata);
+                            break;
+                        case "transomarea":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 22, adjustedValue, shipdMetadata);
+                            break;
+                        case "transomwidth":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 28, adjustedValue, shipdMetadata);
+                            break;
+                        case "hassheer":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 20, adjustedValue > 0.5m ? 1m : 0m, shipdMetadata);
+                            break;
+                        case "hastumblehome":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 21, adjustedValue > 0.5m ? 1m : 0m, shipdMetadata);
+                            break;
+                        case "hasbulb":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 31, adjustedValue > 0.5m ? 1m : 0m, shipdMetadata);
+                            break;
+                        case "bulblengthratio":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 33, adjustedValue, shipdMetadata);
+                            break;
+                        case "bulbheightratio":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 34, adjustedValue, shipdMetadata);
+                            break;
+                        case "bulbwidthratio":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 35, adjustedValue, shipdMetadata);
+                            break;
+                        case "bulbasymmetry":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 36, adjustedValue, shipdMetadata);
+                            break;
+                        case "bulbfilletradius":
+                            adjustedVector = _shipdParameterAdapter.UpdateShipDParameter(originalVector, 37, adjustedValue, shipdMetadata);
+                            break;
+                    }
+
+                    // Store the adjusted vector
+                    candidate.ShipdParametersJson = JsonSerializer.Serialize(adjustedVector);
+
+                    // Regenerate hull sections with adjusted vector + new dimensions
                     var sections = await _shipdGeometryService.GenerateSectionsAsync(
-                        shipdVector,
+                        adjustedVector,
                         candidate.LppM,
                         candidate.BM,
                         candidate.TM,
@@ -255,7 +400,7 @@ public class CandidateDesignService : ICandidateDesignService
                     // Update geometry JSON
                     candidate.GeometryJson = JsonSerializer.Serialize(sections);
                     _logger.LogInformation(
-                        "[CANDIDATE_ADJUST] Regenerated ShipD geometry for candidate {Id} after {Parameter} adjustment",
+                        "[CANDIDATE_ADJUST] Regenerated ShipD geometry for candidate {Id} after {Parameter} adjustment (vector adjusted to maintain design intent)",
                         candidate.Id, dto.Parameter);
                 }
             }
@@ -272,6 +417,7 @@ public class CandidateDesignService : ICandidateDesignService
         // - Re-run Holtrop method for EHP/SHP
         // - Re-run stability estimates for KB/LCB/GM
         // Currently preserving original values to maintain fast response time (<300ms target)
+        // Hybrid mode will queue background solver re-run for accurate results
 
         _logger.LogInformation(
             "[CANDIDATE_ADJUST] Parameter adjusted for candidate {Id}: {Parameter}={Value}, New Δ={Disp}t, Fn={Fn}",
@@ -394,37 +540,112 @@ public class CandidateDesignService : ICandidateDesignService
 
     private static CandidateDesignDto MapToDto(CandidateDesign entity)
     {
+        // Extract ShipD parameters from vector if available
+        decimal[]? shipdVector = null;
+        if (!string.IsNullOrEmpty(entity.ShipdParametersJson))
+        {
+            try
+            {
+                shipdVector = JsonSerializer.Deserialize<decimal[]>(entity.ShipdParametersJson);
+            }
+            catch
+            {
+                // Ignore deserialization errors - parameters will be null
+            }
+        }
+
         return new CandidateDesignDto
         {
             Id = entity.Id,
             SizingRunId = entity.SizingRunId,
             HullFamily = entity.HullFamily,
+            VesselCategory = entity.VesselCategory,
+            VesselType = entity.VesselType,
+            BowFamily = entity.BowFamily,
+            MidshipFamily = entity.MidshipFamily,
+            SternFamily = entity.SternFamily,
+            FamilyMaskVersion = entity.FamilyMaskVersion,
+            ShipdParametersJson = entity.ShipdParametersJson,
+
+            // Principal dimensions
             LppM = entity.LppM,
             LwlM = entity.LwlM,
             LoaM = entity.LoaM,
             BeamM = entity.BM,
             DraftM = entity.TM,
             DepthM = entity.DM,
+
+            // Coefficients
             Cb = entity.Cb,
             Cp = entity.Cp,
             Cwp = entity.Cwp,
+
+            // ShipD Parameters (extracted from vector)
+            BowLengthRatio = GetShipDParam(shipdVector, 1),
+            SternLengthRatio = GetShipDParam(shipdVector, 2),
+            BowFlareAngle = GetShipDParam(shipdVector, 8),
+            BowCurvature = GetShipDParam(shipdVector, 9),
+            BowKnuckle = GetShipDParam(shipdVector, 10),
+            DeadriseAngle = GetShipDParam(shipdVector, 19),
+            SternRakeAngle = GetShipDParam(shipdVector, 27),
+            SternCurvature = GetShipDParam(shipdVector, 29),
+            SternKnuckle = GetShipDParam(shipdVector, 30),
+            TransomArea = GetShipDParam(shipdVector, 22),
+            TransomWidth = GetShipDParam(shipdVector, 28),
+            HasSheer = GetShipDParam(shipdVector, 20) > 0.5m,
+            HasTumblehome = GetShipDParam(shipdVector, 21) > 0.5m,
+            HasBulb = GetShipDParam(shipdVector, 31) > 0.5m,
+            BulbLengthRatio = GetShipDParam(shipdVector, 33),
+            BulbHeightRatio = GetShipDParam(shipdVector, 34),
+            BulbWidthRatio = GetShipDParam(shipdVector, 35),
+            BulbAsymmetry = GetShipDParam(shipdVector, 36),
+            BulbFilletRadius = GetShipDParam(shipdVector, 37),
+
+            // Derived
             DispM3 = entity.DisplacementT / 1.025m,
             DispT = entity.DisplacementT,
             Fn = entity.Fn,
             LwlOverLambda = entity.LwlOverLambda,
+
+            // Stability
             KbM = entity.KbM,
             LcbPctLpp = entity.LcbPctLpp,
             KgEstM = null,
             GmEstM = entity.GmEstM,
+
+            // Resistance
             EhpKw = entity.EhpKw,
             ShpKw = entity.ShpKw,
+
+            // Scoring
             FlagsJson = entity.FlagsJson,
             Score = entity.Score,
             Rank = entity.Rank,
             IsSelected = entity.IsSelected,
+
+            // Geometry
             GeometryJson = entity.GeometryJson,
-            CreatedAt = entity.CreatedAt
+            CreatedAt = entity.CreatedAt,
+
+            // Provenance
+            ReferenceVesselId = entity.ReferenceVesselId,
+            ReferenceVesselName = entity.ReferenceVesselName,
+            SimilarityScore = entity.SimilarityScore,
+            SolverMode = entity.SolverMode
         };
+    }
+
+    /// <summary>
+    /// Extracts a ShipD parameter from the vector at the specified index.
+    /// Returns null if vector is null or index is out of range.
+    /// </summary>
+    private static decimal? GetShipDParam(decimal[]? vector, int index)
+    {
+        if (vector == null || index < 0 || index >= vector.Length)
+        {
+            return null;
+        }
+        return vector[index];
     }
 
     private static VesselDto BuildVesselDto(CandidateDesign candidate, MissionCase mission, PushToHydrostaticsRequestDto request)
@@ -511,4 +732,3 @@ public class CandidateDesignService : ICandidateDesignService
         await _context.SaveChangesAsync(cancellationToken);
     }
 }
-

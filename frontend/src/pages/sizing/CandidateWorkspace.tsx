@@ -77,10 +77,11 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
     setIsAdjusting(true);
     try {
-      // Determine which parameter was updated
+      // Determine which parameter was updated and map to backend format
       let parameter = "";
-      let value = 0;
+      let value: number | boolean = 0;
 
+      // Basic dimensions
       if (updates.lppM !== undefined) {
         parameter = "lppM";
         value = updates.lppM;
@@ -93,7 +94,9 @@ export const CandidateWorkspace: React.FC = observer(() => {
       } else if (updates.depthM !== undefined) {
         parameter = "dM";
         value = updates.depthM;
-      } else if (updates.cb !== undefined) {
+      }
+      // Basic coefficients
+      else if (updates.cb !== undefined) {
         parameter = "cb";
         value = updates.cb;
       } else if (updates.cp !== undefined) {
@@ -103,26 +106,104 @@ export const CandidateWorkspace: React.FC = observer(() => {
         parameter = "cwp";
         value = updates.cwp;
       }
+      // Advanced - Longitudinal
+      else if (updates.bowLengthRatio !== undefined) {
+        parameter = "bowLengthRatio";
+        value = updates.bowLengthRatio;
+      } else if (updates.sternLengthRatio !== undefined) {
+        parameter = "sternLengthRatio";
+        value = updates.sternLengthRatio;
+      }
+      // Advanced - Bow shape
+      else if (updates.bowFlareAngle !== undefined) {
+        parameter = "bowFlareAngle";
+        value = updates.bowFlareAngle;
+      } else if (updates.bowCurvature !== undefined) {
+        parameter = "bowCurvature";
+        value = updates.bowCurvature;
+      } else if (updates.bowKnuckle !== undefined) {
+        parameter = "bowKnuckle";
+        value = updates.bowKnuckle;
+      } else if (updates.deadriseAngle !== undefined) {
+        parameter = "deadriseAngle";
+        value = updates.deadriseAngle;
+      }
+      // Advanced - Stern shape
+      else if (updates.sternRakeAngle !== undefined) {
+        parameter = "sternRakeAngle";
+        value = updates.sternRakeAngle;
+      } else if (updates.sternCurvature !== undefined) {
+        parameter = "sternCurvature";
+        value = updates.sternCurvature;
+      } else if (updates.sternKnuckle !== undefined) {
+        parameter = "sternKnuckle";
+        value = updates.sternKnuckle;
+      } else if (updates.transomArea !== undefined) {
+        parameter = "transomArea";
+        value = updates.transomArea;
+      } else if (updates.transomWidth !== undefined) {
+        parameter = "transomWidth";
+        value = updates.transomWidth;
+      }
+      // Advanced - Midship
+      else if (updates.hasSheer !== undefined) {
+        parameter = "hasSheer";
+        value = updates.hasSheer ? 1 : 0; // Convert boolean to number for API
+      } else if (updates.hasTumblehome !== undefined) {
+        parameter = "hasTumblehome";
+        value = updates.hasTumblehome ? 1 : 0;
+      }
+      // Advanced - Bulb
+      else if (updates.hasBulb !== undefined) {
+        parameter = "hasBulb";
+        value = updates.hasBulb ? 1 : 0;
+      } else if (updates.bulbLengthRatio !== undefined) {
+        parameter = "bulbLengthRatio";
+        value = updates.bulbLengthRatio;
+      } else if (updates.bulbHeightRatio !== undefined) {
+        parameter = "bulbHeightRatio";
+        value = updates.bulbHeightRatio;
+      } else if (updates.bulbWidthRatio !== undefined) {
+        parameter = "bulbWidthRatio";
+        value = updates.bulbWidthRatio;
+      } else if (updates.bulbAsymmetry !== undefined) {
+        parameter = "bulbAsymmetry";
+        value = updates.bulbAsymmetry;
+      } else if (updates.bulbFilletRadius !== undefined) {
+        parameter = "bulbFilletRadius";
+        value = updates.bulbFilletRadius;
+      }
 
       if (!parameter) {
         console.warn("No recognized parameter in updates:", updates);
         return;
       }
 
-      console.log(`[Adjusting] ${parameter} = ${value} for candidate ${candidate.id}`);
+      console.log(
+        `[Adjusting] ${parameter} = ${value} for candidate ${candidate.id} (Hybrid mode: fast preview + background solver)`
+      );
 
+      // Call backend API with hybrid fast mode
+      // Backend will apply intelligent ShipD vector scaling for fast preview
+      // and queue a background solver re-run for accurate final results
       const updatedCandidate = await adjustParameter(candidate.id, {
         parameter,
-        value,
-        recomputeMode: "fast",
+        value: typeof value === "boolean" ? (value ? 1 : 0) : value,
+        recomputeMode: "fast", // Hybrid mode: fast parametric scaling + background solver
       });
 
-      // Update the candidate in the store
+      // Update the candidate in the store with fast preview results
       sizingStore.updateCandidate(updatedCandidate);
 
-      console.log("[Adjusted] New displacement:", updatedCandidate.dispT);
+      console.log(
+        "[Adjusted] Fast preview updated. New displacement:",
+        updatedCandidate.dispT,
+        "t"
+      );
+      // Note: Background solver will re-run for accurate physics-based results
     } catch (error) {
       console.error("Failed to adjust parameter:", error);
+      toast.error("Failed to update parameter. Please try again.");
     } finally {
       setIsAdjusting(false);
     }

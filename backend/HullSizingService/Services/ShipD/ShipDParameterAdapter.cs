@@ -576,4 +576,209 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
         var normalizedResult = (physicalValue - min.Value) / (max.Value - min.Value);
         return Math.Clamp(normalizedResult, 0m, 1m);
     }
+
+    /// <summary>
+    /// Adjusts ShipD vector when principal dimensions change to maintain hull form character.
+    /// Uses intelligent scaling to preserve design intent while applying new dimensions.
+    /// </summary>
+    public decimal[] AdjustVectorForDimensionChange(
+        decimal[] originalVector,
+        decimal oldLpp,
+        decimal newLpp,
+        decimal oldBeam,
+        decimal newBeam,
+        decimal oldDraft,
+        decimal newDraft,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        var adjusted = (decimal[])originalVector.Clone();
+
+        // Scale longitudinal proportions to maintain absolute lengths
+        var lengthRatio = newLpp / oldLpp;
+        if (Math.Abs(lengthRatio - 1.0m) > 0.05m)
+        {
+            // Adjust Lb, Ls to maintain absolute bow/stern lengths
+            adjusted[1] = Math.Clamp(adjusted[1] * oldLpp / newLpp, 0.05m, 0.45m); // Lb
+            adjusted[2] = Math.Clamp(adjusted[2] * oldLpp / newLpp, 0.05m, 0.45m); // Ls
+
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Scaled longitudinal proportions for length change {Old}m → {New}m: Lb={Lb}, Ls={Ls}",
+                oldLpp, newLpp, adjusted[1], adjusted[2]);
+        }
+
+        // Scale beam-related angles to maintain form
+        var beamRatio = newBeam / oldBeam;
+        if (Math.Abs(beamRatio - 1.0m) > 0.05m)
+        {
+            // Reduce flare angles if beam increases (maintain hull character)
+            var beamScaleFactor = (decimal)Math.Pow((double)(oldBeam / newBeam), 0.5);
+            adjusted[8] *= beamScaleFactor;  // Beta (bow flare)
+            adjusted[27] *= beamScaleFactor; // Beta_trans (stern rake)
+
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Scaled beam-related angles for beam change {Old}m → {New}m: Beta={Beta}, Beta_trans={BetaTrans}",
+                oldBeam, newBeam, adjusted[8], adjusted[27]);
+        }
+
+        // Scale draft-related parameters
+        var draftRatio = newDraft / oldDraft;
+        if (Math.Abs(draftRatio - 1.0m) > 0.05m)
+        {
+            // Adjust deadrise to maintain form
+            adjusted[19] *= (decimal)Math.Pow((double)(oldDraft / newDraft), 0.3); // Cdrft (deadrise)
+
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Scaled draft-related parameters for draft change {Old}m → {New}m: Cdrft={Cdrft}",
+                oldDraft, newDraft, adjusted[19]);
+        }
+
+        // Clamp all values to valid metadata ranges
+        for (int i = 0; i < adjusted.Length; i++)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == i);
+            if (param != null)
+            {
+                if (param.Min.HasValue) adjusted[i] = Math.Max(param.Min.Value, adjusted[i]);
+                if (param.Max.HasValue) adjusted[i] = Math.Min(param.Max.Value, adjusted[i]);
+            }
+        }
+
+        return adjusted;
+    }
+
+    /// <summary>
+    /// Adjusts ShipD vector when form coefficients change.
+    /// Modifies hull form parameters to achieve the target coefficient while maintaining design character.
+    /// </summary>
+    public decimal[] AdjustVectorForCoefficientChange(
+        decimal[] originalVector,
+        string coefficient,
+        decimal oldValue,
+        decimal newValue,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        var adjusted = (decimal[])originalVector.Clone();
+        var ratio = newValue / oldValue;
+
+        if (coefficient == "Cb")
+        {
+            // Adjust section fullness parameters
+            // Higher Cb = fuller sections
+            adjusted[9] *= ratio;   // Rc (bow curvature)
+            adjusted[29] *= ratio;  // Rc_trans (stern curvature)
+
+            // For significant Cb increases, also adjust midship features
+            if (ratio > 1.05m)
+            {
+                // Increase fullness: enhance sheer, reduce tumblehome
+                adjusted[20] = Math.Min(1.0m, adjusted[20] * 1.1m); // bit_EP_S (sheer)
+                adjusted[21] = Math.Max(0.0m, adjusted[21] * 0.9m); // bit_EP_T (tumblehome)
+            }
+
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Adjusted Cb {Old} → {New}: Rc={Rc}, Rc_trans={RcTrans}",
+                oldValue, newValue, adjusted[9], adjusted[29]);
+        }
+        else if (coefficient == "Cp")
+        {
+            // Adjust longitudinal distribution
+            // Higher Cp = more parallel body (shorter bow/stern)
+            var lmAdjust = (ratio - 1.0m) * 0.2m;
+            adjusted[1] = Math.Max(0.05m, adjusted[1] - lmAdjust / 2); // Reduce Lb
+            adjusted[2] = Math.Max(0.05m, adjusted[2] - lmAdjust / 2); // Reduce Ls
+
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Adjusted Cp {Old} → {New}: Lb={Lb}, Ls={Ls}",
+                oldValue, newValue, adjusted[1], adjusted[2]);
+        }
+        else if (coefficient == "Cwp")
+        {
+            // Adjust waterplane shape
+            // Higher Cwp = wider waterplane at ends
+            adjusted[8] *= ratio;   // Beta (flare)
+            adjusted[27] *= ratio;  // Beta_trans (stern rake)
+
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Adjusted Cwp {Old} → {New}: Beta={Beta}, Beta_trans={BetaTrans}",
+                oldValue, newValue, adjusted[8], adjusted[27]);
+        }
+
+        // Validate Lb + Ls < 1.0
+        if (adjusted[1] + adjusted[2] >= 1.0m)
+        {
+            var excess = adjusted[1] + adjusted[2] - 0.95m;
+            adjusted[1] = Math.Max(0.05m, adjusted[1] - excess / 2);
+            adjusted[2] = Math.Max(0.05m, adjusted[2] - excess / 2);
+            _logger.LogWarning(
+                "[SHIPD_ADAPTER] Clamped Lb+Ls to ensure Lm > 0: Lb={Lb}, Ls={Ls}",
+                adjusted[1], adjusted[2]);
+        }
+
+        // Clamp all values to valid metadata ranges
+        for (int i = 0; i < adjusted.Length; i++)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == i);
+            if (param != null)
+            {
+                if (param.Min.HasValue) adjusted[i] = Math.Max(param.Min.Value, adjusted[i]);
+                if (param.Max.HasValue) adjusted[i] = Math.Min(param.Max.Value, adjusted[i]);
+            }
+        }
+
+        return adjusted;
+    }
+
+    /// <summary>
+    /// Updates a single ShipD parameter in the vector (for direct parameter adjustments).
+    /// </summary>
+    public decimal[] UpdateShipDParameter(
+        decimal[] originalVector,
+        int parameterIndex,
+        decimal newValue,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        var adjusted = (decimal[])originalVector.Clone();
+
+        if (parameterIndex < 0 || parameterIndex >= adjusted.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(parameterIndex), $"Parameter index must be between 0 and {adjusted.Length - 1}");
+        }
+
+        // Apply new value
+        adjusted[parameterIndex] = newValue;
+
+        // Clamp to valid range from metadata
+        var param = metadata.FirstOrDefault(m => m.ParameterIndex == parameterIndex);
+        if (param != null)
+        {
+            if (param.Min.HasValue) adjusted[parameterIndex] = Math.Max(param.Min.Value, adjusted[parameterIndex]);
+            if (param.Max.HasValue) adjusted[parameterIndex] = Math.Min(param.Max.Value, adjusted[parameterIndex]);
+        }
+
+        // Special validation for longitudinal proportions (Lb + Ls < 1.0)
+        if (parameterIndex == 1 || parameterIndex == 2) // Lb or Ls
+        {
+            if (adjusted[1] + adjusted[2] >= 1.0m)
+            {
+                var excess = adjusted[1] + adjusted[2] - 0.95m;
+                if (parameterIndex == 1) // Adjusting Lb
+                {
+                    adjusted[1] = Math.Max(0.05m, adjusted[1] - excess);
+                }
+                else // Adjusting Ls
+                {
+                    adjusted[2] = Math.Max(0.05m, adjusted[2] - excess);
+                }
+                _logger.LogWarning(
+                    "[SHIPD_ADAPTER] Clamped parameter {Index} to ensure Lb+Ls < 1.0: Lb={Lb}, Ls={Ls}",
+                    parameterIndex, adjusted[1], adjusted[2]);
+            }
+        }
+
+        _logger.LogDebug(
+            "[SHIPD_ADAPTER] Updated ShipD parameter[{Index}] = {Value}",
+            parameterIndex, adjusted[parameterIndex]);
+
+        return adjusted;
+    }
 }

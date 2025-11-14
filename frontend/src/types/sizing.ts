@@ -182,6 +182,36 @@ export interface CandidateDesign {
   cwp: number;
   cm?: number;
 
+  // ShipD Parameters (extracted from shipdParametersJson vector)
+  // Longitudinal Proportions
+  bowLengthRatio?: number; // Lb - vector[1]
+  sternLengthRatio?: number; // Ls - vector[2]
+
+  // Bow Shape
+  bowFlareAngle?: number; // Beta - vector[8]
+  bowCurvature?: number; // Rc - vector[9]
+  bowKnuckle?: number; // Rk - vector[10]
+  deadriseAngle?: number; // Cdrft - vector[19]
+
+  // Stern Shape
+  sternRakeAngle?: number; // Beta_trans - vector[27]
+  sternCurvature?: number; // Rc_trans - vector[29]
+  sternKnuckle?: number; // Rk_trans - vector[30]
+  transomArea?: number; // Atrans - vector[22]
+  transomWidth?: number; // Bc_trans - vector[28]
+
+  // Midship Features
+  hasSheer?: boolean; // bit_EP_S - vector[20]
+  hasTumblehome?: boolean; // bit_EP_T - vector[21]
+
+  // Bulbous Bow
+  hasBulb?: boolean; // bit_BB - vector[31]
+  bulbLengthRatio?: number; // Lbb - vector[33]
+  bulbHeightRatio?: number; // Hbb - vector[34]
+  bulbWidthRatio?: number; // Bbb - vector[35]
+  bulbAsymmetry?: number; // Lbbm - vector[36]
+  bulbFilletRadius?: number; // Rbb - vector[37]
+
   // Derived values
   dispT: number;
   fn: number;

@@ -29,6 +29,36 @@ public record CandidateDesignDto
     public decimal Cp { get; init; }
     public decimal Cwp { get; init; }
 
+    // ShipD Parameters (extracted from ShipdParametersJson vector)
+    // Longitudinal Proportions
+    public decimal? BowLengthRatio { get; init; }      // Lb - vector[1]
+    public decimal? SternLengthRatio { get; init; }    // Ls - vector[2]
+
+    // Bow Shape
+    public decimal? BowFlareAngle { get; init; }       // Beta - vector[8]
+    public decimal? BowCurvature { get; init; }        // Rc - vector[9]
+    public decimal? BowKnuckle { get; init; }          // Rk - vector[10]
+    public decimal? DeadriseAngle { get; init; }       // Cdrft - vector[19]
+
+    // Stern Shape
+    public decimal? SternRakeAngle { get; init; }      // Beta_trans - vector[27]
+    public decimal? SternCurvature { get; init; }      // Rc_trans - vector[29]
+    public decimal? SternKnuckle { get; init; }        // Rk_trans - vector[30]
+    public decimal? TransomArea { get; init; }         // Atrans - vector[22]
+    public decimal? TransomWidth { get; init; }        // Bc_trans - vector[28]
+
+    // Midship Features
+    public bool? HasSheer { get; init; }               // bit_EP_S - vector[20]
+    public bool? HasTumblehome { get; init; }          // bit_EP_T - vector[21]
+
+    // Bulbous Bow
+    public bool? HasBulb { get; init; }                // bit_BB - vector[31]
+    public decimal? BulbLengthRatio { get; init; }     // Lbb - vector[33]
+    public decimal? BulbHeightRatio { get; init; }     // Hbb - vector[34]
+    public decimal? BulbWidthRatio { get; init; }      // Bbb - vector[35]
+    public decimal? BulbAsymmetry { get; init; }       // Lbbm - vector[36]
+    public decimal? BulbFilletRadius { get; init; }    // Rbb - vector[37]
+
     // Derived
     public decimal DispM3 { get; init; }
     public decimal DispT { get; init; }
@@ -80,5 +110,3 @@ public record AdjustParameterDto
     public decimal Value { get; init; }
     public string RecomputeMode { get; init; } = "fast"; // "fast" or "full"
 }
-
-

@@ -286,6 +286,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
 
     /// <summary>
     /// Generates offsets for a single station based on ShipD parameters
+    /// Enhanced to match frontend implementation with longitudinal scaling and improved vertical profiles
     /// </summary>
     private Dictionary<decimal, decimal> GenerateStationOffsets(
         decimal stationPos,
@@ -301,31 +302,80 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         // Always start with keel point (height=0, half-breadth=0) to close the bottom
         offsets[0m] = 0m;
 
-        // Generate offsets at various heights
+        // Generate offsets at various heights (including freeboard above waterline)
         var heightSteps = 20; // Number of height points
+        var maxHeight = draftM * 1.35m; // Include 35% freeboard above waterline
+
         for (int h = 1; h <= heightSteps; h++) // Start from 1 to avoid duplicate keel point
         {
-            var height = (decimal)h / heightSteps * draftM; // Height from keel
+            var height = (decimal)h / heightSteps * maxHeight; // Height from keel to above waterline
 
             // Calculate half-breadth based on region and ShipD parameters
             decimal halfBreadth = 0m;
 
             if (region == "bow")
             {
-                // Bow section: use Beta (flare), Cdrft (deadrise), Rc, Rk
+                // Bow section: use Beta (flare), Cdrft (deadrise), Rc, Rk, Kappa_bow
                 var beta = denormalized[8]; // Flare angle (degrees)
-                var cdrft = denormalized[19]; // Deadrise angle (degrees)
                 var rc = denormalized[9]; // Curvature coefficient
                 var rk = denormalized[10]; // Knuckle coefficient
+                var kappaBow = denormalized.ContainsKey(14) ? denormalized[14] : 0.5m; // Curvature type (-1 to 1)
+                var cdrft = denormalized[19]; // Deadrise angle (degrees)
 
-                // Simplified bow shape: combine flare and deadrise
                 var heightRatio = height / draftM;
-                var flareEffect = (decimal)Math.Tan((double)(beta * (decimal)Math.PI / 180m)) * height;
-                var deadriseEffect = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
 
-                // Base half-breadth at this height (simplified - uses midship beam as reference)
-                var baseHalfBreadth = beamM / 2m * (1m - heightRatio * 0.3m); // Taper toward keel
-                halfBreadth = baseHalfBreadth + flareEffect * 0.1m; // Add flare effect
+                if (height <= draftM)
+                {
+                    // BELOW WATERLINE: Expand from narrow keel to wide waterline
+                    // Calculate keel width (reduced by deadrise)
+                    var deadriseReduction = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
+                    var keelHalfBreadth = Math.Max(0m, (beamM / 2m) * 0.1m); // Keel is ~10% of beam
+
+                    // Expansion curve from keel to waterline
+                    // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
+                    var curvePower = 2.5m - rc * 1.5m; // Range: 1.0 (full) to 2.5 (fine)
+                    var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
+
+                    // Interpolate from keel to max beam
+                    var baseHalfBreadth = keelHalfBreadth +
+                        (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
+
+                    // Apply knuckle effect (hard chine)
+                    if (rk > 0.3m)
+                    {
+                        var knuckleHeight = 0.5m; // Knuckle at mid-height
+                        var knuckleRange = 0.2m;
+                        if (Math.Abs(heightRatio - knuckleHeight) < knuckleRange)
+                        {
+                            var knuckleFactor = 1m - Math.Abs(heightRatio - knuckleHeight) / knuckleRange;
+                            baseHalfBreadth *= 1m + rk * knuckleFactor * 0.15m;
+                        }
+                    }
+
+                    // Apply convex/concave control
+                    if (Math.Abs(kappaBow - 0.5m) > 0.1m)
+                    {
+                        var convexEffect = (kappaBow - 0.5m) * 2m * (decimal)Math.Sin((double)(heightRatio * (decimal)Math.PI / 2m)) * 0.1m;
+                        baseHalfBreadth *= 1m + convexEffect;
+                    }
+
+                    halfBreadth = Math.Max(0m, baseHalfBreadth);
+                }
+                else
+                {
+                    // ABOVE WATERLINE: Apply flare (widen)
+                    var aboveWLHeight = height - draftM;
+                    var baseHalfBreadth = beamM / 2m;
+
+                    // Add flare effect
+                    if (beta > 5m)
+                    {
+                        var flareExpansion = (decimal)Math.Tan((double)(beta * (decimal)Math.PI / 180m)) * aboveWLHeight;
+                        baseHalfBreadth += flareExpansion * 0.2m;
+                    }
+
+                    halfBreadth = Math.Max(0m, baseHalfBreadth);
+                }
             }
             else if (region == "midship")
             {
@@ -334,40 +384,144 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 var bitEPT = denormalized[21] > 0.5m; // Tumblehome
 
                 var heightRatio = height / draftM;
-                var baseHalfBreadth = beamM / 2m * (1m - heightRatio * 0.2m);
 
-                if (bitEPT)
+                if (height <= draftM)
                 {
-                    // Tumblehome: inward curving upper sides
-                    var tumblehomeFactor = heightRatio > 0.7m ? (heightRatio - 0.7m) / 0.3m : 0m;
-                    baseHalfBreadth *= (1m - tumblehomeFactor * 0.15m);
-                }
+                    // BELOW WATERLINE: Gentle expansion from keel to waterline
+                    // Midship has less deadrise, more parallel sides
+                    var keelHalfBreadth = (beamM / 2m) * 0.2m; // Midship keel ~20% of beam (wider than bow)
 
-                halfBreadth = baseHalfBreadth;
+                    // Simple gentle expansion (midship is typically straighter)
+                    var expansionRatio = (decimal)Math.Pow((double)heightRatio, 0.8);
+                    var baseHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+
+                    halfBreadth = baseHalfBreadth;
+                }
+                else
+                {
+                    // ABOVE WATERLINE
+                    var aboveWLHeight = height - draftM;
+                    var freeboard = draftM * 0.35m; // Match total freeboard (35%)
+                    var aboveWLRatio = Math.Min(aboveWLHeight / freeboard, 1.0m);
+
+                    var baseHalfBreadth = beamM / 2m;
+
+                    // Sheer (outward curve at deck)
+                    if (bitEPS && aboveWLRatio > 0.6m)
+                    {
+                        baseHalfBreadth *= 1m + ((aboveWLRatio - 0.6m) / 0.4m) * 0.08m;
+                    }
+
+                    // Tumblehome (inward curve at deck)
+                    if (bitEPT && aboveWLRatio > 0.5m)
+                    {
+                        baseHalfBreadth *= 1m - ((aboveWLRatio - 0.5m) / 0.5m) * 0.15m;
+                    }
+
+                    halfBreadth = baseHalfBreadth;
+                }
             }
             else // stern
             {
-                // Stern section: use Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans
+                // Stern section: use Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans, Kappa_stern
                 var atrans = denormalized[22];
+                var kappaStern = denormalized.ContainsKey(24) ? denormalized[24] : 0.5m; // Curvature type
                 var betaTrans = denormalized[27];
                 var bcTrans = denormalized[28];
                 var rcTrans = denormalized[29];
                 var rkTrans = denormalized[30];
 
                 var heightRatio = height / draftM;
-                var baseHalfBreadth = beamM / 2m * (1m - heightRatio * 0.25m);
 
-                // Apply transom effects
-                if (stationPos < 0.1m) // Near transom
+                if (height <= draftM)
                 {
-                    var transomWidth = beamM * (decimal)bcTrans;
-                    halfBreadth = Math.Min(baseHalfBreadth, transomWidth / 2m);
+                    // BELOW WATERLINE: Expand from narrow keel to wide waterline
+                    var keelHalfBreadth = (beamM / 2m) * 0.15m; // Stern keel slightly wider than bow
+
+                    // Curvature expansion
+                    var curvePower = 2.5m - rcTrans * 1.5m; // Range: 1.0 (full) to 2.5 (fine)
+                    var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
+
+                    var baseHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+
+                    // Transom effect (flat stern) - only near the very aft
+                    if (stationPos < 0.15m && atrans > 0.5m)
+                    {
+                        var transomWidth = beamM * bcTrans;
+                        var transomBlend = (0.15m - stationPos) / 0.15m; // Blend over aft 15%
+                        baseHalfBreadth = baseHalfBreadth * (1m - transomBlend * atrans) +
+                            (transomWidth / 2m) * transomBlend * atrans;
+                    }
+
+                    // Stern knuckle
+                    if (rkTrans > 0.3m && heightRatio > 0.3m && heightRatio < 0.6m)
+                    {
+                        var knuckleFactor = 1m - Math.Abs(heightRatio - 0.45m) / 0.15m;
+                        baseHalfBreadth *= 1m + rkTrans * knuckleFactor * 0.12m;
+                    }
+
+                    // Apply convex/concave control
+                    if (Math.Abs(kappaStern - 0.5m) > 0.1m)
+                    {
+                        var convexEffect = (kappaStern - 0.5m) * 2m * (decimal)Math.Sin((double)(heightRatio * (decimal)Math.PI / 2m)) * 0.1m;
+                        baseHalfBreadth *= 1m + convexEffect;
+                    }
+
+                    halfBreadth = Math.Max(0m, baseHalfBreadth);
                 }
                 else
                 {
-                    halfBreadth = baseHalfBreadth;
+                    // ABOVE WATERLINE: Rake effect
+                    var aboveWLHeight = height - draftM;
+                    var baseHalfBreadth = beamM / 2m;
+
+                    // Apply rake (aft overhang)
+                    if (betaTrans > 5m && stationPos < 0.2m)
+                    {
+                        var rakeExpansion = (decimal)Math.Tan((double)(betaTrans * (decimal)Math.PI / 180m)) * aboveWLHeight;
+                        baseHalfBreadth += rakeExpansion * 0.15m;
+                    }
+
+                    halfBreadth = Math.Max(0m, baseHalfBreadth);
                 }
             }
+
+            // LONGITUDINAL SCALING: Apply taper based on station position and region
+            // This creates the actual bow/stern taper (hull narrows toward ends)
+            decimal longitudinalScale = 1.0m;
+
+            if (region == "bow")
+            {
+                // Bow region: Taper from full beam at bowStart to centerline at bow tip (pos=1.0)
+                var lb = denormalized[1]; // Bow length ratio
+                var ls = denormalized[2]; // Stern length ratio
+                var bowStart = 1.0m - lb - ls + ls; // Start of bow region
+
+                if (stationPos >= bowStart)
+                {
+                    // Position within bow region: 0 = bow start (full beam), 1 = bow tip (centerline)
+                    var bowPos = (stationPos - bowStart) / (1.0m - bowStart);
+                    // Taper: quadratic for smooth curve
+                    longitudinalScale = (decimal)Math.Pow((double)(1.0m - bowPos), 2.0);
+                }
+            }
+            else if (region == "stern")
+            {
+                // Stern region: Taper from centerline at stern tip (pos=0.0) to full beam at midStart
+                var ls = denormalized[2]; // Stern length ratio
+
+                if (stationPos <= ls)
+                {
+                    // Position within stern region: 0 = stern tip (centerline), 1 = stern end (full beam)
+                    var sternPos = stationPos / ls;
+                    // Taper: quadratic for smooth curve
+                    longitudinalScale = (decimal)Math.Pow((double)sternPos, 2.0);
+                }
+            }
+            // Midship region: longitudinalScale = 1.0 (no taper, full beam)
+
+            // Apply longitudinal scaling to half-breadth
+            halfBreadth = halfBreadth * longitudinalScale;
 
             offsets[height] = Math.Max(0m, halfBreadth);
         }
@@ -375,8 +529,8 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         // Ensure we have a point at the deck level (draftM) to close the top
         if (!offsets.ContainsKey(draftM))
         {
-            var maxHeight = offsets.Keys.Max();
-            var maxHalfBreadth = offsets[maxHeight];
+            var currentMaxHeight = offsets.Keys.Max();
+            var maxHalfBreadth = offsets[currentMaxHeight];
             offsets[draftM] = maxHalfBreadth * 0.95m; // Slightly narrower at deck
         }
 
@@ -385,6 +539,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
 
     /// <summary>
     /// Generates bulb offsets for a station in the bow region
+    /// Enhanced to match frontend implementation with asymmetry (Lbbm) and fillet radius (Rbb) support
     /// </summary>
     private Dictionary<decimal, decimal> GenerateBulbOffsets(
         decimal stationPos,
@@ -399,27 +554,50 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         var lbb = denormalized[33]; // Bulb length ratio
         var hbb = denormalized[34]; // Bulb height ratio
         var bbb = denormalized[35]; // Bulb width ratio
-        var lbbm = denormalized[36]; // Bulb asymmetry
-        var rbb = denormalized[37]; // Bulb radius
+        var lbbm = denormalized[36]; // Bulb asymmetry (fore/aft position) - NOW USED!
+        var rbb = denormalized[37]; // Bulb fillet radius - NOW USED!
 
-        // Bulb is only in the forwardmost part of bow
+        // Bulb is only in forward section
         var bowStart = 1.0m - denormalized[1]; // Start of bow region
-        if (stationPos < bowStart + lbb * 0.5m)
+        var bulbExtent = lbb * 0.7m; // Bulb extends forward (70% of bulb length)
+
+        if (stationPos > bowStart && stationPos < bowStart + bulbExtent)
         {
-            // Generate bulb shape (simplified - ellipsoid)
-            var bulbLength = lbb * lppM;
+            // Position within bulb (0 = start, 1 = forward end)
+            var bulbPos = (stationPos - bowStart) / bulbExtent;
+
+            // Apply asymmetry: lbbm shifts max bulb diameter fore/aft
+            // lbbm range: -1 to +1, where 0.5 is neutral
+            // Convert to -0.15 to +0.15 shift
+            var asymmetryShift = (lbbm - 0.5m) * 0.3m; // -0.15 to +0.15
+            var adjustedPos = Math.Max(0m, Math.Min(1m, bulbPos + asymmetryShift));
+
             var bulbHeight = hbb * draftM;
             var bulbWidth = bbb * beamM;
 
-            var heightSteps = 10;
+            // Longitudinal profile: use fillet radius to control shape
+            // Higher rbb = rounder, lower rbb = more pointed
+            // rbb range: 0.05 to 0.33, convert to exponent range 1.5-2.5
+            var longitudinalExp = 1.5m + rbb * 1.0m; // 1.5-2.5
+            var longitudinalProfile = (decimal)Math.Pow(
+                1.0 - Math.Pow((double)adjustedPos, (double)longitudinalExp),
+                1.0 / (double)longitudinalExp);
+
+            var heightSteps = 12;
             for (int h = 0; h <= heightSteps; h++)
             {
                 var height = (decimal)h / heightSteps * bulbHeight;
                 var heightRatio = height / bulbHeight;
 
-                // Ellipsoid half-breadth
-                var halfBreadth = bulbWidth / 2m * (decimal)Math.Sqrt(1.0 - (double)(heightRatio * heightRatio));
-                offsets[height] = halfBreadth;
+                // Vertical profile: ellipsoid with fillet control
+                // Higher rbb = rounder (lower exponent), lower rbb = more pointed (higher exponent)
+                var verticalExp = 1.8m + (1m - rbb) * 0.5m; // 1.8-2.3 (inverse relationship)
+                var verticalProfile = (decimal)Math.Pow(
+                    1.0 - Math.Pow((double)heightRatio, (double)verticalExp),
+                    1.0 / (double)verticalExp);
+
+                var halfBreadth = (bulbWidth / 2m) * longitudinalProfile * verticalProfile;
+                offsets[height] = Math.Max(0m, halfBreadth);
             }
         }
 
