@@ -179,6 +179,41 @@ export const CandidateWorkspace: React.FC = observer(() => {
         return;
       }
 
+      // Check if this is a ShipD-only parameter and candidate has ShipD data
+      const shipdOnlyParameters = [
+        "bowLengthRatio",
+        "sternLengthRatio",
+        "bowFlareAngle",
+        "bowCurvature",
+        "bowKnuckle",
+        "deadriseAngle",
+        "sternRakeAngle",
+        "sternCurvature",
+        "sternKnuckle",
+        "transomArea",
+        "transomWidth",
+        "hasSheer",
+        "hasTumblehome",
+        "hasBulb",
+        "bulbLengthRatio",
+        "bulbHeightRatio",
+        "bulbWidthRatio",
+        "bulbAsymmetry",
+        "bulbFilletRadius",
+      ];
+
+      const isShipDOnly = shipdOnlyParameters.includes(parameter);
+      const hasShipDData =
+        candidate.shipdParametersJson && candidate.shipdParametersJson.trim() !== "";
+
+      if (isShipDOnly && !hasShipDData) {
+        toast.error(
+          `Cannot adjust ${parameter}: This candidate does not have ShipD geometry data. ShipD parameters can only be adjusted on candidates with ShipD geometry.`
+        );
+        setIsAdjusting(false);
+        return;
+      }
+
       console.log(
         `[Adjusting] ${parameter} = ${value} for candidate ${candidate.id} (Hybrid mode: fast preview + background solver)`
       );
@@ -205,7 +240,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
       console.error("Failed to adjust parameter:", error);
       // Extract error message from various possible locations
       let errorMessage = "Unknown error";
-      
+
       // Handle axios errors
       if (axios.isAxiosError(error)) {
         if (error.response?.data?.error) {
@@ -225,10 +260,20 @@ export const CandidateWorkspace: React.FC = observer(() => {
       console.error(`[Parameter Adjust Error] Full error object:`, JSON.stringify(error, null, 2));
       if (axios.isAxiosError(error)) {
         console.error(`[Parameter Adjust Error] Error response:`, error.response?.data);
+        console.error(`[Parameter Adjust Error] Error status:`, error.response?.status);
+        console.error(`[Parameter Adjust Error] Error headers:`, error.response?.headers);
       }
       console.error(`[Parameter Adjust Error] Error message: ${errorMessage}`);
 
-      toast.error(`Failed to update parameter: ${errorMessage}`);
+      // Provide more helpful error message
+      let userMessage = errorMessage;
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        if (errorMessage === "Unknown error" || errorMessage.length < 3) {
+          userMessage = `Invalid parameter value or parameter not supported for this candidate. Check console for details.`;
+        }
+      }
+
+      toast.error(`Failed to update parameter ${parameter}: ${userMessage}`);
     } finally {
       setIsAdjusting(false);
     }
