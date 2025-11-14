@@ -137,6 +137,14 @@ public class HttpClientService : IHttpClientService
                 _logger.LogInformation("Forwarding Authorization header to downstream service");
             }
 
+            // Forward X-Idempotency-Key header if present (required for idempotent operations)
+            var idempotencyKey = httpContext.Request.Headers["X-Idempotency-Key"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(idempotencyKey))
+            {
+                request.Headers.Add("X-Idempotency-Key", idempotencyKey);
+                _logger.LogInformation("Forwarding X-Idempotency-Key header to downstream service");
+            }
+
             // Forward claims from JWT (context.User) to downstream service as headers
             // Read directly from ClaimsPrincipal populated by JwtAuthenticationMiddleware
             if (httpContext.User?.Identity?.IsAuthenticated == true)
