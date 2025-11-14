@@ -301,7 +301,7 @@ The Resistance & Powering (RES/PWR) module provides computational tools for esti
 - Tests: Add validation against published results
 
 **Related Docs**:
-- `.plan/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md`
+- `.plan/active/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md`
 
 ---
 
@@ -580,7 +580,7 @@ The Resistance & Powering (RES/PWR) module provides computational tools for esti
 - `temp/resistance-pie-chart-implementation.md` - Pie charts
 
 ### Plans & Improvements
-- `.plan/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - Solver accuracy needs
+- `.plan/active/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - Solver accuracy needs
 - `temp/resistance-powering-ui-analysis.md` - UI design
 
 ### References
@@ -611,14 +611,3 @@ The Resistance & Powering (RES/PWR) module provides computational tools for esti
 **Last Updated**: November 4, 2025  
 **Module Owner**: Resistance & Powering Team  
 **Next Review**: December 1, 2025 (post-accuracy improvements)
-
-
-
-
-
-
-
-
-
-
-

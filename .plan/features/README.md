@@ -109,17 +109,17 @@ This folder contains organized documentation of all features across the NavArch 
 
 ### Implementation Details
 - **temp/** - Implementation summaries, progress reports, debug notes
-- **.plan/completed-features/** - Completed feature documentation
-- **.plan/hull-sizing/plan/** - Hull sizing detailed plans
+- **.plan/archive/completed-features/** - Completed feature documentation
+- **.plan/active/hull-sizing/plan/** - Hull sizing detailed plans
 
 ### Architectural Docs
-- **.plan/ARCHITECTURE.md** - System architecture
-- **.plan/DEPLOYMENT_WORKFLOW.md** - Deployment processes
+- **.plan/reference/ARCHITECTURE.md** - System architecture
+- **.plan/deployment/DEPLOYMENT_WORKFLOW.md** - Deployment processes
 - **docs/** - Runtime configuration and diagnostics
 
 ### Phase Plans
-- **.plan/phase1-phase14*.md** - Original phase plans
-- **.plan/PRIORITIES.md** - Current priorities and phases
+- **.plan/phases/phase*.md** - Original phase plans
+- **.plan/reference/PRIORITIES.md** - Current priorities and phases
 
 ---
 
@@ -217,14 +217,3 @@ If you need clarification on:
 **Maintained by**: Development Team  
 **Review Frequency**: Weekly during sprint planning  
 **Last Major Update**: November 4, 2025
-
-
-
-
-
-
-
-
-
-
-

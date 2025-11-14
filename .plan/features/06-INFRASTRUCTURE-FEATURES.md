@@ -280,7 +280,7 @@ Log.Logger = new LoggerConfiguration()
 **Performance**: <5ms overhead per request
 
 **Related Docs**:
-- `.plan/phase10-logging.md`
+- `.plan/phases/phase10-logging.md`
 - `.plan/PRIORITIES.md` (Phase 10 section)
 
 ---
@@ -348,7 +348,7 @@ Log.Logger = new LoggerConfiguration()
 **Cost**: Free (built into .NET 8)
 
 **Related Docs**:
-- `.plan/phase11-security.md`
+- `.plan/phases/phase11-security.md`
 
 ---
 
@@ -374,7 +374,7 @@ Log.Logger = new LoggerConfiguration()
 - Backend: `backend/Shared/Middleware/SecurityHeadersMiddleware.cs`
 
 **Related Docs**:
-- `.plan/phase11-security.md`
+- `.plan/phases/phase11-security.md`
 
 ---
 
@@ -519,7 +519,7 @@ Log.Logger = new LoggerConfiguration()
 - Terraform: `terraform/deploy/modules/secrets/`
 
 **Related Docs**:
-- `.plan/phase11-security.md` - **CRITICAL**
+- `.plan/phases/phase11-security.md` - **CRITICAL**
 
 ---
 
@@ -801,10 +801,10 @@ Log.Logger = new LoggerConfiguration()
 - `temp/terraform-lifecycle-analysis.md`
 
 ### Security
-- `.plan/phase11-security.md` - **CRITICAL**
+- `.plan/phases/phase11-security.md` - **CRITICAL**
 
 ### Phases
-- `.plan/phase10-logging.md` (complete)
+- `.plan/phases/phase10-logging.md` (complete)
 - `.plan/PRIORITIES.md` (phases 9-14)
 
 ---
@@ -829,14 +829,3 @@ Log.Logger = new LoggerConfiguration()
 **Last Updated**: November 4, 2025  
 **Module Owner**: DevOps Team  
 **Next Review**: November 11, 2025 (post-security completion)
-
-
-
-
-
-
-
-
-
-
-

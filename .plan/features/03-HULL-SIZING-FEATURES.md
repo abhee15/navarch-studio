@@ -58,7 +58,7 @@ The Hull Sizing module provides automated preliminary hull design using first-pr
 
 **Related Docs**:
 - `temp/PROGRESS-REPORT-NOV-4.md`
-- `.plan/hull-sizing/plan/04-FRONTEND-PHASES.md`
+- `.plan/active/hull-sizing/plan/04-FRONTEND-PHASES.md`
 
 ---
 
@@ -107,8 +107,8 @@ The Hull Sizing module provides automated preliminary hull design using first-pr
 - Target: >95% convergence rate ❌ FAILING (~40%)
 
 **Related Docs**:
-- `.plan/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **CRITICAL READ**
-- `.plan/hull-sizing/plan/05-SOLVER-ALGORITHM.md`
+- `.plan/active/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **CRITICAL READ**
+- `.plan/active/hull-sizing/plan/05-SOLVER-ALGORITHM.md`
 - `temp/SOLVER-VALIDATION-COMPLETE.md`
 
 ---
@@ -156,7 +156,7 @@ The Hull Sizing module provides automated preliminary hull design using first-pr
 
 **Related Docs**:
 - `temp/HULL-SIZING-FINAL-STATUS.md` - Premium UI features
-- `.plan/hull-sizing/CAD-LIKE-VISUALIZATION-PLAN.md`
+- `.plan/active/hull-sizing/CAD-LIKE-VISUALIZATION-PLAN.md`
 
 ---
 
@@ -747,7 +747,7 @@ The Hull Sizing module provides automated preliminary hull design using first-pr
 ## 📚 Related Documentation
 
 ### Critical Reading
-- `.plan/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **MUST READ for solver work**
+- `.plan/active/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **MUST READ for solver work**
 - `temp/PROGRESS-REPORT-NOV-4.md` - Latest status
 - `temp/HULL-SIZING-FINAL-STATUS.md` - Production readiness assessment
 
@@ -758,9 +758,9 @@ The Hull Sizing module provides automated preliminary hull design using first-pr
 - `temp/WORKFLOW-SKIP-ISSUE.md` - CI/CD issue
 
 ### Plans
-- `.plan/hull-sizing/plan/` - 13 detailed plan files
-- `.plan/hull-sizing/CAD-LIKE-VISUALIZATION-PLAN.md`
-- `.plan/hull-sizing/IMPLEMENTATION-STATUS.md`
+- `.plan/active/hull-sizing/plan/` - 13 detailed plan files
+- `.plan/active/hull-sizing/CAD-LIKE-VISUALIZATION-PLAN.md`
+- `.plan/active/hull-sizing/IMPLEMENTATION-STATUS.md`
 
 ---
 
@@ -784,14 +784,3 @@ The Hull Sizing module provides automated preliminary hull design using first-pr
 **Last Updated**: November 4, 2025  
 **Module Owner**: Hull Sizing Team  
 **Next Review**: November 11, 2025 (post-solver fixes)
-
-
-
-
-
-
-
-
-
-
-

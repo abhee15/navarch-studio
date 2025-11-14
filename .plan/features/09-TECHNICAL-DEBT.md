@@ -45,7 +45,7 @@
 
 **Code Locations**:
 - `backend/HullSizingService/Services/Solver/DisplacementClosureService.cs`
-- `.plan/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **FULL DETAILS**
+- `.plan/active/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **FULL DETAILS**
 
 **Test Status**: 2/9 passing (22%)
 
@@ -237,7 +237,7 @@ if: needs.check-changes.outputs.backend == 'true'
 - Terraform: `terraform/deploy/modules/secrets/` (to create)
 
 **Related Docs**:
-- `.plan/phase11-security.md` - **DETAILED PLAN**
+- `.plan/phases/phase11-security.md` - **DETAILED PLAN**
 
 ---
 
@@ -306,7 +306,7 @@ if: needs.check-changes.outputs.backend == 'true'
 - `backend/HullSizingService/Program.cs`
 
 **Related Docs**:
-- `.plan/hull-sizing/plan/11-FUTURE-IMPROVEMENTS.md`
+- `.plan/active/hull-sizing/plan/11-FUTURE-IMPROVEMENTS.md`
 
 ---
 
@@ -746,29 +746,18 @@ See `10-QUICK-WINS.md` for detailed list of 12 items totaling ~10 hours that res
 ## 📚 Related Documentation
 
 ### Critical Reading
-- `.plan/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - Solver fixes
-- `.plan/phase11-security.md` - Security hardening
+- `.plan/active/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - Solver fixes
+- `.plan/phases/phase11-security.md` - Security hardening
 - `temp/WORKFLOW-SKIP-ISSUE.md` - CI/CD fix
 - `temp/HYDROSTATICS_COMPLETION_STATUS.md` - Test status
 
 ### Reference
 - `08-TESTING-DEBT.md` - Test coverage details
 - `10-QUICK-WINS.md` - Low-effort improvements
-- `.plan/hull-sizing/plan/11-FUTURE-IMPROVEMENTS.md` - Future plans
+- `.plan/active/hull-sizing/plan/11-FUTURE-IMPROVEMENTS.md` - Future plans
 
 ---
 
 **Last Updated**: November 4, 2025  
 **Owner**: Technical Leadership  
 **Review Frequency**: Biweekly, update priorities as needed
-
-
-
-
-
-
-
-
-
-
-

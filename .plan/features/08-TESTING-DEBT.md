@@ -70,7 +70,7 @@
 - Implementation: `backend/HullSizingService/Services/Solver/`
 
 **Related Docs**:
-- `.plan/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **MUST READ**
+- `.plan/active/hull-sizing/SOLVER-IMPROVEMENTS-NEEDED.md` - **MUST READ**
 
 ---
 
@@ -459,14 +459,3 @@
 **Last Updated**: November 4, 2025  
 **Owner**: QA Team  
 **Next Review**: Weekly until >80% coverage achieved
-
-
-
-
-
-
-
-
-
-
-

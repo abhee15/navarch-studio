@@ -174,7 +174,7 @@ The frontend is a modern React 18 + TypeScript + Vite application with MobX stat
 
 **Related Docs**:
 - `temp/HULL-SIZING-FINAL-STATUS.md`
-- `.plan/hull-sizing/CAD-LIKE-VISUALIZATION-PLAN.md`
+- `.plan/active/hull-sizing/CAD-LIKE-VISUALIZATION-PLAN.md`
 
 ---
 
@@ -271,7 +271,7 @@ The frontend is a modern React 18 + TypeScript + Vite application with MobX stat
 **Test Coverage**: 20+ test cases (100%)
 
 **Related Docs**:
-- `.plan/completed-features/HYDROSTATICS_EXPORT_COMPLETE.md`
+- `.plan/archive/completed-features/HYDROSTATICS_EXPORT_COMPLETE.md`
 
 ---
 
@@ -838,14 +838,3 @@ The frontend is a modern React 18 + TypeScript + Vite application with MobX stat
 **Last Updated**: November 4, 2025  
 **Module Owner**: Frontend Team  
 **Next Review**: November 11, 2025
-
-
-
-
-
-
-
-
-
-
-

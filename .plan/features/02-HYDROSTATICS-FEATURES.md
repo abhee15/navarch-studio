@@ -55,7 +55,7 @@ The Hydrostatics module provides naval architects with comprehensive tools for h
 
 **Related Docs**:
 - `temp/HYDROSTATICS_COMPLETION_STATUS.md`
-- `.plan/phase1-hydrostatics-mvp.md`
+- `.plan/phases/phase1-hydrostatics-mvp.md`
 
 ---
 
@@ -122,7 +122,7 @@ The Hydrostatics module provides naval architects with comprehensive tools for h
 
 **Related Docs**:
 - `temp/GZ_CURVE_IMPLEMENTATION.md`
-- `.plan/phase1-hydrostatics-mvp.md`
+- `.plan/phases/phase1-hydrostatics-mvp.md`
 
 **Known Issues**:
 - Full Immersion method shows 42,000% error vs Wall-sided at small angles (needs debugging)
@@ -246,7 +246,7 @@ The Hydrostatics module provides naval architects with comprehensive tools for h
 - Excel: 300-800ms
 
 **Related Docs**:
-- `.plan/completed-features/HYDROSTATICS_EXPORT_COMPLETE.md`
+- `.plan/archive/completed-features/HYDROSTATICS_EXPORT_COMPLETE.md`
 - `.plan/USER_GUIDE_EXPORT.md`
 
 ---
@@ -273,7 +273,7 @@ The Hydrostatics module provides naval architects with comprehensive tools for h
 - Tests: `frontend/src/components/hydrostatics/workspace/InteractiveChart.test.tsx`
 
 **Related Docs**:
-- `.plan/completed-features/HYDROSTATICS_IMPLEMENTATION_SUMMARY.md`
+- `.plan/archive/completed-features/HYDROSTATICS_IMPLEMENTATION_SUMMARY.md`
 
 ---
 
@@ -556,13 +556,13 @@ The Hydrostatics module provides naval architects with comprehensive tools for h
 
 ### Implementation Summaries
 - `temp/HYDROSTATICS_COMPLETION_STATUS.md` - Final assessment
-- `.plan/completed-features/HYDROSTATICS_IMPLEMENTATION_SUMMARY.md` - Feature details
-- `.plan/completed-features/HYDROSTATICS_EXPORT_COMPLETE.md` - Export system
+- `.plan/archive/completed-features/HYDROSTATICS_IMPLEMENTATION_SUMMARY.md` - Feature details
+- `.plan/archive/completed-features/HYDROSTATICS_EXPORT_COMPLETE.md` - Export system
 - `temp/BONJEAN_CURVES_IMPLEMENTATION_SUMMARY.md` - Bonjean curves
 - `temp/GZ_CURVE_IMPLEMENTATION.md` - GZ curve feature
 
 ### Plans & Guides
-- `.plan/phase1-hydrostatics-mvp.md` - Original plan
+- `.plan/phases/phase1-hydrostatics-mvp.md` - Original plan
 - `.plan/USER_GUIDE_EXPORT.md` - User documentation
 - `.plan/MANUAL_TESTING_GUIDE.md` - Testing procedures
 - `.plan/HYDROSTATICS_MODULE.md` - Module specifications
@@ -592,14 +592,3 @@ The Hydrostatics module provides naval architects with comprehensive tools for h
 **Last Updated**: November 4, 2025  
 **Module Owner**: Hydrostatics Team  
 **Next Review**: November 11, 2025
-
-
-
-
-
-
-
-
-
-
-

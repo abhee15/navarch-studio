@@ -373,9 +373,9 @@
 - **Infrastructure**: `terraform/` + `.github/workflows/`
 
 ### Related Plans
-- **Original Phases**: `.plan/phase1-phase14*.md`
-- **Current Priorities**: `.plan/PRIORITIES.md`
-- **Hull Sizing Plans**: `.plan/hull-sizing/plan/`
+- **Original Phases**: `.plan/phases/phase*.md`
+- **Current Priorities**: `.plan/reference/PRIORITIES.md`
+- **Hull Sizing Plans**: `.plan/active/hull-sizing/plan/`
 
 ---
 
@@ -414,14 +414,3 @@
 **Report Generated**: November 4, 2025  
 **Next Update**: Weekly during sprint planning  
 **Maintained By**: Development Team
-
-
-
-
-
-
-
-
-
-
-
