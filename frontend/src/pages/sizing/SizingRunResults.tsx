@@ -32,6 +32,13 @@ export const SizingRunResults: React.FC = observer(() => {
         if (sizingStore.candidates.length === 0) {
           sizingStore.loadCandidates(runId);
         }
+        // Safety check: Ensure mission case is loaded if run has missionCaseId
+        if (
+          sizingStore.currentRun.missionCaseId &&
+          sizingStore.selectedMission?.id !== sizingStore.currentRun.missionCaseId
+        ) {
+          sizingStore.selectMission(sizingStore.currentRun.missionCaseId);
+        }
       }
     }
   }, [runId, sizingStore]);

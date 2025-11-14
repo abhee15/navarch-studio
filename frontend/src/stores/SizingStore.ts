@@ -263,6 +263,11 @@ export class SizingStore {
 
       await this.loadCandidates(runId);
 
+      // Load mission case if missionCaseId is provided and not already loaded
+      if (dto.missionCaseId && this.selectedMission?.id !== dto.missionCaseId) {
+        await this.selectMission(dto.missionCaseId);
+      }
+
       return run;
     } catch (error) {
       runInAction(() => {
@@ -346,6 +351,15 @@ export class SizingStore {
         this.loadSizingRun(runId, true), // Skip individual loading state
         this.loadCandidates(runId, true), // Skip individual loading state
       ]);
+
+      // Load mission case if currentRun has missionCaseId and not already loaded
+      if (
+        this.currentRun?.missionCaseId &&
+        this.selectedMission?.id !== this.currentRun.missionCaseId
+      ) {
+        await this.selectMission(this.currentRun.missionCaseId);
+      }
+
       runInAction(() => {
         this.isLoading = false;
       });
