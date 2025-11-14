@@ -5,7 +5,7 @@ import { aiAgentApi } from "../services/aiAgentApi";
 import toast from "react-hot-toast";
 
 export class CopilotStore {
-  @observable panelPosition: PanelPosition = "right";
+  @observable panelPosition: PanelPosition = "hidden";
   @observable panelWidth: number = 400;
   @observable floatingPosition: { x: number; y: number } = { x: 100, y: 100 };
   @observable messages: ChatMessage[] = [];
@@ -224,10 +224,8 @@ ${
   }
 
   private loadFromLocalStorage() {
-    const savedPosition = localStorage.getItem("copilot-panel-position") as PanelPosition;
-    if (savedPosition) {
-      this.panelPosition = savedPosition;
-    }
+    // Don't restore panel position - always start hidden
+    // Users must manually toggle visibility each session
 
     const savedWidth = localStorage.getItem("copilot-panel-width");
     if (savedWidth) {

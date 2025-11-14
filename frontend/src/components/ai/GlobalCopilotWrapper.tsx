@@ -48,6 +48,7 @@ export const GlobalCopilotWrapper: React.FC<{ children: React.ReactNode }> = obs
 
       // INCLUDE: Actual workspace/detail pages only
       const workspacePatterns = [
+        /^\/sizing$/, // Root sizing page (mission list)
         /\/sizing\/missions/, // Mission list page - users build briefs here
         /\/sizing\/mission\/new/,
         /\/sizing\/runs\/[^/]+/,
