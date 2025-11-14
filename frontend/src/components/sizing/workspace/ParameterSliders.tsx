@@ -42,76 +42,79 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
   isUpdating = false,
 }) => {
   const [selectedGroup, setSelectedGroup] = useState<ParameterGroup>("dimensions");
-  
+
   // Initialize local values from candidate
-  const initializeLocalValues = useCallback(() => ({
-    // Basic - Dimensions
-    lpp: candidate.lppM,
-    beam: candidate.beamM,
-    draft: candidate.draftM,
-    depth: candidate.depthM,
+  const initializeLocalValues = useCallback(
+    () => ({
+      // Basic - Dimensions
+      lpp: candidate.lppM,
+      beam: candidate.beamM,
+      draft: candidate.draftM,
+      depth: candidate.depthM,
 
-    // Basic - Coefficients
-    cb: candidate.cb,
-    cp: candidate.cp,
-    cwp: candidate.cwp,
+      // Basic - Coefficients
+      cb: candidate.cb,
+      cp: candidate.cp,
+      cwp: candidate.cwp,
 
-    // Advanced - Longitudinal
-    bowLength: candidate.bowLengthRatio ?? 0.25,
-    sternLength: candidate.sternLengthRatio ?? 0.25,
+      // Advanced - Longitudinal
+      bowLength: candidate.bowLengthRatio ?? 0.25,
+      sternLength: candidate.sternLengthRatio ?? 0.25,
 
-    // Advanced - Bow shape
-    bowFlareAngle: candidate.bowFlareAngle ?? 15,
-    bowCurvature: candidate.bowCurvature ?? 0.5,
-    bowKnuckle: candidate.bowKnuckle ?? 0.0,
-    deadriseAngle: candidate.deadriseAngle ?? 10,
+      // Advanced - Bow shape
+      bowFlareAngle: candidate.bowFlareAngle ?? 15,
+      bowCurvature: candidate.bowCurvature ?? 0.5,
+      bowKnuckle: candidate.bowKnuckle ?? 0.0,
+      deadriseAngle: candidate.deadriseAngle ?? 10,
 
-    // Advanced - Stern shape
-    sternRakeAngle: candidate.sternRakeAngle ?? 15,
-    sternCurvature: candidate.sternCurvature ?? 0.5,
-    sternKnuckle: candidate.sternKnuckle ?? 0.0,
-    transomArea: candidate.transomArea ?? 0.0,
-    transomWidth: candidate.transomWidth ?? 0.8,
+      // Advanced - Stern shape
+      sternRakeAngle: candidate.sternRakeAngle ?? 15,
+      sternCurvature: candidate.sternCurvature ?? 0.5,
+      sternKnuckle: candidate.sternKnuckle ?? 0.0,
+      transomArea: candidate.transomArea ?? 0.0,
+      transomWidth: candidate.transomWidth ?? 0.8,
 
-    // Advanced - Midship
-    hasSheer: candidate.hasSheer ?? false,
-    hasTumblehome: candidate.hasTumblehome ?? false,
+      // Advanced - Midship
+      hasSheer: candidate.hasSheer ?? false,
+      hasTumblehome: candidate.hasTumblehome ?? false,
 
-    // Advanced - Bulb
-    hasBulb: candidate.hasBulb ?? false,
-    bulbLength: candidate.bulbLengthRatio ?? 0.04,
-    bulbHeight: candidate.bulbHeightRatio ?? 0.5,
-    bulbWidth: candidate.bulbWidthRatio ?? 0.7,
-    bulbAsymmetry: candidate.bulbAsymmetry ?? 0.5,
-    bulbFillet: candidate.bulbFilletRadius ?? 0.2,
-  }), [
-    candidate.lppM,
-    candidate.beamM,
-    candidate.draftM,
-    candidate.depthM,
-    candidate.cb,
-    candidate.cp,
-    candidate.cwp,
-    candidate.bowLengthRatio,
-    candidate.sternLengthRatio,
-    candidate.bowFlareAngle,
-    candidate.bowCurvature,
-    candidate.bowKnuckle,
-    candidate.deadriseAngle,
-    candidate.sternRakeAngle,
-    candidate.sternCurvature,
-    candidate.sternKnuckle,
-    candidate.transomArea,
-    candidate.transomWidth,
-    candidate.hasSheer,
-    candidate.hasTumblehome,
-    candidate.hasBulb,
-    candidate.bulbLengthRatio,
-    candidate.bulbHeightRatio,
-    candidate.bulbWidthRatio,
-    candidate.bulbAsymmetry,
-    candidate.bulbFilletRadius,
-  ]);
+      // Advanced - Bulb
+      hasBulb: candidate.hasBulb ?? false,
+      bulbLength: candidate.bulbLengthRatio ?? 0.04,
+      bulbHeight: candidate.bulbHeightRatio ?? 0.5,
+      bulbWidth: candidate.bulbWidthRatio ?? 0.7,
+      bulbAsymmetry: candidate.bulbAsymmetry ?? 0.5,
+      bulbFillet: candidate.bulbFilletRadius ?? 0.2,
+    }),
+    [
+      candidate.lppM,
+      candidate.beamM,
+      candidate.draftM,
+      candidate.depthM,
+      candidate.cb,
+      candidate.cp,
+      candidate.cwp,
+      candidate.bowLengthRatio,
+      candidate.sternLengthRatio,
+      candidate.bowFlareAngle,
+      candidate.bowCurvature,
+      candidate.bowKnuckle,
+      candidate.deadriseAngle,
+      candidate.sternRakeAngle,
+      candidate.sternCurvature,
+      candidate.sternKnuckle,
+      candidate.transomArea,
+      candidate.transomWidth,
+      candidate.hasSheer,
+      candidate.hasTumblehome,
+      candidate.hasBulb,
+      candidate.bulbLengthRatio,
+      candidate.bulbHeightRatio,
+      candidate.bulbWidthRatio,
+      candidate.bulbAsymmetry,
+      candidate.bulbFilletRadius,
+    ]
+  );
 
   const [localValues, setLocalValues] = useState(initializeLocalValues);
 
