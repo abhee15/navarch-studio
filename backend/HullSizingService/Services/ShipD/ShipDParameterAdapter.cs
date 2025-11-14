@@ -91,6 +91,48 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             vector[20] = Math.Clamp(missionCase.ServiceSpeedKn / 40m, 0.0m, 1.0m);
         }
 
+        // Extract additionalParameters from MissionCase.ShipdInputsJson as fallback if not in request
+        // This must happen BEFORE applying taxonomy defaults so user values can override defaults
+        IDictionary<string, object>? effectiveAdditionalParameters = runRequest.Options?.AdditionalParameters;
+        if ((effectiveAdditionalParameters == null || effectiveAdditionalParameters.Count == 0) &&
+            !string.IsNullOrWhiteSpace(missionCase.ShipdInputsJson))
+        {
+            try
+            {
+                var shipdInputs = JsonSerializer.Deserialize<Dictionary<string, object>>(missionCase.ShipdInputsJson);
+                if (shipdInputs != null && shipdInputs.TryGetValue("additionalParameters", out var additionalParamsObj))
+                {
+                    if (additionalParamsObj is JsonElement jsonElement)
+                    {
+                        effectiveAdditionalParameters = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonElement.GetRawText());
+                    }
+                    else if (additionalParamsObj is Dictionary<string, object> dict)
+                    {
+                        effectiveAdditionalParameters = dict;
+                    }
+                    else
+                    {
+                        var json = JsonSerializer.Serialize(additionalParamsObj);
+                        effectiveAdditionalParameters = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                    }
+
+                    if (effectiveAdditionalParameters != null && effectiveAdditionalParameters.Count > 0)
+                    {
+                        _logger.LogDebug("[SHIPD_ADAPTER] Extracted {Count} additional parameters from MissionCase.ShipdInputsJson as fallback",
+                            effectiveAdditionalParameters.Count);
+                    }
+                }
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to extract additionalParameters from MissionCase.ShipdInputsJson as fallback");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[SHIPD_ADAPTER] Unexpected error extracting additionalParameters from MissionCase.ShipdInputsJson");
+            }
+        }
+
         // Extract bow/stern length ratio defaults from taxonomy
         decimal? defaultBow = null;
         decimal? defaultStern = null;
@@ -151,11 +193,11 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
         // Apply taxonomy defaults for bow/stern length ratios if not provided by user
         // This must happen before ApplyConditionalParameters so user overrides can take precedence
         ShipDAdditionalParameters? additionalParsed = null;
-        if (runRequest.Options?.AdditionalParameters != null && runRequest.Options.AdditionalParameters.Count > 0)
+        if (effectiveAdditionalParameters != null && effectiveAdditionalParameters.Count > 0)
         {
             try
             {
-                var json = JsonSerializer.Serialize(runRequest.Options.AdditionalParameters);
+                var json = JsonSerializer.Serialize(effectiveAdditionalParameters);
                 var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,
@@ -182,21 +224,17 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             _logger.LogDebug("[SHIPD_ADAPTER] Applied taxonomy default stern length ratio: {Ratio}", defaultStern.Value);
         }
 
-        // Apply conditional parameters from AdditionalParameters
+        // Apply conditional parameters from AdditionalParameters (using effectiveAdditionalParameters)
         ApplyConditionalParameters(
             vector,
-            runRequest.Options?.AdditionalParameters,
+            effectiveAdditionalParameters,
             bowFamily,
             midshipFamily,
             sternFamily,
             parameterMetadata,
             warnings);
 
-        IDictionary<string, object>? additional = null;
-        if (runRequest.Options?.AdditionalParameters != null && runRequest.Options.AdditionalParameters.Count > 0)
-        {
-            additional = runRequest.Options.AdditionalParameters;
-        }
+        IDictionary<string, object>? additional = effectiveAdditionalParameters;
 
         if (!string.IsNullOrWhiteSpace(taxonomyEntry?.AdditionalParametersJson))
         {

@@ -131,8 +131,53 @@ public class SizingRunService : ISizingRunService
 
         var sw = Stopwatch.StartNew();
 
+        // Extract additionalParameters from MissionCase.ShipdInputsJson if not already in request
+        // This ensures wizard-set geometry parameters are used even when not explicitly passed in the request
+        var effectiveDto = dto;
+        if (dto.Options?.AdditionalParameters == null || dto.Options.AdditionalParameters.Count == 0)
+        {
+            var missionStoredAdditionalParameters = ExtractAdditionalParametersFromMissionCase(missionCase);
+            if (missionStoredAdditionalParameters != null && missionStoredAdditionalParameters.Count > 0)
+            {
+                _logger.LogInformation("[SIZING_RUN] Extracted {Count} additional parameters from MissionCase.ShipdInputsJson before BuildAsync",
+                    missionStoredAdditionalParameters.Count);
+
+                // Inject into dto.Options so they're available to BuildAsync
+                if (effectiveDto.Options == null)
+                {
+                    // Create new options with extracted parameters
+                    effectiveDto = effectiveDto with
+                    {
+                        Options = new SizingOptionsDto
+                        {
+                            AdditionalParameters = missionStoredAdditionalParameters
+                        }
+                    };
+                }
+                else
+                {
+                    // Merge with existing options - request parameters take precedence
+                    var mergedParams = new Dictionary<string, object>(missionStoredAdditionalParameters, StringComparer.OrdinalIgnoreCase);
+                    if (effectiveDto.Options.AdditionalParameters != null)
+                    {
+                        foreach (var kvp in effectiveDto.Options.AdditionalParameters)
+                        {
+                            mergedParams[kvp.Key] = kvp.Value;
+                        }
+                    }
+                    effectiveDto = effectiveDto with
+                    {
+                        Options = effectiveDto.Options with
+                        {
+                            AdditionalParameters = mergedParams
+                        }
+                    };
+                }
+            }
+        }
+
         // Build ShipD parameterization
-        var shipdResult = await _shipdAdapter.BuildAsync(missionCase, dto, cancellationToken);
+        var shipdResult = await _shipdAdapter.BuildAsync(missionCase, effectiveDto, cancellationToken);
         var validationResult = _shipdValidator.Validate(shipdResult);
         if (!validationResult.IsValid)
         {
@@ -151,10 +196,14 @@ public class SizingRunService : ISizingRunService
         missionCase.ShipdInputsJson = shipdPayloadJson;
         missionCase.UpdatedAt = DateTime.UtcNow;
 
-        var familyHints = BuildFamilyHints(dto, shipdResult);
-        var mergedAdditionalParameters = MergeAdditionalParameters(dto.Options?.AdditionalParameters, shipdResult.AdditionalParameters);
+        var familyHints = BuildFamilyHints(effectiveDto, shipdResult);
 
-        var maxCandidates = dto.Options?.MaxCandidates ?? 5;
+        // Merge additionalParameters: request parameters override ShipD result parameters
+        var mergedAdditionalParameters = MergeAdditionalParameters(
+            effectiveDto.Options?.AdditionalParameters,
+            shipdResult.AdditionalParameters);
+
+        var maxCandidates = effectiveDto.Options?.MaxCandidates ?? 5;
         if (maxCandidates < 1)
         {
             maxCandidates = 1;
@@ -165,18 +214,18 @@ public class SizingRunService : ISizingRunService
         {
             effectiveAdditionalParameters = mergedAdditionalParameters.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
-        else if (dto.Options?.AdditionalParameters != null)
+        else if (effectiveDto.Options?.AdditionalParameters != null)
         {
-            effectiveAdditionalParameters = new Dictionary<string, object>(dto.Options.AdditionalParameters, StringComparer.OrdinalIgnoreCase);
+            effectiveAdditionalParameters = new Dictionary<string, object>(effectiveDto.Options.AdditionalParameters, StringComparer.OrdinalIgnoreCase);
         }
 
         var effectiveRunOptionsDto = new Shared.DTOs.Sizing.SizingOptionsDto
         {
-            FamilyHints = familyHints.Count > 0 ? new List<string>(familyHints) : dto.Options?.FamilyHints,
+            FamilyHints = familyHints.Count > 0 ? new List<string>(familyHints) : effectiveDto.Options?.FamilyHints,
             MaxCandidates = maxCandidates,
-            MinFn = dto.Options?.MinFn,
-            MaxFn = dto.Options?.MaxFn,
-            IncludeGeometry = dto.Options?.IncludeGeometry ?? false,
+            MinFn = effectiveDto.Options?.MinFn,
+            MaxFn = effectiveDto.Options?.MaxFn,
+            IncludeGeometry = effectiveDto.Options?.IncludeGeometry ?? false,
             AdditionalParameters = effectiveAdditionalParameters
         };
 
@@ -185,8 +234,8 @@ public class SizingRunService : ISizingRunService
         var solverOptions = new Solver.SizingOptionsDto(
             FamilyHints: familyHints.Count > 0 ? familyHints : null,
             MaxCandidates: maxCandidates,
-            MinFn: dto.Options?.MinFn,
-            MaxFn: dto.Options?.MaxFn,
+            MinFn: effectiveDto.Options?.MinFn,
+            MaxFn: effectiveDto.Options?.MaxFn,
             AdditionalParameters: mergedAdditionalParameters
         );
 
@@ -512,6 +561,20 @@ public class SizingRunService : ISizingRunService
 
     private static CandidateDesignDto MapCandidateToDto(CandidateDesign entity)
     {
+        // Extract ShipD parameters from vector JSON
+        decimal[]? shipdVector = null;
+        if (!string.IsNullOrWhiteSpace(entity.ShipdParametersJson))
+        {
+            try
+            {
+                shipdVector = JsonSerializer.Deserialize<decimal[]>(entity.ShipdParametersJson);
+            }
+            catch (JsonException)
+            {
+                // If parsing fails, shipdVector remains null and parameters will be null
+            }
+        }
+
         return new CandidateDesignDto
         {
             Id = entity.Id,
@@ -533,6 +596,28 @@ public class SizingRunService : ISizingRunService
             Cb = entity.Cb,
             Cp = entity.Cp,
             Cwp = entity.Cwp,
+
+            // ShipD Parameters (extracted from vector)
+            BowLengthRatio = GetShipDParam(shipdVector, 1),
+            SternLengthRatio = GetShipDParam(shipdVector, 2),
+            BowFlareAngle = GetShipDParam(shipdVector, 8),
+            BowCurvature = GetShipDParam(shipdVector, 9),
+            BowKnuckle = GetShipDParam(shipdVector, 10),
+            DeadriseAngle = GetShipDParam(shipdVector, 19),
+            SternRakeAngle = GetShipDParam(shipdVector, 27),
+            SternCurvature = GetShipDParam(shipdVector, 29),
+            SternKnuckle = GetShipDParam(shipdVector, 30),
+            TransomArea = GetShipDParam(shipdVector, 22),
+            TransomWidth = GetShipDParam(shipdVector, 28),
+            HasSheer = GetShipDParam(shipdVector, 20) > 0.5m,
+            HasTumblehome = GetShipDParam(shipdVector, 21) > 0.5m,
+            HasBulb = GetShipDParam(shipdVector, 31) > 0.5m,
+            BulbLengthRatio = GetShipDParam(shipdVector, 33),
+            BulbHeightRatio = GetShipDParam(shipdVector, 34),
+            BulbWidthRatio = GetShipDParam(shipdVector, 35),
+            BulbAsymmetry = GetShipDParam(shipdVector, 36),
+            BulbFilletRadius = GetShipDParam(shipdVector, 37),
+
             DispM3 = entity.DisplacementT / 1.025m, // Convert tonnes to m3
             DispT = entity.DisplacementT,
             Fn = entity.Fn,
@@ -558,7 +643,20 @@ public class SizingRunService : ISizingRunService
         };
     }
 
-    private static List<string> BuildFamilyHints(CreateSizingRunDto dto, ShipDParameterizationResult shipdResult)
+    /// <summary>
+    /// Extracts a ShipD parameter from the vector at the specified index.
+    /// Returns null if vector is null or index is out of range.
+    /// </summary>
+    private static decimal? GetShipDParam(decimal[]? vector, int index)
+    {
+        if (vector == null || index < 0 || index >= vector.Length)
+        {
+            return null;
+        }
+        return vector[index];
+    }
+
+    private static List<string> BuildFamilyHints(CreateSizingRunDto effectiveDto, ShipDParameterizationResult shipdResult)
     {
         var orderedHints = new List<string>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -577,9 +675,9 @@ public class SizingRunService : ISizingRunService
             }
         }
 
-        if (dto.Options?.FamilyHints != null)
+        if (effectiveDto.Options?.FamilyHints != null)
         {
-            foreach (var hint in dto.Options.FamilyHints)
+            foreach (var hint in effectiveDto.Options.FamilyHints)
             {
                 AddHint(hint);
             }
@@ -626,5 +724,52 @@ public class SizingRunService : ISizingRunService
         }
 
         return merged;
+    }
+
+    /// <summary>
+    /// Extracts additionalParameters from MissionCase.ShipdInputsJson if present.
+    /// Returns null if not found or on parse error.
+    /// </summary>
+    private static Dictionary<string, object>? ExtractAdditionalParametersFromMissionCase(MissionCase missionCase)
+    {
+        if (string.IsNullOrWhiteSpace(missionCase.ShipdInputsJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            var shipdInputs = JsonSerializer.Deserialize<Dictionary<string, object>>(missionCase.ShipdInputsJson);
+            if (shipdInputs != null && shipdInputs.TryGetValue("additionalParameters", out var additionalParamsObj))
+            {
+                if (additionalParamsObj is JsonElement jsonElement)
+                {
+                    var additionalParams = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonElement.GetRawText());
+                    return additionalParams;
+                }
+                else if (additionalParamsObj is Dictionary<string, object> dict)
+                {
+                    return dict;
+                }
+                else
+                {
+                    // Try to serialize and deserialize to convert to Dictionary
+                    var json = JsonSerializer.Serialize(additionalParamsObj);
+                    var result = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                    return result;
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            // Log but don't throw - mission case may have old format or invalid JSON
+            // This is a non-critical error - solver will use defaults
+        }
+        catch (Exception)
+        {
+            // Ignore other errors - mission case may have unexpected structure
+        }
+
+        return null;
     }
 }

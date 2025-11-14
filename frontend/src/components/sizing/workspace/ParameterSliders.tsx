@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Label } from "../../ui/label";
 import { Select } from "../../ui/select";
 import type { CandidateDesign } from "../../../types/sizing";
@@ -42,7 +42,9 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
   isUpdating = false,
 }) => {
   const [selectedGroup, setSelectedGroup] = useState<ParameterGroup>("dimensions");
-  const [localValues, setLocalValues] = useState({
+  
+  // Initialize local values from candidate
+  const initializeLocalValues = useCallback(() => ({
     // Basic - Dimensions
     lpp: candidate.lppM,
     beam: candidate.beamM,
@@ -82,7 +84,41 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
     bulbWidth: candidate.bulbWidthRatio ?? 0.7,
     bulbAsymmetry: candidate.bulbAsymmetry ?? 0.5,
     bulbFillet: candidate.bulbFilletRadius ?? 0.2,
-  });
+  }), [
+    candidate.lppM,
+    candidate.beamM,
+    candidate.draftM,
+    candidate.depthM,
+    candidate.cb,
+    candidate.cp,
+    candidate.cwp,
+    candidate.bowLengthRatio,
+    candidate.sternLengthRatio,
+    candidate.bowFlareAngle,
+    candidate.bowCurvature,
+    candidate.bowKnuckle,
+    candidate.deadriseAngle,
+    candidate.sternRakeAngle,
+    candidate.sternCurvature,
+    candidate.sternKnuckle,
+    candidate.transomArea,
+    candidate.transomWidth,
+    candidate.hasSheer,
+    candidate.hasTumblehome,
+    candidate.hasBulb,
+    candidate.bulbLengthRatio,
+    candidate.bulbHeightRatio,
+    candidate.bulbWidthRatio,
+    candidate.bulbAsymmetry,
+    candidate.bulbFilletRadius,
+  ]);
+
+  const [localValues, setLocalValues] = useState(initializeLocalValues);
+
+  // Sync localValues when candidate changes (e.g., when parameters are loaded from backend)
+  useEffect(() => {
+    setLocalValues(initializeLocalValues());
+  }, [initializeLocalValues]);
 
   const handleSliderChange = (param: keyof typeof localValues, value: number | boolean) => {
     setLocalValues((prev) => ({ ...prev, [param]: value }));
