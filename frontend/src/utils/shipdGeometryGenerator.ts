@@ -89,12 +89,13 @@ export function generateShipDSections(
   // Denormalize key parameters
   const denormalized = denormalizeParameters(shipdVector, metadata);
 
-  // LOG KEY PARAMETERS for debugging
-  console.log("[ShipD Geometry] Key parameters:", {
+  // LOG KEY PARAMETERS for debugging (debug level to reduce noise during optimization)
+  // Note: vector[1] and vector[2] are already ratios, not denormalized
+  console.debug("[ShipD Geometry] Key parameters:", {
     longitudinal: {
-      bow_length: denormalized[1]?.toFixed(2),
-      stern_length: denormalized[2]?.toFixed(2),
-      mid_length: (1.0 - denormalized[1] - denormalized[2])?.toFixed(2),
+      bow_length: shipdVector[1]?.toFixed(2),
+      stern_length: shipdVector[2]?.toFixed(2),
+      mid_length: (1.0 - shipdVector[1] - shipdVector[2])?.toFixed(2),
     },
     bow: {
       flare_deg: denormalized[8]?.toFixed(1),
@@ -116,18 +117,20 @@ export function generateShipDSections(
       knuckle: denormalized[30]?.toFixed(2),
     },
     bulb: {
-      enabled: denormalized[31] > 0.5,
-      length: denormalized[33]?.toFixed(2),
-      height: denormalized[34]?.toFixed(2),
-      width: denormalized[35]?.toFixed(2),
-      asymmetry: denormalized[36]?.toFixed(2),
-      fillet: denormalized[37]?.toFixed(2),
+      enabled: shipdVector[31] > 0.5,
+      length: shipdVector[33]?.toFixed(2), // Ratio - use directly
+      height: shipdVector[34]?.toFixed(2), // Ratio - use directly
+      width: shipdVector[35]?.toFixed(2), // Ratio - use directly
+      asymmetry: shipdVector[36]?.toFixed(2), // Ratio - use directly
+      fillet: shipdVector[37]?.toFixed(2), // Ratio - use directly
     },
   });
 
   // Extract longitudinal proportions with validation and fallbacks
-  let lb = denormalized[1]; // Bow length ratio (Lb from ShipD)
-  let ls = denormalized[2]; // Stern length ratio (Ls from ShipD)
+  // IMPORTANT: vector[1] and vector[2] are already ratios (0-1), NOT normalized values
+  // They should NOT be denormalized - they ARE the actual ratios
+  let lb = shipdVector[1]; // Bow length ratio (Lb from ShipD) - already a ratio
+  let ls = shipdVector[2]; // Stern length ratio (Ls from ShipD) - already a ratio
 
   // VALIDATION: ShipD parameters should be reasonable
   // Lb and Ls are ratios of Lpp, typically 0.15-0.45 each
@@ -140,6 +143,8 @@ export function generateShipDSections(
   const needsFallback =
     lb == null ||
     ls == null ||
+    isNaN(lb) ||
+    isNaN(ls) ||
     lb < MIN_BOW_LENGTH ||
     ls < MIN_STERN_LENGTH ||
     lb > MAX_BOW_LENGTH ||
@@ -147,13 +152,15 @@ export function generateShipDSections(
     lb + ls > 0.85; // Ensure at least 15% midship
 
   if (needsFallback) {
-    console.warn(
+    // Debug log instead of warn - this is expected behavior during optimization
+    // when parameters may temporarily be out of bounds
+    console.debug(
       "[ShipD Geometry] Invalid longitudinal proportions detected, using fallback values:",
       {
         original: { lb, ls, sum: lb + ls },
         reason:
-          lb == null || ls == null
-            ? "Missing values"
+          lb == null || ls == null || isNaN(lb) || isNaN(ls)
+            ? "Missing or invalid values"
             : lb < MIN_BOW_LENGTH || ls < MIN_STERN_LENGTH
               ? "Too short"
               : lb > MAX_BOW_LENGTH || ls > MAX_STERN_LENGTH
@@ -168,7 +175,8 @@ export function generateShipDSections(
     lb = 0.3; // 30% bow
     ls = 0.3; // 30% stern
 
-    console.log("[ShipD Geometry] Using fallback proportions:", {
+    // Debug log instead of regular log to reduce noise
+    console.debug("[ShipD Geometry] Using fallback proportions:", {
       bow: "30%",
       midship: "40%",
       stern: "30%",
@@ -206,11 +214,11 @@ export function generateShipDSections(
     );
 
     // Check for bulb (only in bow region)
-    const hasBulb = region === "bow" && denormalized[31] > 0.5; // bit_BB
+    const hasBulb = region === "bow" && shipdVector[31] > 0.5; // bit_BB
     let bulbOffsets: Record<number, number> | undefined;
 
     if (hasBulb) {
-      bulbOffsets = generateBulbOffsets(stationPos, denormalized, lppM, beamM, draftM);
+      bulbOffsets = generateBulbOffsets(stationPos, shipdVector, lppM, beamM, draftM);
     }
 
     stations.push({
@@ -241,14 +249,14 @@ export function generateShipDBulb(
   const denormalized = denormalizeParameters(shipdVector, metadata);
 
   // Check if bulb is enabled
-  if (denormalized[31] <= 0.5) {
+  if (shipdVector[31] <= 0.5) {
     return null; // bit_BB
   }
 
-  // Bulb parameters
-  // const lbb = denormalized[33]; // Bulb length ratio - not used in ellipsoid generation
-  const hbb = denormalized[34]; // Bulb height ratio
-  const bbb = denormalized[35]; // Bulb width ratio
+  // Bulb parameters - these are ratios, use vector directly
+  // const lbb = shipdVector[33]; // Bulb length ratio - not used in ellipsoid generation
+  const hbb = shipdVector[34]; // Bulb height ratio
+  const bbb = shipdVector[35]; // Bulb width ratio
   // const lbbm = denormalized[36]; // Bulb asymmetry - not used in simplified implementation
   // const rbb = denormalized[37]; // Bulb radius - not used in simplified implementation
 
@@ -770,9 +778,9 @@ function generateStationOffsets(
 
     if (region === "bow") {
       // Bow region: Taper from full beam at bowStart to centerline at bow tip (pos=1.0)
-      // Need bow boundaries from denormalized parameters
-      const lb = denormalized[1] || 0.3; // Bow length ratio
-      const ls = denormalized[2] || 0.3; // Stern length ratio
+      // Need bow boundaries - use vector directly (already ratios)
+      const lb = shipdVector[1] ?? 0.3; // Bow length ratio
+      const ls = shipdVector[2] ?? 0.3; // Stern length ratio
       const bowStart = 1.0 - lb - ls + ls; // Start of bow region
 
       if (stationPos >= bowStart) {
@@ -783,7 +791,7 @@ function generateStationOffsets(
       }
     } else if (region === "stern") {
       // Stern region: Taper from centerline at stern tip (pos=0.0) to full beam at midStart
-      const ls = denormalized[2] || 0.3; // Stern length ratio
+      const ls = shipdVector[2] ?? 0.3; // Stern length ratio (already a ratio)
 
       if (stationPos <= ls) {
         // Position within stern region: 0 = stern tip (centerline), 1 = stern end (full beam)
@@ -815,22 +823,22 @@ function generateStationOffsets(
  */
 function generateBulbOffsets(
   stationPos: number,
-  denormalized: Record<number, number>,
+  shipdVector: number[],
   _lppM: number,
   beamM: number,
   draftM: number
 ): Record<number, number> {
   const offsets: Record<number, number> = {};
 
-  // Bulb parameters
-  const lbb = denormalized[33]; // Bulb length ratio
-  const hbb = denormalized[34]; // Bulb height ratio
-  const bbb = denormalized[35]; // Bulb width ratio
-  const lbbm = denormalized[36]; // Bulb asymmetry (fore/aft position) - NOW USED!
-  const rbb = denormalized[37]; // Bulb fillet radius - NOW USED!
+  // Bulb parameters - these are ratios, use vector directly
+  const lbb = shipdVector[33]; // Bulb length ratio
+  const hbb = shipdVector[34]; // Bulb height ratio
+  const bbb = shipdVector[35]; // Bulb width ratio
+  const lbbm = shipdVector[36]; // Bulb asymmetry (fore/aft position) - NOW USED!
+  const rbb = shipdVector[37]; // Bulb fillet radius - NOW USED!
 
   // Bulb is only in forward section
-  const bowStart = 1.0 - denormalized[1]; // Start of bow region
+  const bowStart = 1.0 - (shipdVector[1] ?? 0.3) - (shipdVector[2] ?? 0.3); // Start of bow region
   const bulbExtent = lbb * 0.7; // Bulb extends forward
 
   if (stationPos > bowStart && stationPos < bowStart + bulbExtent) {

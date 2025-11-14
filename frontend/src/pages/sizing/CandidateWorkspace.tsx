@@ -59,6 +59,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
       }
     }
     // Ensure ShipD metadata is loaded if candidate has ShipD parameters
+    // This will also trigger parameter extraction in selectCandidate
     if (candidate?.shipdParametersJson) {
       sizingStore.ensureShipDMetadataLoaded();
     }

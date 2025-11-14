@@ -15,6 +15,7 @@ import type {
   SourceDesignSummary,
 } from "../types/sizing";
 import * as sizingApi from "../services/sizingApi";
+import { extractShipDParameters } from "../utils/shipdParameterExtractor";
 
 export interface PushToHydroForm {
   vesselName: string;
@@ -309,20 +310,41 @@ export class SizingStore {
     this.error = null;
     try {
       const candidates = await sizingApi.getRunCandidates(runId);
+
+      // Ensure metadata is loaded before extracting parameters
+      if (!this.shipdMetadataLoaded) {
+        await this.ensureShipDMetadataLoaded();
+      }
+
+      // Extract ShipD parameters from vector for each candidate
+      const extractedCandidates = candidates.map((c) => {
+        // If candidate already has extracted parameters, use as-is
+        if (c.bowLengthRatio != null && c.sternLengthRatio != null) {
+          return c;
+        }
+
+        // Extract parameters from vector if available
+        if (c.shipdParametersJson && this.shipdParameters.length > 0) {
+          return extractShipDParameters(c, this.shipdParameters);
+        }
+
+        return c;
+      });
+
       runInAction(() => {
         // Clear and repopulate to maintain observable array
         this.candidates.length = 0;
         // Defensive: Use forEach instead of spread to avoid Symbol.iterator issues
-        if (Array.isArray(candidates)) {
+        if (Array.isArray(extractedCandidates)) {
           // DEBUG: Log first candidate to see property names
-          if (candidates.length > 0) {
-            console.log("[SizingStore] Sample candidate properties:", Object.keys(candidates[0]));
-            console.log("[SizingStore] Sample candidate data:", candidates[0]);
+          if (extractedCandidates.length > 0) {
+            console.log("[SizingStore] Sample candidate properties:", Object.keys(extractedCandidates[0]));
+            console.log("[SizingStore] Sample candidate data:", extractedCandidates[0]);
           }
-          candidates.forEach((c) => this.candidates.push(c));
+          extractedCandidates.forEach((c) => this.candidates.push(c));
           // Auto-select first candidate
-          if (candidates.length > 0 && !this.selectedCandidate) {
-            this.selectedCandidate = candidates[0];
+          if (extractedCandidates.length > 0 && !this.selectedCandidate) {
+            this.selectedCandidate = extractedCandidates[0];
           }
         } else {
           console.warn("[SizingStore] getRunCandidates returned non-array:", candidates);
@@ -374,7 +396,20 @@ export class SizingStore {
   selectCandidate(id: string) {
     const candidate = this.candidates.find((c) => c.id === id);
     if (candidate) {
-      this.selectedCandidate = candidate;
+      // Ensure parameters are extracted if missing
+      let updatedCandidate = candidate;
+      if (
+        candidate.shipdParametersJson &&
+        (candidate.bowLengthRatio == null || candidate.sternLengthRatio == null)
+      ) {
+        updatedCandidate = extractShipDParameters(candidate, this.shipdParameters);
+        // Update in candidates array
+        const index = this.candidates.findIndex((c) => c.id === id);
+        if (index >= 0) {
+          this.candidates[index] = updatedCandidate;
+        }
+      }
+      this.selectedCandidate = updatedCandidate;
     }
   }
 

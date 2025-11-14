@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Label } from "../../ui/label";
 import { Select } from "../../ui/select";
 import type { CandidateDesign } from "../../../types/sizing";
@@ -14,6 +14,11 @@ import {
   Circle,
   Info,
 } from "lucide-react";
+import {
+  isParameterGroupVisible,
+  isParameterVisible,
+  type ParameterId,
+} from "../../../utils/shipdParameterFilter";
 
 interface ParameterSlidersProps {
   candidate: CandidateDesign;
@@ -42,6 +47,38 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
   isUpdating = false,
 }) => {
   const [selectedGroup, setSelectedGroup] = useState<ParameterGroup>("dimensions");
+
+  // Filter parameters based on vessel configuration
+  const filterConfig = useMemo(
+    () => ({
+      candidate,
+      vesselType: candidate.vesselType,
+      vesselCategory: candidate.vesselCategory,
+      maskVersion: candidate.familyMaskVersion,
+    }),
+    [candidate]
+  );
+
+  // Get visible parameter groups
+  const visibleGroups = useMemo(() => {
+    const groups: ParameterGroup[] = [
+      "dimensions",
+      "coefficients",
+      "longitudinal",
+      "bow",
+      "stern",
+      "midship",
+      "bulb",
+    ];
+    return groups.filter((group) => isParameterGroupVisible(group, filterConfig));
+  }, [filterConfig]);
+
+  // Update selected group if current selection is not visible
+  useEffect(() => {
+    if (!visibleGroups.includes(selectedGroup)) {
+      setSelectedGroup(visibleGroups[0] || "dimensions");
+    }
+  }, [visibleGroups, selectedGroup]);
 
   // Initialize local values from candidate
   const initializeLocalValues = useCallback(
@@ -172,16 +209,72 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
     onUpdate(updates);
   };
 
-  // Parameter group definitions
-  const parameterGroups = [
-    { value: "dimensions" as const, label: "Dimensions", count: 4, icon: Ruler },
-    { value: "coefficients" as const, label: "Coefficients", count: 3, icon: Triangle },
-    { value: "longitudinal" as const, label: "Longitudinal", count: 2, icon: ArrowLeftRight },
-    { value: "bow" as const, label: "Bow Shape", count: 4, icon: ChevronRight },
-    { value: "stern" as const, label: "Stern Shape", count: 5, icon: ChevronLeft },
-    { value: "midship" as const, label: "Midship", count: 2, icon: Square },
-    { value: "bulb" as const, label: "Bulbous Bow", count: 6, icon: Circle },
-  ];
+  // Parameter group definitions with filtered counts
+  const parameterGroups = useMemo(() => {
+    const allGroups = [
+      { value: "dimensions" as const, label: "Dimensions", icon: Ruler },
+      { value: "coefficients" as const, label: "Coefficients", icon: Triangle },
+      { value: "longitudinal" as const, label: "Longitudinal", icon: ArrowLeftRight },
+      { value: "bow" as const, label: "Bow Shape", icon: ChevronRight },
+      { value: "stern" as const, label: "Stern Shape", icon: ChevronLeft },
+      { value: "midship" as const, label: "Midship", icon: Square },
+      { value: "bulb" as const, label: "Bulbous Bow", icon: Circle },
+    ];
+
+    // Filter to only visible groups and add counts
+    return allGroups
+      .filter((g) => visibleGroups.includes(g.value))
+      .map((g) => {
+        let count = 0;
+        switch (g.value) {
+          case "dimensions":
+            count = ["lpp", "beam", "draft", "depth"].filter((p) =>
+              isParameterVisible(p as ParameterId, filterConfig)
+            ).length;
+            break;
+          case "coefficients":
+            count = ["cb", "cp", "cwp"].filter((p) =>
+              isParameterVisible(p as ParameterId, filterConfig)
+            ).length;
+            break;
+          case "longitudinal":
+            count = ["bowLength", "sternLength"].filter((p) =>
+              isParameterVisible(p as ParameterId, filterConfig)
+            ).length;
+            break;
+          case "bow":
+            count = ["bowFlareAngle", "bowCurvature", "bowKnuckle", "deadriseAngle"].filter((p) =>
+              isParameterVisible(p as ParameterId, filterConfig)
+            ).length;
+            break;
+          case "stern":
+            count = [
+              "sternRakeAngle",
+              "sternCurvature",
+              "sternKnuckle",
+              "transomArea",
+              "transomWidth",
+            ].filter((p) => isParameterVisible(p as ParameterId, filterConfig)).length;
+            break;
+          case "midship":
+            count = ["hasSheer", "hasTumblehome"].filter((p) =>
+              isParameterVisible(p as ParameterId, filterConfig)
+            ).length;
+            break;
+          case "bulb":
+            count = [
+              "hasBulb",
+              "bulbLength",
+              "bulbHeight",
+              "bulbWidth",
+              "bulbAsymmetry",
+              "bulbFillet",
+            ].filter((p) => isParameterVisible(p as ParameterId, filterConfig)).length;
+            break;
+        }
+        return { ...g, count };
+      });
+  }, [visibleGroups, filterConfig]);
 
   const currentGroup = parameterGroups.find((g) => g.value === selectedGroup);
 
@@ -319,53 +412,57 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </div>
 
               <div className="space-y-4">
-                {renderSlider({
-                  id: "lpp",
-                  label: "Length (Lpp)",
-                  value: localValues.lpp,
-                  min: candidate.lppM * 0.7,
-                  max: candidate.lppM * 1.3,
-                  step: 0.5,
-                  unit: "m",
-                  description: "Length between perpendiculars",
-                  color: "blue",
-                })}
+                {isParameterVisible("lpp", filterConfig) &&
+                  renderSlider({
+                    id: "lpp",
+                    label: "Length (Lpp)",
+                    value: localValues.lpp,
+                    min: candidate.lppM * 0.7,
+                    max: candidate.lppM * 1.3,
+                    step: 0.5,
+                    unit: "m",
+                    description: "Length between perpendiculars",
+                    color: "blue",
+                  })}
 
-                {renderSlider({
-                  id: "beam",
-                  label: "Beam",
-                  value: localValues.beam,
-                  min: candidate.beamM * 0.7,
-                  max: candidate.beamM * 1.3,
-                  step: 0.1,
-                  unit: "m",
-                  description: "Maximum beam (width)",
-                  color: "cyan",
-                })}
+                {isParameterVisible("beam", filterConfig) &&
+                  renderSlider({
+                    id: "beam",
+                    label: "Beam",
+                    value: localValues.beam,
+                    min: candidate.beamM * 0.7,
+                    max: candidate.beamM * 1.3,
+                    step: 0.1,
+                    unit: "m",
+                    description: "Maximum beam (width)",
+                    color: "cyan",
+                  })}
 
-                {renderSlider({
-                  id: "draft",
-                  label: "Draft",
-                  value: localValues.draft,
-                  min: candidate.draftM * 0.7,
-                  max: candidate.draftM * 1.3,
-                  step: 0.1,
-                  unit: "m",
-                  description: "Depth of hull below waterline",
-                  color: "green",
-                })}
+                {isParameterVisible("draft", filterConfig) &&
+                  renderSlider({
+                    id: "draft",
+                    label: "Draft",
+                    value: localValues.draft,
+                    min: candidate.draftM * 0.7,
+                    max: candidate.draftM * 1.3,
+                    step: 0.1,
+                    unit: "m",
+                    description: "Depth of hull below waterline",
+                    color: "green",
+                  })}
 
-                {renderSlider({
-                  id: "depth",
-                  label: "Depth",
-                  value: localValues.depth,
-                  min: candidate.depthM * 0.8,
-                  max: candidate.depthM * 1.2,
-                  step: 0.1,
-                  unit: "m",
-                  description: "Molded depth from keel to deck",
-                  color: "amber",
-                })}
+                {isParameterVisible("depth", filterConfig) &&
+                  renderSlider({
+                    id: "depth",
+                    label: "Depth",
+                    value: localValues.depth,
+                    min: candidate.depthM * 0.8,
+                    max: candidate.depthM * 1.2,
+                    step: 0.1,
+                    unit: "m",
+                    description: "Molded depth from keel to deck",
+                    color: "amber",
+                  })}
               </div>
 
               {/* Derived Ratios */}
@@ -412,41 +509,44 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </div>
 
               <div className="space-y-4">
-                {renderSlider({
-                  id: "cb",
-                  label: "Block Coefficient (Cb)",
-                  value: localValues.cb,
-                  min: Math.max(0.4, candidate.cb - 0.15),
-                  max: Math.min(0.9, candidate.cb + 0.15),
-                  step: 0.01,
-                  unit: "",
-                  description: "Overall hull fullness (V / L×B×T)",
-                  color: "purple",
-                })}
+                {isParameterVisible("cb", filterConfig) &&
+                  renderSlider({
+                    id: "cb",
+                    label: "Block Coefficient (Cb)",
+                    value: localValues.cb,
+                    min: Math.max(0.4, candidate.cb - 0.15),
+                    max: Math.min(0.9, candidate.cb + 0.15),
+                    step: 0.01,
+                    unit: "",
+                    description: "Overall hull fullness (V / L×B×T)",
+                    color: "purple",
+                  })}
 
-                {renderSlider({
-                  id: "cp",
-                  label: "Prismatic Coefficient (Cp)",
-                  value: localValues.cp,
-                  min: Math.max(0.5, candidate.cp - 0.1),
-                  max: Math.min(0.95, candidate.cp + 0.1),
-                  step: 0.01,
-                  unit: "",
-                  description: "Longitudinal fullness (V / Am×L)",
-                  color: "indigo",
-                })}
+                {isParameterVisible("cp", filterConfig) &&
+                  renderSlider({
+                    id: "cp",
+                    label: "Prismatic Coefficient (Cp)",
+                    value: localValues.cp,
+                    min: Math.max(0.5, candidate.cp - 0.1),
+                    max: Math.min(0.95, candidate.cp + 0.1),
+                    step: 0.01,
+                    unit: "",
+                    description: "Longitudinal fullness (V / Am×L)",
+                    color: "indigo",
+                  })}
 
-                {renderSlider({
-                  id: "cwp",
-                  label: "Waterplane Coefficient (Cwp)",
-                  value: localValues.cwp,
-                  min: Math.max(0.6, candidate.cwp - 0.1),
-                  max: Math.min(0.98, candidate.cwp + 0.1),
-                  step: 0.01,
-                  unit: "",
-                  description: "Waterplane area fullness (Awp / L×B)",
-                  color: "violet",
-                })}
+                {isParameterVisible("cwp", filterConfig) &&
+                  renderSlider({
+                    id: "cwp",
+                    label: "Waterplane Coefficient (Cwp)",
+                    value: localValues.cwp,
+                    min: Math.max(0.6, candidate.cwp - 0.1),
+                    max: Math.min(0.98, candidate.cwp + 0.1),
+                    step: 0.01,
+                    unit: "",
+                    description: "Waterplane area fullness (Awp / L×B)",
+                    color: "violet",
+                  })}
               </div>
             </div>
           )}
@@ -494,27 +594,29 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </div>
 
               <div className="space-y-4">
-                {renderSlider({
-                  id: "bowLength",
-                  label: "Bow Length Ratio (Lb)",
-                  value: localValues.bowLength,
-                  min: 0.1,
-                  max: Math.min(0.45, 0.9 - localValues.sternLength),
-                  step: 0.01,
-                  unit: "",
-                  description: "Proportion of LOA for bow region",
-                })}
+                {isParameterVisible("bowLength", filterConfig) &&
+                  renderSlider({
+                    id: "bowLength",
+                    label: "Bow Length Ratio (Lb)",
+                    value: localValues.bowLength,
+                    min: 0.1,
+                    max: Math.min(0.45, 0.9 - localValues.sternLength),
+                    step: 0.01,
+                    unit: "",
+                    description: "Proportion of LOA for bow region",
+                  })}
 
-                {renderSlider({
-                  id: "sternLength",
-                  label: "Stern Length Ratio (Ls)",
-                  value: localValues.sternLength,
-                  min: 0.1,
-                  max: Math.min(0.45, 0.9 - localValues.bowLength),
-                  step: 0.01,
-                  unit: "",
-                  description: "Proportion of LOA for stern region",
-                })}
+                {isParameterVisible("sternLength", filterConfig) &&
+                  renderSlider({
+                    id: "sternLength",
+                    label: "Stern Length Ratio (Ls)",
+                    value: localValues.sternLength,
+                    min: 0.1,
+                    max: Math.min(0.45, 0.9 - localValues.bowLength),
+                    step: 0.01,
+                    unit: "",
+                    description: "Proportion of LOA for stern region",
+                  })}
               </div>
             </div>
           )}
@@ -533,49 +635,53 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </div>
 
               <div className="space-y-4">
-                {renderSlider({
-                  id: "bowFlareAngle",
-                  label: "Flare Angle (β)",
-                  value: localValues.bowFlareAngle,
-                  min: 0,
-                  max: 45,
-                  step: 1,
-                  unit: "°",
-                  description: "Outward angle above waterline",
-                })}
+                {isParameterVisible("bowFlareAngle", filterConfig) &&
+                  renderSlider({
+                    id: "bowFlareAngle",
+                    label: "Flare Angle (β)",
+                    value: localValues.bowFlareAngle,
+                    min: 0,
+                    max: 45,
+                    step: 1,
+                    unit: "°",
+                    description: "Outward angle above waterline",
+                  })}
 
-                {renderSlider({
-                  id: "bowCurvature",
-                  label: "Curvature (Rc)",
-                  value: localValues.bowCurvature,
-                  min: 0.1,
-                  max: 1.0,
-                  step: 0.05,
-                  unit: "",
-                  description: "Section fullness (0.1=fine, 1.0=full)",
-                })}
+                {isParameterVisible("bowCurvature", filterConfig) &&
+                  renderSlider({
+                    id: "bowCurvature",
+                    label: "Curvature (Rc)",
+                    value: localValues.bowCurvature,
+                    min: 0.1,
+                    max: 1.0,
+                    step: 0.05,
+                    unit: "",
+                    description: "Section fullness (0.1=fine, 1.0=full)",
+                  })}
 
-                {renderSlider({
-                  id: "bowKnuckle",
-                  label: "Knuckle (Rk)",
-                  value: localValues.bowKnuckle,
-                  min: 0.0,
-                  max: 1.0,
-                  step: 0.05,
-                  unit: "",
-                  description: "Hard chine effect (0=round, 1=angular)",
-                })}
+                {isParameterVisible("bowKnuckle", filterConfig) &&
+                  renderSlider({
+                    id: "bowKnuckle",
+                    label: "Knuckle (Rk)",
+                    value: localValues.bowKnuckle,
+                    min: 0.0,
+                    max: 1.0,
+                    step: 0.05,
+                    unit: "",
+                    description: "Hard chine effect (0=round, 1=angular)",
+                  })}
 
-                {renderSlider({
-                  id: "deadriseAngle",
-                  label: "Deadrise Angle",
-                  value: localValues.deadriseAngle,
-                  min: 0,
-                  max: 45,
-                  step: 1,
-                  unit: "°",
-                  description: "V-shape at keel (0°=flat, 45°=sharp)",
-                })}
+                {isParameterVisible("deadriseAngle", filterConfig) &&
+                  renderSlider({
+                    id: "deadriseAngle",
+                    label: "Deadrise Angle",
+                    value: localValues.deadriseAngle,
+                    min: 0,
+                    max: 45,
+                    step: 1,
+                    unit: "°",
+                    description: "V-shape at keel (0°=flat, 45°=sharp)",
+                  })}
               </div>
             </div>
           )}
@@ -594,51 +700,56 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </div>
 
               <div className="space-y-4">
-                {renderSlider({
-                  id: "sternRakeAngle",
-                  label: "Rake Angle",
-                  value: localValues.sternRakeAngle,
-                  min: 0,
-                  max: 45,
-                  step: 1,
-                  unit: "°",
-                  description: "Aft overhang angle",
-                })}
+                {isParameterVisible("sternRakeAngle", filterConfig) &&
+                  renderSlider({
+                    id: "sternRakeAngle",
+                    label: "Rake Angle",
+                    value: localValues.sternRakeAngle,
+                    min: 0,
+                    max: 45,
+                    step: 1,
+                    unit: "°",
+                    description: "Aft overhang angle",
+                  })}
 
-                {renderSlider({
-                  id: "sternCurvature",
-                  label: "Curvature (Rc_trans)",
-                  value: localValues.sternCurvature,
-                  min: 0.1,
-                  max: 1.0,
-                  step: 0.05,
-                  unit: "",
-                  description: "Section fullness",
-                })}
+                {isParameterVisible("sternCurvature", filterConfig) &&
+                  renderSlider({
+                    id: "sternCurvature",
+                    label: "Curvature (Rc_trans)",
+                    value: localValues.sternCurvature,
+                    min: 0.1,
+                    max: 1.0,
+                    step: 0.05,
+                    unit: "",
+                    description: "Section fullness",
+                  })}
 
-                {renderSlider({
-                  id: "sternKnuckle",
-                  label: "Knuckle (Rk_trans)",
-                  value: localValues.sternKnuckle,
-                  min: 0.0,
-                  max: 1.0,
-                  step: 0.05,
-                  unit: "",
-                  description: "Hard chine effect",
-                })}
+                {isParameterVisible("sternKnuckle", filterConfig) &&
+                  renderSlider({
+                    id: "sternKnuckle",
+                    label: "Knuckle (Rk_trans)",
+                    value: localValues.sternKnuckle,
+                    min: 0.0,
+                    max: 1.0,
+                    step: 0.05,
+                    unit: "",
+                    description: "Hard chine effect",
+                  })}
 
-                {renderSlider({
-                  id: "transomArea",
-                  label: "Transom Area",
-                  value: localValues.transomArea,
-                  min: 0.0,
-                  max: 1.0,
-                  step: 0.05,
-                  unit: "",
-                  description: "Flat stern (0=pointed, 1=full transom)",
-                })}
+                {isParameterVisible("transomArea", filterConfig) &&
+                  renderSlider({
+                    id: "transomArea",
+                    label: "Transom Area",
+                    value: localValues.transomArea,
+                    min: 0.0,
+                    max: 1.0,
+                    step: 0.05,
+                    unit: "",
+                    description: "Flat stern (0=pointed, 1=full transom)",
+                  })}
 
-                {localValues.transomArea > 0.05 &&
+                {isParameterVisible("transomWidth", filterConfig) &&
+                  localValues.transomArea > 0.05 &&
                   renderSlider({
                     id: "transomWidth",
                     label: "Transom Width",
@@ -667,17 +778,19 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </div>
 
               <div className="space-y-3">
-                {renderToggle({
-                  id: "hasSheer",
-                  label: "Sheer",
-                  description: "Outward curve at deck edge",
-                })}
+                {isParameterVisible("hasSheer", filterConfig) &&
+                  renderToggle({
+                    id: "hasSheer",
+                    label: "Sheer",
+                    description: "Outward curve at deck edge",
+                  })}
 
-                {renderToggle({
-                  id: "hasTumblehome",
-                  label: "Tumblehome",
-                  description: "Inward slope at deck edge",
-                })}
+                {isParameterVisible("hasTumblehome", filterConfig) &&
+                  renderToggle({
+                    id: "hasTumblehome",
+                    label: "Tumblehome",
+                    description: "Inward slope at deck edge",
+                  })}
               </div>
             </div>
           )}
@@ -696,68 +809,74 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
               </div>
 
               {/* Bulb enable toggle */}
-              {renderToggle({
-                id: "hasBulb",
-                label: "Enable Bulbous Bow",
-                description: "Add bulb for wave resistance reduction",
-              })}
+              {isParameterVisible("hasBulb", filterConfig) &&
+                renderToggle({
+                  id: "hasBulb",
+                  label: "Enable Bulbous Bow",
+                  description: "Add bulb for wave resistance reduction",
+                })}
 
               {localValues.hasBulb && (
                 <div className="space-y-4">
-                  {renderSlider({
-                    id: "bulbLength",
-                    label: "Length Ratio (Lbb)",
-                    value: localValues.bulbLength,
-                    min: 0.02,
-                    max: 0.08,
-                    step: 0.005,
-                    unit: "",
-                    description: "Relative to Lpp",
-                  })}
+                  {isParameterVisible("bulbLength", filterConfig) &&
+                    renderSlider({
+                      id: "bulbLength",
+                      label: "Length Ratio (Lbb)",
+                      value: localValues.bulbLength,
+                      min: 0.02,
+                      max: 0.08,
+                      step: 0.005,
+                      unit: "",
+                      description: "Relative to Lpp",
+                    })}
 
-                  {renderSlider({
-                    id: "bulbHeight",
-                    label: "Height Ratio (Hbb)",
-                    value: localValues.bulbHeight,
-                    min: 0.3,
-                    max: 0.8,
-                    step: 0.05,
-                    unit: "",
-                    description: "Relative to draft",
-                  })}
+                  {isParameterVisible("bulbHeight", filterConfig) &&
+                    renderSlider({
+                      id: "bulbHeight",
+                      label: "Height Ratio (Hbb)",
+                      value: localValues.bulbHeight,
+                      min: 0.3,
+                      max: 0.8,
+                      step: 0.05,
+                      unit: "",
+                      description: "Relative to draft",
+                    })}
 
-                  {renderSlider({
-                    id: "bulbWidth",
-                    label: "Width Ratio (Bbb)",
-                    value: localValues.bulbWidth,
-                    min: 0.4,
-                    max: 0.9,
-                    step: 0.05,
-                    unit: "",
-                    description: "Relative to beam",
-                  })}
+                  {isParameterVisible("bulbWidth", filterConfig) &&
+                    renderSlider({
+                      id: "bulbWidth",
+                      label: "Width Ratio (Bbb)",
+                      value: localValues.bulbWidth,
+                      min: 0.4,
+                      max: 0.9,
+                      step: 0.05,
+                      unit: "",
+                      description: "Relative to beam",
+                    })}
 
-                  {renderSlider({
-                    id: "bulbAsymmetry",
-                    label: "Asymmetry (Lbbm)",
-                    value: localValues.bulbAsymmetry,
-                    min: 0.3,
-                    max: 0.7,
-                    step: 0.05,
-                    unit: "",
-                    description: "Fore/aft position (0.5=symmetric)",
-                  })}
+                  {isParameterVisible("bulbAsymmetry", filterConfig) &&
+                    renderSlider({
+                      id: "bulbAsymmetry",
+                      label: "Asymmetry (Lbbm)",
+                      value: localValues.bulbAsymmetry,
+                      min: 0.3,
+                      max: 0.7,
+                      step: 0.05,
+                      unit: "",
+                      description: "Fore/aft position (0.5=symmetric)",
+                    })}
 
-                  {renderSlider({
-                    id: "bulbFillet",
-                    label: "Fillet Radius (Rbb)",
-                    value: localValues.bulbFillet,
-                    min: 0.05,
-                    max: 0.33,
-                    step: 0.01,
-                    unit: "",
-                    description: "Roundness (low=pointed, high=round)",
-                  })}
+                  {isParameterVisible("bulbFillet", filterConfig) &&
+                    renderSlider({
+                      id: "bulbFillet",
+                      label: "Fillet Radius (Rbb)",
+                      value: localValues.bulbFillet,
+                      min: 0.05,
+                      max: 0.33,
+                      step: 0.01,
+                      unit: "",
+                      description: "Roundness (low=pointed, high=round)",
+                    })}
                 </div>
               )}
             </div>
