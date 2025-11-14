@@ -1,10 +1,14 @@
-import React, { useMemo } from "react";
-import type { CreateMissionCaseDto, ShipDAdditionalParameters } from "../../../types/sizing";
+import React, { useMemo, useEffect } from "react";
+import type {
+  CreateMissionCaseDto,
+  ShipDAdditionalParameters,
+  ShipDVesselTaxonomy,
+} from "../../../types/sizing";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
 import { Select } from "../../ui/select";
-import { ChevronDown, ChevronUp, Info } from "lucide-react";
+import { ChevronDown, ChevronUp, Info, AlertTriangle } from "lucide-react";
 
 interface Step2bProps {
   formData: Partial<CreateMissionCaseDto>;
@@ -17,6 +21,7 @@ interface Step2bProps {
   bowFamily?: string;
   midshipFamily?: string;
   sternFamily?: string;
+  taxonomyEntry?: ShipDVesselTaxonomy;
 }
 
 export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
@@ -27,6 +32,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
   bowFamily,
   midshipFamily,
   sternFamily,
+  taxonomyEntry,
 }) => {
   const [expandedSections, setExpandedSections] = React.useState({
     sectionGeometry: true,
@@ -48,28 +54,76 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
   }, [formData.shipdInputsJson]);
 
   // Update additionalParameters
-  const updateAdditionalParams = (updates: Partial<ShipDAdditionalParameters>) => {
-    const current = additionalParams || {};
-    const updated = { ...current, ...updates };
-    const shipdInputs = {
-      ...(formData.shipdInputsJson ? JSON.parse(formData.shipdInputsJson) : {}),
-      additionalParameters: updated,
-    };
-    updateFormData({
-      shipdInputsJson: JSON.stringify(shipdInputs),
-    });
-  };
+  const updateAdditionalParams = React.useCallback(
+    (updates: Partial<ShipDAdditionalParameters>) => {
+      const current = additionalParams || {};
+      const updated = { ...current, ...updates };
+      const shipdInputs = {
+        ...(formData.shipdInputsJson ? JSON.parse(formData.shipdInputsJson) : {}),
+        additionalParameters: updated,
+      };
+      updateFormData({
+        shipdInputsJson: JSON.stringify(shipdInputs),
+      });
+    },
+    [additionalParams, formData.shipdInputsJson, updateFormData]
+  );
+
+  // Extract defaults from taxonomy entry
+  const taxonomyDefaults = useMemo(() => {
+    if (taxonomyEntry?.additionalParametersJson) {
+      try {
+        const parsed = JSON.parse(taxonomyEntry.additionalParametersJson);
+        return {
+          bow: parsed.bowLengthRatio as number | undefined,
+          stern: parsed.sternLengthRatio as number | undefined,
+        };
+      } catch {
+        // Ignore parse errors
+      }
+    }
+    return { bow: 0.3, stern: 0.3 }; // Fallback defaults
+  }, [taxonomyEntry]);
+
+  // Set defaults when component mounts or vessel type changes (if values not already set)
+  useEffect(() => {
+    if (taxonomyDefaults.bow !== undefined && taxonomyDefaults.stern !== undefined) {
+      const currentBow = additionalParams?.bowLengthRatio;
+      const currentStern = additionalParams?.sternLengthRatio;
+
+      // Only set defaults if values are not already set
+      if (currentBow === undefined && currentStern === undefined) {
+        updateAdditionalParams({
+          bowLengthRatio: taxonomyDefaults.bow,
+          sternLengthRatio: taxonomyDefaults.stern,
+        });
+      }
+    }
+  }, [
+    taxonomyDefaults.bow,
+    taxonomyDefaults.stern,
+    additionalParams?.bowLengthRatio,
+    additionalParams?.sternLengthRatio,
+    updateAdditionalParams,
+  ]); // Only run when defaults change
 
   // Show bulb section only if bulbous_bow is selected
   const showBulbSection = bowFamily === "bulbous_bow";
 
   // Calculate mid-body length ratio (derived)
   const midBodyRatio = useMemo(() => {
-    const lb = additionalParams?.bowLengthRatio ?? 0.316;
-    const ls = additionalParams?.sternLengthRatio ?? 0.42;
+    const lb = additionalParams?.bowLengthRatio ?? taxonomyDefaults.bow ?? 0.3;
+    const ls = additionalParams?.sternLengthRatio ?? taxonomyDefaults.stern ?? 0.3;
     const lm = 1 - lb - ls;
     return Math.max(0, lm);
-  }, [additionalParams?.bowLengthRatio, additionalParams?.sternLengthRatio]);
+  }, [additionalParams?.bowLengthRatio, additionalParams?.sternLengthRatio, taxonomyDefaults]);
+
+  // Validation: check if bow + stern >= 1.0
+  const isValid = useMemo(() => {
+    const lb = additionalParams?.bowLengthRatio ?? taxonomyDefaults.bow ?? 0.3;
+    const ls = additionalParams?.sternLengthRatio ?? taxonomyDefaults.stern ?? 0.3;
+    return lb + ls < 1.0;
+  }, [additionalParams?.bowLengthRatio, additionalParams?.sternLengthRatio, taxonomyDefaults]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -259,7 +313,62 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
 
         {expandedSections.longitudinal && (
           <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Visual representation of ratios */}
+            <div className="rounded-lg bg-gray-50 dark:bg-gray-900/50 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm font-medium">Length Distribution</Label>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Total:{" "}
+                  {(
+                    midBodyRatio +
+                    (additionalParams?.bowLengthRatio ?? taxonomyDefaults.bow ?? 0.3) +
+                    (additionalParams?.sternLengthRatio ?? taxonomyDefaults.stern ?? 0.3)
+                  ).toFixed(3)}
+                </span>
+              </div>
+              <div className="flex h-6 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
+                <div
+                  className="bg-blue-500 flex items-center justify-center text-xs font-medium text-white"
+                  style={{
+                    width: `${((additionalParams?.bowLengthRatio ?? taxonomyDefaults.bow ?? 0.3) * 100).toFixed(1)}%`,
+                  }}
+                  title={`Bow: ${((additionalParams?.bowLengthRatio ?? taxonomyDefaults.bow ?? 0.3) * 100).toFixed(1)}%`}
+                >
+                  {(
+                    (additionalParams?.bowLengthRatio ?? taxonomyDefaults.bow ?? 0.3) * 100
+                  ).toFixed(0)}
+                  %
+                </div>
+                <div
+                  className="bg-green-500 flex items-center justify-center text-xs font-medium text-white"
+                  style={{
+                    width: `${(midBodyRatio * 100).toFixed(1)}%`,
+                  }}
+                  title={`Midship: ${(midBodyRatio * 100).toFixed(1)}%`}
+                >
+                  {midBodyRatio > 0.05 ? `${(midBodyRatio * 100).toFixed(0)}%` : ""}
+                </div>
+                <div
+                  className="bg-purple-500 flex items-center justify-center text-xs font-medium text-white"
+                  style={{
+                    width: `${((additionalParams?.sternLengthRatio ?? taxonomyDefaults.stern ?? 0.3) * 100).toFixed(1)}%`,
+                  }}
+                  title={`Stern: ${((additionalParams?.sternLengthRatio ?? taxonomyDefaults.stern ?? 0.3) * 100).toFixed(1)}%`}
+                >
+                  {(
+                    (additionalParams?.sternLengthRatio ?? taxonomyDefaults.stern ?? 0.3) * 100
+                  ).toFixed(0)}
+                  %
+                </div>
+              </div>
+              <div className="flex justify-between mt-2 text-xs text-gray-600 dark:text-gray-400">
+                <span>Bow</span>
+                <span>Midship</span>
+                <span>Stern</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Bow Length Ratio */}
               <div className="space-y-2">
                 <Label htmlFor="bowLengthRatio">Bow Length Ratio (Lb)</Label>
@@ -269,12 +378,23 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   min={0.05}
                   max={0.9}
                   step={0.01}
-                  value={additionalParams?.bowLengthRatio?.toString() || ""}
+                  value={
+                    additionalParams?.bowLengthRatio?.toString() ||
+                    taxonomyDefaults.bow?.toString() ||
+                    ""
+                  }
                   onChange={(e) => {
                     const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                    updateAdditionalParams({ bowLengthRatio: value });
+                    const currentStern =
+                      additionalParams?.sternLengthRatio ?? taxonomyDefaults.stern ?? 0.3;
+                    // Auto-constrain: prevent bow + stern >= 1.0
+                    const maxBow = Math.min(0.9, 0.99 - currentStern);
+                    const constrainedValue =
+                      value !== undefined ? Math.min(value, maxBow) : undefined;
+                    updateAdditionalParams({ bowLengthRatio: constrainedValue });
                   }}
-                  placeholder="0.05-0.90"
+                  placeholder={taxonomyDefaults.bow?.toFixed(2) || "0.05-0.90"}
+                  className={!isValid ? "border-red-500 dark:border-red-500" : ""}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400">Relative to LOA</p>
               </div>
@@ -303,24 +423,38 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   min={0.05}
                   max={0.9}
                   step={0.01}
-                  value={additionalParams?.sternLengthRatio?.toString() || ""}
+                  value={
+                    additionalParams?.sternLengthRatio?.toString() ||
+                    taxonomyDefaults.stern?.toString() ||
+                    ""
+                  }
                   onChange={(e) => {
                     const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                    updateAdditionalParams({ sternLengthRatio: value });
+                    const currentBow =
+                      additionalParams?.bowLengthRatio ?? taxonomyDefaults.bow ?? 0.3;
+                    // Auto-constrain: prevent bow + stern >= 1.0
+                    const maxStern = Math.min(0.9, 0.99 - currentBow);
+                    const constrainedValue =
+                      value !== undefined ? Math.min(value, maxStern) : undefined;
+                    updateAdditionalParams({ sternLengthRatio: constrainedValue });
                   }}
-                  placeholder="0.05-0.90"
+                  placeholder={taxonomyDefaults.stern?.toFixed(2) || "0.05-0.90"}
+                  className={!isValid ? "border-red-500 dark:border-red-500" : ""}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400">Relative to LOA</p>
               </div>
             </div>
 
             {/* Validation warning */}
-            {midBodyRatio <= 0 && (
-              <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 text-sm text-yellow-800 dark:text-yellow-200">
-                <p className="font-medium">Warning: Lb + Ls must be less than 1.0</p>
-                <p className="mt-1">
-                  Please adjust bow or stern length ratios to ensure mid-body length is positive.
-                </p>
+            {!isValid && (
+              <div className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 text-sm text-red-800 dark:text-red-200 flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Invalid: Lb + Ls must be less than 1.0</p>
+                  <p className="mt-1">
+                    Please adjust bow or stern length ratios to ensure mid-body length is positive.
+                  </p>
+                </div>
               </div>
             )}
 

@@ -91,6 +91,32 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             vector[20] = Math.Clamp(missionCase.ServiceSpeedKn / 40m, 0.0m, 1.0m);
         }
 
+        // Extract bow/stern length ratio defaults from taxonomy
+        decimal? defaultBow = null;
+        decimal? defaultStern = null;
+        if (taxonomyEntry != null && !string.IsNullOrWhiteSpace(taxonomyEntry.AdditionalParametersJson))
+        {
+            try
+            {
+                var taxonomyParams = JsonSerializer.Deserialize<Dictionary<string, object>>(taxonomyEntry.AdditionalParametersJson);
+                if (taxonomyParams != null)
+                {
+                    if (taxonomyParams.TryGetValue("bowLengthRatio", out var bowObj) && bowObj != null)
+                    {
+                        defaultBow = Convert.ToDecimal(bowObj);
+                    }
+                    if (taxonomyParams.TryGetValue("sternLengthRatio", out var sternObj) && sternObj != null)
+                    {
+                        defaultStern = Convert.ToDecimal(sternObj);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to parse bow/stern defaults from taxonomy AdditionalParametersJson");
+            }
+        }
+
         // Apply taxonomy defaults when available
         if (taxonomyEntry != null)
         {
@@ -120,6 +146,33 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
         if (bowFamily is null || midshipFamily is null || sternFamily is null)
         {
             warnings.Add("One or more hull families were not specified; using defaults during ShipD processing.");
+        }
+
+        // Apply taxonomy defaults for bow/stern length ratios if not provided by user
+        // This must happen before ApplyConditionalParameters so user overrides can take precedence
+        ShipDAdditionalParameters? additionalParsed = null;
+        if (runRequest.Options?.AdditionalParameters != null && runRequest.Options.AdditionalParameters.Count > 0)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(runRequest.Options.AdditionalParameters);
+                additionalParsed = JsonSerializer.Deserialize<ShipDAdditionalParameters>(json);
+            }
+            catch
+            {
+                // Ignore parse errors, will try manual mapping in ApplyConditionalParameters
+            }
+        }
+
+        if (defaultBow.HasValue && (additionalParsed == null || !additionalParsed.BowLengthRatio.HasValue))
+        {
+            vector[1] = defaultBow.Value;
+            _logger.LogDebug("[SHIPD_ADAPTER] Applied taxonomy default bow length ratio: {Ratio}", defaultBow.Value);
+        }
+        if (defaultStern.HasValue && (additionalParsed == null || !additionalParsed.SternLengthRatio.HasValue))
+        {
+            vector[2] = defaultStern.Value;
+            _logger.LogDebug("[SHIPD_ADAPTER] Applied taxonomy default stern length ratio: {Ratio}", defaultStern.Value);
         }
 
         // Apply conditional parameters from AdditionalParameters

@@ -456,6 +456,7 @@ export const MissionWizard: React.FC = observer(() => {
             bowFamily={formData.bowFamily}
             midshipFamily={formData.midshipFamily}
             sternFamily={formData.sternFamily}
+            taxonomyEntry={taxonomyEntry}
           />
         );
       case 3:

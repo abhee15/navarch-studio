@@ -6,6 +6,34 @@ internal static class ShipDMetadataDefaults
 {
     private const string SharedAdditionalParametersJson = "{\"conditionalInputs\":{\"bow\":{\"bulbous_bow\":[\"bit_BB\",\"Lbb\",\"Hbb\",\"Bbb\",\"Lbbm\",\"Rbb\"],\"wave_piercing\":[\"Beta\",\"Rc\",\"Rk\"],\"fine_entry\":[\"Beta\",\"Rc\"],\"axe_bow\":[\"Beta\",\"Rk\"]},\"midship\":{\"deep_v_midship\":[\"Adrft\",\"Bdrft\",\"Cdrft\"],\"barge_midship\":[\"bit_EP_S\"],\"fine_midship\":[\"bit_EP_T\"]},\"stern\":{\"transom_stern\":[\"Atrans\",\"Beta_trans\",\"Bc_trans\",\"Rc_trans\",\"Rk_trans\"],\"twin_skeg\":[\"SK_z\",\"Kappa_stern\",\"Lsb\",\"Hsb\",\"Bsb\"],\"skeg_stern\":[\"SK_z\",\"Kappa_stern\",\"Lsb\",\"HSBOA\"],\"canoe_stern\":[\"Adel_stern\",\"Bdel_stern\"]}},\"familyDefaults\":{\"bulbous_bow\":{\"bit_BB\":1},\"wave_piercing\":{\"bit_BB\":0,\"Beta\":5},\"transom_stern\":{\"Atrans\":0.5},\"twin_skeg\":{\"bit_SB\":1}}}";
 
+    // Vessel-type-specific default length ratios (bow, stern, midship = 1 - bow - stern)
+    private const string ContainerDefaults = "{\"bowLengthRatio\":0.30,\"sternLengthRatio\":0.30}";
+    private const string YachtDefaults = "{\"bowLengthRatio\":0.45,\"sternLengthRatio\":0.35}";
+    private const string TankerDefaults = "{\"bowLengthRatio\":0.30,\"sternLengthRatio\":0.30}";
+    private const string FishingDefaults = "{\"bowLengthRatio\":0.35,\"sternLengthRatio\":0.35}";
+    private const string GeneralCargoDefaults = "{\"bowLengthRatio\":0.30,\"sternLengthRatio\":0.30}";
+    private const string DefaultFallback = "{\"bowLengthRatio\":0.30,\"sternLengthRatio\":0.30}";
+
+    private static string MergeAdditionalParameters(string baseJson, string defaultsJson)
+    {
+        try
+        {
+            var baseObj = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(baseJson) ?? new Dictionary<string, object>();
+            var defaultsObj = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(defaultsJson) ?? new Dictionary<string, object>();
+
+            foreach (var kvp in defaultsObj)
+            {
+                baseObj[kvp.Key] = kvp.Value;
+            }
+
+            return System.Text.Json.JsonSerializer.Serialize(baseObj);
+        }
+        catch
+        {
+            return baseJson;
+        }
+    }
+
     public static readonly ShipDParameterMetadataSeed[] ParameterMetadata =
     {
         new ShipDParameterMetadataSeed(0, "LOA", "principal_dimensions", "Baseline length parameter used for ShipD normalization", null, 10.0m, 10.0m, 10.0m, 0.0m, "{\"normalized\":false,\"constant\":true}"),
@@ -66,7 +94,7 @@ internal static class ShipDMetadataDefaults
             new[] { "full_midship", "fine_midship" },
             new[] { "transom_stern", "cruiser_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, GeneralCargoDefaults)),
         new ShipDVesselTaxonomySeed(
             "Commercial",
             "bulk_carrier",
@@ -76,7 +104,7 @@ internal static class ShipDMetadataDefaults
             new[] { "full_midship" },
             new[] { "transom_stern", "cruiser_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, GeneralCargoDefaults)),
         new ShipDVesselTaxonomySeed(
             "Commercial",
             "container",
@@ -86,7 +114,7 @@ internal static class ShipDMetadataDefaults
             new[] { "fine_midship" },
             new[] { "transom_stern", "twin_skeg" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, ContainerDefaults)),
         new ShipDVesselTaxonomySeed(
             "Commercial",
             "fishing",
@@ -96,7 +124,7 @@ internal static class ShipDMetadataDefaults
             new[] { "deep_v_midship", "fine_midship" },
             new[] { "canoe_stern", "wedge_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, FishingDefaults)),
         new ShipDVesselTaxonomySeed(
             "Commercial",
             "tanker",
@@ -106,7 +134,7 @@ internal static class ShipDMetadataDefaults
             new[] { "full_midship" },
             new[] { "transom_stern", "cruiser_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, TankerDefaults)),
         new ShipDVesselTaxonomySeed(
             "Commercial",
             "lng_carrier",
@@ -116,7 +144,7 @@ internal static class ShipDMetadataDefaults
             new[] { "full_midship", "fine_midship" },
             new[] { "transom_stern", "twin_skeg" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, ContainerDefaults)),
         new ShipDVesselTaxonomySeed(
             "Commercial",
             "cruise_vessel",
@@ -126,7 +154,7 @@ internal static class ShipDMetadataDefaults
             new[] { "full_midship" },
             new[] { "cruiser_stern", "transom_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, GeneralCargoDefaults)),
         new ShipDVesselTaxonomySeed(
             "Commercial",
             "passenger_vessel",
@@ -136,7 +164,7 @@ internal static class ShipDMetadataDefaults
             new[] { "full_midship", "fine_midship" },
             new[] { "cruiser_stern", "transom_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, GeneralCargoDefaults)),
         new ShipDVesselTaxonomySeed(
             "Government",
             "cutters",
@@ -146,7 +174,7 @@ internal static class ShipDMetadataDefaults
             new[] { "deep_v_midship", "fine_midship" },
             new[] { "transom_stern", "canoe_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, DefaultFallback)),
         new ShipDVesselTaxonomySeed(
             "Government",
             "medical_ship",
@@ -156,7 +184,7 @@ internal static class ShipDMetadataDefaults
             new[] { "full_midship" },
             new[] { "cruiser_stern", "transom_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, GeneralCargoDefaults)),
         new ShipDVesselTaxonomySeed(
             "Government",
             "general_military",
@@ -166,7 +194,7 @@ internal static class ShipDMetadataDefaults
             new[] { "deep_v_midship" },
             new[] { "transom_stern", "skeg_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, DefaultFallback)),
         new ShipDVesselTaxonomySeed(
             "Recreational",
             "yacht",
@@ -176,7 +204,7 @@ internal static class ShipDMetadataDefaults
             new[] { "deep_v_midship" },
             new[] { "transom_stern", "canoe_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, YachtDefaults)),
         new ShipDVesselTaxonomySeed(
             "Recreational",
             "fishing_recreational",
@@ -186,7 +214,7 @@ internal static class ShipDMetadataDefaults
             new[] { "deep_v_midship", "barge_midship" },
             new[] { "wedge_stern", "transom_stern" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, FishingDefaults)),
         new ShipDVesselTaxonomySeed(
             "Recreational",
             "high_speed_craft",
@@ -196,7 +224,7 @@ internal static class ShipDMetadataDefaults
             new[] { "deep_v_midship" },
             new[] { "transom_stern", "twin_skeg" },
             1,
-            SharedAdditionalParametersJson),
+            MergeAdditionalParameters(SharedAdditionalParametersJson, DefaultFallback)),
         new ShipDVesselTaxonomySeed(
             "Research",
             "research_vessel",
@@ -206,7 +234,7 @@ internal static class ShipDMetadataDefaults
             new[] { "fine_midship", "full_midship" },
             new[] { "cruiser_stern", "transom_stern" },
             1,
-            SharedAdditionalParametersJson)
+            MergeAdditionalParameters(SharedAdditionalParametersJson, GeneralCargoDefaults))
     };
 
     internal sealed record ShipDParameterMetadataSeed(
