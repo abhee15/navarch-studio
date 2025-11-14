@@ -207,25 +207,69 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
     const padding = 60;
     const svgWidth = 600;
     const svgHeight = 600;
-    const beam = candidate.beamM;
-    const draft = candidate.draftM;
-    const depth = candidate.depthM;
+    const beam = candidate.beamM ?? 20; // Fallback to 20m if undefined
+    const draft = candidate.draftM ?? 5; // Fallback to 5m if undefined
+    const depth = candidate.depthM ?? 10; // Fallback to 10m if undefined
+
+    // Validate values to prevent NaN
+    if (!Number.isFinite(beam) || beam <= 0) {
+      console.warn("[Hull2DSections] Invalid Beam value:", candidate.beamM);
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Invalid vessel dimensions (Beam: {String(candidate.beamM)})
+        </div>
+      );
+    }
+    if (!Number.isFinite(depth) || depth <= 0) {
+      console.warn("[Hull2DSections] Invalid Depth value:", candidate.depthM);
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Invalid vessel dimensions (Depth: {String(candidate.depthM)})
+        </div>
+      );
+    }
+
     const scaleY = (svgWidth / 2 - padding) / (beam / 2);
     const scaleZ = (svgHeight - 2 * padding) / depth;
     const scale = Math.min(scaleY, scaleZ);
+
+    // Validate scale to prevent NaN
+    if (!Number.isFinite(scale) || scale <= 0) {
+      console.warn("[Hull2DSections] Invalid scale calculated:", { scaleY, scaleZ, beam, depth });
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Unable to calculate view scale
+        </div>
+      );
+    }
 
     const toSVG = (y: number, z: number, isAft: boolean): [number, number] => {
       const xOffset = isAft ? -y : y;
       return [svgWidth / 2 + xOffset * scale, svgHeight - padding - (z + draft) * scale];
     };
 
-    const generateSectionPath = (points: [number, number][], isAft: boolean) =>
-      points
+    const generateSectionPath = (points: [number, number][], isAft: boolean) => {
+      // Filter out invalid points (NaN, Infinity, etc.)
+      const validPoints = points.filter(([y, z]) => Number.isFinite(y) && Number.isFinite(z));
+
+      if (validPoints.length === 0) {
+        console.warn("[Hull2DSections] No valid points for section path");
+        return "";
+      }
+
+      return validPoints
         .map(([y, z], i) => {
           const [sx, sy] = toSVG(y, z, isAft);
+          // Validate coordinates before formatting
+          if (!Number.isFinite(sx) || !Number.isFinite(sy)) {
+            console.warn("[Hull2DSections] Invalid SVG coordinate:", { sx, sy, y, z });
+            return "";
+          }
           return `${i === 0 ? "M" : "L"} ${sx.toFixed(2)},${sy.toFixed(2)}`;
         })
+        .filter((segment) => segment !== "")
         .join(" ");
+    };
 
     return (
       <div className="w-full h-full p-4 relative flex flex-col">

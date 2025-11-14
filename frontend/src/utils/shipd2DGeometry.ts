@@ -16,6 +16,12 @@ export function extractWaterlinesFromShipD(
   waterlineHeights: number[] = [],
   designDraft?: number
 ): Array<{ depth: number; points: Array<[number, number]>; isDesignWaterline: boolean }> {
+  // Validate inputs to prevent NaN
+  if (!Number.isFinite(lppM) || lppM <= 0) {
+    console.warn("[extractWaterlinesFromShipD] Invalid lppM:", lppM);
+    return [];
+  }
+
   const waterlines: Array<{
     depth: number;
     points: Array<[number, number]>;
@@ -97,8 +103,8 @@ export function extractWaterlinesFromShipD(
       // This matches the 3D coordinate system where hull is centered at origin
       const x = (station.position - 0.5) * lppM;
 
-      // Only add point if halfBreadth is valid (>= 0)
-      if (halfBreadth >= 0) {
+      // Only add point if both coordinates are valid (finite numbers)
+      if (Number.isFinite(x) && Number.isFinite(halfBreadth) && halfBreadth >= 0) {
         points.push([x, halfBreadth]);
       }
     }
@@ -184,6 +190,16 @@ export function extractButtocksFromShipD(
   draftM: number,
   buttockOffsets: number[] = []
 ): Array<{ transverseOffset: number; points: Array<[number, number]>; isCenterline: boolean }> {
+  // Validate inputs to prevent NaN
+  if (!Number.isFinite(lppM) || lppM <= 0) {
+    console.warn("[extractButtocksFromShipD] Invalid lppM:", lppM);
+    return [];
+  }
+  if (!Number.isFinite(draftM) || draftM <= 0) {
+    console.warn("[extractButtocksFromShipD] Invalid draftM:", draftM);
+    return [];
+  }
+
   const buttocks: Array<{
     transverseOffset: number;
     points: Array<[number, number]>;
@@ -241,7 +257,11 @@ export function extractButtocksFromShipD(
       // ShipD uses: height = 0 at keel, positive above (waterline = draft)
       // Convert: profileY = height - draft (so keel = -draft, waterline = 0)
       const profileY = z - draftM;
-      points.push([x, profileY]);
+
+      // Only add point if both coordinates are valid (finite numbers)
+      if (Number.isFinite(x) && Number.isFinite(profileY)) {
+        points.push([x, profileY]);
+      }
     }
 
     if (points.length > 0) {

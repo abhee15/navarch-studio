@@ -53,6 +53,20 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
     // Generate waterlines - prioritize ShipD geometry if available
     const waterlines = useMemo(() => {
+      // Validate candidate dimensions early to prevent NaN propagation
+      const lppM = candidate.lppM;
+      const beamM = candidate.beamM;
+      const draftM = candidate.draftM;
+
+      if (!Number.isFinite(lppM) || lppM <= 0 || !Number.isFinite(beamM) || beamM <= 0) {
+        console.warn("[Hull2DPlan] Invalid candidate dimensions, returning empty waterlines", {
+          lppM,
+          beamM,
+          draftM,
+        });
+        return [];
+      }
+
       // Check if ShipD geometry is available (from backend)
       if (candidate.geometryJson) {
         try {
@@ -98,9 +112,9 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
             const result = extractWaterlinesFromShipD(
               shipdSections,
-              candidate.lppM,
+              lppM,
               waterlineHeights,
-              candidate.draftM
+              draftM
             );
             console.log("[Hull2DPlan] Extracted waterlines from ShipD geometry", {
               waterlineCount: result.length,
@@ -134,9 +148,9 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             const sections = generateShipDSections(
               {
                 shipdVector,
-                lppM: candidate.lppM,
-                beamM: candidate.beamM,
-                draftM: candidate.draftM,
+                lppM: lppM,
+                beamM: beamM,
+                draftM: draftM,
                 metadata: sizingStore.shipdParameters,
                 resolution: 1.0,
               },
@@ -144,18 +158,13 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             );
 
             // Heights should be from 0 (keel) to draft (waterline)
-            const maxDraft = candidate.draftM || 5;
+            const maxDraft = draftM || 5;
             const waterlineHeights = Array.from(
               { length: waterlineCount },
               (_, i) => (i / (waterlineCount - 1)) * maxDraft
             );
 
-            const result = extractWaterlinesFromShipD(
-              sections,
-              candidate.lppM,
-              waterlineHeights,
-              candidate.draftM
-            );
+            const result = extractWaterlinesFromShipD(sections, lppM, waterlineHeights, draftM);
             console.log("[Hull2DPlan] Generated waterlines from ShipD parameters", {
               waterlineCount: result.length,
             });
@@ -182,9 +191,9 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Fallback: Use vessel-type-specific waterline generator
       const generatedWaterlines = generateHullWaterlines({
         hullFamily: candidate.hullFamily,
-        lppM: candidate.lppM,
-        beamM: candidate.beamM,
-        draftM: candidate.draftM,
+        lppM: lppM,
+        beamM: beamM,
+        draftM: draftM,
         cb: candidate.cb,
         cp: candidate.cp,
         cwp: candidate.cwp,
@@ -220,6 +229,12 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     const stations = useMemo(() => {
       const lpp = candidate.lppM;
 
+      // Validate lpp to prevent NaN
+      if (!Number.isFinite(lpp) || lpp <= 0) {
+        console.warn("[Hull2DPlan] Invalid lpp for stations:", lpp);
+        return [];
+      }
+
       // Check if ShipD geometry is available
       if (candidate.geometryJson) {
         try {
@@ -251,11 +266,40 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     const padding = 60;
     const svgWidth = 800;
     const svgHeight = 400;
-    const lpp = candidate.lppM;
-    const beam = candidate.beamM;
+    const lpp = candidate.lppM ?? 100; // Fallback to 100m if undefined
+    const beam = candidate.beamM ?? 20; // Fallback to 20m if undefined
+
+    // Validate values to prevent NaN
+    if (!Number.isFinite(lpp) || lpp <= 0) {
+      console.warn("[Hull2DPlan] Invalid Lpp value, using fallback:", candidate.lppM);
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Invalid vessel dimensions (Lpp: {String(candidate.lppM)})
+        </div>
+      );
+    }
+    if (!Number.isFinite(beam) || beam <= 0) {
+      console.warn("[Hull2DPlan] Invalid Beam value, using fallback:", candidate.beamM);
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Invalid vessel dimensions (Beam: {String(candidate.beamM)})
+        </div>
+      );
+    }
+
     const scaleX = (svgWidth - 2 * padding) / lpp;
     const scaleY = (svgHeight - 2 * padding) / beam;
     const scale = Math.min(scaleX, scaleY);
+
+    // Validate scale to prevent NaN
+    if (!Number.isFinite(scale) || scale <= 0) {
+      console.warn("[Hull2DPlan] Invalid scale calculated:", { scaleX, scaleY, lpp, beam });
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Unable to calculate view scale
+        </div>
+      );
+    }
 
     const toSVG = (x: number, y: number): [number, number] => [
       svgWidth / 2 + x * scale,
@@ -266,21 +310,45 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Naval architecture Plan View: waterlines should be closed curves
       // Path: stern centerline → starboard side → bow centerline → port side → stern centerline
 
+      // Filter out invalid points (NaN, Infinity, etc.)
+      const validPoints = points.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+
+      if (validPoints.length === 0) {
+        console.warn("[Hull2DPlan] No valid points for waterline path");
+        return { starboard: "", port: "", closed: "" };
+      }
+
       // Starboard side: points from stern to bow (x from -lpp/2 to +lpp/2, y >= 0)
-      const starboardPoints = points.map(([x, y]) => toSVG(x, y));
+      const starboardPoints = validPoints.map(([x, y]) => toSVG(x, y));
       const starboardPath = starboardPoints
-        .map(([x, y], i) => `${i === 0 ? "M" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`)
+        .map(([x, y], i) => {
+          // Validate coordinates before formatting
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            console.warn("[Hull2DPlan] Invalid SVG coordinate:", { x, y });
+            return "";
+          }
+          return `${i === 0 ? "M" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .filter((segment) => segment !== "")
         .join(" ");
 
       // Port side: reverse the points and negate y to create closed loop
       // We reverse so the path goes: bow centerline → port side → stern centerline
-      const portPoints = [...points].reverse().map(([x, y]) => toSVG(x, -y));
+      const portPoints = [...validPoints].reverse().map(([x, y]) => toSVG(x, -y));
       const portPath = portPoints
-        .map(([x, y], i) => `${i === 0 ? "L" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`)
+        .map(([x, y], i) => {
+          // Validate coordinates before formatting
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            console.warn("[Hull2DPlan] Invalid SVG coordinate:", { x, y });
+            return "";
+          }
+          return `${i === 0 ? "L" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`;
+        })
+        .filter((segment) => segment !== "")
         .join(" ");
 
       // Close the path by connecting back to stern centerline
-      const closedPath = `${starboardPath} ${portPath} Z`;
+      const closedPath = starboardPath && portPath ? `${starboardPath} ${portPath} Z` : "";
 
       return { starboard: starboardPath, port: portPath, closed: closedPath };
     };

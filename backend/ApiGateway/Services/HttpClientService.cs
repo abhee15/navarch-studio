@@ -65,8 +65,37 @@ public class HttpClientService : IHttpClientService
         };
         ForwardAuthorizationHeader(request);
 
-        _logger.LogInformation("Forwarding POST request to {Url}", url);
-        return await _httpClient.SendAsync(request, cancellationToken);
+        _logger.LogInformation("[HTTP_CLIENT] Forwarding POST request to {Url}", url);
+        Console.WriteLine($"[HTTP_CLIENT] POST {url}");
+
+        try
+        {
+            var startTime = DateTime.UtcNow;
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+            _logger.LogInformation("[HTTP_CLIENT] Response from {Url}: {StatusCode} in {Elapsed}ms", url, (int)response.StatusCode, elapsed);
+            Console.WriteLine($"[HTTP_CLIENT] Response: {(int)response.StatusCode} {response.StatusCode} in {elapsed}ms");
+
+            // Log response body for 404 errors to help diagnose routing issues
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("[HTTP_CLIENT] 404 response body: {Body}", responseBody);
+                Console.WriteLine($"[HTTP_CLIENT] 404 response body: {responseBody}");
+                // Recreate the response since we consumed the content
+                response.Content = new StringContent(responseBody, System.Text.Encoding.UTF8, response.Content.Headers.ContentType?.MediaType ?? "application/json");
+            }
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[HTTP_CLIENT] Error calling {Url}: {Message}", url, ex.Message);
+            Console.WriteLine($"[HTTP_CLIENT] ERROR calling {url}: {ex.Message}");
+            Console.WriteLine($"[HTTP_CLIENT] Exception Type: {ex.GetType().FullName}");
+            throw;
+        }
     }
 
     public async Task<HttpResponseMessage> PutAsync(string service, string endpoint, HttpContent content, CancellationToken cancellationToken)

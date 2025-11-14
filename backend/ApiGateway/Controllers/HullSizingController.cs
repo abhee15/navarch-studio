@@ -58,19 +58,29 @@ public class HullSizingController : ControllerBase
         try
         {
             _logger.LogInformation("Proxying POST /hull-sizing/{Path} to HullSizingService", path);
+            Console.WriteLine($"[HULL_SIZING_PROXY] POST /hull-sizing/{path}");
 
             // Read request body
             using var reader = new StreamReader(Request.Body);
             var body = await reader.ReadToEndAsync(cancellationToken);
             var content = new StringContent(body, System.Text.Encoding.UTF8, Request.ContentType ?? "application/json");
 
+            var targetEndpoint = $"api/v1/hull-sizing/{path}";
+            _logger.LogInformation("Target endpoint: {Endpoint}", targetEndpoint);
+            Console.WriteLine($"[HULL_SIZING_PROXY] Target endpoint: {targetEndpoint}");
+
             var response = await _httpClientService.PostAsync(
                 "hullsizing",
-                $"api/v1/hull-sizing/{path}",
+                targetEndpoint,
                 content,
                 cancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            _logger.LogInformation("Response from HullSizingService: {StatusCode} - {Content}",
+                (int)response.StatusCode,
+                responseContent.Length > 200 ? responseContent.Substring(0, 200) + "..." : responseContent);
+            Console.WriteLine($"[HULL_SIZING_PROXY] Response: {(int)response.StatusCode} {response.StatusCode}");
 
             // Return raw content with actual status code from downstream service
             return new ContentResult
@@ -82,8 +92,10 @@ public class HullSizingController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error proxying POST request to HullSizingService");
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Internal server error" });
+            _logger.LogError(ex, "Error proxying POST request to HullSizingService for path: {Path}", path);
+            Console.WriteLine($"[HULL_SIZING_PROXY] ERROR: {ex.Message}");
+            Console.WriteLine($"[HULL_SIZING_PROXY] Stack trace: {ex.StackTrace}");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Internal server error", details = ex.Message });
         }
     }
 
@@ -147,4 +159,3 @@ public class HullSizingController : ControllerBase
         }
     }
 }
-

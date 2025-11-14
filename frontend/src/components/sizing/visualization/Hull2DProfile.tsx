@@ -60,6 +60,23 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
       const beam = candidate.beamM;
       const draft = candidate.draftM;
 
+      // Validate candidate dimensions early to prevent NaN propagation
+      if (
+        !Number.isFinite(lpp) ||
+        lpp <= 0 ||
+        !Number.isFinite(beam) ||
+        beam <= 0 ||
+        !Number.isFinite(draft) ||
+        draft <= 0
+      ) {
+        console.warn("[Hull2DProfile] Invalid candidate dimensions, returning empty buttocks", {
+          lpp,
+          beam,
+          draft,
+        });
+        return [];
+      }
+
       // Check if ShipD geometry is available (from backend)
       if (candidate.geometryJson) {
         try {
@@ -270,24 +287,68 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
     const padding = 80;
     const svgWidth = 900;
     const svgHeight = 520;
-    const lpp = candidate.lppM;
-    const depth = candidate.depthM;
+    const lpp = candidate.lppM ?? 100; // Fallback to 100m if undefined
+    const depth = candidate.depthM ?? 10; // Fallback to 10m if undefined
+
+    // Validate values to prevent NaN
+    if (!Number.isFinite(lpp) || lpp <= 0) {
+      console.warn("[Hull2DProfile] Invalid Lpp value:", candidate.lppM);
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Invalid vessel dimensions (Lpp: {String(candidate.lppM)})
+        </div>
+      );
+    }
+    if (!Number.isFinite(depth) || depth <= 0) {
+      console.warn("[Hull2DProfile] Invalid Depth value:", candidate.depthM);
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Invalid vessel dimensions (Depth: {String(candidate.depthM)})
+        </div>
+      );
+    }
+
     const scaleX = (svgWidth - 2 * padding) / lpp;
     const scaleY = (svgHeight - 2 * padding) / depth;
     const scale = Math.min(scaleX, scaleY);
+
+    // Validate scale to prevent NaN
+    if (!Number.isFinite(scale) || scale <= 0) {
+      console.warn("[Hull2DProfile] Invalid scale calculated:", { scaleX, scaleY, lpp, depth });
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Unable to calculate view scale
+        </div>
+      );
+    }
 
     const toSVG = (x: number, y: number): [number, number] => [
       svgWidth / 2 + x * scale,
       svgHeight - padding - (y + candidate.draftM) * scale,
     ];
 
-    const generatePath = (points: [number, number][]) =>
-      points
-        .map(
-          ([x, y], i) =>
-            `${i === 0 ? "M" : "L"} ${toSVG(x, y)[0].toFixed(2)},${toSVG(x, y)[1].toFixed(2)}`
-        )
+    const generatePath = (points: [number, number][]) => {
+      // Filter out invalid points (NaN, Infinity, etc.)
+      const validPoints = points.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+
+      if (validPoints.length === 0) {
+        console.warn("[Hull2DProfile] No valid points for path");
+        return "";
+      }
+
+      return validPoints
+        .map(([x, y], i) => {
+          const [svgX, svgY] = toSVG(x, y);
+          // Validate coordinates before formatting
+          if (!Number.isFinite(svgX) || !Number.isFinite(svgY)) {
+            console.warn("[Hull2DProfile] Invalid SVG coordinate:", { svgX, svgY, x, y });
+            return "";
+          }
+          return `${i === 0 ? "M" : "L"} ${svgX.toFixed(2)},${svgY.toFixed(2)}`;
+        })
+        .filter((segment) => segment !== "")
         .join(" ");
+    };
 
     return (
       <div className="w-full h-full p-4 relative flex flex-col">
