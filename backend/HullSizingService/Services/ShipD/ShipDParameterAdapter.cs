@@ -768,6 +768,8 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
 
     /// <summary>
     /// Updates a single ShipD parameter in the vector (for direct parameter adjustments).
+    /// Normalizes incoming denormalized values (e.g., degrees for angles) to 0-1 range.
+    /// Ratio parameters are already in 0-1 range and used as-is.
     /// </summary>
     public decimal[] UpdateShipDParameter(
         decimal[] originalVector,
@@ -782,15 +784,74 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             throw new ArgumentOutOfRangeException(nameof(parameterIndex), $"Parameter index must be between 0 and {adjusted.Length - 1}");
         }
 
-        // Apply new value
-        adjusted[parameterIndex] = newValue;
-
-        // Clamp to valid range from metadata
         var param = metadata.FirstOrDefault(m => m.ParameterIndex == parameterIndex);
+        decimal normalizedValue = newValue;
+
+        // Parameters that are ratios (0-1 range) - use value as-is
+        var ratioParameters = new HashSet<int> { 1, 2, 9, 10, 14, 22, 24, 28, 29, 30, 33, 34, 35, 36, 37 };
+        // Boolean parameters (0 or 1)
+        var booleanParameters = new HashSet<int> { 20, 21, 31 };
+
+        if (ratioParameters.Contains(parameterIndex))
+        {
+            // Ratio parameters are already in 0-1 range - use as-is
+            normalizedValue = newValue;
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Using ratio parameter[{Index}] value as-is: {Value}",
+                parameterIndex, normalizedValue);
+        }
+        else if (booleanParameters.Contains(parameterIndex))
+        {
+            // Boolean parameters: convert to 0 or 1
+            normalizedValue = newValue > 0.5m ? 1m : 0m;
+            _logger.LogDebug(
+                "[SHIPD_ADAPTER] Converted boolean parameter[{Index}]: {Value} -> {Normalized}",
+                parameterIndex, newValue, normalizedValue);
+        }
+        else if (param != null && param.Min.HasValue && param.Max.HasValue)
+        {
+            // Physical parameters (angles, etc.) - normalize from physical units to 0-1 range
+            var range = param.Max.Value - param.Min.Value;
+
+            // Check if this is a physical parameter (min < 0 or max > 1) or value is outside [0, 1]
+            bool isPhysicalParameter = param.Min.Value < 0m || param.Max.Value > 1m;
+            bool valueOutsideNormalizedRange = newValue < 0m || newValue > 1m;
+
+            if (range > 0m && (isPhysicalParameter || valueOutsideNormalizedRange))
+            {
+                // Value is denormalized (e.g., 15 degrees) - normalize it to 0-1 range
+                normalizedValue = (newValue - param.Min.Value) / range;
+                normalizedValue = Math.Max(0m, Math.Min(1m, normalizedValue)); // Clamp to [0, 1]
+                _logger.LogDebug(
+                    "[SHIPD_ADAPTER] Normalized physical parameter[{Index}]: {Value} ({Unit}) -> {Normalized} (0-1 range) using range [{Min}, {Max}]",
+                    parameterIndex, newValue, param.Unit ?? "unit", normalizedValue, param.Min.Value, param.Max.Value);
+            }
+            else
+            {
+                // Value appears to already be normalized (0-1 range) or metadata suggests normalized
+                normalizedValue = Math.Max(0m, Math.Min(1m, newValue));
+                _logger.LogDebug(
+                    "[SHIPD_ADAPTER] Parameter[{Index}] value appears normalized, using as-is: {Value}",
+                    parameterIndex, normalizedValue);
+            }
+        }
+        else
+        {
+            // No metadata available - assume value is already normalized (0-1 range)
+            normalizedValue = Math.Max(0m, Math.Min(1m, newValue));
+            _logger.LogWarning(
+                "[SHIPD_ADAPTER] No metadata for parameter[{Index}], assuming normalized value: {Value}",
+                parameterIndex, normalizedValue);
+        }
+
+        // Apply normalized value
+        adjusted[parameterIndex] = normalizedValue;
+
+        // Clamp to valid range (should already be in range, but double-check)
         if (param != null)
         {
-            if (param.Min.HasValue) adjusted[parameterIndex] = Math.Max(param.Min.Value, adjusted[parameterIndex]);
-            if (param.Max.HasValue) adjusted[parameterIndex] = Math.Min(param.Max.Value, adjusted[parameterIndex]);
+            if (param.Min.HasValue) adjusted[parameterIndex] = Math.Max(0m, adjusted[parameterIndex]); // ShipD vector uses 0-1 range
+            if (param.Max.HasValue) adjusted[parameterIndex] = Math.Min(1m, adjusted[parameterIndex]); // ShipD vector uses 0-1 range
         }
 
         // Special validation for longitudinal proportions (Lb + Ls < 1.0)

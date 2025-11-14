@@ -203,6 +203,10 @@ public class CandidateDesignService : ICandidateDesignService
         var adjustedValue = dto.Value;
         var paramLower = dto.Parameter.ToLower();
 
+        _logger.LogInformation(
+            "[CANDIDATE_ADJUST] Received parameter adjustment request: Parameter='{Parameter}', Value={Value}, CandidateId={CandidateId}",
+            dto.Parameter, dto.Value, id);
+
         switch (paramLower)
         {
             case "lppm":
@@ -387,7 +391,36 @@ public class CandidateDesignService : ICandidateDesignService
                     // Store the adjusted vector
                     candidate.ShipdParametersJson = JsonSerializer.Serialize(adjustedVector);
 
+                    // Log the normalized parameter value for stern and bulbous parameters
+                    if (paramLower.Contains("stern") || paramLower.Contains("bulb"))
+                    {
+                        int? paramIndex = paramLower switch
+                        {
+                            "sternrakeangle" => 27,
+                            "sterncurvature" => 29,
+                            "sternknuckle" => 30,
+                            "hasbulb" => 31,
+                            "bulblengthratio" => 33,
+                            "bulbheightratio" => 34,
+                            "bulbwidthratio" => 35,
+                            "bulbasymmetry" => 36,
+                            "bulbfilletradius" => 37,
+                            _ => null
+                        };
+
+                        if (paramIndex.HasValue && paramIndex.Value < adjustedVector.Length)
+                        {
+                            _logger.LogInformation(
+                                "[CANDIDATE_ADJUST] Parameter '{Parameter}' normalized: Input={Input}, Vector[{Index}]={Normalized}",
+                                dto.Parameter, adjustedValue, paramIndex.Value, adjustedVector[paramIndex.Value]);
+                        }
+                    }
+
                     // Regenerate hull sections with adjusted vector + new dimensions
+                    _logger.LogInformation(
+                        "[CANDIDATE_ADJUST] Regenerating ShipD geometry for candidate {Id} with adjusted vector (Parameter='{Parameter}', Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m)",
+                        candidate.Id, dto.Parameter, candidate.LppM, candidate.BM, candidate.TM);
+
                     var sections = await _shipdGeometryService.GenerateSectionsAsync(
                         adjustedVector,
                         candidate.LppM,
@@ -400,8 +433,8 @@ public class CandidateDesignService : ICandidateDesignService
                     // Update geometry JSON
                     candidate.GeometryJson = JsonSerializer.Serialize(sections);
                     _logger.LogInformation(
-                        "[CANDIDATE_ADJUST] Regenerated ShipD geometry for candidate {Id} after {Parameter} adjustment (vector adjusted to maintain design intent)",
-                        candidate.Id, dto.Parameter);
+                        "[CANDIDATE_ADJUST] Successfully regenerated ShipD geometry for candidate {Id} after {Parameter} adjustment: Generated {StationCount} stations",
+                        candidate.Id, dto.Parameter, sections.Stations?.Count ?? 0);
                 }
             }
             catch (Exception ex)
