@@ -40,10 +40,8 @@ export const Step3Constraints: React.FC<Step3Props> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Physical Constraints
-        </h2>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <h2 className="text-xl font-semibold text-foreground">Physical Constraints</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Define maximum dimensions (optional - leave blank for unconstrained)
         </p>
       </div>
@@ -57,15 +55,13 @@ export const Step3Constraints: React.FC<Step3Props> = ({
               key={preset.name}
               type="button"
               onClick={() => applyPreset(preset)}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="rounded-md border border-input px-3 py-2 text-sm hover:bg-accent/10"
             >
               {preset.name}
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Quick apply standard canal/lock constraints
-        </p>
+        <p className="text-xs text-muted-foreground">Quick apply standard canal/lock constraints</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -121,14 +117,12 @@ export const Step3Constraints: React.FC<Step3Props> = ({
               updateFormData({ capAirdraftM: parseFloat(e.target.value) || undefined })
             }
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Height from waterline to highest point
-          </p>
+          <p className="text-xs text-muted-foreground">Height from waterline to highest point</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-between pt-6 border-t border-border">
         <Button variant="outline" onClick={onPrevious}>
           ← Previous
         </Button>

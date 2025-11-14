@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Label } from "../../ui/label";
+import { Select } from "../../ui/select";
 import type { CandidateDesign } from "../../../types/sizing";
 import {
   Sliders,
@@ -183,7 +184,7 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
           onMouseUp={() => handleSliderRelease(config.id)}
           onTouchEnd={() => handleSliderRelease(config.id)}
           disabled={isUpdating}
-          className="w-full h-2.5 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 dark:bg-gray-700"
+          className="w-full h-2.5 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-muted"
         />
       </div>
 
@@ -220,13 +221,13 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
         disabled={isUpdating}
         className={`
           relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-          ${localValues[config.id] ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}
+          ${localValues[config.id] ? "bg-primary" : "bg-muted"}
           ${isUpdating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         `}
       >
         <span
           className={`
-            inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+            inline-block h-4 w-4 transform rounded-full bg-card transition-transform
             ${localValues[config.id] ? "translate-x-6" : "translate-x-1"}
           `}
         />
@@ -258,35 +259,16 @@ export const ParameterSliders: React.FC<ParameterSlidersProps> = ({
           {/* Parameter Group Selector (Dropdown) */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">Parameter Group</Label>
-            <div className="relative">
-              <select
-                value={selectedGroup}
-                onChange={(e) => setSelectedGroup(e.target.value as ParameterGroup)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-primary focus:border-primary"
-                disabled={isUpdating}
-              >
-                {parameterGroups.map((group) => (
-                  <option key={group.value} value={group.value}>
-                    {group.label} ({group.count})
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-muted-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
+            <Select
+              value={selectedGroup}
+              onChange={(value) => setSelectedGroup(value as ParameterGroup)}
+              options={parameterGroups.map((group) => ({
+                value: group.value,
+                label: `${group.label} (${group.count})`,
+              }))}
+              className="w-full"
+              disabled={isUpdating}
+            />
           </div>
 
           {/* GROUP 1: DIMENSIONS */}

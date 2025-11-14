@@ -520,8 +520,8 @@ export const MissionWizard: React.FC = observer(() => {
       <main className="flex-1 py-8">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hull Sizing Wizard</h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
+            <h1 className="text-3xl font-bold text-foreground">Hull Sizing Wizard</h1>
+            <p className="mt-2 text-muted-foreground">
               Define your brief requirements and choose your solver mode for optimal hull designs
             </p>
 
@@ -592,19 +592,19 @@ export const MissionWizard: React.FC = observer(() => {
             </div>
           </div>
 
-          <div className="relative rounded-lg bg-white p-8 shadow dark:bg-gray-800">
+          <div className="relative rounded-lg bg-card p-8 shadow">
             {isGenerating && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-lg bg-white/90 backdrop-blur-sm dark:bg-gray-800/90">
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-lg bg-card/90 backdrop-blur-sm">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <p className="text-lg font-semibold text-foreground">
                       🧮 Generating Hull Designs...
                     </p>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Running first-principles solver
                     </p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       This usually takes 1-2 seconds
                     </p>
                   </div>

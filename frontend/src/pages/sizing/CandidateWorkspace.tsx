@@ -76,11 +76,10 @@ export const CandidateWorkspace: React.FC = observer(() => {
     if (!candidate) return;
 
     setIsAdjusting(true);
+    // Determine which parameter was updated and map to backend format
+    let parameter = "";
+    let value: number | boolean = 0;
     try {
-      // Determine which parameter was updated and map to backend format
-      let parameter = "";
-      let value: number | boolean = 0;
-
       // Basic dimensions
       if (updates.lppM !== undefined) {
         parameter = "lppM";
@@ -201,9 +200,26 @@ export const CandidateWorkspace: React.FC = observer(() => {
         "t"
       );
       // Note: Background solver will re-run for accurate physics-based results
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to adjust parameter:", error);
-      toast.error("Failed to update parameter. Please try again.");
+      // Extract error message from various possible locations
+      let errorMessage = "Unknown error";
+      if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (typeof error?.response?.data === "string") {
+        errorMessage = error.response.data;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      console.error(`[Parameter Adjust Error] Parameter: ${parameter}, Value: ${value}`);
+      console.error(`[Parameter Adjust Error] Full error object:`, JSON.stringify(error, null, 2));
+      console.error(`[Parameter Adjust Error] Error response:`, error?.response?.data);
+      console.error(`[Parameter Adjust Error] Error message: ${errorMessage}`);
+
+      toast.error(`Failed to update parameter: ${errorMessage}`);
     } finally {
       setIsAdjusting(false);
     }
@@ -239,7 +255,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
   if (!candidate) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
+      <div className="flex min-h-screen flex-col bg-background">
         <AppHeader
           left={<h1 className="text-xl font-semibold text-foreground">Hull Sizing - Workspace</h1>}
           right={
@@ -295,7 +311,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
       <main className="flex-1">
         {/* Toolbar */}
-        <div className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <div className="border-b border-border bg-card">
           <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">

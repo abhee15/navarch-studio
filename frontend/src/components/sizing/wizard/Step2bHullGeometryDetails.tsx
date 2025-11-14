@@ -132,10 +132,8 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Hull Geometry Details
-        </h2>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <h2 className="text-xl font-semibold text-foreground">Hull Geometry Details</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Fine-tune hull geometry parameters based on your selected families. These parameters
           provide granular control over section shapes, longitudinal proportions, and appendages.
         </p>
@@ -152,27 +150,27 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
       </div>
 
       {/* Section 1: Section Geometry (Image 1) */}
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="rounded-lg border border-border bg-card">
         <button
           type="button"
           onClick={() => toggleSection("sectionGeometry")}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-accent/10 transition-colors"
         >
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">Section Geometry</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <h3 className="font-semibold text-foreground">Section Geometry</h3>
+            <p className="text-xs text-muted-foreground mt-1">
               Flare, deadrise, chine type, and curvature controls
             </p>
           </div>
           {expandedSections.sectionGeometry ? (
-            <ChevronUp className="h-5 w-5 text-gray-400" />
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-gray-400" />
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
           )}
         </button>
 
         {expandedSections.sectionGeometry && (
-          <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Flare Angle */}
               <div className="space-y-2">
@@ -191,7 +189,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   }
                   placeholder="0-45"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Outward angle of upper sides (Beta parameter)
                 </p>
               </div>
@@ -213,7 +211,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   }
                   placeholder="0-60"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Angle of lower sides relative to horizontal (Cdrft parameter)
                 </p>
               </div>
@@ -236,7 +234,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   ]}
                   placeholder="Select chine type"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Affects curvature coefficients Rc and Rk
                 </p>
               </div>
@@ -259,7 +257,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   ]}
                   placeholder="Select curvature type"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Affects Kappa_bow and Kappa_stern parameters
                 </p>
               </div>
@@ -276,11 +274,11 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                     onChange={(e) =>
                       updateAdditionalParams({ tumblehomeEnabled: e.target.checked || undefined })
                     }
-                    className="rounded border-gray-300 dark:border-gray-600"
+                    className="rounded border-input"
                   />
                   <span>Enable Tumblehome</span>
                 </Label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                <p className="text-xs text-muted-foreground ml-6">
                   Inward curving upper sides (only applicable for fine midship)
                 </p>
               </div>
@@ -290,34 +288,32 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
       </div>
 
       {/* Section 2: Longitudinal Proportions (Image 2) */}
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="rounded-lg border border-border bg-card">
         <button
           type="button"
           onClick={() => toggleSection("longitudinal")}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-accent/10 transition-colors"
         >
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              Longitudinal Proportions
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <h3 className="font-semibold text-foreground">Longitudinal Proportions</h3>
+            <p className="text-xs text-muted-foreground mt-1">
               Bow, mid-body, and stern length ratios (Lb, Lm, Ls)
             </p>
           </div>
           {expandedSections.longitudinal ? (
-            <ChevronUp className="h-5 w-5 text-gray-400" />
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-gray-400" />
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
           )}
         </button>
 
         {expandedSections.longitudinal && (
-          <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
             {/* Visual representation of ratios */}
-            <div className="rounded-lg bg-gray-50 dark:bg-gray-900/50 p-4">
+            <div className="rounded-lg bg-muted/50 p-4">
               <div className="flex items-center justify-between mb-2">
                 <Label className="text-sm font-medium">Length Distribution</Label>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-muted-foreground">
                   Total:{" "}
                   {(
                     midBodyRatio +
@@ -326,7 +322,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   ).toFixed(3)}
                 </span>
               </div>
-              <div className="flex h-6 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div className="flex h-6 rounded-md overflow-hidden border border-border">
                 <div
                   className="bg-blue-500 flex items-center justify-center text-xs font-medium text-white"
                   style={{
@@ -361,7 +357,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   %
                 </div>
               </div>
-              <div className="flex justify-between mt-2 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                 <span>Bow</span>
                 <span>Midship</span>
                 <span>Stern</span>
@@ -396,7 +392,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   placeholder={taxonomyDefaults.bow?.toFixed(2) || "0.05-0.90"}
                   className={!isValid ? "border-red-500 dark:border-red-500" : ""}
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">Relative to LOA</p>
+                <p className="text-xs text-muted-foreground">Relative to LOA</p>
               </div>
 
               {/* Mid-Body Length Ratio (calculated) */}
@@ -407,11 +403,9 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   type="number"
                   value={midBodyRatio.toFixed(3)}
                   disabled
-                  className="bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                  className="bg-muted cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Calculated: 1 - Lb - Ls (read-only)
-                </p>
+                <p className="text-xs text-muted-foreground">Calculated: 1 - Lb - Ls (read-only)</p>
               </div>
 
               {/* Stern Length Ratio */}
@@ -441,7 +435,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   placeholder={taxonomyDefaults.stern?.toFixed(2) || "0.05-0.90"}
                   className={!isValid ? "border-red-500 dark:border-red-500" : ""}
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">Relative to LOA</p>
+                <p className="text-xs text-muted-foreground">Relative to LOA</p>
               </div>
             </div>
 
@@ -476,9 +470,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   }
                   placeholder="0-45"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Forward section rake angle
-                </p>
+                <p className="text-xs text-muted-foreground">Forward section rake angle</p>
               </div>
 
               {/* Stern Rake Angle */}
@@ -498,9 +490,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                   }
                   placeholder="0-60"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Aft section rake angle (Beta_trans)
-                </p>
+                <p className="text-xs text-muted-foreground">Aft section rake angle (Beta_trans)</p>
               </div>
             </div>
           </div>
@@ -509,15 +499,15 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
 
       {/* Section 3: Bulb Geometry (Image 3) - only if bulbous_bow selected */}
       {showBulbSection && (
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="rounded-lg border border-border bg-card">
           <button
             type="button"
             onClick={() => toggleSection("bulb")}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-accent/10 transition-colors"
           >
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">Bulb Geometry</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <h3 className="font-semibold text-foreground">Bulb Geometry</h3>
+              <p className="text-xs text-muted-foreground mt-1">
                 Bulbous bow dimensions and shape parameters
               </p>
             </div>
@@ -529,7 +519,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
           </button>
 
           {expandedSections.bulb && (
-            <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Bulb Length Ratio */}
                 <div className="space-y-2">
@@ -548,7 +538,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                     }
                     placeholder="0.0-0.2"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Relative to LOA</p>
+                  <p className="text-xs text-muted-foreground">Relative to LOA</p>
                 </div>
 
                 {/* Bulb Width Ratio */}
@@ -568,7 +558,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                     }
                     placeholder="0.0-1.0"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Relative to beam</p>
+                  <p className="text-xs text-muted-foreground">Relative to beam</p>
                 </div>
 
                 {/* Bulb Height Ratio */}
@@ -588,7 +578,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                     }
                     placeholder="0.0-1.0"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Relative to draft</p>
+                  <p className="text-xs text-muted-foreground">Relative to draft</p>
                 </div>
 
                 {/* Bulb Asymmetry Factor */}
@@ -610,9 +600,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                     }
                     placeholder="-1.0 to 1.0"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Longitudinal moment coefficient
-                  </p>
+                  <p className="text-xs text-muted-foreground">Longitudinal moment coefficient</p>
                 </div>
 
                 {/* Bulb Fillet Radius */}
@@ -632,7 +620,7 @@ export const Step2bHullGeometryDetails: React.FC<Step2bProps> = ({
                     }
                     placeholder="0.05-0.33"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Radius coefficient</p>
+                  <p className="text-xs text-muted-foreground">Radius coefficient</p>
                 </div>
               </div>
             </div>

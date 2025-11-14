@@ -55,7 +55,7 @@ export const SizingRunResults: React.FC = observer(() => {
   // Show comparison view if active
   if (showComparison && sizingStore.compareCandidates.length >= 2) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
+      <div className="flex min-h-screen flex-col bg-background">
         <AppHeader
           left={<h1 className="text-xl font-semibold text-foreground">Hull Sizing - Comparison</h1>}
           right={
@@ -104,10 +104,8 @@ export const SizingRunResults: React.FC = observer(() => {
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Hull Sizing Results
-                </h1>
-                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                <h1 className="text-3xl font-bold text-foreground">Hull Sizing Results</h1>
+                <p className="mt-2 text-muted-foreground">
                   {sizingStore.candidates.length} candidate designs generated
                 </p>
               </div>
@@ -121,9 +119,7 @@ export const SizingRunResults: React.FC = observer(() => {
           {sizingStore.isLoading && (
             <div className="text-center py-12">
               <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">
-                Running first-principles solver...
-              </p>
+              <p className="mt-4 text-muted-foreground">Running first-principles solver...</p>
             </div>
           )}
 

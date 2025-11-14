@@ -25,8 +25,8 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Speed & Environment</h2>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <h2 className="text-xl font-semibold text-foreground">Speed & Environment</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Define operational speed and environmental conditions
         </p>
       </div>
@@ -42,7 +42,7 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
           value={formData.serviceSpeedKn || ""}
           onChange={(e) => updateFormData({ serviceSpeedKn: parseFloat(e.target.value) })}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Typical: Tanker 14-16kn, Bulk carrier 14-15kn, Container 20-25kn, Fast ferry 30-40kn
         </p>
       </div>
@@ -58,7 +58,7 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
           value={formData.seaMarginPct || ""}
           onChange={(e) => updateFormData({ seaMarginPct: parseFloat(e.target.value) })}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Allowance for hull fouling and weather. Typical: 15-20%
         </p>
       </div>
@@ -74,7 +74,7 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
           value={formData.envHsM || ""}
           onChange={(e) => updateFormData({ envHsM: parseFloat(e.target.value) })}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Design sea state. Typical: Coastal 2-3m, Ocean 3-5m, North Atlantic 5-7m
         </p>
       </div>
@@ -90,7 +90,7 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
           value={formData.envTzS || ""}
           onChange={(e) => updateFormData({ envTzS: parseFloat(e.target.value) })}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Wave period for seakeeping. Typical: 6-9 seconds
         </p>
       </div>
@@ -105,13 +105,13 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
           value={formData.enduranceNm || ""}
           onChange={(e) => updateFormData({ enduranceNm: parseFloat(e.target.value) })}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Range at service speed. Used for fuel tank sizing.
         </p>
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-between pt-6 border-t border-border">
         <Button variant="outline" onClick={onPrevious}>
           ← Previous
         </Button>
