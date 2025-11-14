@@ -89,9 +89,92 @@ export function generateShipDSections(
   // Denormalize key parameters
   const denormalized = denormalizeParameters(shipdVector, metadata);
 
-  // Extract longitudinal proportions
-  const lb = denormalized[1]; // Bow length ratio
-  const ls = denormalized[2]; // Stern length ratio
+  // LOG KEY PARAMETERS for debugging
+  console.log("[ShipD Geometry] Key parameters:", {
+    longitudinal: {
+      bow_length: denormalized[1]?.toFixed(2),
+      stern_length: denormalized[2]?.toFixed(2),
+      mid_length: (1.0 - denormalized[1] - denormalized[2])?.toFixed(2),
+    },
+    bow: {
+      flare_deg: denormalized[8]?.toFixed(1),
+      curvature: denormalized[9]?.toFixed(2),
+      knuckle: denormalized[10]?.toFixed(2),
+      kappa_bow: denormalized[14]?.toFixed(2),
+      deadrise_deg: denormalized[19]?.toFixed(1),
+    },
+    midship: {
+      sheer_enabled: denormalized[20] > 0.5,
+      tumblehome_enabled: denormalized[21] > 0.5,
+    },
+    stern: {
+      atrans: denormalized[22]?.toFixed(2),
+      kappa_stern: denormalized[24]?.toFixed(2),
+      rake_deg: denormalized[27]?.toFixed(1),
+      transom_width: denormalized[28]?.toFixed(2),
+      curvature: denormalized[29]?.toFixed(2),
+      knuckle: denormalized[30]?.toFixed(2),
+    },
+    bulb: {
+      enabled: denormalized[31] > 0.5,
+      length: denormalized[33]?.toFixed(2),
+      height: denormalized[34]?.toFixed(2),
+      width: denormalized[35]?.toFixed(2),
+      asymmetry: denormalized[36]?.toFixed(2),
+      fillet: denormalized[37]?.toFixed(2),
+    },
+  });
+
+  // Extract longitudinal proportions with validation and fallbacks
+  let lb = denormalized[1]; // Bow length ratio (Lb from ShipD)
+  let ls = denormalized[2]; // Stern length ratio (Ls from ShipD)
+
+  // VALIDATION: ShipD parameters should be reasonable
+  // Lb and Ls are ratios of Lpp, typically 0.15-0.45 each
+  const MIN_BOW_LENGTH = 0.15; // Minimum 15% for bow
+  const MIN_STERN_LENGTH = 0.15; // Minimum 15% for stern
+  const MAX_BOW_LENGTH = 0.45; // Maximum 45% for bow
+  const MAX_STERN_LENGTH = 0.45; // Maximum 45% for stern
+
+  // Check if values are unrealistic (missing metadata, bad data, or extreme edge cases)
+  const needsFallback =
+    lb == null ||
+    ls == null ||
+    lb < MIN_BOW_LENGTH ||
+    ls < MIN_STERN_LENGTH ||
+    lb > MAX_BOW_LENGTH ||
+    ls > MAX_STERN_LENGTH ||
+    lb + ls > 0.85; // Ensure at least 15% midship
+
+  if (needsFallback) {
+    console.warn(
+      "[ShipD Geometry] Invalid longitudinal proportions detected, using fallback values:",
+      {
+        original: { lb, ls, sum: lb + ls },
+        reason:
+          lb == null || ls == null
+            ? "Missing values"
+            : lb < MIN_BOW_LENGTH || ls < MIN_STERN_LENGTH
+              ? "Too short"
+              : lb > MAX_BOW_LENGTH || ls > MAX_STERN_LENGTH
+                ? "Too long"
+                : lb + ls > 0.85
+                  ? "Sum exceeds 85%"
+                  : "Unknown",
+      }
+    );
+
+    // Realistic fallback: typical container ship proportions
+    lb = 0.3; // 30% bow
+    ls = 0.3; // 30% stern
+
+    console.log("[ShipD Geometry] Using fallback proportions:", {
+      bow: "30%",
+      midship: "40%",
+      stern: "30%",
+    });
+  }
+
   const lm = 1.0 - lb - ls; // Mid-body length ratio
 
   // Calculate boundaries
@@ -512,64 +595,207 @@ function generateStationOffsets(
   // Always start with keel point (height=0, half-breadth=0) to close the bottom
   offsets[0] = 0;
 
-  // Generate offsets at various heights
+  // Generate offsets at various heights (including freeboard above waterline)
   const heightSteps = 20;
+  const maxHeight = draftM * 1.35; // Include 35% freeboard above waterline (more realistic proportions)
+
   for (let h = 1; h <= heightSteps; h++) {
     // Start from 1 to avoid duplicate keel point
-    const height = (h / heightSteps) * draftM; // Height from keel
+    const height = (h / heightSteps) * maxHeight; // Height from keel to above waterline
 
     let halfBreadth = 0;
 
     if (region === "bow") {
-      // Bow section: use Beta (flare), Cdrft (deadrise), Rc, Rk
+      // Bow section: use Beta (flare), Cdrft (deadrise), Rc (curvature), Rk (knuckle), Kappa_bow (convex/concave)
       const beta = denormalized[8]; // Flare angle (degrees)
-      // const cdrft = denormalized[19]; // Deadrise angle (degrees) - not used in simplified implementation
-      // const rc = denormalized[9]; // Curvature coefficient - not used in simplified implementation
-      // const rk = denormalized[10]; // Knuckle coefficient - not used in simplified implementation
+      const rc = denormalized[9]; // Curvature coefficient (0-1)
+      const rk = denormalized[10]; // Knuckle coefficient (0-1)
+      const kappaBow = denormalized[14]; // Curvature type (-1 to 1, concave to convex)
+      const cdrft = denormalized[19]; // Deadrise angle (degrees)
 
-      // Simplified bow shape: combine flare and deadrise
       const heightRatio = height / draftM;
-      const flareEffect = Math.tan((beta * Math.PI) / 180) * height;
-      // const deadriseEffect = Math.tan((cdrft * Math.PI) / 180) * (draftM - height); // Not used in simplified implementation
 
-      // Base half-breadth at this height
-      const baseHalfBreadth = (beamM / 2) * (1 - heightRatio * 0.3); // Taper toward keel
-      halfBreadth = baseHalfBreadth + flareEffect * 0.1; // Add flare effect
+      // CORRECT VERTICAL PROFILE: Narrow at keel, wide at waterline
+      if (height <= draftM) {
+        // BELOW WATERLINE: Expand from narrow keel to wide waterline
+
+        // 1. Calculate keel width (reduced by deadrise)
+        const deadriseReduction = Math.tan((cdrft * Math.PI) / 180) * (draftM - height);
+        const keelHalfBreadth = Math.max(0, (beamM / 2) * 0.1); // Keel is ~10% of beam
+
+        // 2. Expansion curve from keel to waterline
+        // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
+        const curvePower = 2.5 - rc * 1.5; // Range: 1.0 (full) to 2.5 (fine)
+        const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
+
+        // 3. Interpolate from keel to max beam
+        let baseHalfBreadth =
+          keelHalfBreadth +
+          (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
+
+        // 4. Apply knuckle effect (hard chine)
+        if (rk > 0.3) {
+          const knuckleHeight = 0.5; // Knuckle at mid-height
+          const knuckleRange = 0.2;
+          if (Math.abs(heightRatio - knuckleHeight) < knuckleRange) {
+            const knuckleFactor = 1 - Math.abs(heightRatio - knuckleHeight) / knuckleRange;
+            baseHalfBreadth *= 1 + rk * knuckleFactor * 0.15;
+          }
+        }
+
+        // 5. Apply convex/concave control
+        if (Math.abs(kappaBow) > 0.1) {
+          const convexEffect = kappaBow * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
+          baseHalfBreadth *= 1 + convexEffect;
+        }
+
+        halfBreadth = Math.max(0, baseHalfBreadth);
+      } else {
+        // ABOVE WATERLINE: Apply flare (widen)
+        const aboveWLHeight = height - draftM;
+
+        // Start at waterline beam
+        let baseHalfBreadth = beamM / 2;
+
+        // Add flare effect
+        if (beta > 5) {
+          const flareExpansion = Math.tan((beta * Math.PI) / 180) * aboveWLHeight;
+          baseHalfBreadth += flareExpansion * 0.2;
+        }
+
+        halfBreadth = Math.max(0, baseHalfBreadth);
+      }
     } else if (region === "midship") {
       // Midship section: use bit_EP_S (sheer), bit_EP_T (tumblehome)
-      // const bitEPS = denormalized[20] > 0.5; // Sheer extrusion - not used in simplified implementation
+      const bitEPS = denormalized[20] > 0.5; // Sheer extrusion
       const bitEPT = denormalized[21] > 0.5; // Tumblehome
 
       const heightRatio = height / draftM;
-      let baseHalfBreadth = (beamM / 2) * (1 - heightRatio * 0.2);
 
-      if (bitEPT) {
-        // Tumblehome: inward curving upper sides
-        const tumblehomeFactor = heightRatio > 0.7 ? (heightRatio - 0.7) / 0.3 : 0;
-        baseHalfBreadth *= 1 - tumblehomeFactor * 0.15;
-      }
+      // CORRECT VERTICAL PROFILE: Midship typically parallel below waterline
+      if (height <= draftM) {
+        // BELOW WATERLINE: Gentle expansion from keel to waterline
+        // Midship has less deadrise, more parallel sides
 
-      halfBreadth = baseHalfBreadth;
-    } else {
-      // Stern section: use Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans
-      // const atrans = denormalized[22]; // Not used in simplified implementation
-      // const betaTrans = denormalized[27]; // Not used in simplified implementation
-      const bcTrans = denormalized[28];
-      // const rcTrans = denormalized[29]; // Not used in simplified implementation
-      // const rkTrans = denormalized[30]; // Not used in simplified implementation
+        const keelHalfBreadth = (beamM / 2) * 0.2; // Midship keel ~20% of beam (wider than bow)
 
-      const heightRatio = height / draftM;
-      const baseHalfBreadth = (beamM / 2) * (1 - heightRatio * 0.25);
+        // Simple gentle expansion (midship is typically straighter)
+        const expansionRatio = Math.pow(heightRatio, 0.8); // Gentle curve
+        const baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
 
-      // Apply transom effects
-      if (stationPos < 0.1) {
-        // Near transom
-        const transomWidth = beamM * bcTrans;
-        halfBreadth = Math.min(baseHalfBreadth, transomWidth / 2);
+        halfBreadth = baseHalfBreadth;
       } else {
+        // ABOVE WATERLINE
+        const aboveWLHeight = height - draftM;
+        const freeboard = draftM * 0.35; // Match total freeboard (35%)
+        const aboveWLRatio = Math.min(aboveWLHeight / freeboard, 1.0);
+
+        let baseHalfBreadth = beamM / 2;
+
+        // Sheer (outward curve at deck)
+        if (bitEPS && aboveWLRatio > 0.6) {
+          baseHalfBreadth *= 1 + ((aboveWLRatio - 0.6) / 0.4) * 0.08;
+        }
+
+        // Tumblehome (inward curve at deck)
+        if (bitEPT && aboveWLRatio > 0.5) {
+          baseHalfBreadth *= 1 - ((aboveWLRatio - 0.5) / 0.5) * 0.15;
+        }
+
         halfBreadth = baseHalfBreadth;
       }
+    } else {
+      // Stern section: use Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans, Kappa_stern
+      const atrans = denormalized[22]; // Transom area coefficient
+      const kappaStern = denormalized[24]; // Curvature type (-1 to 1, concave to convex)
+      const betaTrans = denormalized[27]; // Stern rake angle
+      const bcTrans = denormalized[28]; // Transom width ratio
+      const rcTrans = denormalized[29]; // Stern curvature coefficient
+      const rkTrans = denormalized[30]; // Stern knuckle coefficient
+
+      const heightRatio = height / draftM;
+
+      // CORRECT VERTICAL PROFILE: Similar to bow but with stern characteristics
+      if (height <= draftM) {
+        // BELOW WATERLINE: Expand from narrow keel to wide waterline
+
+        const keelHalfBreadth = (beamM / 2) * 0.15; // Stern keel slightly wider than bow
+
+        // Curvature expansion
+        const curvePower = 2.5 - rcTrans * 1.5; // Range: 1.0 (full) to 2.5 (fine)
+        const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
+
+        let baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+
+        // Transom effect (flat stern) - only near the very aft
+        if (stationPos < 0.15 && atrans > 0.5) {
+          const transomWidth = beamM * bcTrans;
+          const transomBlend = (0.15 - stationPos) / 0.15; // Blend over aft 15%
+          baseHalfBreadth =
+            baseHalfBreadth * (1 - transomBlend * atrans) +
+            (transomWidth / 2) * transomBlend * atrans;
+        }
+
+        // Stern knuckle
+        if (rkTrans > 0.3 && heightRatio > 0.3 && heightRatio < 0.6) {
+          const knuckleFactor = 1 - Math.abs(heightRatio - 0.45) / 0.15;
+          baseHalfBreadth *= 1 + rkTrans * knuckleFactor * 0.12;
+        }
+
+        // Apply convex/concave control
+        if (Math.abs(kappaStern) > 0.1) {
+          const convexEffect = kappaStern * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
+          baseHalfBreadth *= 1 + convexEffect;
+        }
+
+        halfBreadth = Math.max(0, baseHalfBreadth);
+      } else {
+        // ABOVE WATERLINE: Rake effect
+        const aboveWLHeight = height - draftM;
+        let baseHalfBreadth = beamM / 2;
+
+        // Apply rake (aft overhang)
+        if (betaTrans > 5 && stationPos < 0.2) {
+          const rakeExpansion = Math.tan((betaTrans * Math.PI) / 180) * aboveWLHeight;
+          baseHalfBreadth += rakeExpansion * 0.15;
+        }
+
+        halfBreadth = Math.max(0, baseHalfBreadth);
+      }
     }
+
+    // LONGITUDINAL SCALING: Apply taper based on station position and region
+    // This creates the actual bow/stern taper (hull narrows toward ends)
+    let longitudinalScale = 1.0;
+
+    if (region === "bow") {
+      // Bow region: Taper from full beam at bowStart to centerline at bow tip (pos=1.0)
+      // Need bow boundaries from denormalized parameters
+      const lb = denormalized[1] || 0.3; // Bow length ratio
+      const ls = denormalized[2] || 0.3; // Stern length ratio
+      const bowStart = 1.0 - lb - ls + ls; // Start of bow region
+
+      if (stationPos >= bowStart) {
+        // Position within bow region: 0 = bow start (full beam), 1 = bow tip (centerline)
+        const bowPos = (stationPos - bowStart) / (1.0 - bowStart);
+        // Taper: quadratic for smooth curve
+        longitudinalScale = Math.pow(1.0 - bowPos, 2.0);
+      }
+    } else if (region === "stern") {
+      // Stern region: Taper from centerline at stern tip (pos=0.0) to full beam at midStart
+      const ls = denormalized[2] || 0.3; // Stern length ratio
+
+      if (stationPos <= ls) {
+        // Position within stern region: 0 = stern tip (centerline), 1 = stern end (full beam)
+        const sternPos = stationPos / ls;
+        // Taper: quadratic for smooth curve
+        longitudinalScale = Math.pow(sternPos, 2.0);
+      }
+    }
+    // Midship region: longitudinalScale = 1.0 (no taper, full beam)
+
+    // Apply longitudinal scaling to half-breadth
+    halfBreadth = halfBreadth * longitudinalScale;
 
     offsets[height] = Math.max(0, halfBreadth);
   }
@@ -597,29 +823,46 @@ function generateBulbOffsets(
   const offsets: Record<number, number> = {};
 
   // Bulb parameters
-  // const lbb = denormalized[33]; // Bulb length ratio - not used in ellipsoid generation
+  const lbb = denormalized[33]; // Bulb length ratio
   const hbb = denormalized[34]; // Bulb height ratio
   const bbb = denormalized[35]; // Bulb width ratio
-  // const lbbm = denormalized[36]; // Bulb asymmetry - not used in simplified implementation
-  // const rbb = denormalized[37]; // Bulb radius - not used in simplified implementation
+  const lbbm = denormalized[36]; // Bulb asymmetry (fore/aft position) - NOW USED!
+  const rbb = denormalized[37]; // Bulb fillet radius - NOW USED!
 
-  // Bulb is only in the forwardmost part of bow
+  // Bulb is only in forward section
   const bowStart = 1.0 - denormalized[1]; // Start of bow region
-  const lbb = denormalized[33]; // Bulb length ratio (needed for position check)
-  if (stationPos < bowStart + lbb * 0.5) {
-    // Generate bulb shape (simplified - ellipsoid)
-    // const bulbLength = lbb * lppM; // Not used in simplified implementation
+  const bulbExtent = lbb * 0.7; // Bulb extends forward
+
+  if (stationPos > bowStart && stationPos < bowStart + bulbExtent) {
+    // Position within bulb (0 = start, 1 = forward end)
+    const bulbPos = (stationPos - bowStart) / bulbExtent;
+
+    // Apply asymmetry: lbbm shifts max bulb diameter fore/aft
+    const asymmetryShift = (lbbm - 0.5) * 0.3; // -0.15 to +0.15
+    const adjustedPos = Math.max(0, Math.min(1, bulbPos + asymmetryShift));
+
     const bulbHeight = hbb * draftM;
     const bulbWidth = bbb * beamM;
 
-    const heightSteps = 10;
+    // Longitudinal profile: use fillet radius to control shape
+    // Higher rbb = rounder, lower rbb = more pointed
+    const longitudinalExp = 1.5 + rbb * 1.0; // 1.5-2.5
+    const longitudinalProfile = Math.pow(
+      1 - Math.pow(adjustedPos, longitudinalExp),
+      1 / longitudinalExp
+    );
+
+    const heightSteps = 12;
     for (let h = 0; h <= heightSteps; h++) {
       const height = (h / heightSteps) * bulbHeight;
       const heightRatio = height / bulbHeight;
 
-      // Ellipsoid half-breadth
-      const halfBreadth = (bulbWidth / 2) * Math.sqrt(1 - heightRatio * heightRatio);
-      offsets[height] = halfBreadth;
+      // Vertical profile: ellipsoid with fillet control
+      const verticalExp = 1.8 + (1 - rbb) * 0.5; // 1.8-2.3
+      const verticalProfile = Math.pow(1 - Math.pow(heightRatio, verticalExp), 1 / verticalExp);
+
+      const halfBreadth = (bulbWidth / 2) * longitudinalProfile * verticalProfile;
+      offsets[height] = Math.max(0, halfBreadth);
     }
   }
 

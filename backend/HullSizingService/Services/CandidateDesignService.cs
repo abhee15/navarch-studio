@@ -4,6 +4,8 @@ using HullSizingService.Data;
 using HullSizingService.Services.Geometry;
 using HullSizingService.Services.Integration;
 using Microsoft.EntityFrameworkCore;
+using Shared.DTOs;
+using Shared.DTOs.Hydrostatics;
 using Shared.DTOs.Sizing;
 using Shared.Models.Sizing;
 
@@ -15,17 +17,20 @@ public class CandidateDesignService : ICandidateDesignService
     private readonly ILogger<CandidateDesignService> _logger;
     private readonly IShipDHullGeometryService? _shipdGeometryService;
     private readonly IDataServiceClient? _dataServiceClient;
+    private readonly IShipDToHydroMapper _hydroMapper;
 
     public CandidateDesignService(
         SizingDbContext context,
         ILogger<CandidateDesignService> logger,
-        IShipDHullGeometryService? shipdGeometryService = null,
-        IDataServiceClient? dataServiceClient = null)
+        IShipDHullGeometryService? shipdGeometryService,
+        IDataServiceClient? dataServiceClient,
+        IShipDToHydroMapper hydroMapper)
     {
         _context = context;
         _logger = logger;
         _shipdGeometryService = shipdGeometryService;
         _dataServiceClient = dataServiceClient;
+        _hydroMapper = hydroMapper;
     }
 
     public async Task<CandidateDesignDto?> GetByIdAsync(Guid id, string tenantId, CancellationToken cancellationToken = default)
@@ -278,6 +283,115 @@ public class CandidateDesignService : ICandidateDesignService
         return MapToDto(candidate);
     }
 
+    public async Task<PushToHydrostaticsResultDto?> PushToHydrostaticsAsync(
+        Guid id,
+        PushToHydrostaticsRequestDto request,
+        string tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        if (_dataServiceClient == null || _shipdGeometryService == null)
+        {
+            throw new InvalidOperationException("Hydrostatics integration is not configured for this service.");
+        }
+
+        request ??= new PushToHydrostaticsRequestDto();
+
+        var candidate = await _context.CandidateDesigns
+            .Include(cd => cd.SizingRun)
+                .ThenInclude(sr => sr.MissionCase)
+            .Where(cd => cd.Id == id && cd.SizingRun.MissionCase.TenantId == tenantId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (candidate == null)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(candidate.ShipdParametersJson))
+        {
+            throw new InvalidOperationException("Candidate is missing ShipD parameters required for geometry export.");
+        }
+
+        var mission = candidate.SizingRun.MissionCase;
+        var idempotencyKey = request.IdempotencyKey ?? request.SourceDesign?.IdempotencyKey ?? candidate.Id.ToString();
+
+        var existingPush = await _context.PushOperations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                p => p.CandidateId == candidate.Id || p.IdempotencyKey == idempotencyKey,
+                cancellationToken);
+
+        if (existingPush != null)
+        {
+            _logger.LogInformation("[PUSH] Candidate {CandidateId} already pushed as vessel {VesselId}", candidate.Id, existingPush.VesselId);
+            return new PushToHydrostaticsResultDto
+            {
+                VesselId = existingPush.VesselId,
+                SourceDesign = new SourceDesignDto
+                {
+                    CandidateId = candidate.Id,
+                    SizingRunId = candidate.SizingRunId,
+                    MissionCaseId = mission.Id,
+                    UserId = mission.UserId,
+                    MissionName = mission.Name,
+                    SourceSystem = "HullSizingService",
+                    IdempotencyKey = existingPush.IdempotencyKey,
+                    OriginCreatedAt = candidate.CreatedAt,
+                    PushedAt = existingPush.CreatedAt
+                }
+            };
+        }
+
+        var shipdVector = JsonSerializer.Deserialize<decimal[]>(candidate.ShipdParametersJson);
+        if (shipdVector == null || shipdVector.Length == 0)
+        {
+            throw new InvalidOperationException("Unable to parse ShipD parameter vector for candidate.");
+        }
+
+        var metadata = await _dataServiceClient.GetShipDParameterMetadataAsync(cancellationToken);
+        if (metadata.Count == 0)
+        {
+            throw new InvalidOperationException("Failed to load ShipD parameter metadata from DataService.");
+        }
+
+        var sections = await _shipdGeometryService.GenerateSectionsAsync(
+            shipdVector,
+            candidate.LppM,
+            candidate.BM,
+            candidate.TM,
+            metadata,
+            stationCount: 25,
+            cancellationToken);
+
+        var geometry = _hydroMapper.ConvertSections(sections, candidate.LppM);
+        var vesselDto = BuildVesselDto(candidate, mission, request);
+        vesselDto.SourceDesign = BuildSourceDesign(candidate, mission, request, idempotencyKey);
+
+        var importRequest = new HydrostaticsImportRequestDto
+        {
+            Vessel = vesselDto,
+            Stations = geometry.stations,
+            Waterlines = geometry.waterlines,
+            Offsets = geometry.offsets,
+            IdempotencyKey = vesselDto.SourceDesign?.IdempotencyKey ?? idempotencyKey,
+            CreateDefaultLoadcase = true
+        };
+
+        var importResult = await _dataServiceClient.ImportHydrostaticsVesselAsync(importRequest, cancellationToken);
+        if (importResult == null)
+        {
+            throw new InvalidOperationException("DataService rejected the Hydrostatics import request.");
+        }
+
+        await SavePushOperationAsync(candidate.Id, importResult.Id, importRequest.IdempotencyKey!, cancellationToken);
+
+        return new PushToHydrostaticsResultDto
+        {
+            VesselId = importResult.Id,
+            SourceDesign = importResult.SourceDesign ?? vesselDto.SourceDesign
+        };
+    }
+
     private static CandidateDesignDto MapToDto(CandidateDesign entity)
     {
         return new CandidateDesignDto
@@ -311,6 +425,90 @@ public class CandidateDesignService : ICandidateDesignService
             GeometryJson = entity.GeometryJson,
             CreatedAt = entity.CreatedAt
         };
+    }
+
+    private static VesselDto BuildVesselDto(CandidateDesign candidate, MissionCase mission, PushToHydrostaticsRequestDto request)
+    {
+        var vesselName = string.IsNullOrWhiteSpace(request.VesselName)
+            ? $"{mission.Name ?? "Candidate"} - {candidate.HullFamily} #{candidate.Rank}"
+            : request.VesselName;
+
+        var description = string.IsNullOrWhiteSpace(request.Description)
+            ? $"Generated from mission \"{mission.Name}\" via HullSizingService."
+            : request.Description;
+
+        var shipdCategory = request.ShipdCategory ?? candidate.VesselCategory ?? mission.MissionCategory;
+        var shipdType = request.ShipdType ?? candidate.VesselType ?? mission.MissionType;
+        var shipdBow = request.ShipdBowFamily ?? candidate.BowFamily ?? mission.BowFamily;
+        var shipdMidship = request.ShipdMidshipFamily ?? candidate.MidshipFamily ?? mission.MidshipFamily;
+        var shipdStern = request.ShipdSternFamily ?? candidate.SternFamily ?? mission.SternFamily;
+        var shipdMaskVersion = request.ShipdMaskVersion ?? candidate.FamilyMaskVersion ?? mission.FamilyMaskVersion;
+
+        return new VesselDto
+        {
+            Name = vesselName,
+            Description = description,
+            ShipdCategory = shipdCategory,
+            ShipdType = shipdType,
+            ShipdTypeDisplayName = request.ShipdTypeDisplayName ?? shipdType,
+            ShipdBowFamily = shipdBow,
+            ShipdMidshipFamily = shipdMidship,
+            ShipdSternFamily = shipdStern,
+            ShipdMaskVersion = shipdMaskVersion,
+            ShipdParametersJson = candidate.ShipdParametersJson,
+            Lpp = candidate.LppM,
+            Beam = candidate.BM,
+            DesignDraft = candidate.TM,
+            Units = "SI",
+            Metadata = new VesselMetadataDto
+            {
+                VesselType = shipdType ?? candidate.HullFamily,
+                Size = mission.MissionCategory,
+                BlockCoefficient = candidate.Cb,
+                HullFamily = candidate.HullFamily,
+                ShipdCategory = shipdCategory,
+                ShipdType = shipdType,
+                ShipdMaskVersion = shipdMaskVersion
+            }
+        };
+    }
+
+    private static SourceDesignDto BuildSourceDesign(
+        CandidateDesign candidate,
+        MissionCase mission,
+        PushToHydrostaticsRequestDto request,
+        string idempotencyKey)
+    {
+        return new SourceDesignDto
+        {
+            CandidateId = candidate.Id,
+            SizingRunId = candidate.SizingRunId,
+            MissionCaseId = mission.Id,
+            UserId = mission.UserId,
+            MissionName = mission.Name,
+            RunName = candidate.SizingRun.Mode,
+            DesignName = request.SourceDesign?.DesignName ?? candidate.HullFamily,
+            SourceSystem = request.SourceDesign?.SourceSystem ?? "HullSizingService",
+            IdempotencyKey = idempotencyKey,
+            OriginCreatedAt = candidate.CreatedAt,
+            PushedAt = DateTime.UtcNow,
+            UserDisplayName = request.SourceDesign?.UserDisplayName
+        };
+    }
+
+    private async Task SavePushOperationAsync(Guid candidateId, Guid vesselId, string idempotencyKey, CancellationToken cancellationToken)
+    {
+        var pushOp = new PushOperation
+        {
+            Id = Guid.NewGuid(),
+            CandidateId = candidateId,
+            VesselId = vesselId,
+            IdempotencyKey = idempotencyKey,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.PushOperations.Add(pushOp);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
 

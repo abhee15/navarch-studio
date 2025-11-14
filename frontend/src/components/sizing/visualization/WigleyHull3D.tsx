@@ -188,9 +188,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
     const lcbX = (lcbPct / 100) * lpp - lpp / 2;
 
     return {
-      lcb: { x: lcbX, y: 0, z: -kb, color: "#ef4444" }, // Red - LCB
-      lcg: { x: 0, y: 0, z: -draft / 2, color: "#10b981" }, // Green - CG (approximate)
-      kb: { x: 0, y: 0, z: -kb, color: "#3b82f6" }, // Blue - KB
+      lcb: { x: lcbX, y: kb, z: 0, color: "#ef4444" }, // Red - LCB (Y = height from keel)
+      lcg: { x: 0, y: draft / 2, z: 0, color: "#10b981" }, // Green - CG (approximate)
+      kb: { x: 0, y: kb, z: 0, color: "#3b82f6" }, // Blue - KB (Y = height from keel)
     };
   }, [candidate.lppM, candidate.draftM, candidate.lcbPctLpp, candidate.kbM, showCenters]);
 
@@ -210,7 +210,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = ({
 
       {/* Waterplane */}
       {showWaterplane && waterplaneGeometry && (
-        <mesh geometry={waterplaneGeometry} position={[0, 0, 0]}>
+        <mesh geometry={waterplaneGeometry} position={[0, candidate.draftM, 0]}>
           <meshStandardMaterial color="#06b6d4" opacity={0.3} transparent side={THREE.DoubleSide} />
         </mesh>
       )}

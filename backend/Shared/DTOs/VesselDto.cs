@@ -13,6 +13,15 @@ public class VesselDto : UnitAwareDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
 
+    public string? ShipdCategory { get; set; }
+    public string? ShipdType { get; set; }
+    public string? ShipdTypeDisplayName { get; set; }
+    public string? ShipdBowFamily { get; set; }
+    public string? ShipdMidshipFamily { get; set; }
+    public string? ShipdSternFamily { get; set; }
+    public int? ShipdMaskVersion { get; set; }
+    public string? ShipdParametersJson { get; set; }
+
     [Convertible("Length")]
     public decimal Lpp { get; set; }
 
@@ -26,6 +35,7 @@ public class VesselDto : UnitAwareDto
     public VesselMetadataDto? Metadata { get; set; }
     public MaterialsConfigDto? Materials { get; set; }
     public LoadingConditionsDto? Loading { get; set; }
+    public SourceDesignDto? SourceDesign { get; set; }
 }
 
 /// <summary>
@@ -37,6 +47,15 @@ public class VesselDetailsDto : UnitAwareDto
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+
+    public string? ShipdCategory { get; set; }
+    public string? ShipdType { get; set; }
+    public string? ShipdTypeDisplayName { get; set; }
+    public string? ShipdBowFamily { get; set; }
+    public string? ShipdMidshipFamily { get; set; }
+    public string? ShipdSternFamily { get; set; }
+    public int? ShipdMaskVersion { get; set; }
+    public string? ShipdParametersJson { get; set; }
 
     [Convertible("Length")]
     public decimal Lpp { get; set; }
@@ -62,4 +81,21 @@ public class VesselDetailsDto : UnitAwareDto
     public VesselMetadataDto? Metadata { get; set; }
     public MaterialsConfigDto? Materials { get; set; }
     public LoadingConditionsDto? Loading { get; set; }
+    public SourceDesignDto? SourceDesign { get; set; }
+}
+
+public class SourceDesignDto
+{
+    public Guid? CandidateId { get; set; }
+    public Guid? SizingRunId { get; set; }
+    public Guid? MissionCaseId { get; set; }
+    public Guid? UserId { get; set; }
+    public string? UserDisplayName { get; set; }
+    public string? MissionName { get; set; }
+    public string? RunName { get; set; }
+    public string? DesignName { get; set; }
+    public string? SourceSystem { get; set; }
+    public string? IdempotencyKey { get; set; }
+    public DateTime? OriginCreatedAt { get; set; }
+    public DateTime? PushedAt { get; set; }
 }

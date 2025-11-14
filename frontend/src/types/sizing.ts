@@ -328,3 +328,36 @@ export interface ShipDVesselTaxonomy {
   maskVersion: number;
   additionalParametersJson?: string | null;
 }
+
+export interface SourceDesignSummary {
+  candidateId?: string;
+  sizingRunId?: string;
+  missionCaseId?: string;
+  userId?: string;
+  userDisplayName?: string;
+  missionName?: string;
+  runName?: string;
+  designName?: string;
+  sourceSystem?: string;
+  idempotencyKey?: string;
+  originCreatedAt?: string;
+  pushedAt?: string;
+}
+
+export interface PushToHydrostaticsRequest {
+  vesselName?: string;
+  description?: string;
+  shipdCategory?: string;
+  shipdType?: string;
+  shipdTypeDisplayName?: string;
+  shipdBowFamily?: string;
+  shipdMidshipFamily?: string;
+  shipdSternFamily?: string;
+  shipdMaskVersion?: number;
+  sourceDesign?: SourceDesignSummary;
+}
+
+export interface PushToHydrostaticsResult {
+  vesselId: string;
+  sourceDesign?: SourceDesignSummary;
+}

@@ -70,9 +70,9 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
 
   // Optimal viewing angle: isometric view showing bow, side, and top
   // Position camera to see hull from 3/4 view (bow-left, starboard-right, top-up)
-  const cameraX = cameraDistance * 0.7; // Slightly forward of center
-  const cameraY = cameraDistance * 0.6; // Elevated view
-  const cameraZ = cameraDistance * 0.8; // Side view angle
+  const cameraX = cameraDistance * 0.65; // Forward-right position for better bow view
+  const cameraY = cameraDistance * 0.75; // Higher elevation to see full hull height (35% freeboard)
+  const cameraZ = cameraDistance * 0.85; // Pulled back slightly for better perspective
 
   return (
     <div className="w-full h-full p-4 relative flex flex-col">

@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Shared.Models;
 
 /// <summary>
@@ -47,6 +50,95 @@ public class Vessel
     /// Source catalog hull ID if this vessel was cloned from catalog
     /// </summary>
     public Guid? SourceCatalogHullId { get; set; }
+
+    /// <summary>
+    /// ShipD taxonomy category (Commercial, Government, etc.)
+    /// </summary>
+    [MaxLength(100)]
+    public string? ShipdCategory { get; set; }
+
+    /// <summary>
+    /// ShipD taxonomy vessel type slug
+    /// </summary>
+    [MaxLength(100)]
+    public string? ShipdType { get; set; }
+
+    /// <summary>
+    /// Human-readable ShipD vessel display name
+    /// </summary>
+    [MaxLength(150)]
+    public string? ShipdTypeDisplayName { get; set; }
+
+    /// <summary>
+    /// ShipD bow family identifier
+    /// </summary>
+    [MaxLength(100)]
+    public string? ShipdBowFamily { get; set; }
+
+    /// <summary>
+    /// ShipD midship family identifier
+    /// </summary>
+    [MaxLength(100)]
+    public string? ShipdMidshipFamily { get; set; }
+
+    /// <summary>
+    /// ShipD stern family identifier
+    /// </summary>
+    [MaxLength(100)]
+    public string? ShipdSternFamily { get; set; }
+
+    /// <summary>
+    /// ShipD family mask version
+    /// </summary>
+    public int? ShipdMaskVersion { get; set; }
+
+    /// <summary>
+    /// Serialized ShipD parameter vector snapshot (jsonb)
+    /// </summary>
+    [Column(TypeName = "jsonb")]
+    public string? ShipdParametersJson { get; set; }
+
+    /// <summary>
+    /// Hull-sizing candidate that produced this vessel
+    /// </summary>
+    public Guid? OriginCandidateId { get; set; }
+
+    /// <summary>
+    /// Hull-sizing run that produced the candidate
+    /// </summary>
+    public Guid? OriginSizingRunId { get; set; }
+
+    /// <summary>
+    /// Hull-sizing mission case
+    /// </summary>
+    public Guid? OriginMissionCaseId { get; set; }
+
+    /// <summary>
+    /// Upstream system identifier ("HullSizingService", etc.)
+    /// </summary>
+    [MaxLength(50)]
+    public string? OriginSystem { get; set; }
+
+    [MaxLength(200)]
+    public string? OriginDesignName { get; set; }
+
+    [MaxLength(200)]
+    public string? OriginMissionName { get; set; }
+
+    [MaxLength(200)]
+    public string? OriginRunName { get; set; }
+
+    public DateTime? OriginCreatedAt { get; set; }
+
+    public DateTime? PushedToHydrostaticsAt { get; set; }
+
+    public Guid? OriginUserId { get; set; }
+
+    [MaxLength(200)]
+    public string? OriginUserDisplayName { get; set; }
+
+    [MaxLength(200)]
+    public string? OriginIdempotencyKey { get; set; }
 
     // Navigation properties
     public ICollection<Station> Stations { get; set; } = new List<Station>();

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useStore } from "../../stores";
 import { Footer } from "../../components/Footer";
 import { Button } from "../../components/ui/button";
@@ -30,6 +31,8 @@ import {
 import { downloadDXF } from "../../utils/dxfExporter";
 import { ShipDParameterChart } from "../../components/sizing/visualization/ShipDParameterChart";
 import { GeometryDetailsPanel } from "../../components/sizing/visualization/GeometryDetailsPanel";
+import { PushToHydroModal } from "../../components/sizing/PushToHydroModal";
+import type { PushToHydroForm } from "../../stores/SizingStore";
 
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
@@ -38,8 +41,12 @@ export const CandidateWorkspace: React.FC = observer(() => {
   const [activeTab, setActiveTab] = useState<"kpi" | "offsets" | "sensitivity" | "shipd">("kpi");
   const [showSettings, setShowSettings] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [isPushModalOpen, setPushModalOpen] = useState(false);
+  const [isPushingToHydro, setIsPushingToHydro] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   const candidate = sizingStore.selectedCandidate;
+  const mission = sizingStore.selectedMission;
 
   useEffect(() => {
     if (candidateId && (!candidate || candidate.id !== candidateId)) {
@@ -118,6 +125,34 @@ export const CandidateWorkspace: React.FC = observer(() => {
       console.error("Failed to adjust parameter:", error);
     } finally {
       setIsAdjusting(false);
+    }
+  };
+
+  const handleOpenPushModal = () => {
+    if (!candidate) return;
+    sizingStore.ensureShipDMetadataLoaded();
+    setPushError(null);
+    setPushModalOpen(true);
+  };
+
+  const handlePushToHydrostatics = async (form: PushToHydroForm) => {
+    if (!candidate) return;
+    setIsPushingToHydro(true);
+    setPushError(null);
+    try {
+      const result = await sizingStore.pushToHydrostatics(candidate, form, {
+        id: authStore.user?.id,
+        name: authStore.user?.name,
+      });
+      toast.success("Vessel pushed to Hydrostatics");
+      setPushModalOpen(false);
+      navigate(`/hydrostatics/vessels/${result.vesselId}/workspace`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to push to Hydrostatics";
+      setPushError(message);
+      toast.error(message);
+    } finally {
+      setIsPushingToHydro(false);
     }
   };
 
@@ -215,14 +250,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                   <FileText className="h-4 w-4" />
                   <span className="hidden md:inline ml-2">Export CSV</span>
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={async () => {
-                    const vesselId = await sizingStore.pushToHydrostatics(candidate.id);
-                    navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
-                  }}
-                  title="Push to Hydrostatics"
-                >
+                <Button size="sm" onClick={handleOpenPushModal} title="Push to Hydrostatics">
                   <Ship className="h-4 w-4" />
                   <span className="hidden md:inline ml-2">Push to Hydrostatics</span>
                 </Button>
@@ -356,10 +384,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                         variant="default"
                         size="sm"
                         className="w-full"
-                        onClick={async () => {
-                          const vesselId = await sizingStore.pushToHydrostatics(candidate.id);
-                          navigate(`/hydrostatics/vessels/${vesselId}/workspace`);
-                        }}
+                        onClick={handleOpenPushModal}
                       >
                         <Ship className="h-3 w-3 mr-2" />
                         Push to Hydrostatics
@@ -413,6 +438,22 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
       {/* Settings Dialog */}
       <UserSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
+
+      <PushToHydroModal
+        isOpen={isPushModalOpen}
+        onClose={() => {
+          if (!isPushingToHydro) {
+            setPushModalOpen(false);
+          }
+        }}
+        candidate={candidate}
+        missionName={mission?.name}
+        missionCategory={mission?.missionCategory}
+        taxonomy={sizingStore.shipdTaxonomy}
+        isSubmitting={isPushingToHydro}
+        error={pushError}
+        onSubmit={handlePushToHydrostatics}
+      />
     </div>
   );
 });

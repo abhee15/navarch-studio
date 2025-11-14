@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Shared.DTOs;
 using Shared.DTOs.Catalog;
+using Shared.DTOs.Hydrostatics;
 using Shared.DTOs.ShipD;
 
 namespace HullSizingService.Services.Integration;
@@ -213,6 +215,43 @@ public class DataServiceClient : IDataServiceClient
         {
             _logger.LogError(ex, "[DATA_CLIENT] Failed to fetch ShipD taxonomy metadata");
             return Array.Empty<ShipDVesselTaxonomyDto>();
+        }
+    }
+
+    public async Task<VesselDetailsDto?> ImportHydrostaticsVesselAsync(
+        HydrostaticsImportRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(
+                "/api/v1/hydrostatics/vessels/import-from-sizing",
+                content,
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("[DATA_CLIENT] Import vessel failed: {StatusCode} - {Body}", response.StatusCode, body);
+                return null;
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<VesselDetailsDto>(responseJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[DATA_CLIENT] Failed to import Hydrostatics vessel");
+            return null;
         }
     }
 }

@@ -9,6 +9,9 @@ public class VesselMetadataDto
     public string? Size { get; set; }
     public decimal? BlockCoefficient { get; set; }
     public string? HullFamily { get; set; }
+    public string? ShipdCategory { get; set; }
+    public string? ShipdType { get; set; }
+    public int? ShipdMaskVersion { get; set; }
 }
 
 

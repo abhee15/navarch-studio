@@ -1,4 +1,6 @@
+using Shared.DTOs;
 using Shared.DTOs.Catalog;
+using Shared.DTOs.Hydrostatics;
 using Shared.DTOs.ShipD;
 
 namespace HullSizingService.Services.Integration;
@@ -37,6 +39,11 @@ public interface IDataServiceClient
     /// Fetch ShipD vessel taxonomy mappings.
     /// </summary>
     Task<IReadOnlyList<ShipDVesselTaxonomyDto>> GetShipDVesselTaxonomyAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pushes a vessel import payload into the Hydrostatics service.
+    /// </summary>
+    Task<VesselDetailsDto?> ImportHydrostaticsVesselAsync(HydrostaticsImportRequestDto request, CancellationToken cancellationToken = default);
 }
 
 public record WaterPropertiesResponse(

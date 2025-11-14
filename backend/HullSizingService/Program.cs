@@ -151,7 +151,8 @@ try
     builder.Services.AddScoped<IShipDParameterAdapter, ShipDParameterAdapter>();
     builder.Services.AddScoped<IShipDConstraintValidator, ShipDConstraintValidator>();
     builder.Services.AddScoped<IShipDHullGeometryService, ShipDHullGeometryService>();
-    Log.Information("ShipD parameterization and geometry services registered");
+    builder.Services.AddScoped<IShipDToHydroMapper, ShipDToHydroMapper>();
+    Log.Information("ShipD parameterization, geometry, and Hydro mapper services registered");
 
     // Mission Case Service
     builder.Services.AddScoped<HullSizingService.Services.IMissionCaseService, HullSizingService.Services.MissionCaseService>();

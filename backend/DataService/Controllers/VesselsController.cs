@@ -4,6 +4,8 @@ using DataService.Services.Hydrostatics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
+using Shared.DTOs.Hydrostatics;
+using Shared.Models;
 
 namespace DataService.Controllers;
 
@@ -19,17 +21,20 @@ public class VesselsController : ControllerBase
     private readonly SampleVesselSeedService _seedService;
     private readonly DataDbContext _context;
     private readonly ILogger<VesselsController> _logger;
+    private readonly IGeometryService _geometryService;
 
     public VesselsController(
         IVesselService vesselService,
         SampleVesselSeedService seedService,
         DataDbContext context,
-        ILogger<VesselsController> logger)
+        ILogger<VesselsController> logger,
+        IGeometryService geometryService)
     {
         _vesselService = vesselService;
         _seedService = seedService;
         _context = context;
         _logger = logger;
+        _geometryService = geometryService;
     }
 
     /// <summary>
@@ -94,6 +99,74 @@ public class VesselsController : ControllerBase
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
                 new { error = "An unexpected error occurred while creating the vessel", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Imports a vessel that was pushed from Hull Sizing, including geometry metadata.
+    /// </summary>
+    [HttpPost("import-from-sizing")]
+    [ProducesResponseType(typeof(VesselDetailsDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ImportFromSizing(
+        [FromBody] HydrostaticsImportRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request?.Vessel == null)
+        {
+            return BadRequest(new { error = "Vessel payload is required" });
+        }
+
+        request.Stations ??= new List<StationDto>();
+        request.Waterlines ??= new List<WaterlineDto>();
+        request.Offsets ??= new List<OffsetDto>();
+
+        var idempotencyKey = request.Vessel.SourceDesign?.IdempotencyKey ?? request.IdempotencyKey;
+        var candidateId = request.Vessel.SourceDesign?.CandidateId;
+
+        var existing = await FindExistingImportAsync(candidateId, idempotencyKey, cancellationToken);
+        if (existing != null)
+        {
+            _logger.LogInformation(
+                "[IMPORT] Returning existing vessel {VesselId} for candidate {CandidateId} (idempotent)",
+                existing.Id, candidateId);
+            return Ok(existing);
+        }
+
+        try
+        {
+            var ownerUserId = request.Vessel.SourceDesign?.UserId ?? Shared.Constants.TemplateVessels.SystemUserId;
+            var vessel = await _vesselService.CreateVesselAsync(request.Vessel, ownerUserId, cancellationToken);
+
+            if (request.Stations.Count > 0 || request.Waterlines.Count > 0 || request.Offsets.Count > 0)
+            {
+                await _geometryService.ImportCombinedGeometryAsync(
+                    vessel.Id,
+                    request.Stations,
+                    request.Waterlines,
+                    request.Offsets,
+                    cancellationToken);
+            }
+
+            if (request.CreateDefaultLoadcase)
+            {
+                await EnsureDefaultLoadcaseAsync(vessel.Id, cancellationToken);
+            }
+
+            var details = await _vesselService.GetVesselDetailsAsync(vessel.Id, cancellationToken);
+
+            return CreatedAtAction(nameof(GetVessel), new { id = vessel.Id }, details);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "[IMPORT] Validation error importing vessel from sizing");
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[IMPORT] Unexpected error importing vessel from sizing");
+            return StatusCode(500, new { error = "Failed to import vessel from sizing", details = ex.Message });
         }
     }
 
@@ -169,11 +242,19 @@ public class VesselsController : ControllerBase
             {
                 var isTemplate = vessel.UserId == Shared.Constants.TemplateVessels.SystemUserId;
 
-                vesselDetails.Add(new VesselDetailsDto
+                var details = new VesselDetailsDto
                 {
                     Id = vessel.Id,
                     Name = vessel.Name,
                     Description = vessel.Description,
+                    ShipdCategory = vessel.ShipdCategory,
+                    ShipdType = vessel.ShipdType,
+                    ShipdTypeDisplayName = vessel.ShipdTypeDisplayName,
+                    ShipdBowFamily = vessel.ShipdBowFamily,
+                    ShipdMidshipFamily = vessel.ShipdMidshipFamily,
+                    ShipdSternFamily = vessel.ShipdSternFamily,
+                    ShipdMaskVersion = vessel.ShipdMaskVersion,
+                    ShipdParametersJson = vessel.ShipdParametersJson,
                     Lpp = vessel.Lpp,  // In SI units, will be converted by filter
                     Beam = vessel.Beam,
                     DesignDraft = vessel.DesignDraft,
@@ -183,8 +264,29 @@ public class VesselsController : ControllerBase
                     IsTemplate = isTemplate,
                     Units = "SI",  // Data is stored in SI, filter will convert
                     CreatedAt = vessel.CreatedAt,
-                    UpdatedAt = vessel.UpdatedAt
-                });
+                    UpdatedAt = vessel.UpdatedAt,
+                    SourceDesign = vessel.OriginCandidateId.HasValue ||
+                                   !string.IsNullOrWhiteSpace(vessel.OriginSystem) ||
+                                   !string.IsNullOrWhiteSpace(vessel.OriginIdempotencyKey)
+                        ? new SourceDesignDto
+                        {
+                            CandidateId = vessel.OriginCandidateId,
+                            SizingRunId = vessel.OriginSizingRunId,
+                            MissionCaseId = vessel.OriginMissionCaseId,
+                            SourceSystem = vessel.OriginSystem,
+                            DesignName = vessel.OriginDesignName,
+                            MissionName = vessel.OriginMissionName,
+                            RunName = vessel.OriginRunName,
+                            OriginCreatedAt = vessel.OriginCreatedAt,
+                            PushedAt = vessel.PushedToHydrostaticsAt,
+                            UserId = vessel.OriginUserId,
+                            UserDisplayName = vessel.OriginUserDisplayName,
+                            IdempotencyKey = vessel.OriginIdempotencyKey
+                        }
+                        : null
+                };
+
+                vesselDetails.Add(details);
             }
 
             Console.WriteLine("[VESSELS] Returning response with {0} vessels", vesselDetails.Count);
@@ -411,5 +513,52 @@ public class VesselsController : ControllerBase
                 StatusCodes.Status500InternalServerError,
                 new { error = "An unexpected error occurred while diagnosing template vessel", details = ex.Message });
         }
+    }
+
+    private async Task<VesselDetailsDto?> FindExistingImportAsync(Guid? candidateId, string? idempotencyKey, CancellationToken cancellationToken)
+    {
+        Guid? vesselId = null;
+
+        if (candidateId.HasValue)
+        {
+            vesselId = await _context.Vessels
+                .Where(v => v.OriginCandidateId == candidateId)
+                .Select(v => v.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (vesselId == null && !string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            vesselId = await _context.Vessels
+                .Where(v => v.OriginIdempotencyKey == idempotencyKey)
+                .Select(v => v.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return vesselId.HasValue
+            ? await _vesselService.GetVesselDetailsAsync(vesselId.Value, cancellationToken)
+            : null;
+    }
+
+    private async Task EnsureDefaultLoadcaseAsync(Guid vesselId, CancellationToken cancellationToken)
+    {
+        var hasLoadcase = await _context.Loadcases.AnyAsync(l => l.VesselId == vesselId, cancellationToken);
+        if (hasLoadcase)
+        {
+            return;
+        }
+
+        var loadcase = new Loadcase
+        {
+            Id = Guid.NewGuid(),
+            VesselId = vesselId,
+            Name = "Full Load",
+            Rho = 1025m,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Loadcases.Add(loadcase);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

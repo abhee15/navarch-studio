@@ -55,6 +55,8 @@ public class VesselService : IVesselService
             UpdatedAt = DateTime.UtcNow
         };
 
+        ApplyShipdMetadata(vessel, dto);
+
         _context.Vessels.Add(vessel);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -68,6 +70,9 @@ public class VesselService : IVesselService
                 Size = dto.Metadata.Size,
                 BlockCoefficient = dto.Metadata.BlockCoefficient,
                 HullFamily = dto.Metadata.HullFamily,
+                ShipdCategory = dto.Metadata.ShipdCategory,
+                ShipdType = dto.Metadata.ShipdType,
+                ShipdMaskVersion = dto.Metadata.ShipdMaskVersion,
                 CreatedAt = DateTime.UtcNow
             };
             _context.VesselMetadata.Add(metadata);
@@ -145,7 +150,27 @@ public class VesselService : IVesselService
                 v.Beam,
                 v.DesignDraft,
                 v.CreatedAt,
-                v.UpdatedAt
+                v.UpdatedAt,
+                v.ShipdCategory,
+                v.ShipdType,
+                v.ShipdTypeDisplayName,
+                v.ShipdBowFamily,
+                v.ShipdMidshipFamily,
+                v.ShipdSternFamily,
+                v.ShipdMaskVersion,
+                v.ShipdParametersJson,
+                v.OriginCandidateId,
+                v.OriginSizingRunId,
+                v.OriginMissionCaseId,
+                v.OriginSystem,
+                v.OriginDesignName,
+                v.OriginMissionName,
+                v.OriginRunName,
+                v.OriginCreatedAt,
+                v.PushedToHydrostaticsAt,
+                v.OriginUserId,
+                v.OriginUserDisplayName,
+                v.OriginIdempotencyKey
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -188,6 +213,14 @@ public class VesselService : IVesselService
             Id = vessel.Id,
             Name = vessel.Name,
             Description = vessel.Description,
+            ShipdCategory = vessel.ShipdCategory,
+            ShipdType = vessel.ShipdType,
+            ShipdTypeDisplayName = vessel.ShipdTypeDisplayName,
+            ShipdBowFamily = vessel.ShipdBowFamily,
+            ShipdMidshipFamily = vessel.ShipdMidshipFamily,
+            ShipdSternFamily = vessel.ShipdSternFamily,
+            ShipdMaskVersion = vessel.ShipdMaskVersion,
+            ShipdParametersJson = vessel.ShipdParametersJson,
             Lpp = vessel.Lpp,  // Stored in SI, filter will convert to user's preference
             Beam = vessel.Beam,
             DesignDraft = vessel.DesignDraft,
@@ -203,7 +236,10 @@ public class VesselService : IVesselService
                 VesselType = metadata.VesselType,
                 Size = metadata.Size,
                 BlockCoefficient = metadata.BlockCoefficient,
-                HullFamily = metadata.HullFamily
+                HullFamily = metadata.HullFamily,
+                ShipdCategory = metadata.ShipdCategory,
+                ShipdType = metadata.ShipdType,
+                ShipdMaskVersion = metadata.ShipdMaskVersion
             } : null,
             Materials = materials != null ? new MaterialsConfigDto
             {
@@ -214,7 +250,26 @@ public class VesselService : IVesselService
             {
                 LightshipTonnes = loading.LightshipTonnes,
                 DeadweightTonnes = loading.DeadweightTonnes
-            } : null
+            } : null,
+            SourceDesign = vessel.OriginCandidateId.HasValue ||
+                           !string.IsNullOrWhiteSpace(vessel.OriginSystem) ||
+                           !string.IsNullOrWhiteSpace(vessel.OriginIdempotencyKey)
+                ? new SourceDesignDto
+                {
+                    CandidateId = vessel.OriginCandidateId,
+                    SizingRunId = vessel.OriginSizingRunId,
+                    MissionCaseId = vessel.OriginMissionCaseId,
+                    SourceSystem = vessel.OriginSystem,
+                    DesignName = vessel.OriginDesignName,
+                    MissionName = vessel.OriginMissionName,
+                    RunName = vessel.OriginRunName,
+                    OriginCreatedAt = vessel.OriginCreatedAt,
+                    PushedAt = vessel.PushedToHydrostaticsAt,
+                    UserId = vessel.OriginUserId,
+                    UserDisplayName = vessel.OriginUserDisplayName,
+                    IdempotencyKey = vessel.OriginIdempotencyKey
+                }
+                : null
         };
     }
 
@@ -236,7 +291,27 @@ public class VesselService : IVesselService
                 DesignDraft = v.DesignDraft,
                 CreatedAt = v.CreatedAt,
                 UpdatedAt = v.UpdatedAt,
-                DeletedAt = v.DeletedAt
+                DeletedAt = v.DeletedAt,
+                ShipdCategory = v.ShipdCategory,
+                ShipdType = v.ShipdType,
+                ShipdTypeDisplayName = v.ShipdTypeDisplayName,
+                ShipdBowFamily = v.ShipdBowFamily,
+                ShipdMidshipFamily = v.ShipdMidshipFamily,
+                ShipdSternFamily = v.ShipdSternFamily,
+                ShipdMaskVersion = v.ShipdMaskVersion,
+                ShipdParametersJson = v.ShipdParametersJson,
+                OriginCandidateId = v.OriginCandidateId,
+                OriginSizingRunId = v.OriginSizingRunId,
+                OriginMissionCaseId = v.OriginMissionCaseId,
+                OriginSystem = v.OriginSystem,
+                OriginDesignName = v.OriginDesignName,
+                OriginMissionName = v.OriginMissionName,
+                OriginRunName = v.OriginRunName,
+                OriginCreatedAt = v.OriginCreatedAt,
+                PushedToHydrostaticsAt = v.PushedToHydrostaticsAt,
+                OriginUserId = v.OriginUserId,
+                OriginUserDisplayName = v.OriginUserDisplayName,
+                OriginIdempotencyKey = v.OriginIdempotencyKey
                 // Explicitly exclude navigation properties to avoid lazy loading
             })
             .ToListAsync(cancellationToken);
@@ -273,6 +348,11 @@ public class VesselService : IVesselService
         vessel.Beam = dto.Beam;  // Now in SI (meters)
         vessel.DesignDraft = dto.DesignDraft;  // Now in SI (meters)
         vessel.UpdatedAt = DateTime.UtcNow;
+        ApplyShipdMetadata(vessel, dto);
+
+        await UpsertMetadataAsync(vessel.Id, dto.Metadata, cancellationToken);
+        await UpsertMaterialsAsync(vessel.Id, dto.Materials, cancellationToken);
+        await UpsertLoadingAsync(vessel.Id, dto.Loading, cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -403,5 +483,104 @@ public class VesselService : IVesselService
         };
 
         return Task.FromResult(templates);
+    }
+
+    private async Task UpsertMetadataAsync(Guid vesselId, VesselMetadataDto? dto, CancellationToken cancellationToken)
+    {
+        if (dto == null)
+        {
+            return;
+        }
+
+        var metadata = await _context.VesselMetadata.FirstOrDefaultAsync(m => m.VesselId == vesselId, cancellationToken);
+        if (metadata == null)
+        {
+            metadata = new VesselMetadata
+            {
+                VesselId = vesselId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.VesselMetadata.Add(metadata);
+        }
+
+        metadata.VesselType = dto.VesselType;
+        metadata.Size = dto.Size;
+        metadata.BlockCoefficient = dto.BlockCoefficient;
+        metadata.HullFamily = dto.HullFamily;
+        metadata.ShipdCategory = dto.ShipdCategory;
+        metadata.ShipdType = dto.ShipdType;
+        metadata.ShipdMaskVersion = dto.ShipdMaskVersion;
+    }
+
+    private async Task UpsertMaterialsAsync(Guid vesselId, MaterialsConfigDto? dto, CancellationToken cancellationToken)
+    {
+        if (dto == null)
+        {
+            return;
+        }
+
+        var materials = await _context.MaterialsConfigs.FirstOrDefaultAsync(m => m.VesselId == vesselId, cancellationToken);
+        if (materials == null)
+        {
+            materials = new MaterialsConfig
+            {
+                VesselId = vesselId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.MaterialsConfigs.Add(materials);
+        }
+
+        materials.HullMaterial = dto.HullMaterial;
+        materials.SuperstructureMaterial = dto.SuperstructureMaterial;
+    }
+
+    private async Task UpsertLoadingAsync(Guid vesselId, LoadingConditionsDto? dto, CancellationToken cancellationToken)
+    {
+        if (dto == null)
+        {
+            return;
+        }
+
+        var loading = await _context.LoadingConditions.FirstOrDefaultAsync(l => l.VesselId == vesselId, cancellationToken);
+        if (loading == null)
+        {
+            loading = new LoadingConditions
+            {
+                VesselId = vesselId,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.LoadingConditions.Add(loading);
+        }
+
+        loading.LightshipTonnes = dto.LightshipTonnes;
+        loading.DeadweightTonnes = dto.DeadweightTonnes;
+    }
+
+    private static void ApplyShipdMetadata(Vessel vessel, VesselDto dto)
+    {
+        vessel.ShipdCategory = dto.ShipdCategory ?? vessel.ShipdCategory;
+        vessel.ShipdType = dto.ShipdType ?? vessel.ShipdType;
+        vessel.ShipdTypeDisplayName = dto.ShipdTypeDisplayName ?? vessel.ShipdTypeDisplayName;
+        vessel.ShipdBowFamily = dto.ShipdBowFamily ?? vessel.ShipdBowFamily;
+        vessel.ShipdMidshipFamily = dto.ShipdMidshipFamily ?? vessel.ShipdMidshipFamily;
+        vessel.ShipdSternFamily = dto.ShipdSternFamily ?? vessel.ShipdSternFamily;
+        vessel.ShipdMaskVersion = dto.ShipdMaskVersion ?? vessel.ShipdMaskVersion;
+        vessel.ShipdParametersJson = dto.ShipdParametersJson ?? vessel.ShipdParametersJson;
+
+        if (dto.SourceDesign != null)
+        {
+            vessel.OriginCandidateId = dto.SourceDesign.CandidateId ?? vessel.OriginCandidateId;
+            vessel.OriginSizingRunId = dto.SourceDesign.SizingRunId ?? vessel.OriginSizingRunId;
+            vessel.OriginMissionCaseId = dto.SourceDesign.MissionCaseId ?? vessel.OriginMissionCaseId;
+            vessel.OriginSystem = dto.SourceDesign.SourceSystem ?? vessel.OriginSystem;
+            vessel.OriginDesignName = dto.SourceDesign.DesignName ?? vessel.OriginDesignName;
+            vessel.OriginMissionName = dto.SourceDesign.MissionName ?? vessel.OriginMissionName;
+            vessel.OriginRunName = dto.SourceDesign.RunName ?? vessel.OriginRunName;
+            vessel.OriginCreatedAt = dto.SourceDesign.OriginCreatedAt ?? vessel.OriginCreatedAt;
+            vessel.PushedToHydrostaticsAt = dto.SourceDesign.PushedAt ?? vessel.PushedToHydrostaticsAt;
+            vessel.OriginUserId = dto.SourceDesign.UserId ?? vessel.OriginUserId;
+            vessel.OriginUserDisplayName = dto.SourceDesign.UserDisplayName ?? vessel.OriginUserDisplayName;
+            vessel.OriginIdempotencyKey = dto.SourceDesign.IdempotencyKey ?? vessel.OriginIdempotencyKey;
+        }
     }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { ExternalLink } from "lucide-react";
 import { settingsStore } from "../../../stores/SettingsStore";
 import type { VesselDetails, Loadcase, HydroResult } from "../../../types/hydrostatics";
 import type { PanelId, WorkspaceMode } from "../../../types/workspace";
@@ -493,6 +494,37 @@ export function WorkspaceLayout({ vessel, onBack, onVesselUpdated }: WorkspaceLa
           </div>
         </div>
       </div>
+      {vessel.sourceDesign && (
+        <div className="bg-amber-50 border-b border-amber-100 px-4 py-2 text-[11px] text-amber-900 flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center rounded-full bg-amber-200/70 px-2 py-0.5 font-semibold uppercase tracking-wide">
+            From Hull Sizing
+          </span>
+          {vessel.sourceDesign.missionName && (
+            <span>
+              Mission <strong>{vessel.sourceDesign.missionName}</strong>
+            </span>
+          )}
+          {vessel.sourceDesign.runName && (
+            <span>
+              Run <strong>{vessel.sourceDesign.runName}</strong>
+            </span>
+          )}
+          {vessel.sourceDesign.pushedAt && (
+            <span className="text-amber-800">
+              Pushed {new Date(vessel.sourceDesign.pushedAt).toLocaleString()}
+            </span>
+          )}
+          {vessel.sourceDesign.candidateId && (
+            <button
+              className="inline-flex items-center text-primary font-semibold hover:text-primary/80"
+              onClick={() => navigate(`/sizing/workspace/${vessel.sourceDesign!.candidateId}`)}
+            >
+              View in Hull Sizing
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (

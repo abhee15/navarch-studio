@@ -80,9 +80,26 @@ public class DataDbContext : DbContext
             entity.Property(e => e.Lpp).HasColumnType("decimal(10,3)");
             entity.Property(e => e.Beam).HasColumnType("decimal(10,3)");
             entity.Property(e => e.DesignDraft).HasColumnType("decimal(10,3)");
+            entity.Property(e => e.ShipdCategory).HasMaxLength(100);
+            entity.Property(e => e.ShipdType).HasMaxLength(100);
+            entity.Property(e => e.ShipdTypeDisplayName).HasMaxLength(150);
+            entity.Property(e => e.ShipdBowFamily).HasMaxLength(100);
+            entity.Property(e => e.ShipdMidshipFamily).HasMaxLength(100);
+            entity.Property(e => e.ShipdSternFamily).HasMaxLength(100);
+            entity.Property(e => e.ShipdParametersJson).HasColumnType("jsonb");
+            entity.Property(e => e.OriginSystem).HasMaxLength(50);
+            entity.Property(e => e.OriginDesignName).HasMaxLength(200);
+            entity.Property(e => e.OriginMissionName).HasMaxLength(200);
+            entity.Property(e => e.OriginRunName).HasMaxLength(200);
+            entity.Property(e => e.OriginUserDisplayName).HasMaxLength(200);
+            entity.Property(e => e.OriginIdempotencyKey).HasMaxLength(200);
 
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.SourceCatalogHullId);
+            entity.HasIndex(e => e.OriginCandidateId);
+            entity.HasIndex(e => e.OriginSizingRunId);
+            entity.HasIndex(e => e.OriginMissionCaseId);
+            entity.HasIndex(e => e.ShipdType);
             entity.HasQueryFilter(e => e.DeletedAt == null);
 
             // Configure relationships
@@ -248,6 +265,8 @@ public class DataDbContext : DbContext
             entity.Property(e => e.Size).HasMaxLength(50);
             entity.Property(e => e.BlockCoefficient).HasColumnType("decimal(5,3)");
             entity.Property(e => e.HullFamily).HasMaxLength(50);
+            entity.Property(e => e.ShipdCategory).HasMaxLength(100);
+            entity.Property(e => e.ShipdType).HasMaxLength(100);
 
             entity.HasIndex(e => e.VesselId).IsUnique();
         });

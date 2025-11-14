@@ -12,7 +12,7 @@ import { AppHeader } from "../../components/AppHeader";
 import { settingsStore } from "../../stores/SettingsStore";
 import { getUnitSymbol } from "../../utils/unitSymbols";
 import { isHydrostaticsVessel } from "../../constants/templateVessels";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 
 export const VesselsList = observer(function VesselsList() {
   const navigate = useNavigate();
@@ -83,6 +83,11 @@ export const VesselsList = observer(function VesselsList() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleNavigateToCandidate = (candidateId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    navigate(`/sizing/workspace/${candidateId}`);
   };
 
   const handleHome = () => {
@@ -350,6 +355,29 @@ export const VesselsList = observer(function VesselsList() {
                       <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
                         {vessel.description}
                       </p>
+                    )}
+                    {vessel.sourceDesign && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">
+                          From Hull Sizing
+                        </span>
+                        {vessel.sourceDesign.designName && (
+                          <span className="text-muted-foreground">
+                            {vessel.sourceDesign.designName}
+                          </span>
+                        )}
+                        {vessel.sourceDesign.candidateId && (
+                          <button
+                            className="inline-flex items-center text-primary hover:text-primary/80 font-medium"
+                            onClick={(e) =>
+                              handleNavigateToCandidate(vessel.sourceDesign!.candidateId!, e)
+                            }
+                          >
+                            View candidate
+                            <ExternalLink className="ml-1 h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
                     )}
                     <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
                       <div>

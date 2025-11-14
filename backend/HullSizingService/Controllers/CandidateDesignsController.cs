@@ -1,5 +1,6 @@
 using HullSizingService.Services;
 using Microsoft.AspNetCore.Mvc;
+using Shared.DTOs;
 using Shared.DTOs.Sizing;
 
 namespace HullSizingService.Controllers;
@@ -97,6 +98,45 @@ public class CandidateDesignsController : ControllerBase
             return Ok(result);
         }
         catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/push-to-hydrostatics")]
+    public async Task<ActionResult<PushToHydrostaticsResultDto>> PushToHydrostatics(
+        Guid id,
+        [FromBody] PushToHydrostaticsRequestDto? dto,
+        CancellationToken ct)
+    {
+        var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
+        dto ??= new PushToHydrostaticsRequestDto();
+
+        var headerKey = Request.Headers.TryGetValue("X-Idempotency-Key", out var headerValue)
+            ? headerValue.ToString()
+            : null;
+
+        var idempotencyKey = dto.IdempotencyKey ?? headerKey;
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            return BadRequest(new { error = "X-Idempotency-Key header (or request.IdempotencyKey) is required to push a design." });
+        }
+
+        dto.IdempotencyKey = idempotencyKey;
+        dto.SourceDesign ??= new SourceDesignDto();
+        dto.SourceDesign.IdempotencyKey = idempotencyKey;
+
+        try
+        {
+            var result = await _service.PushToHydrostaticsAsync(id, dto, tenantId, ct);
+            if (result == null)
+            {
+                return NotFound(new { error = "Candidate design not found" });
+            }
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new { error = ex.Message });
         }

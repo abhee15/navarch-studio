@@ -23,7 +23,7 @@ interface CoefficientsEvolutionPanelProps {
 }
 
 // Typical coefficient ranges by vessel type (for reference bands)
-const TYPICAL_RANGES = {
+const TYPICAL_RANGES: Record<string, { cb: [number, number]; cp: [number, number]; cm: [number, number]; cwp: [number, number] }> = {
   Boat: { cb: [0.35, 0.5], cp: [0.6, 0.75], cm: [0.75, 0.85], cwp: [0.7, 0.85] },
   Yacht: { cb: [0.3, 0.45], cp: [0.55, 0.7], cm: [0.7, 0.8], cwp: [0.65, 0.8] },
   Ship: { cb: [0.55, 0.85], cp: [0.7, 0.85], cm: [0.85, 0.98], cwp: [0.75, 0.9] },
@@ -303,23 +303,24 @@ export const CoefficientsEvolutionPanel = observer(
         </div>
 
         {/* Legend/Info about typical ranges */}
-        {vessel?.metadata?.vesselType && TYPICAL_RANGES[vessel.metadata.vesselType] && (
-          <div className="mt-3 pt-3 border-t border-border flex-shrink-0">
-            <p className="text-xs text-muted-foreground mb-2">
-              <strong>Typical ranges for {vessel.metadata.vesselType}:</strong>
-            </p>
-            <div className="grid grid-cols-4 gap-2 text-[10px]">
-              {Object.entries(TYPICAL_RANGES[vessel.metadata.vesselType]).map(([coeff, range]) => (
-                <div key={coeff} className="text-center">
-                  <span className="font-medium text-foreground">{coeff.toUpperCase()}:</span>{" "}
-                  <span className="text-muted-foreground">
-                    {range[0].toFixed(2)} - {range[1].toFixed(2)}
-                  </span>
-                </div>
-              ))}
+        {vessel?.metadata?.vesselType &&
+          vessel.metadata.vesselType in TYPICAL_RANGES && (
+            <div className="mt-3 pt-3 border-t border-border flex-shrink-0">
+              <p className="text-xs text-muted-foreground mb-2">
+                <strong>Typical ranges for {vessel.metadata.vesselType}:</strong>
+              </p>
+              <div className="grid grid-cols-4 gap-2 text-[10px]">
+                {Object.entries(TYPICAL_RANGES[vessel.metadata.vesselType]).map(([coeff, range]) => (
+                  <div key={coeff} className="text-center">
+                    <span className="font-medium text-foreground">{coeff.toUpperCase()}:</span>{" "}
+                    <span className="text-muted-foreground">
+                      {range[0].toFixed(2)} - {range[1].toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     );
   }

@@ -8,9 +8,25 @@ import type {
   CandidateWithFlags,
   SizingLocksDto,
   ExportFormat,
+  ShipDParameterMetadata,
+  ShipDVesselTaxonomy,
+  PushToHydrostaticsResult,
+  PushToHydrostaticsRequest,
+  SourceDesignSummary,
 } from "../types/sizing";
 import * as sizingApi from "../services/sizingApi";
-import type { ShipDParameterMetadata, ShipDVesselTaxonomy } from "../types/sizing";
+
+export interface PushToHydroForm {
+  vesselName: string;
+  description?: string;
+  shipdCategory?: string;
+  shipdType?: string;
+  shipdTypeDisplayName?: string;
+  shipdBowFamily?: string;
+  shipdMidshipFamily?: string;
+  shipdSternFamily?: string;
+  shipdMaskVersion?: number;
+}
 
 export class SizingStore {
   // Mission Cases
@@ -415,21 +431,51 @@ export class SizingStore {
     }
   }
 
-  async pushToHydrostatics(candidateId: string) {
-    this.isLoading = true;
+  async pushToHydrostatics(
+    candidate: CandidateDesign,
+    form: PushToHydroForm,
+    user?: { id?: string; name?: string }
+  ): Promise<PushToHydrostaticsResult> {
     this.error = null;
+    const idempotencyKey = this.generateIdempotencyKey();
+
+    const payload: PushToHydrostaticsRequest = {
+      vesselName: form.vesselName?.trim() || this.buildDefaultVesselName(candidate),
+      description: form.description,
+      shipdCategory:
+        form.shipdCategory ?? candidate.vesselCategory ?? this.selectedMission?.missionCategory,
+      shipdType: form.shipdType ?? candidate.vesselType ?? undefined,
+      shipdTypeDisplayName: form.shipdTypeDisplayName,
+      shipdBowFamily: form.shipdBowFamily ?? candidate.bowFamily ?? undefined,
+      shipdMidshipFamily: form.shipdMidshipFamily ?? candidate.midshipFamily ?? undefined,
+      shipdSternFamily: form.shipdSternFamily ?? candidate.sternFamily ?? undefined,
+      shipdMaskVersion: form.shipdMaskVersion ?? candidate.familyMaskVersion,
+    };
+
+    if (payload.shipdCategory && payload.shipdType) {
+      const taxonomyEntry = this.getTaxonomyEntry(payload.shipdCategory, payload.shipdType);
+      if (taxonomyEntry) {
+        payload.shipdTypeDisplayName =
+          payload.shipdTypeDisplayName || taxonomyEntry.displayName || payload.shipdType;
+        payload.shipdMaskVersion = payload.shipdMaskVersion ?? taxonomyEntry.maskVersion;
+      }
+    }
+
+    payload.sourceDesign = this.buildSourceDesign(candidate, {
+      idempotencyKey,
+      designName: payload.vesselName,
+      missionCaseId: this.selectedMission?.id ?? this.currentRun?.missionCaseId,
+      missionName: this.selectedMission?.name,
+      userId: user?.id ?? candidate.userId,
+      userDisplayName: user?.name,
+    });
+
     try {
-      const result = await sizingApi.pushToHydrostatics(candidateId);
-      runInAction(() => {
-        this.isLoading = false;
-      });
-      return result.vesselId;
+      return await sizingApi.pushToHydrostatics(candidate.id, payload, idempotencyKey);
     } catch (error) {
-      runInAction(() => {
-        this.error = error instanceof Error ? error.message : "Failed to push to hydrostatics";
-        this.isLoading = false;
-      });
-      throw error;
+      const message = error instanceof Error ? error.message : "Failed to push to hydrostatics";
+      this.error = message;
+      throw new Error(message);
     }
   }
 
@@ -476,6 +522,54 @@ export class SizingStore {
     this.wizardStep = 1;
     this.locks = {};
     this.error = null;
+  }
+
+  private buildDefaultVesselName(candidate: CandidateDesign): string {
+    const baseName = candidate.hullFamily.replace(/_/g, " ");
+    if (this.selectedMission?.name) {
+      return `${this.selectedMission.name} • ${baseName}`;
+    }
+    return `${baseName} Design`;
+  }
+
+  private buildSourceDesign(
+    candidate: CandidateDesign,
+    overrides: SourceDesignSummary & { idempotencyKey: string }
+  ): SourceDesignSummary {
+    return {
+      candidateId: candidate.id,
+      sizingRunId: candidate.sizingRunId,
+      missionCaseId:
+        overrides.missionCaseId ?? this.selectedMission?.id ?? this.currentRun?.missionCaseId,
+      userId: overrides.userId ?? candidate.userId,
+      userDisplayName: overrides.userDisplayName,
+      missionName: overrides.missionName ?? this.selectedMission?.name,
+      runName: overrides.runName ?? this.buildRunName(),
+      designName: overrides.designName ?? this.buildDefaultVesselName(candidate),
+      sourceSystem: overrides.sourceSystem ?? "HullSizingService",
+      idempotencyKey: overrides.idempotencyKey,
+      originCreatedAt: candidate.createdAt,
+    };
+  }
+
+  private buildRunName(): string | undefined {
+    if (!this.currentRun) {
+      return undefined;
+    }
+
+    const modeLabel = this.currentRun.mode.replace(/_/g, " ");
+    const timestamp = this.currentRun.createdAt
+      ? new Date(this.currentRun.createdAt).toLocaleDateString()
+      : undefined;
+
+    return timestamp ? `${modeLabel} • ${timestamp}` : modeLabel;
+  }
+
+  private generateIdempotencyKey(): string {
+    if (typeof window !== "undefined" && window.crypto?.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return `hydro-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   }
 }
 

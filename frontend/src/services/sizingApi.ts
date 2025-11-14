@@ -7,8 +7,11 @@ import type {
   SizingRun,
   CandidateDesign,
   ExportFormat,
+  ShipDParameterMetadata,
+  ShipDVesselTaxonomy,
+  PushToHydrostaticsRequest,
+  PushToHydrostaticsResult,
 } from "../types/sizing";
-import type { ShipDParameterMetadata, ShipDVesselTaxonomy } from "../types/sizing";
 
 const BASE_PATH = "/hull-sizing";
 const SHIPD_PATH = "/shipd";
@@ -91,9 +94,19 @@ export const exportCandidate = async (id: string, format: ExportFormat): Promise
   return response.data;
 };
 
-export const pushToHydrostatics = async (candidateId: string): Promise<{ vesselId: string }> => {
-  const response = await api.post<{ vesselId: string }>(
-    `${BASE_PATH}/candidates/${candidateId}/push-to-hydrostatics`
+export const pushToHydrostatics = async (
+  candidateId: string,
+  payload: PushToHydrostaticsRequest,
+  idempotencyKey: string
+): Promise<PushToHydrostaticsResult> => {
+  const response = await api.post<PushToHydrostaticsResult>(
+    `${BASE_PATH}/candidates/${candidateId}/push-to-hydrostatics`,
+    payload,
+    {
+      headers: {
+        "X-Idempotency-Key": idempotencyKey,
+      },
+    }
   );
   return response.data;
 };

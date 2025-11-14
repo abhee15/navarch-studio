@@ -4,6 +4,14 @@ export interface Vessel {
   id: string;
   name: string;
   description?: string;
+  shipdCategory?: string;
+  shipdType?: string;
+  shipdTypeDisplayName?: string;
+  shipdBowFamily?: string;
+  shipdMidshipFamily?: string;
+  shipdSternFamily?: string;
+  shipdMaskVersion?: number;
+  shipdParametersJson?: string;
   lpp: number; // Always in user's preferred units
   beam: number;
   designDraft: number;
@@ -14,13 +22,17 @@ export interface Vessel {
   isTemplate?: boolean; // Whether this is a template vessel (read-only)
   // Legacy field name for backward compatibility
   unitsSystem?: string;
+  sourceDesign?: SourceDesign;
 }
 
 export interface VesselMetadata {
-  vesselType?: "Boat" | "Yacht" | "Ship";
-  size?: "Small" | "Medium" | "Large";
+  vesselType?: string;
+  size?: string;
   blockCoefficient?: number;
-  hullFamily?: "Wigley" | "Series 60" | "NPL" | "Prismatic";
+  hullFamily?: string;
+  shipdCategory?: string;
+  shipdType?: string;
+  shipdMaskVersion?: number;
 }
 
 export interface MaterialsConfig {
@@ -41,6 +53,21 @@ export interface VesselDetails extends Vessel {
   materials?: MaterialsConfig;
   loading?: LoadingConditions;
   isTemplate?: boolean; // Whether this is a template vessel (read-only)
+}
+
+export interface SourceDesign {
+  candidateId?: string;
+  sizingRunId?: string;
+  missionCaseId?: string;
+  userId?: string;
+  userDisplayName?: string;
+  missionName?: string;
+  runName?: string;
+  designName?: string;
+  sourceSystem?: string;
+  idempotencyKey?: string;
+  originCreatedAt?: string;
+  pushedAt?: string;
 }
 
 export interface CreateVesselDto {
