@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { observer } from "mobx-react-lite";
 import { LinesPlanTitleBlock } from "../../LinesPlanTitleBlock";
 import { LinesPlanGrid } from "../../LinesPlanGrid";
@@ -7,7 +7,7 @@ import { SectionAreaCurveComponent } from "../../SectionAreaCurve";
 import { OffsetsTableView } from "../../OffsetsTableView";
 import { LinesPlanExportDialog } from "../../LinesPlanExportDialog";
 import { BodyPlanViewer } from "../../BodyPlanViewer";
-import type { VesselDetails } from "../../../../types/hydrostatics";
+import type { VesselDetails, WaterlineCurve, ButtockCurve } from "../../../../types/hydrostatics";
 import type { BodyPlanData } from "../../../../types/bodyplan";
 import type {
   DiagonalsData,
@@ -35,6 +35,8 @@ export const LinesPlanPanel = observer(({ vesselId, vessel }: LinesPlanPanelProp
   const [diagonals, setDiagonals] = useState<DiagonalsData | null>(null);
   const [sectionAreaCurve, setSectionAreaCurve] = useState<SectionAreaCurve | null>(null);
   const [fairingQuality, setFairingQuality] = useState<FairingQuality | null>(null);
+  const [waterlines, setWaterlines] = useState<WaterlineCurve[]>([]);
+  const [buttocks, setButtocks] = useState<ButtockCurve[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,11 +66,13 @@ export const LinesPlanPanel = observer(({ vesselId, vessel }: LinesPlanPanelProp
       setLoading(true);
       setError(null);
 
-      const [bodyPlan, diag, sac, fq] = await Promise.all([
+      const [bodyPlan, diag, sac, fq, wlData, btData] = await Promise.all([
         geometryApi.getOffsetsGrid(vesselId),
         projectionsApi.getDiagonals(vesselId, 3),
         curvesApi.getSectionAreaCurve(vesselId),
         curvesApi.getFairingQuality(vesselId),
+        projectionsApi.getWaterlines(vesselId),
+        projectionsApi.getButtocks(vesselId, 5),
       ]);
 
       // Transform offsets grid to body plan data
@@ -82,6 +86,8 @@ export const LinesPlanPanel = observer(({ vesselId, vessel }: LinesPlanPanelProp
       setDiagonals(diag);
       setSectionAreaCurve(sac);
       setFairingQuality(fq);
+      setWaterlines(wlData.waterlines);
+      setButtocks(btData.buttocks);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -117,7 +123,112 @@ export const LinesPlanPanel = observer(({ vesselId, vessel }: LinesPlanPanelProp
   const maxX = bodyPlanData ? Math.max(...bodyPlanData.stations) : 100;
   const minZ = bodyPlanData ? Math.min(...bodyPlanData.waterlines, 0) : 0;
   const maxZ = bodyPlanData ? Math.max(...bodyPlanData.waterlines) : 10;
-  const maxY = vessel.beam / 2; // Half-breadth
+
+  // Calculate max half-breadth from actual waterlines data
+  const maxY = useMemo(() => {
+    if (waterlines.length === 0) return vessel.beam / 2;
+    let max = 0;
+    waterlines.forEach((wl) => {
+      wl.points.forEach((p) => {
+        max = Math.max(max, Math.abs(p.y));
+      });
+    });
+    return max || vessel.beam / 2;
+  }, [waterlines, vessel.beam]);
+
+  // Color palette for waterlines and buttocks
+  const COLORS = [
+    "#3B82F6", // Blue
+    "#10B981", // Green
+    "#F59E0B", // Amber
+    "#EF4444", // Red
+    "#8B5CF6", // Purple
+    "#EC4899", // Pink
+    "#14B8A6", // Teal
+    "#F97316", // Orange
+    "#6366F1", // Indigo
+    "#84CC16", // Lime
+  ];
+
+  const getColor = (index: number) => COLORS[index % COLORS.length];
+
+  // Helper functions for coordinate transformation within a view
+  const createPlanViewTransform = useCallback(
+    (viewWidth: number, viewHeight: number) => {
+      const rangeX = maxX - minX || 1;
+      const rangeY = maxY || 1;
+
+      return {
+        toSvgX: (x: number) => ((x - minX) / rangeX) * viewWidth,
+        toSvgY: (y: number, side: "port" | "starboard" = "starboard") => {
+          const centerY = viewHeight / 2;
+          const scaledY = (Math.abs(y) / rangeY) * (viewHeight / 2);
+          return side === "starboard" ? centerY - scaledY : centerY + scaledY;
+        },
+      };
+    },
+    [minX, maxX, maxY]
+  );
+
+  const createProfileViewTransform = useCallback(
+    (viewWidth: number, viewHeight: number) => {
+      const rangeX = maxX - minX || 1;
+      const rangeZ = maxZ - minZ || 1;
+
+      return {
+        toSvgX: (x: number) => ((x - minX) / rangeX) * viewWidth,
+        toSvgY: (z: number) => viewHeight - ((z - minZ) / rangeZ) * viewHeight,
+      };
+    },
+    [minX, maxX, minZ, maxZ]
+  );
+
+  // Generate path for waterline in plan view (XY projection)
+  const generateWaterlinePathPlan = useCallback(
+    (wl: WaterlineCurve, viewWidth: number, viewHeight: number, side: "port" | "starboard") => {
+      if (wl.points.length === 0) return "";
+      const transform = createPlanViewTransform(viewWidth, viewHeight);
+
+      let path = `M ${transform.toSvgX(wl.points[0].x)} ${transform.toSvgY(wl.points[0].y, side)}`;
+      for (let i = 1; i < wl.points.length; i++) {
+        path += ` L ${transform.toSvgX(wl.points[i].x)} ${transform.toSvgY(wl.points[i].y, side)}`;
+      }
+      return path;
+    },
+    [createPlanViewTransform]
+  );
+
+  // Generate path for waterline in profile view (XZ projection - sheerline)
+  const generateWaterlinePathProfile = useCallback(
+    (wl: WaterlineCurve, viewWidth: number, viewHeight: number) => {
+      if (wl.points.length === 0) return "";
+      const transform = createProfileViewTransform(viewWidth, viewHeight);
+
+      // For profile view, use the maximum Y (half-breadth) at each station
+      // This gives us the sheerline (deck edge)
+      let path = `M ${transform.toSvgX(wl.points[0].x)} ${transform.toSvgY(wl.z)}`;
+      for (let i = 1; i < wl.points.length; i++) {
+        path += ` L ${transform.toSvgX(wl.points[i].x)} ${transform.toSvgY(wl.z)}`;
+      }
+      return path;
+    },
+    [createProfileViewTransform]
+  );
+
+  // Generate path for buttock in profile view (XZ projection)
+  const generateButtockPath = useCallback(
+    (bt: ButtockCurve, viewWidth: number, viewHeight: number) => {
+      if (bt.points.length === 0) return "";
+      const transform = createProfileViewTransform(viewWidth, viewHeight);
+
+      let path = `M ${transform.toSvgX(bt.points[0].x)} ${transform.toSvgY(bt.points[0].z)}`;
+      for (let i = 1; i < bt.points.length; i++) {
+        path += ` L ${transform.toSvgX(bt.points[i].x)} ${transform.toSvgY(bt.points[i].z)}`;
+      }
+      return path;
+    },
+    [createProfileViewTransform]
+  );
 
   if (loading) {
     return (
@@ -353,8 +464,31 @@ export const LinesPlanPanel = observer(({ vesselId, vessel }: LinesPlanPanelProp
                   lpp={vessel.lpp}
                 />
               )}
-              {/* Waterlines would be rendered here as profile curves */}
-              {/* Buttocks would be rendered here */}
+              {/* Render waterlines (sheerline) in profile view */}
+              {visibility.waterlines &&
+                waterlines.map((wl) => (
+                  <path
+                    key={`profile-wl-${wl.waterlineIndex}`}
+                    d={generateWaterlinePathProfile(wl, 650, 300)}
+                    stroke={getColor(wl.waterlineIndex)}
+                    strokeWidth={1.5}
+                    fill="none"
+                    opacity={0.8}
+                  />
+                ))}
+              {/* Render buttocks in profile view */}
+              {visibility.buttocks &&
+                buttocks.map((bt) => (
+                  <path
+                    key={`profile-bt-${bt.buttockIndex}`}
+                    d={generateButtockPath(bt, 650, 300)}
+                    stroke={getColor(bt.buttockIndex + 10)}
+                    strokeWidth={1.5}
+                    fill="none"
+                    opacity={0.8}
+                    strokeDasharray="4,4"
+                  />
+                ))}
               {visibility.diagonals && diagonals && (
                 <DiagonalsView
                   diagonals={diagonals.diagonals}
@@ -391,7 +525,29 @@ export const LinesPlanPanel = observer(({ vesselId, vessel }: LinesPlanPanelProp
                   lpp={vessel.lpp}
                 />
               )}
-              {/* Waterlines in plan view would be rendered here */}
+              {/* Render waterlines in plan view (XY projection) */}
+              {visibility.waterlines &&
+                waterlines.map((wl) => (
+                  <g key={`plan-wl-${wl.waterlineIndex}`}>
+                    {/* Starboard side */}
+                    <path
+                      d={generateWaterlinePathPlan(wl, 650, 300, "starboard")}
+                      stroke={getColor(wl.waterlineIndex)}
+                      strokeWidth={1.5}
+                      fill="none"
+                      opacity={0.8}
+                    />
+                    {/* Port side (mirrored) */}
+                    <path
+                      d={generateWaterlinePathPlan(wl, 650, 300, "port")}
+                      stroke={getColor(wl.waterlineIndex)}
+                      strokeWidth={1.5}
+                      fill="none"
+                      opacity={0.8}
+                      strokeDasharray="4,4"
+                    />
+                  </g>
+                ))}
               {visibility.diagonals && diagonals && (
                 <DiagonalsView
                   diagonals={diagonals.diagonals}
