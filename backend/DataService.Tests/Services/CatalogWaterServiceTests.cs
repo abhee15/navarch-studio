@@ -160,14 +160,14 @@ public class CatalogWaterServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetWaterPropertiesAsync_OutOfRange_ThrowsArgumentException()
+    public async Task GetWaterPropertiesAsync_OutOfRange_ThrowsInvalidOperationException()
     {
         // Arrange
-        var temperatureC = 35m; // Above max 30°C
+        var temperatureC = 35m; // Above max 30°C - no anchor points available for Fresh at 35°C
         var salinityPSU = 0m;
 
         // Act & Assert
-        // Service throws InvalidOperationException when anchor points are missing
+        // Service throws InvalidOperationException when anchor points are missing for interpolation
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await _service.GetWaterPropertiesAsync(temperatureC, salinityPSU));
     }
