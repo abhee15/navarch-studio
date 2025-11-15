@@ -55,6 +55,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
       );
 
       // Create station labels (AP, 1, 2, ..., ⚓, ..., FP)
+      const actualStationCount = geometryData.stations.length;
       const labels = geometryData.stations.map((_, idx) => {
         if (idx === 0) return "AP";
         if (idx === Math.floor(actualStationCount / 2)) return "⚓︎";
