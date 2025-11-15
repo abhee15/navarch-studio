@@ -181,7 +181,6 @@ public class HullGeometryGeneratorServiceTests
     [InlineData("tanker", 200.0, 32.0, 12.0, 0.80, 0.82, 0.99, 0.87, 2.0, "tanker")]
     [InlineData("container", 280.0, 44.0, 14.0, 0.65, 0.68, 0.98, 0.80, -1.5, "container")]
     [InlineData("bulk", 250.0, 40.0, 15.0, 0.75, 0.78, 0.99, 0.85, 1.0, "bulk_carrier")]
-    [InlineData("product_carrier", 185.0, 28.0, 12.87, 0.80, 0.82, 0.99, 0.87, 2.08, "product_carrier", Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
     public async Task GenerateOffsetsFromCandidate_ForVesselType_ProducesValidGeometry(
         string hullFamily,
         double lpp,
@@ -234,6 +233,53 @@ public class HullGeometryGeneratorServiceTests
             {
                 halfBreadth.Should().BeGreaterThanOrEqualTo(0m);
                 halfBreadth.Should().BeLessThanOrEqualTo((decimal)beam / 2m);
+            }
+        }
+    }
+
+    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    public async Task GenerateOffsetsFromCandidate_ForProductCarrier_ProducesValidGeometry()
+    {
+        // Arrange - Product Carrier with Cb=0.80 (requires parent hull data)
+        var candidate = new SolverCandidate(
+            HullFamily: "product_carrier",
+            LppM: 185m,
+            LwlM: 190m,
+            LoaM: 195m,
+            BeamM: 28m,
+            DraftM: 12.87m,
+            DepthM: 16.4m,
+            Cb: 0.80m,
+            Cp: 0.82m,
+            Cwp: 0.87m,
+            Cm: 0.99m,
+            DisplacementT: 50000m,
+            Fn: 0.20m,
+            LwlOverLambda: null,
+            KbM: 6.0m,
+            LcbPctLpp: 2.08m,
+            GmEstM: 1.5m,
+            EhpKw: 5000m,
+            ShpKw: 6000m,
+            Score: 0.85m,
+            Flags: new List<string>());
+
+        // Act - Pass vessel type to test parent hull selection
+        var offsets = await _service.GenerateOffsetsFromCandidateAsync(candidate, vesselType: "product_carrier");
+
+        // Assert
+        offsets.Should().NotBeNull();
+        offsets!.Stations.Should().NotBeEmpty();
+        offsets.Waterlines.Should().NotBeEmpty();
+        offsets.Offsets.Should().NotBeEmpty();
+
+        // Verify offsets are valid (non-negative, within beam)
+        foreach (var stationOffsets in offsets.Offsets)
+        {
+            foreach (var halfBreadth in stationOffsets)
+            {
+                halfBreadth.Should().BeGreaterThanOrEqualTo(0m);
+                halfBreadth.Should().BeLessThanOrEqualTo(28m / 2m);
             }
         }
     }
