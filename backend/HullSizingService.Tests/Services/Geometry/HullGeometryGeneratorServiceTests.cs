@@ -241,7 +241,7 @@ public class HullGeometryGeneratorServiceTests
         }
     }
 
-    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    [Fact]
     public async Task GenerateOffsetsFromCandidate_ForProductCarrier_ProducesValidGeometry()
     {
         // Arrange - Product Carrier with Cb=0.80 (requires parent hull data)
@@ -288,7 +288,7 @@ public class HullGeometryGeneratorServiceTests
         }
     }
 
-    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    [Fact]
     public async Task GenerateOffsetsFromCandidate_WithProductCarrierVesselType_UsesParentHullGenerator()
     {
         // Arrange - Product Carrier with Cb=0.80 should use parent hull if available

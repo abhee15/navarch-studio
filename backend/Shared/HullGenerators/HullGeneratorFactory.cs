@@ -90,9 +90,19 @@ public class HullGeneratorFactory
     {
         if (preferParentHull && ParentHullLoader.HasParentHull(registryType, cb))
         {
+            _logger?.LogInformation(
+                "Using parent hull generator for {VesselType}, Cb={Cb}",
+                registryType ?? "unknown", cb);
+
+            // Use vessel-type-specific generator if available, otherwise generic parent hull generator
             return CreateVesselTypeSpecificGenerator(registryType)
                 ?? new ParentHullHullGenerator(_parentHullLogger, registryType);
         }
+
+        // Fallback to parametric
+        _logger?.LogInformation(
+            "Parent hull not available for {VesselType}, Cb={Cb}. Using parametric generator.",
+            registryType ?? "unknown", cb);
 
         return new FormCoefficientHullGenerator();
     }

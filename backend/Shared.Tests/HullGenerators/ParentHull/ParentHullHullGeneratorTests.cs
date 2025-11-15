@@ -9,25 +9,9 @@ namespace Shared.Tests.HullGenerators.ParentHull;
 /// </summary>
 public class ParentHullHullGeneratorTests
 {
-    private static bool HasDataFiles()
-    {
-        try
-        {
-            ParentHullLoader.HasParentHull("product_carrier", 0.80m);
-            return true;
-        }
-        catch (FileNotFoundException)
-        {
-            return false;
-        }
-    }
-
-    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    [Fact]
     public void Generate_WithProductCarrierCb080_GeneratesValidGeometry()
     {
-        if (!HasDataFiles())
-            return; // Skip if data files not available
-
         // Arrange - Product Carrier reference dimensions
         var dims = new HullDimensions(185m, 28m, 12.87m, 2.08m);
         var generator = new ParentHullHullGenerator();

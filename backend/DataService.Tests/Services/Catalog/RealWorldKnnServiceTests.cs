@@ -29,14 +29,42 @@ public class RealWorldKnnServiceTests : IDisposable
         _loggerMock = new Mock<ILogger<RealWorldKnnService>>();
         _vesselTypeMapperMock = new Mock<IVesselTypeMapper>();
 
-        // Set up default mock behavior: return catalog type as-is (identity mapping)
+        // Set up mock behavior to match VesselTypeMapper implementation
+        // Return empty list for null/empty input
         _vesselTypeMapperMock
-            .Setup(m => m.MapToCatalogTypes(It.IsAny<string>()))
-            .Returns<string>(type => new List<string> { type ?? string.Empty });
+            .Setup(m => m.MapToCatalogTypes(It.Is<string>(s => string.IsNullOrWhiteSpace(s))))
+            .Returns(new List<string>());
+
+        // Return proper mappings for known vessel types
+        _vesselTypeMapperMock
+            .Setup(m => m.MapToCatalogTypes("Container"))
+            .Returns(new List<string> { "Container", "Container ship", "Container vessel" });
+
+        _vesselTypeMapperMock
+            .Setup(m => m.MapToCatalogTypes("Tanker"))
+            .Returns(new List<string> { "Tanker", "Crude oil tanker", "Product tanker", "Oil tanker", "Tank ship" });
+
+        _vesselTypeMapperMock
+            .Setup(m => m.MapToCatalogTypes("Naval combatant"))
+            .Returns(new List<string> { "Naval combatant", "Warship", "Military", "Naval vessel", "Combatant" });
+
+        // For other types, return identity mapping (type as-is)
+        _vesselTypeMapperMock
+            .Setup(m => m.MapToCatalogTypes(It.Is<string>(s => !string.IsNullOrWhiteSpace(s))))
+            .Returns<string>(type => new List<string> { type! });
 
         _vesselTypeMapperMock
             .Setup(m => m.NormalizeVesselType(It.IsAny<string>()))
-            .Returns<string>(type => (type ?? string.Empty).ToLowerInvariant().Replace(" ", "").Replace("_", ""));
+            .Returns<string>(type =>
+            {
+                if (string.IsNullOrWhiteSpace(type))
+                    return string.Empty;
+                return type.ToLowerInvariant().Replace(" ", string.Empty, StringComparison.Ordinal)
+                    .Replace("_", string.Empty, StringComparison.Ordinal)
+                    .Replace("-", string.Empty, StringComparison.Ordinal)
+                    .Replace(".", string.Empty, StringComparison.Ordinal)
+                    .Trim();
+            });
 
         _service = new RealWorldKnnService(_context, _cache, _vesselTypeMapperMock.Object, _loggerMock.Object);
 
@@ -127,7 +155,7 @@ public class RealWorldKnnServiceTests : IDisposable
         _context.SaveChanges();
     }
 
-    [Fact(Skip = "TODO: Fix IVesselTypeMapper mock setup - MapToCatalogTypes returns null causing ArgumentNullException. Will fix after dev build is up.")]
+    [Fact]
     public async Task FindSimilarVesselsAsync_ContainerMission_ReturnsContainers()
     {
         // Arrange
@@ -150,7 +178,7 @@ public class RealWorldKnnServiceTests : IDisposable
         results.First().SimilarityScore.Should().BeGreaterThan(0.5);  // Reasonable match
     }
 
-    [Fact(Skip = "TODO: Fix IVesselTypeMapper mock setup - MapToCatalogTypes returns null causing ArgumentNullException. Will fix after dev build is up.")]
+    [Fact]
     public async Task FindSimilarVesselsAsync_OrdersByProximity()
     {
         // Arrange - target close to KCS
@@ -172,7 +200,7 @@ public class RealWorldKnnServiceTests : IDisposable
         results.First().SimilarityScore.Should().BeGreaterThan(0.9);  // Very similar
     }
 
-    [Fact(Skip = "TODO: Fix IVesselTypeMapper mock setup - MapToCatalogTypes returns null causing ArgumentNullException. Will fix after dev build is up.")]
+    [Fact]
     public async Task FindSimilarVesselsAsync_FewMatches_FallbackToAllTypes()
     {
         // Arrange - only 1 naval combatant in test data
@@ -194,7 +222,7 @@ public class RealWorldKnnServiceTests : IDisposable
         results.Count.Should().BeGreaterThan(1);
     }
 
-    [Fact(Skip = "TODO: Fix IVesselTypeMapper mock setup - MapToCatalogTypes returns null causing ArgumentNullException. Will fix after dev build is up.")]
+    [Fact]
     public async Task FindSimilarVesselsAsync_CachesResults()
     {
         // Arrange
@@ -238,7 +266,7 @@ public class RealWorldKnnServiceTests : IDisposable
         results.Should().BeEmpty();
     }
 
-    [Fact(Skip = "TODO: Fix IVesselTypeMapper mock setup - MapToCatalogTypes returns null causing ArgumentNullException. Will fix after dev build is up.")]
+    [Fact]
     public async Task FindSimilarVesselsAsync_ReturnsTopK()
     {
         // Arrange

@@ -1,7 +1,3 @@
-using System.Globalization;
-using CsvHelper;
-using CsvHelper.Configuration;
-
 namespace HullSizingService.Tests.TestData;
 
 /// <summary>
@@ -17,37 +13,25 @@ public record KCSResistanceRecord
 /// <summary>
 /// KCS resistance reference data for validation
 /// Used for validating Holtrop-Mennen resistance calculations
+/// Now uses constants instead of CSV files for better maintainability
 /// </summary>
 public static class KCSResistanceReference
 {
     /// <summary>
-    /// Loads KCS resistance reference data from CSV
-    /// CSV format: speed_mps, RT_ref_N, source
+    /// Loads KCS resistance reference data from constants
     /// </summary>
-    public static List<KCSResistanceRecord> LoadResistanceData(string csvPath)
+    /// <param name="csvPath">Ignored for backward compatibility - data now comes from constants</param>
+    public static List<KCSResistanceRecord> LoadResistanceData(string? csvPath = null)
     {
-        if (!File.Exists(csvPath))
-        {
-            throw new FileNotFoundException($"KCS resistance reference CSV not found at {csvPath}");
-        }
-
-        using var reader = new StreamReader(csvPath);
-        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = true,
-            TrimOptions = TrimOptions.Trim,
-            IgnoreBlankLines = true
-        });
-
-        csv.Context.RegisterClassMap<KCSResistanceRecordMap>();
-
-        var records = csv.GetRecords<KCSResistanceRecord>().ToList();
-        return records;
+        // Use constants instead of CSV file
+        return KCSResistanceReferenceConstants.GetResistanceData();
     }
 
     /// <summary>
-    /// Gets the default CSV path (in TestData/validation/)
+    /// Gets the default CSV path (deprecated - data now comes from constants)
+    /// Kept for backward compatibility
     /// </summary>
+    [Obsolete("Data now comes from constants. Use LoadResistanceData() without parameters.")]
     public static string GetResistanceReferencePath()
     {
         var basePath = Path.Combine(
@@ -67,16 +51,5 @@ public static class KCSResistanceReference
         }
 
         return basePath;
-    }
-}
-
-// CSV Class Map
-internal sealed class KCSResistanceRecordMap : ClassMap<KCSResistanceRecord>
-{
-    public KCSResistanceRecordMap()
-    {
-        Map(m => m.Speed_mps).Name("speed_mps");
-        Map(m => m.RT_ref_N).Name("RT_ref_N");
-        Map(m => m.Source).Name("source");
     }
 }

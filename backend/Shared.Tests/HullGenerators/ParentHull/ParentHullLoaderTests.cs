@@ -7,25 +7,9 @@ namespace Shared.Tests.HullGenerators.ParentHull;
 /// </summary>
 public class ParentHullLoaderTests
 {
-    private static bool HasDataFiles()
-    {
-        try
-        {
-            ParentHullLoader.HasParentHull("product_carrier", 0.80m);
-            return true;
-        }
-        catch (FileNotFoundException)
-        {
-            return false;
-        }
-    }
-
-    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    [Fact]
     public void HasParentHull_WithProductCarrierCb080_ReturnsTrue()
     {
-        if (!HasDataFiles())
-            return; // Skip if data files not available
-
         // Act
         var hasHull = ParentHullLoader.HasParentHull("product_carrier", 0.80m);
 
@@ -33,12 +17,9 @@ public class ParentHullLoaderTests
         hasHull.Should().BeTrue();
     }
 
-    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    [Fact]
     public void HasParentHull_WithUnknownVesselType_ReturnsFalse()
     {
-        if (!HasDataFiles())
-            return; // Skip if data files not available
-
         // Act
         var hasHull = ParentHullLoader.HasParentHull("unknown_type", 0.80m);
 
@@ -46,12 +27,9 @@ public class ParentHullLoaderTests
         hasHull.Should().BeFalse();
     }
 
-    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    [Fact]
     public void LoadParentHull_WithProductCarrierCb080_LoadsSuccessfully()
     {
-        if (!HasDataFiles())
-            return; // Skip if data files not available
-
         // Arrange
         var loader = new ParentHullLoader();
 
@@ -69,12 +47,9 @@ public class ParentHullLoaderTests
         parentHull.Offsets[0].Count.Should().Be(parentHull.Waterlines.Count);
     }
 
-    [Fact(Skip = "Requires parent hull CSV data files - skipped in CI/CD if files not available")]
+    [Fact]
     public void LoadParentHull_WithUnknownVesselType_ThrowsException()
     {
-        if (!HasDataFiles())
-            return; // Skip if data files not available
-
         // Arrange
         var loader = new ParentHullLoader();
 

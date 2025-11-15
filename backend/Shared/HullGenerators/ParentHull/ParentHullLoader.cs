@@ -1,11 +1,12 @@
 using System.Globalization;
 using Microsoft.Extensions.Logging;
+using Shared.Constants;
 using Shared.HullGenerators.Models;
 
 namespace Shared.HullGenerators.ParentHull;
 
 /// <summary>
-/// Loads parent hull data from CSV registry and offset tables
+/// Loads parent hull data from constants (converted from CSV registry and offset tables)
 /// Caches loaded hulls in memory for performance
 /// </summary>
 public class ParentHullLoader
@@ -21,25 +22,16 @@ public class ParentHullLoader
 
     /// <summary>
     /// Check if a parent hull is available for the given vessel type and Cb
-    /// Returns false if registry file not found (graceful fallback)
     /// </summary>
     public static bool HasParentHull(string? vesselType, decimal cb)
     {
         if (string.IsNullOrWhiteSpace(vesselType))
             return false;
 
-        try
-        {
-            var registry = LoadRegistry();
-            return registry.Any(h =>
-                string.Equals(h.VesselType, vesselType, StringComparison.OrdinalIgnoreCase) &&
-                Math.Abs(h.Cb - cb) < 0.01m); // Within 0.01 tolerance
-        }
-        catch (FileNotFoundException)
-        {
-            // Registry file not found - return false to allow fallback to parametric generator
-            return false;
-        }
+        var registry = LoadRegistry();
+        return registry.Any(h =>
+            string.Equals(h.VesselType, vesselType, StringComparison.OrdinalIgnoreCase) &&
+            Math.Abs(h.Cb - cb) < 0.01m); // Within 0.01 tolerance
     }
 
     /// <summary>
@@ -96,49 +88,26 @@ public class ParentHullLoader
     }
 
     /// <summary>
-    /// Load parent hull registry from CSV
+    /// Load parent hull registry from constants
     /// </summary>
     private static List<ParentHullData> LoadRegistry()
     {
-        var registryPath = FindDataFile("Data/BSRA/parent_hulls_registry.csv");
+        var entries = ParentHullRegistryConstants.GetAllEntries();
 
-        if (!File.Exists(registryPath))
+        return entries.Select(entry => new ParentHullData
         {
-            throw new FileNotFoundException(
-                $"Parent hull registry not found. Searched: {registryPath}");
-        }
-
-        var registry = new List<ParentHullData>();
-        var lines = File.ReadAllLines(registryPath);
-
-        // Skip header
-        for (int i = 1; i < lines.Length; i++)
-        {
-            var line = lines[i].Trim();
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            var parts = line.Split(',');
-            if (parts.Length < 10)
-                continue;
-
-            registry.Add(new ParentHullData
-            {
-                VesselType = parts[0].Trim(),
-                Cb = decimal.Parse(parts[1].Trim(), CultureInfo.InvariantCulture),
-                Lbp = decimal.Parse(parts[2].Trim(), CultureInfo.InvariantCulture),
-                B = decimal.Parse(parts[3].Trim(), CultureInfo.InvariantCulture),
-                D = decimal.Parse(parts[4].Trim(), CultureInfo.InvariantCulture),
-                T = decimal.Parse(parts[5].Trim(), CultureInfo.InvariantCulture),
-                Cm = decimal.Parse(parts[6].Trim(), CultureInfo.InvariantCulture),
-                Cw = decimal.Parse(parts[7].Trim(), CultureInfo.InvariantCulture),
-                LcbPercent = decimal.Parse(parts[8].Trim(), CultureInfo.InvariantCulture),
-                Source = parts[9].Trim(),
-                Notes = parts.Length > 10 ? parts[10].Trim() : null
-            });
-        }
-
-        return registry;
+            VesselType = entry.VesselType,
+            Cb = entry.Cb,
+            Lbp = entry.Lbp,
+            B = entry.B,
+            D = entry.D,
+            T = entry.T,
+            Cm = entry.Cm,
+            Cw = entry.Cw,
+            LcbPercent = entry.LcbPercent,
+            Source = entry.Source,
+            Notes = entry.Notes
+        }).ToList();
     }
 
     /// <summary>
@@ -223,67 +192,21 @@ public class ParentHullLoader
     }
 
     /// <summary>
-    /// Load offset table from CSV
+    /// Load offset table from constants
     /// </summary>
     private static (List<decimal> Stations, List<decimal> Waterlines, List<List<decimal>> Offsets) LoadOffsetTable(
         string vesselType, decimal cb)
     {
-        // Generate filename: e.g., "product_carrier_cb080_offsets.csv" for Cb=0.80
-        var cbInt = (int)(cb * 100);
-        var fileName = $"{vesselType}_cb{cbInt:D3}_offsets.csv";
-        var offsetPath = FindDataFile($"Data/BSRA/parent_hulls/{fileName}");
+        var offsetData = ParentHullOffsetConstants.GetOffsets(vesselType, cb);
 
-        if (!File.Exists(offsetPath))
+        if (offsetData == null)
         {
+            var cbInt = (int)(cb * 100);
             throw new FileNotFoundException(
-                $"Parent hull offset table not found: {fileName}. Searched: {offsetPath}");
+                $"Parent hull offset table not found for vessel type '{vesselType}' with Cb={cb} (cb{cbInt:D3}). " +
+                "Only product_carrier with Cb=0.80 is currently supported in constants.");
         }
 
-        var lines = File.ReadAllLines(offsetPath);
-        if (lines.Length < 2)
-            throw new InvalidDataException("Offset table must have at least header and one data row");
-
-        // Parse header to get waterline names
-        var header = lines[0].Split(',');
-        var waterlineNames = new List<string>();
-        for (int i = 1; i < header.Length; i++) // Skip "station" column
-        {
-            waterlineNames.Add(header[i].Trim());
-        }
-
-        // Parse waterline heights from names (e.g., "wl_1" -> 1.0, "wl_16.4" -> 16.4)
-        var waterlines = waterlineNames.Select(name =>
-        {
-            var wlPart = name.Replace("wl_", "");
-            return decimal.Parse(wlPart, CultureInfo.InvariantCulture);
-        }).ToList();
-
-        // Parse data rows
-        // Stations in CSV are normalized 0-10 (BSRA standard), not actual meters
-        var stations = new List<decimal>();
-        var offsets = new List<List<decimal>>();
-
-        for (int i = 1; i < lines.Length; i++)
-        {
-            var line = lines[i].Trim();
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            var parts = line.Split(',');
-            if (parts.Length < 2)
-                continue;
-
-            // Station is normalized 0-10 (BSRA standard)
-            stations.Add(decimal.Parse(parts[0].Trim(), CultureInfo.InvariantCulture));
-
-            var rowOffsets = new List<decimal>();
-            for (int j = 1; j < parts.Length; j++)
-            {
-                rowOffsets.Add(decimal.Parse(parts[j].Trim(), CultureInfo.InvariantCulture));
-            }
-            offsets.Add(rowOffsets);
-        }
-
-        return (stations, waterlines, offsets);
+        return offsetData.Value;
     }
 }
