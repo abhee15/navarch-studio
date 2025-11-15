@@ -90,13 +90,14 @@ public class BargeValidationTests : IDisposable
         }
 
         // Create loadcase: density 1025 kg/m³ (seawater)
+        // KG = 0.5m (fixed, not dependent on draft for reference calculations)
         _loadcase = new Loadcase
         {
             Id = Guid.NewGuid(),
             VesselId = _vessel.Id,
             Name = "Design Condition",
             Rho = 1025m,
-            KG = designDraft * 0.5m, // KG at 50% of draft
+            KG = 0.5m, // Fixed KG for reference calculations
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

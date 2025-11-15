@@ -538,7 +538,10 @@ export class SizingStore {
           } else if ("message" in errorData && typeof errorData.message === "string") {
             message = errorData.message;
           } else if ("details" in errorData) {
-            const errorStr = "error" in errorData && typeof errorData.error === "string" ? errorData.error : "Error";
+            const errorStr =
+              "error" in errorData && typeof errorData.error === "string"
+                ? errorData.error
+                : "Error";
             message = `${errorStr}: ${String(errorData.details)}`;
           }
 

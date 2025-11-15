@@ -429,137 +429,152 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
 
             {/* Section curves with animations */}
             {visibility.sections &&
-              sections.map((section: { station: number; points: [number, number][]; isAft: boolean; hasBulb: boolean }) => {
-                if (section.station === 5) return null;
-                const isHovered = hoveredSection === section.station;
-                const isEndStation = section.station === 0 || section.station === 10;
-                const color = isEndStation ? "#3b82f6" : isHovered ? "#60a5fa" : "#93c5fd";
-                const strokeWidth = isEndStation ? 2.5 : isHovered ? 2 : 1.2;
-                const dimmed = hoveredLegendItem && hoveredLegendItem !== "sections";
+              sections.map(
+                (section: {
+                  station: number;
+                  points: [number, number][];
+                  isAft: boolean;
+                  hasBulb: boolean;
+                }) => {
+                  if (section.station === 5) return null;
+                  const isHovered = hoveredSection === section.station;
+                  const isEndStation = section.station === 0 || section.station === 10;
+                  const color = isEndStation ? "#3b82f6" : isHovered ? "#60a5fa" : "#93c5fd";
+                  const strokeWidth = isEndStation ? 2.5 : isHovered ? 2 : 1.2;
+                  const dimmed = hoveredLegendItem && hoveredLegendItem !== "sections";
 
-                return (
-                  <g
-                    key={section.station}
-                    onMouseEnter={() => setHoveredSection(section.station)}
-                    onMouseLeave={() => setHoveredSection(null)}
-                    style={{
-                      opacity: dimmed ? 0.3 : 0,
-                      animation: `fadeIn 0.3s ease-in forwards ${section.station * 0.05}s`,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {/* Main hull section */}
-                    {section.points.length > 1 && (
-                      <path
-                        d={generateSectionPath(section.points as [number, number][], section.isAft)}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth={strokeWidth}
-                        strokeLinecap="round"
-                        filter={isEndStation ? "url(#sectionShadow)" : undefined}
-                        style={{ transition: "all 0.3s ease" }}
-                      />
-                    )}
-
-                    {/* Bulb indicator (if present) - overlay on main section */}
-                    {section.hasBulb && (
-                      <circle
-                        cx={
-                          toSVG(
-                            section.points[section.points.length - 1]?.[0] || 0,
-                            section.points[section.points.length - 1]?.[1] || -draft,
+                  return (
+                    <g
+                      key={section.station}
+                      onMouseEnter={() => setHoveredSection(section.station)}
+                      onMouseLeave={() => setHoveredSection(null)}
+                      style={{
+                        opacity: dimmed ? 0.3 : 0,
+                        animation: `fadeIn 0.3s ease-in forwards ${section.station * 0.05}s`,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {/* Main hull section */}
+                      {section.points.length > 1 && (
+                        <path
+                          d={generateSectionPath(
+                            section.points as [number, number][],
                             section.isAft
-                          )[0]
-                        }
-                        cy={
-                          toSVG(
-                            section.points[section.points.length - 1]?.[0] || 0,
-                            section.points[section.points.length - 1]?.[1] || -draft,
-                            section.isAft
-                          )[1]
-                        }
-                        r="4"
-                        fill="#f59e0b"
-                        stroke="#ffffff"
-                        strokeWidth="1.5"
-                        opacity="0.9"
-                        filter="url(#sectionGlow)"
-                      />
-                    )}
-
-                    {section.points.length > 1 && (
-                      <g>
-                        <text
-                          x={toSVG(section.points[0][0], section.points[0][1], section.isAft)[0]}
-                          y={
-                            toSVG(section.points[0][0], section.points[0][1], section.isAft)[1] - 10
-                          }
-                          textAnchor="middle"
-                          className={
-                            isHovered ? "fill-blue-700 font-bold" : "fill-blue-500 font-semibold"
-                          }
-                          style={{
-                            fontSize: isHovered ? "12px" : "10px",
-                            transition: "all 0.2s ease",
-                          }}
-                        >
-                          {section.station}
-                          {section.hasBulb && (
-                            <tspan className="fill-orange-600" style={{ fontSize: "8px" }}>
-                              {" "}
-                              ●
-                            </tspan>
                           )}
-                        </text>
+                          fill="none"
+                          stroke={color}
+                          strokeWidth={strokeWidth}
+                          strokeLinecap="round"
+                          filter={isEndStation ? "url(#sectionShadow)" : undefined}
+                          style={{ transition: "all 0.3s ease" }}
+                        />
+                      )}
 
-                        {isHovered && (
-                          <g>
-                            <rect
-                              x={
-                                toSVG(
-                                  section.points[0][0],
-                                  section.points[0][1],
-                                  section.isAft
-                                )[0] - 50
-                              }
-                              y={
-                                toSVG(
-                                  section.points[0][0],
-                                  section.points[0][1],
-                                  section.isAft
-                                )[1] - 30
-                              }
-                              width={section.hasBulb ? "100" : "80"}
-                              height="16"
-                              rx="3"
-                              fill="#1f2937"
-                              opacity="0.95"
-                            />
-                            <text
-                              x={
-                                toSVG(section.points[0][0], section.points[0][1], section.isAft)[0]
-                              }
-                              y={
-                                toSVG(
-                                  section.points[0][0],
-                                  section.points[0][1],
-                                  section.isAft
-                                )[1] - 19
-                              }
-                              textAnchor="middle"
-                              fill="#ffffff"
-                              style={{ fontSize: "9px" }}
-                            >
-                              Station {section.station} · {section.isAft ? "AFT" : "FWD"}
-                              {section.hasBulb && " · Bulb"}
-                            </text>
-                          </g>
-                        )}
-                      </g>
-                    )}
-                  </g>
-                );
-              })}
+                      {/* Bulb indicator (if present) - overlay on main section */}
+                      {section.hasBulb && (
+                        <circle
+                          cx={
+                            toSVG(
+                              section.points[section.points.length - 1]?.[0] || 0,
+                              section.points[section.points.length - 1]?.[1] || -draft,
+                              section.isAft
+                            )[0]
+                          }
+                          cy={
+                            toSVG(
+                              section.points[section.points.length - 1]?.[0] || 0,
+                              section.points[section.points.length - 1]?.[1] || -draft,
+                              section.isAft
+                            )[1]
+                          }
+                          r="4"
+                          fill="#f59e0b"
+                          stroke="#ffffff"
+                          strokeWidth="1.5"
+                          opacity="0.9"
+                          filter="url(#sectionGlow)"
+                        />
+                      )}
+
+                      {section.points.length > 1 && (
+                        <g>
+                          <text
+                            x={toSVG(section.points[0][0], section.points[0][1], section.isAft)[0]}
+                            y={
+                              toSVG(section.points[0][0], section.points[0][1], section.isAft)[1] -
+                              10
+                            }
+                            textAnchor="middle"
+                            className={
+                              isHovered ? "fill-blue-700 font-bold" : "fill-blue-500 font-semibold"
+                            }
+                            style={{
+                              fontSize: isHovered ? "12px" : "10px",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            {section.station}
+                            {section.hasBulb && (
+                              <tspan className="fill-orange-600" style={{ fontSize: "8px" }}>
+                                {" "}
+                                ●
+                              </tspan>
+                            )}
+                          </text>
+
+                          {isHovered && (
+                            <g>
+                              <rect
+                                x={
+                                  toSVG(
+                                    section.points[0][0],
+                                    section.points[0][1],
+                                    section.isAft
+                                  )[0] - 50
+                                }
+                                y={
+                                  toSVG(
+                                    section.points[0][0],
+                                    section.points[0][1],
+                                    section.isAft
+                                  )[1] - 30
+                                }
+                                width={section.hasBulb ? "100" : "80"}
+                                height="16"
+                                rx="3"
+                                fill="#1f2937"
+                                opacity="0.95"
+                              />
+                              <text
+                                x={
+                                  toSVG(
+                                    section.points[0][0],
+                                    section.points[0][1],
+                                    section.isAft
+                                  )[0]
+                                }
+                                y={
+                                  toSVG(
+                                    section.points[0][0],
+                                    section.points[0][1],
+                                    section.isAft
+                                  )[1] - 19
+                                }
+                                textAnchor="middle"
+                                fill="#ffffff"
+                                style={{ fontSize: "9px" }}
+                              >
+                                Station {section.station} · {section.isAft ? "AFT" : "FWD"}
+                                {section.hasBulb && " · Bulb"}
+                              </text>
+                            </g>
+                          )}
+                        </g>
+                      )}
+                    </g>
+                  );
+                }
+              )}
 
             {/* Midship - special highlighting */}
             {visibility.midship && sections.find((s: { station: number }) => s.station === 5) && (
@@ -572,7 +587,10 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               >
                 <path
                   d={generateSectionPath(
-                    sections.find((s: { station: number }) => s.station === 5)!.points as [number, number][],
+                    sections.find((s: { station: number }) => s.station === 5)!.points as [
+                      number,
+                      number,
+                    ][],
                     false
                   )}
                   fill="none"
@@ -583,7 +601,10 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                 />
                 <path
                   d={generateSectionPath(
-                    sections.find((s: { station: number }) => s.station === 5)!.points as [number, number][],
+                    sections.find((s: { station: number }) => s.station === 5)!.points as [
+                      number,
+                      number,
+                    ][],
                     true
                   )}
                   fill="none"

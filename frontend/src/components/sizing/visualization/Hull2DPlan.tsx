@@ -100,7 +100,9 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
             console.log("[Hull2DPlan] Extracted waterlines from OffsetsGrid geometry", {
               waterlineCount: result.length,
-              designWaterlineIndex: result.findIndex((wl: { isDesignWaterline: boolean }) => wl.isDesignWaterline),
+              designWaterlineIndex: result.findIndex(
+                (wl: { isDesignWaterline: boolean }) => wl.isDesignWaterline
+              ),
             });
             return result;
           }
@@ -617,67 +619,72 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             {/* Waterlines with gradient strokes and animations */}
             {showWaterlines &&
               visibility.waterlines &&
-              waterlines.map((wl: { points: [number, number][]; isDesignWaterline: boolean; depth: number }, idx: number) => {
-                const paths = waterlinePath(wl.points);
-                const dimmed = hoveredLegendItem && hoveredLegendItem !== "waterlines";
-                const isHovered = hoveredWaterline === idx;
-                const baseColor = wl.isDesignWaterline ? "#3b82f6" : "#60a5fa";
-                const hoverColor = wl.isDesignWaterline ? "#2563eb" : "#3b82f6";
-                const strokeWidth = wl.isDesignWaterline ? 2.5 : isHovered ? 2 : 1.2;
+              waterlines.map(
+                (
+                  wl: { points: [number, number][]; isDesignWaterline: boolean; depth: number },
+                  idx: number
+                ) => {
+                  const paths = waterlinePath(wl.points);
+                  const dimmed = hoveredLegendItem && hoveredLegendItem !== "waterlines";
+                  const isHovered = hoveredWaterline === idx;
+                  const baseColor = wl.isDesignWaterline ? "#3b82f6" : "#60a5fa";
+                  const hoverColor = wl.isDesignWaterline ? "#2563eb" : "#3b82f6";
+                  const strokeWidth = wl.isDesignWaterline ? 2.5 : isHovered ? 2 : 1.2;
 
-                return (
-                  <g
-                    key={idx}
-                    onMouseEnter={() => setHoveredWaterline(idx)}
-                    onMouseLeave={() => setHoveredWaterline(null)}
-                    style={{
-                      opacity: dimmed ? 0.3 : 0,
-                      animation: `fadeIn 0.4s ease-in forwards ${idx * 0.08}s`,
-                      transition: "opacity 0.3s ease",
-                    }}
-                  >
-                    {/* Closed waterline path (naval architecture standard) */}
-                    <path
-                      d={paths.closed}
-                      fill="none"
-                      stroke={isHovered ? hoverColor : baseColor}
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      filter={wl.isDesignWaterline ? "url(#dropShadow)" : undefined}
+                  return (
+                    <g
+                      key={idx}
+                      onMouseEnter={() => setHoveredWaterline(idx)}
+                      onMouseLeave={() => setHoveredWaterline(null)}
                       style={{
-                        transition: "all 0.3s ease",
-                        cursor: "pointer",
+                        opacity: dimmed ? 0.3 : 0,
+                        animation: `fadeIn 0.4s ease-in forwards ${idx * 0.08}s`,
+                        transition: "opacity 0.3s ease",
                       }}
-                    />
+                    >
+                      {/* Closed waterline path (naval architecture standard) */}
+                      <path
+                        d={paths.closed}
+                        fill="none"
+                        stroke={isHovered ? hoverColor : baseColor}
+                        strokeWidth={strokeWidth}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        filter={wl.isDesignWaterline ? "url(#dropShadow)" : undefined}
+                        style={{
+                          transition: "all 0.3s ease",
+                          cursor: "pointer",
+                        }}
+                      />
 
-                    {/* Label with background */}
-                    {(idx % 2 === 0 || isHovered) && (
-                      <g>
-                        <rect
-                          x={toSVG(lpp / 2 + 6, wl.points[wl.points.length - 1][1])[0]}
-                          y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1] - 10}
-                          width="55"
-                          height="14"
-                          rx="2"
-                          fill={isHovered ? "#3b82f6" : "#ffffff"}
-                          opacity={isHovered ? 0.95 : 0.85}
-                          stroke={baseColor}
-                          strokeWidth="0.5"
-                        />
-                        <text
-                          x={toSVG(lpp / 2 + 33, 0)[0]}
-                          y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1] - 1}
-                          className={isHovered ? "fill-white font-semibold" : "fill-blue-600"}
-                          style={{ fontSize: "9px" }}
-                        >
-                          WL{idx} {wl.depth.toFixed(1)}m
-                        </text>
-                      </g>
-                    )}
-                  </g>
-                );
-              })}
+                      {/* Label with background */}
+                      {(idx % 2 === 0 || isHovered) && (
+                        <g>
+                          <rect
+                            x={toSVG(lpp / 2 + 6, wl.points[wl.points.length - 1][1])[0]}
+                            y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1] - 10}
+                            width="55"
+                            height="14"
+                            rx="2"
+                            fill={isHovered ? "#3b82f6" : "#ffffff"}
+                            opacity={isHovered ? 0.95 : 0.85}
+                            stroke={baseColor}
+                            strokeWidth="0.5"
+                          />
+                          <text
+                            x={toSVG(lpp / 2 + 33, 0)[0]}
+                            y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1] - 1}
+                            className={isHovered ? "fill-white font-semibold" : "fill-blue-600"}
+                            style={{ fontSize: "9px" }}
+                          >
+                            WL{idx} {wl.depth.toFixed(1)}m
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  );
+                }
+              )}
 
             {/* Dimensions */}
             {showDimensionsState && (

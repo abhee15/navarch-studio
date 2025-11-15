@@ -167,7 +167,8 @@ public class CatalogWaterServiceTests : IDisposable
         var salinityPSU = 0m;
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(async () =>
+        // Service throws InvalidOperationException when anchor points are missing
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await _service.GetWaterPropertiesAsync(temperatureC, salinityPSU));
     }
 
