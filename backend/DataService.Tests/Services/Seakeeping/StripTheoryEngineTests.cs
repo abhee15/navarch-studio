@@ -32,7 +32,6 @@ public class StripTheoryEngineTests
     {
         // Arrange
         var vesselId = Guid.NewGuid();
-        var draft = 5.0;
         var frequencies = new[] { 0.4, 0.6, 0.8 };
 
         // TODO: Convert to integration test with real in-memory database
