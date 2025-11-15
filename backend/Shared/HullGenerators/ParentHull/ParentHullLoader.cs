@@ -21,16 +21,25 @@ public class ParentHullLoader
 
     /// <summary>
     /// Check if a parent hull is available for the given vessel type and Cb
+    /// Returns false if registry file not found (graceful fallback)
     /// </summary>
     public static bool HasParentHull(string? vesselType, decimal cb)
     {
         if (string.IsNullOrWhiteSpace(vesselType))
             return false;
 
-        var registry = LoadRegistry();
-        return registry.Any(h =>
-            string.Equals(h.VesselType, vesselType, StringComparison.OrdinalIgnoreCase) &&
-            Math.Abs(h.Cb - cb) < 0.01m); // Within 0.01 tolerance
+        try
+        {
+            var registry = LoadRegistry();
+            return registry.Any(h =>
+                string.Equals(h.VesselType, vesselType, StringComparison.OrdinalIgnoreCase) &&
+                Math.Abs(h.Cb - cb) < 0.01m); // Within 0.01 tolerance
+        }
+        catch (FileNotFoundException)
+        {
+            // Registry file not found - return false to allow fallback to parametric generator
+            return false;
+        }
     }
 
     /// <summary>
