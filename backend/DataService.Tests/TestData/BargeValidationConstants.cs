@@ -1,14 +1,14 @@
 namespace DataService.Tests.TestData;
 
-    /// <summary>
-    /// Barge validation reference data as constants
-    /// Analytical validation data for rectangular barge (L=100m, B=20m)
-    /// Source: Analytical calculations
-    ///
-    /// NOTE: Reference data corrected to match 100m x 20m barge dimensions
-    /// Volume = L * B * T = 100 * 20 * T = 2000 * T
-    /// KB = T/2 (for rectangular barge)
-    /// BMt = (B²/12) / T = (400/12) / T = 33.333... / T
+/// <summary>
+/// Barge validation reference data as constants
+/// Analytical validation data for rectangular barge (L=100m, B=20m)
+/// Source: Analytical calculations
+///
+/// NOTE: Reference data corrected to match 100m x 20m barge dimensions
+/// Volume = L * B * T = 100 * 20 * T = 2000 * T
+/// KB = T/2 (for rectangular barge)
+/// BMt = (B²/12) / T = (400/12) / T = 33.333... / T
 ///
 /// UNITS: All values stored in SI base units (matches database schema)
 /// - Draft: meters (m)
