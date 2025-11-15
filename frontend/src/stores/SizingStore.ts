@@ -529,9 +529,9 @@ export class SizingStore {
       // Try to extract specific error message from API response
       let message = "Failed to push to hydrostatics";
 
-      if (isAxiosError(error) && error.response?.data) {
-        const errorData = error.response.data;
-        if (typeof errorData === "object" && errorData !== null) {
+      if (isAxiosError(error)) {
+        const errorData = error.response?.data;
+        if (errorData && typeof errorData === "object" && errorData !== null) {
           // Check for error message in various formats
           if ("error" in errorData && typeof errorData.error === "string") {
             message = errorData.error;
