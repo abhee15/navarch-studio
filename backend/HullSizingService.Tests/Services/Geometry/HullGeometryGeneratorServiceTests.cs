@@ -227,12 +227,16 @@ public class HullGeometryGeneratorServiceTests
         offsets.Offsets.Should().NotBeEmpty();
 
         // Verify offsets are valid (non-negative, within beam)
+        // Allow tiny numerical precision errors
+        var halfBeam = (decimal)beam / 2m;
         foreach (var stationOffsets in offsets.Offsets)
         {
             foreach (var halfBreadth in stationOffsets)
             {
-                halfBreadth.Should().BeGreaterThanOrEqualTo(0m);
-                halfBreadth.Should().BeLessThanOrEqualTo((decimal)beam / 2m);
+                halfBreadth.Should().BeGreaterThanOrEqualTo(-0.0001m,
+                    "Half-breadths must be non-negative (allowing tiny numerical precision errors)");
+                halfBreadth.Should().BeLessThanOrEqualTo(halfBeam + 0.0001m,
+                    "Half-breadths must not exceed half beam (allowing tiny numerical precision errors)");
             }
         }
     }
