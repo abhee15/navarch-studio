@@ -145,8 +145,7 @@ test.describe('Design Workspace Analysis', () => {
     console.log('🔍 Extracting candidate data from results page...');
     const firstCard = page.locator('[data-testid="candidate-card-1"]').first();
 
-    let candidateDataFromResults: Record<string, any> = {};
-    let candidateIdFromResults: string | null = null;
+    let candidateDataFromResults: Record<string, unknown> = {};
     let results3DScreenshot: Buffer | null = null;
 
     if (await firstCard.count() > 0) {
@@ -288,11 +287,11 @@ test.describe('Design Workspace Analysis', () => {
 
     // Extract candidate data from workspace (after opening)
     console.log('🔍 Extracting candidate data from workspace...');
-    let candidateDataFromWorkspace: Record<string, any> = {};
+    let candidateDataFromWorkspace: Record<string, unknown> = {};
 
     try {
       // Extract data from KPI panel or workspace header
-      const workspaceData: Record<string, any> = {};
+      const workspaceData: Record<string, unknown> = {};
 
       // Extract hull family from workspace header
       const headerText = await page.locator('h2, h3').first().textContent().catch(() => '');
@@ -324,7 +323,7 @@ test.describe('Design Workspace Analysis', () => {
 
     // Step 10: Compare candidate data between results page and workspace
     console.log('\n🔗 Step 10: Comparing candidate data (Results vs Workspace)...\n');
-    const dataComparison: Record<string, any> = {};
+    const dataComparison: Record<string, unknown> = {};
 
     // First check: Are we comparing the same candidate?
     console.log('  🔍 Candidate ID check:');
@@ -385,7 +384,7 @@ test.describe('Design Workspace Analysis', () => {
 
     // Step 11: Test Parameter Slider Integration
     console.log('\n🎚️ Step 11: Testing Parameter Slider Integration...\n');
-    const parameterTestResults: Record<string, any> = {};
+    const parameterTestResults: Record<string, unknown> = {};
 
     try {
       // Find parameter sliders
@@ -623,12 +622,13 @@ test.describe('Design Workspace Analysis', () => {
 
     // Continue using the existing inconsistencies array
     // Pass results3DScreenshot to panel analysis scope
-    const analysisResults: Record<string, any> = {
+    const analysisResults: Record<string, unknown> = {
       candidateDataComparison: dataComparison,
       parameterIntegrationTest: parameterTestResults,
     };
 
     // Make results3DScreenshot available in panel analysis scope
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (globalThis as any).results3DScreenshot = results3DScreenshot;
 
     // Panel 1: CompactHUD (KPI Panel)
@@ -790,6 +790,7 @@ test.describe('Design Workspace Analysis', () => {
         }
 
         // Compare screenshots if both exist
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const results3D = (globalThis as any).results3DScreenshot as Buffer | null;
         if (results3D && workspace3DScreenshot) {
           console.log('  🔍 Comparing 3D visualizations...');

@@ -524,7 +524,7 @@ export class SizingStore {
 
     try {
       return await sizingApi.pushToHydrostatics(candidate.id, payload, idempotencyKey);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Try to extract specific error message from API response
       let message = "Failed to push to hydrostatics";
 
