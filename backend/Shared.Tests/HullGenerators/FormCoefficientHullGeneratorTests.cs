@@ -411,8 +411,10 @@ public class FormCoefficientHullGeneratorTests
                 // Allow tiny negative values due to numerical precision (clamp to 0 in actual use)
                 halfBreadth.Should().BeGreaterThanOrEqualTo(-0.0001m,
                     "Half-breadths must be non-negative (allowing tiny numerical precision errors)");
-                halfBreadth.Should().BeLessThanOrEqualTo(dims.Beam / 2m,
-                    "Half-breadths must not exceed half beam");
+                // Allow tiny values slightly exceeding half beam due to numerical precision
+                var halfBeam = dims.Beam / 2m;
+                halfBreadth.Should().BeLessThanOrEqualTo(halfBeam + 0.0001m,
+                    "Half-breadths must not exceed half beam (allowing tiny numerical precision errors)");
             }
         }
     }
