@@ -16,6 +16,7 @@ import type {
 } from "../types/sizing";
 import * as sizingApi from "../services/sizingApi";
 import { extractShipDParameters } from "../utils/shipdParameterExtractor";
+import { isAxiosError } from "axios";
 
 export interface PushToHydroForm {
   vesselName: string;
@@ -528,20 +529,21 @@ export class SizingStore {
       // Try to extract specific error message from API response
       let message = "Failed to push to hydrostatics";
 
-      if (error?.response?.data) {
+      if (isAxiosError(error) && error.response?.data) {
         const errorData = error.response.data;
-        if (typeof errorData === "object") {
+        if (typeof errorData === "object" && errorData !== null) {
           // Check for error message in various formats
-          if (errorData.error) {
+          if ("error" in errorData && typeof errorData.error === "string") {
             message = errorData.error;
-          } else if (errorData.message) {
+          } else if ("message" in errorData && typeof errorData.message === "string") {
             message = errorData.message;
-          } else if (errorData.details) {
-            message = `${errorData.error || "Error"}: ${errorData.details}`;
+          } else if ("details" in errorData) {
+            const errorStr = "error" in errorData && typeof errorData.error === "string" ? errorData.error : "Error";
+            message = `${errorStr}: ${String(errorData.details)}`;
           }
 
           // Add error type if available for better context
-          if (errorData.type) {
+          if ("type" in errorData && typeof errorData.type === "string") {
             message = `[${errorData.type}] ${message}`;
           }
         } else if (typeof errorData === "string") {
