@@ -78,13 +78,38 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                 points.push([halfBreadth, -wlZ]); // Negative Z because we're drawing from keel upward
               }
 
+              // Sort points by Z coordinate (height) to ensure proper ordering
+              points.sort((a, b) => a[1] - b[1]);
+
+              // Remove duplicate or very close points that could cause sharp angles
+              const cleanedPoints: Array<[number, number]> = [];
+              const tolerance = 0.001; // 1mm tolerance for point deduplication
+
+              for (let i = 0; i < points.length; i++) {
+                const current = points[i];
+                if (cleanedPoints.length === 0) {
+                  cleanedPoints.push(current);
+                  continue;
+                }
+
+                const last = cleanedPoints[cleanedPoints.length - 1];
+                const distance = Math.sqrt(
+                  Math.pow(current[0] - last[0], 2) + Math.pow(current[1] - last[1], 2)
+                );
+
+                // Only add point if it's sufficiently different from the last point
+                if (distance > tolerance) {
+                  cleanedPoints.push(current);
+                }
+              }
+
               // Determine if this is aft or forward section
               const lpp = candidate.lppM;
               const isAft = stationX < lpp / 2;
 
               return {
                 station: stIdx,
-                points,
+                points: cleanedPoints,
                 isAft,
                 hasBulb: false,
               };
@@ -301,6 +326,23 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
         return "";
       }
 
+      // If we have very few points, use straight lines
+      if (validPoints.length <= 2) {
+        return validPoints
+          .map(([y, z], i) => {
+            const [sx, sy] = toSVG(y, z, isAft);
+            if (!Number.isFinite(sx) || !Number.isFinite(sy)) {
+              return "";
+            }
+            return `${i === 0 ? "M" : "L"} ${sx.toFixed(2)},${sy.toFixed(2)}`;
+          })
+          .filter((segment) => segment !== "")
+          .join(" ");
+      }
+
+      // Use smooth curves with proper line joins
+      // The point deduplication above should eliminate most sharp angles
+      // Use smooth line joins in SVG to further reduce visual artifacts
       return validPoints
         .map(([y, z], i) => {
           const [sx, sy] = toSVG(y, z, isAft);
@@ -465,6 +507,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                           stroke={color}
                           strokeWidth={strokeWidth}
                           strokeLinecap="round"
+                          strokeLinejoin="round"
                           filter={isEndStation ? "url(#sectionShadow)" : undefined}
                           style={{ transition: "all 0.3s ease" }}
                         />
@@ -597,6 +640,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                   stroke="url(#midshipGradient)"
                   strokeWidth="3.5"
                   strokeLinecap="round"
+                  strokeLinejoin="round"
                   filter="url(#sectionGlow)"
                 />
                 <path
@@ -611,6 +655,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                   stroke="url(#midshipGradient)"
                   strokeWidth="3.5"
                   strokeLinecap="round"
+                  strokeLinejoin="round"
                   filter="url(#sectionGlow)"
                 />
                 <defs>

@@ -325,10 +325,36 @@ export function extractSectionsFromShipD(
     }
 
     if (points.length > 0) {
+      // Re-sort points by height (Z coordinate) to ensure proper ordering
+      // This is critical after adding bulb points
+      points.sort((a, b) => a[1] - b[1]);
+
+      // Remove duplicate or very close points that could cause sharp angles
+      const cleanedPoints: Array<[number, number]> = [];
+      const tolerance = 0.001; // 1mm tolerance for point deduplication
+
+      for (let i = 0; i < points.length; i++) {
+        const current = points[i];
+        if (cleanedPoints.length === 0) {
+          cleanedPoints.push(current);
+          continue;
+        }
+
+        const last = cleanedPoints[cleanedPoints.length - 1];
+        const distance = Math.sqrt(
+          Math.pow(current[0] - last[0], 2) + Math.pow(current[1] - last[1], 2)
+        );
+
+        // Only add point if it's sufficiently different from the last point
+        if (distance > tolerance) {
+          cleanedPoints.push(current);
+        }
+      }
+
       // Determine if aft (position < 0.5) or forward (position >= 0.5)
       result.push({
         station: Math.round(station.position * 10), // Convert 0-1 to 0-10
-        points,
+        points: cleanedPoints,
         isAft: station.position < 0.5,
         hasBulb: station.hasBulb || false,
       });
