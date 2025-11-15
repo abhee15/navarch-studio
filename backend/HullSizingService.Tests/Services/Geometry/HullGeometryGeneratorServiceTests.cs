@@ -1,3 +1,4 @@
+using FluentAssertions;
 using HullSizingService.Services.Geometry;
 using HullSizingService.Services.Solver;
 using Microsoft.Extensions.Logging;
@@ -204,7 +205,7 @@ public class HullGeometryGeneratorServiceTests
             Cp: (decimal)cp,
             Cwp: (decimal)cwp,
             Cm: (decimal)cm,
-            DisplacementT: (decimal)(cb * lpp * beam * draft * 1.025m),
+            DisplacementT: (decimal)cb * (decimal)lpp * (decimal)beam * (decimal)draft * 1.025m,
             Fn: 0.20m,
             LwlOverLambda: null,
             KbM: (decimal)draft * 0.5m,

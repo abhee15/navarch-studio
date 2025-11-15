@@ -1,4 +1,3 @@
-using DataService.Services.Hydrostatics;
 using Shared.HullGenerators;
 using Shared.HullGenerators.Models;
 using Shared.TestData;
@@ -19,13 +18,22 @@ public class FormCoefficientHullGeneratorTests
     private const decimal FORM_COEFFICIENT_TOLERANCE = 0.10m; // 10% tolerance (initial implementation)
     private const decimal VOLUME_TOLERANCE = 0.05m; // 5% tolerance
     private const decimal LCB_TOLERANCE = 10.0m; // 10% of length (LCB positioning needs refinement in Phase 3)
-    private readonly IIntegrationEngine _integrationEngine;
 
-    public FormCoefficientHullGeneratorTests()
+    /// <summary>
+    /// Simple trapezoidal integration for test validation
+    /// </summary>
+    private static decimal IntegrateTrapezoidal(List<decimal> x, List<decimal> y)
     {
-        // Create a simple integration engine for validation
-        var logger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<IntegrationEngine>();
-        _integrationEngine = new IntegrationEngine(logger);
+        if (x.Count != y.Count || x.Count < 2)
+            return 0m;
+
+        decimal integral = 0m;
+        for (int i = 0; i < x.Count - 1; i++)
+        {
+            decimal dx = x[i + 1] - x[i];
+            integral += dx * (y[i] + y[i + 1]) / 2m;
+        }
+        return integral;
     }
 
     #region Form Coefficient Accuracy Tests
@@ -424,7 +432,7 @@ public class FormCoefficientHullGeneratorTests
         {
             // Integrate half-breadths to get sectional area
             var halfBreadths = stationOffsets.Select(hb => 2m * hb).ToList();
-            decimal area = _integrationEngine.Integrate(geometry.Waterlines, halfBreadths);
+            decimal area = IntegrateTrapezoidal(geometry.Waterlines, halfBreadths);
             sectionAreas.Add(area);
         }
 
