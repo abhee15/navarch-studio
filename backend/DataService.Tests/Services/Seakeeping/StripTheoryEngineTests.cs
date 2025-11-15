@@ -54,7 +54,6 @@ public class StripTheoryEngineTests
         // Arrange
         var breadth = 10.0; // m
         var height = 5.0;   // m
-        var omega = 0.5;    // rad/s
 
         // Act & Assert
         // Simplified elliptic: a33 ≈ ρπab should be positive
