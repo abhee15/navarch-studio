@@ -114,17 +114,3 @@ public static class BargeValidationConstants
         }
     };
 }
-
-/// <summary>
-/// Barge hydrostatic table reference record
-/// </summary>
-public record BargeHydroTableRecord
-{
-    public decimal Draft_T_m { get; init; }
-    public decimal Volume_disp_m3 { get; init; }
-    public decimal Weight_tonnes { get; init; }
-    public decimal KB_m { get; init; }
-    public decimal BM_T_m { get; init; }
-    public decimal KM_T_m { get; init; }
-    public decimal GM_T_m { get; init; }
-}
