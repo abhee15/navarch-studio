@@ -127,8 +127,6 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
     waterlineCount,
   ]);
 
-  const effectiveWaterlineCount = waterlines.length;
-
   return (
     <div className="w-full overflow-auto">
       <div className="rounded-lg border border-border bg-card shadow-lg">
@@ -167,7 +165,7 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
                 const designDraft = candidate.draftM;
                 const isDesignWaterline =
                   Math.abs(waterlines[wlIdx] - designDraft) < 0.01 ||
-                  wlIdx === effectiveWaterlineCount - 1;
+                  wlIdx === waterlines.length - 1;
 
                 return (
                   <tr
