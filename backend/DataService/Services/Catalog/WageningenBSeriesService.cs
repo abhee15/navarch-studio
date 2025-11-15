@@ -5,7 +5,7 @@ namespace DataService.Services.Catalog;
 
 /// <summary>
 /// Wageningen B-Series propeller performance calculator
-/// Uses 33-term polynomial regression from MARIN systematic series (Oosterveld & van Oossanen, 1975)
+/// Uses 33-term polynomial regression from MARIN systematic series (Oosterveld and van Oossanen, 1975)
 /// Coefficients are hardcoded constants (published reference data that never changes)
 /// </summary>
 public class WageningenBSeriesService
@@ -92,9 +92,12 @@ public class WageningenBSeriesService
     /// Find optimal propeller for required thrust
     /// </summary>
     /// <param name="requiredThrustN">Required thrust in Newtons</param>
-    /// <param name="speedMs">Ship speed in m/s</param>
+    /// <param name="speedMs">Speed in m/s</param>
     /// <param name="diameterM">Propeller diameter in meters</param>
-    /// <param name="rpmRange">RPM range to search</param>
+    /// <param name="rpmRange">RPM search range (min, max)</param>
+    /// <param name="Z">Number of blades (default: 4)</param>
+    /// <param name="AeA0">Expanded area ratio (default: 0.55)</param>
+    /// <param name="PD">Pitch-diameter ratio (default: 1.0)</param>
     /// <returns>Optimal operating point</returns>
     public PropellerOperatingPoint FindOptimalPoint(
         double requiredThrustN,

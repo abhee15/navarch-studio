@@ -42,7 +42,7 @@ public class StripTheoryEngine : IStripTheoryEngine
         // Get vessel geometry
         var offsetsGrid = await _geometryService.GetOffsetsGridAsync(vesselId, cancellationToken);
 
-        if (offsetsGrid.Offsets.Count == 0)
+        if (offsetsGrid == null || offsetsGrid.Offsets.Count == 0)
         {
             throw new InvalidOperationException("No offsets data available for vessel");
         }

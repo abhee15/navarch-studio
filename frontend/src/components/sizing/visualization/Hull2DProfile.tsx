@@ -121,7 +121,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             });
             return result;
           } else {
-            console.warn("[Hull2DProfile] ShipD geometry has no stations, falling back");
+            // Debug log - this is expected when backend geometry hasn't been generated yet
+            console.debug("[Hull2DProfile] ShipD geometry has no stations, falling back");
           }
         } catch (error) {
           console.error(
@@ -140,7 +141,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         try {
           const shipdVector = JSON.parse(candidate.shipdParametersJson);
           if (Array.isArray(shipdVector) && shipdVector.length === 45) {
-            console.log("[Hull2DProfile] Generating ShipD geometry from parameters", {
+            // Debug log - called repeatedly during optimization
+            console.debug("[Hull2DProfile] Generating ShipD geometry from parameters", {
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
@@ -162,7 +164,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             );
 
             const result = extractButtocksFromShipD(sections, lpp, draft, buttockOffsets);
-            console.log("[Hull2DProfile] Generated buttocks from ShipD parameters", {
+            // Debug log - called repeatedly during optimization
+            console.debug("[Hull2DProfile] Generated buttocks from ShipD parameters", {
               buttockCount: result.length,
             });
             return result;

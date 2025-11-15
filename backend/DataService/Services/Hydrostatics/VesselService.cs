@@ -73,6 +73,27 @@ public class VesselService : IVesselService
                 ShipdCategory = dto.Metadata.ShipdCategory,
                 ShipdType = dto.Metadata.ShipdType,
                 ShipdMaskVersion = dto.Metadata.ShipdMaskVersion,
+
+                // Form coefficients (from hull sizing)
+                PrismaticCoefficient = dto.Metadata.PrismaticCoefficient,
+                MidshipCoefficient = dto.Metadata.MidshipCoefficient,
+                WaterplaneCoefficient = dto.Metadata.WaterplaneCoefficient,
+
+                // Additional dimensions (from hull sizing)
+                Lwl = dto.Metadata.Lwl,
+                Loa = dto.Metadata.Loa,
+                Depth = dto.Metadata.Depth,
+
+                // Stability parameters (from hull sizing)
+                KbInitial = dto.Metadata.KbInitial,
+                LcbPctLpp = dto.Metadata.LcbPctLpp,
+                GmInitial = dto.Metadata.GmInitial,
+
+                // Propulsion data (from hull sizing)
+                EhpKw = dto.Metadata.EhpKw,
+                ShpKw = dto.Metadata.ShpKw,
+                FroudeNumber = dto.Metadata.FroudeNumber,
+
                 CreatedAt = DateTime.UtcNow
             };
             _context.VesselMetadata.Add(metadata);
@@ -239,7 +260,27 @@ public class VesselService : IVesselService
                 HullFamily = metadata.HullFamily,
                 ShipdCategory = metadata.ShipdCategory,
                 ShipdType = metadata.ShipdType,
-                ShipdMaskVersion = metadata.ShipdMaskVersion
+                ShipdMaskVersion = metadata.ShipdMaskVersion,
+
+                // Form coefficients (from hull sizing)
+                PrismaticCoefficient = metadata.PrismaticCoefficient,
+                MidshipCoefficient = metadata.MidshipCoefficient,
+                WaterplaneCoefficient = metadata.WaterplaneCoefficient,
+
+                // Additional dimensions (from hull sizing)
+                Lwl = metadata.Lwl,
+                Loa = metadata.Loa,
+                Depth = metadata.Depth,
+
+                // Stability parameters (from hull sizing)
+                KbInitial = metadata.KbInitial,
+                LcbPctLpp = metadata.LcbPctLpp,
+                GmInitial = metadata.GmInitial,
+
+                // Propulsion data (from hull sizing)
+                EhpKw = metadata.EhpKw,
+                ShpKw = metadata.ShpKw,
+                FroudeNumber = metadata.FroudeNumber
             } : null,
             Materials = materials != null ? new MaterialsConfigDto
             {
@@ -510,6 +551,26 @@ public class VesselService : IVesselService
         metadata.ShipdCategory = dto.ShipdCategory;
         metadata.ShipdType = dto.ShipdType;
         metadata.ShipdMaskVersion = dto.ShipdMaskVersion;
+
+        // Form coefficients (from hull sizing)
+        metadata.PrismaticCoefficient = dto.PrismaticCoefficient;
+        metadata.MidshipCoefficient = dto.MidshipCoefficient;
+        metadata.WaterplaneCoefficient = dto.WaterplaneCoefficient;
+
+        // Additional dimensions (from hull sizing)
+        metadata.Lwl = dto.Lwl;
+        metadata.Loa = dto.Loa;
+        metadata.Depth = dto.Depth;
+
+        // Stability parameters (from hull sizing)
+        metadata.KbInitial = dto.KbInitial;
+        metadata.LcbPctLpp = dto.LcbPctLpp;
+        metadata.GmInitial = dto.GmInitial;
+
+        // Propulsion data (from hull sizing)
+        metadata.EhpKw = dto.EhpKw;
+        metadata.ShpKw = dto.ShpKw;
+        metadata.FroudeNumber = dto.FroudeNumber;
     }
 
     private async Task UpsertMaterialsAsync(Guid vesselId, MaterialsConfigDto? dto, CancellationToken cancellationToken)

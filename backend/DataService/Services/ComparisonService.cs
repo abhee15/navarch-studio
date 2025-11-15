@@ -246,7 +246,7 @@ public class ComparisonService
     }
 
     // Helper: Convert snapshot entity to DTO
-    private async Task<ComparisonSnapshotDto> ConvertSnapshotToDtoAsync(ComparisonSnapshot snapshot, string displayUnits)
+    private Task<ComparisonSnapshotDto> ConvertSnapshotToDtoAsync(ComparisonSnapshot snapshot, string displayUnits)
     {
         // Deserialize results from JSON (stored in SI)
         var resultsInSI = JsonSerializer.Deserialize<List<HydroResultDto>>(snapshot.ResultsJson) ?? new List<HydroResultDto>();
@@ -287,7 +287,7 @@ public class ComparisonService
         // Convert the DTO itself from SI to display units
         dto = _unitConversionService.ConvertDto(dto, "SI", displayUnits);
 
-        return dto;
+        return Task.FromResult(dto);
     }
 
     // Helper: Compare a single KPI

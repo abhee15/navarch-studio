@@ -238,6 +238,9 @@ try
     builder.Services.AddScoped<IShipDMetadataService, ShipDMetadataService>();
     builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkHullImporter>();
     builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkTestImporter>();
+    builder.Services.AddScoped<DataService.Services.Catalog.WaterPropertiesImporter>();
+    builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkGeometryImporter>();
+    builder.Services.AddScoped<DataService.Services.Catalog.BenchmarkVesselSeeder>();
     builder.Services.AddSingleton<DataService.Services.Catalog.WageningenBSeriesService>();
     Log.Information("Benchmark and propeller services registered");
 
@@ -538,6 +541,10 @@ try
             {
                 var catalogSeeder = scope.ServiceProvider.GetRequiredService<DataService.Data.Seeds.CatalogSeeder>();
                 await catalogSeeder.SeedAllAsync();
+
+                // Seed benchmark vessels with geometry from CSV
+                var benchmarkVesselSeeder = scope.ServiceProvider.GetRequiredService<DataService.Services.Catalog.BenchmarkVesselSeeder>();
+                await benchmarkVesselSeeder.SeedBenchmarkVesselsAsync();
 
                 // Verify critical seed data was created
                 var waterCount = await dbContext.CatalogWaterProperties.CountAsync();

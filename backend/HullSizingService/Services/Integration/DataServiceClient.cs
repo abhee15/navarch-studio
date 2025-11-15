@@ -238,8 +238,26 @@ public class DataServiceClient : IDataServiceClient
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogWarning("[DATA_CLIENT] Import vessel failed: {StatusCode} - {Body}", response.StatusCode, body);
-                return null;
+                _logger.LogError(
+                    "[DATA_CLIENT] Import vessel failed: {StatusCode} - {Body}. Request vessel: Name={Name}, Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m",
+                    response.StatusCode, body, request.Vessel?.Name, request.Vessel?.Lpp, request.Vessel?.Beam, request.Vessel?.DesignDraft);
+
+                // Try to parse error message from response
+                try
+                {
+                    var errorObj = JsonSerializer.Deserialize<Dictionary<string, object>>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (errorObj != null && errorObj.TryGetValue("error", out var errorValue))
+                    {
+                        var errorMessage = errorValue?.ToString() ?? "Unknown error";
+                        throw new InvalidOperationException($"DataService import failed ({response.StatusCode}): {errorMessage}");
+                    }
+                }
+                catch (JsonException)
+                {
+                    // If JSON parsing fails, just use the raw body
+                }
+
+                throw new InvalidOperationException($"DataService import failed ({response.StatusCode}): {body}");
             }
 
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);

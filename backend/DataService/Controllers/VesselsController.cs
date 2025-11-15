@@ -136,37 +136,53 @@ public class VesselsController : ControllerBase
 
         try
         {
+            // Log import request details
+            _logger.LogInformation(
+                "[IMPORT] Importing vessel from sizing. Vessel: Name={Name}, Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m. Geometry: {StationCount} stations, {WaterlineCount} waterlines, {OffsetCount} offsets. IdempotencyKey={Key}",
+                request.Vessel?.Name, request.Vessel?.Lpp, request.Vessel?.Beam, request.Vessel?.DesignDraft,
+                request.Stations?.Count ?? 0, request.Waterlines?.Count ?? 0, request.Offsets?.Count ?? 0,
+                request.IdempotencyKey);
+
             var ownerUserId = request.Vessel.SourceDesign?.UserId ?? Shared.Constants.TemplateVessels.SystemUserId;
             var vessel = await _vesselService.CreateVesselAsync(request.Vessel, ownerUserId, cancellationToken);
 
             if (request.Stations.Count > 0 || request.Waterlines.Count > 0 || request.Offsets.Count > 0)
             {
+                _logger.LogDebug("[IMPORT] Importing geometry for vessel {VesselId}", vessel.Id);
                 await _geometryService.ImportCombinedGeometryAsync(
                     vessel.Id,
                     request.Stations,
                     request.Waterlines,
                     request.Offsets,
                     cancellationToken);
+                _logger.LogDebug("[IMPORT] Geometry imported successfully for vessel {VesselId}", vessel.Id);
             }
 
             if (request.CreateDefaultLoadcase)
             {
+                _logger.LogDebug("[IMPORT] Creating default loadcase for vessel {VesselId}", vessel.Id);
                 await EnsureDefaultLoadcaseAsync(vessel.Id, cancellationToken);
             }
 
             var details = await _vesselService.GetVesselDetailsAsync(vessel.Id, cancellationToken);
+            _logger.LogInformation("[IMPORT] Successfully imported vessel {VesselId} from sizing", vessel.Id);
 
             return CreatedAtAction(nameof(GetVessel), new { id = vessel.Id }, details);
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning(ex, "[IMPORT] Validation error importing vessel from sizing");
-            return BadRequest(new { error = ex.Message });
+            _logger.LogWarning(ex, "[IMPORT] Validation error importing vessel from sizing: {Message}", ex.Message);
+            return BadRequest(new { error = ex.Message, type = "ValidationError" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "[IMPORT] Invalid operation importing vessel from sizing: {Message}", ex.Message);
+            return BadRequest(new { error = ex.Message, type = "InvalidOperation" });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[IMPORT] Unexpected error importing vessel from sizing");
-            return StatusCode(500, new { error = "Failed to import vessel from sizing", details = ex.Message });
+            _logger.LogError(ex, "[IMPORT] Unexpected error importing vessel from sizing: {Message}", ex.Message);
+            return StatusCode(500, new { error = "Failed to import vessel from sizing", details = ex.Message, type = "InternalError" });
         }
     }
 
@@ -548,17 +564,77 @@ public class VesselsController : ControllerBase
             return;
         }
 
+        // Get vessel metadata and loading conditions to set initial values
+        var metadata = await _context.VesselMetadata
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.VesselId == vesselId, cancellationToken);
+
+        var loading = await _context.LoadingConditions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.VesselId == vesselId, cancellationToken);
+
+        // Estimate initial KG from stability parameters if available
+        decimal? initialKG = null;
+        if (metadata != null && metadata.GmInitial.HasValue && metadata.KbInitial.HasValue)
+        {
+            // KG ≈ KB + BM - GM
+            // We can estimate BM from form coefficients if available
+            // For now, use a simplified estimate: BM ≈ (Beam^2) / (12 * Draft) for rectangular approximation
+            // Or use: KG ≈ KB - GM (if BM is small relative to KB)
+            // A better estimate: KG ≈ KB + (Beam^2 / (12 * Draft)) - GM
+            // But we need vessel dimensions, so let's use a simpler approach:
+            // If we have KB and GM, we can estimate KG ≈ KB - GM (assuming BM is small)
+            // This is a rough estimate, but better than nothing
+            var vessel = await _context.Vessels
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == vesselId, cancellationToken);
+
+            if (vessel != null && vessel.DesignDraft > 0 && vessel.Beam > 0)
+            {
+                // Estimate BM using rectangular approximation: BM ≈ (Beam^2) / (12 * Draft)
+                var estimatedBM = (vessel.Beam * vessel.Beam) / (12m * vessel.DesignDraft);
+                // KG ≈ KB + BM - GM
+                initialKG = metadata.KbInitial.Value + estimatedBM - metadata.GmInitial.Value;
+
+                // Ensure KG is positive and reasonable (should be above keel)
+                if (initialKG < 0 || initialKG > vessel.DesignDraft * 2)
+                {
+                    // If estimate is unreasonable, use a simpler approach: KG ≈ KB - GM
+                    initialKG = metadata.KbInitial.Value - metadata.GmInitial.Value;
+                    if (initialKG < 0)
+                    {
+                        // If still negative, use a default estimate: KG ≈ 0.6 * Draft (typical for many vessels)
+                        initialKG = vessel.DesignDraft * 0.6m;
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: use KB - GM if vessel dimensions not available
+                initialKG = metadata.KbInitial.Value - metadata.GmInitial.Value;
+                if (initialKG < 0)
+                {
+                    initialKG = null; // Don't set if estimate is negative
+                }
+            }
+        }
+
         var loadcase = new Loadcase
         {
             Id = Guid.NewGuid(),
             VesselId = vesselId,
             Name = "Full Load",
-            Rho = 1025m,
+            Rho = 1025m, // Default saltwater density
+            KG = initialKG, // Set initial KG estimate if available
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         _context.Loadcases.Add(loadcase);
         await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogDebug(
+            "[IMPORT] Created default loadcase for vessel {VesselId} with KG={KG}m (estimated from metadata: KB={KB}m, GM={GM}m)",
+            vesselId, initialKG, metadata?.KbInitial, metadata?.GmInitial);
     }
 }

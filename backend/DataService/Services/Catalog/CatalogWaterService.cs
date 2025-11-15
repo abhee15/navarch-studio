@@ -36,11 +36,11 @@ public class CatalogWaterService
         // Determine medium based on salinity
         var medium = salinityPSU < 1 ? "Fresh" : "Sea";
 
-        // Validate temperature range
-        if (temperatureC < 0 || temperatureC > 30)
+        // Validate temperature range (extended to -2°C to 32°C with CSV data)
+        if (temperatureC < -5 || temperatureC > 35)
         {
             throw new ArgumentException(
-                $"Temperature {temperatureC}°C is outside supported range (0-30°C)");
+                $"Temperature {temperatureC}°C is outside supported range (-5 to 35°C)");
         }
 
         // Get anchor points for this medium

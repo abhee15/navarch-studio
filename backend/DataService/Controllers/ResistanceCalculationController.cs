@@ -203,7 +203,7 @@ public class ResistanceCalculationController : ControllerBase
     [HttpPost("power-curves")]
     [ProducesResponseType(typeof(PowerCurveResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CalculatePowerCurves(
+    public Task<IActionResult> CalculatePowerCurves(
         [FromBody] PowerCurveRequest request,
         CancellationToken cancellationToken)
     {
@@ -216,17 +216,17 @@ public class ResistanceCalculationController : ControllerBase
                 result.SpeedGrid.Count,
                 result.ServiceMargin);
 
-            return Ok(result);
+            return Task.FromResult<IActionResult>(Ok(result));
         }
         catch (ArgumentException ex)
         {
             _logger.LogWarning(ex, "Invalid power curve request");
-            return BadRequest(new { error = ex.Message });
+            return Task.FromResult<IActionResult>(BadRequest(new { error = ex.Message }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculating power curves");
-            return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+            return Task.FromResult<IActionResult>(StatusCode(500, new { error = "Internal server error", details = ex.Message }));
         }
     }
 

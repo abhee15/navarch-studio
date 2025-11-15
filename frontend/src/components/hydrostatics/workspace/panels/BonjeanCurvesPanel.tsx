@@ -66,9 +66,9 @@ export const BonjeanCurvesPanel = observer(
         const data = await curvesApi.getBonjean(vesselId);
         setCurves(data.curves);
 
-        // Select first 5 stations by default (or all if less than 5)
+        // Select first 6 stations by default (or all if less than 6) - increased to show more stations
         if (data.curves.length > 0) {
-          const stationsToSelect = data.curves.slice(0, Math.min(5, data.curves.length));
+          const stationsToSelect = data.curves.slice(0, Math.min(6, data.curves.length));
           setSelectedStations(stationsToSelect.map((c) => c.stationIndex));
         }
       } catch (err) {
@@ -241,7 +241,7 @@ export const BonjeanCurvesPanel = observer(
             </button>
           </div>
           <div className="flex flex-wrap gap-1">
-            {curves.slice(0, 10).map((curve) => (
+            {curves.slice(0, 25).map((curve) => (
               <button
                 key={curve.stationIndex}
                 onClick={() => handleStationToggle(curve.stationIndex)}
@@ -255,9 +255,9 @@ export const BonjeanCurvesPanel = observer(
                 Stn {curve.stationIndex}
               </button>
             ))}
-            {curves.length > 10 && (
+            {curves.length > 25 && (
               <span className="text-[10px] text-muted-foreground self-center">
-                +{curves.length - 10} more
+                +{curves.length - 25} more
               </span>
             )}
           </div>

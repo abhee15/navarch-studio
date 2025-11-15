@@ -87,4 +87,3 @@ public static class KCSResistanceConstants
         }
     };
 }
-

@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\DataService\DataService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,12 +36,3 @@
   </ItemGroup>
 
 </Project>
-
-
-
-
-
-
-
-
-

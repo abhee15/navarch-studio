@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DataService.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
 using Shared.TestData;
@@ -14,13 +15,16 @@ public class CatalogSeeder
 {
     private readonly DataDbContext _context;
     private readonly ILogger<CatalogSeeder> _logger;
+    private readonly IServiceProvider _serviceProvider;
 
     public CatalogSeeder(
         DataDbContext context,
-        ILogger<CatalogSeeder> logger)
+        ILogger<CatalogSeeder> logger,
+        IServiceProvider serviceProvider)
     {
         _context = context;
         _logger = logger;
+        _serviceProvider = serviceProvider;
     }
 
     /// <summary>
@@ -37,6 +41,10 @@ public class CatalogSeeder
 
         // NEW: Benchmark data from MLData folder
         await SeedBenchmarkDataAsync(cancellationToken);
+
+        // NEW: Benchmark vessels with geometry from CSV
+        // Note: This is handled separately via BenchmarkVesselSeeder to avoid circular dependencies
+        // It should be called after CatalogSeeder.SeedAllAsync() from Program.cs
 
         _logger.LogInformation("Catalog seed complete.");
     }
@@ -72,6 +80,7 @@ public class CatalogSeeder
 
     /// <summary>
     /// Seed ITTC water property anchor points (0, 15, 30 deg C for Fresh and Sea water)
+    /// Extended with CSV data for additional temperature points
     /// </summary>
     private async Task SeedWaterPropertiesAsync(CancellationToken cancellationToken)
     {
@@ -81,7 +90,10 @@ public class CatalogSeeder
             return;
         }
 
-        var waterProps = new[]
+        var waterProps = new List<CatalogWaterProperty>();
+
+        // First, add the ITTC standard anchor points (Freshwater)
+        waterProps.AddRange(new[]
         {
             // Freshwater (SA=0, p=0.101325 MPa)
             new CatalogWaterProperty
@@ -110,8 +122,12 @@ public class CatalogSeeder
                 Density_kgm3 = 995.6502m,
                 KinematicViscosity_m2s = 0.000000801m,
                 SourceRef = "ITTC 7.5-02-01-03 Table 1"
-            },
+            }
+        });
 
+        // Add ITTC standard anchor points (Seawater)
+        waterProps.AddRange(new[]
+        {
             // Seawater (SSW, SA≈35 g/kg, p=0.101325 MPa)
             new CatalogWaterProperty
             {
@@ -140,12 +156,41 @@ public class CatalogSeeder
                 KinematicViscosity_m2s = 0.000000783m,
                 SourceRef = "ITTC 7.5-02-01-03 Table 2"
             }
-        };
+        });
+
+        // Add extended data from constants (seawater)
+        // Using constants instead of CSV for small fixed dataset
+        var extendedProperties = Shared.Constants.WaterPropertiesConstants.ExtendedSeawaterProperties;
+        var existingTemps = waterProps.Where(w => w.Medium == "Sea")
+            .Select(w => w.Temperature_C)
+            .ToHashSet();
+
+        foreach (var prop in extendedProperties)
+        {
+            if (!existingTemps.Contains(prop.Temperature_C))
+            {
+                waterProps.Add(new CatalogWaterProperty
+                {
+                    Medium = "Sea",
+                    Temperature_C = prop.Temperature_C,
+                    Salinity_PSU = 35m,
+                    Density_kgm3 = prop.Density_kgm3,
+                    KinematicViscosity_m2s = prop.KinematicViscosity_m2s,
+                    SourceRef = "Extended constants data (Seawater)"
+                });
+            }
+        }
+
+        if (extendedProperties.Length > 0)
+        {
+            _logger.LogInformation("Added {Count} extended water property points from constants",
+                extendedProperties.Count(p => !existingTemps.Contains(p.Temperature_C)));
+        }
 
         _context.CatalogWaterProperties.AddRange(waterProps);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Seeded {Count} water property anchor points", waterProps.Length);
+        _logger.LogInformation("Seeded {Count} water property anchor points (including extended constants)", waterProps.Count);
     }
 
     /// <summary>

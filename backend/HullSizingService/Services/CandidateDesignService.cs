@@ -543,8 +543,54 @@ public class CandidateDesignService : ICandidateDesignService
             cancellationToken);
 
         var geometry = _hydroMapper.ConvertSections(sections, candidate.LppM);
+
+        // Validate geometry before sending
+        if (geometry.stations == null || geometry.stations.Count < 3)
+        {
+            throw new InvalidOperationException($"Invalid geometry: stations count is {geometry.stations?.Count ?? 0}, minimum 3 required.");
+        }
+
+        if (geometry.waterlines == null || geometry.waterlines.Count < 2)
+        {
+            throw new InvalidOperationException($"Invalid geometry: waterlines count is {geometry.waterlines?.Count ?? 0}, minimum 2 required.");
+        }
+
+        if (geometry.offsets == null || geometry.offsets.Count == 0)
+        {
+            throw new InvalidOperationException($"Invalid geometry: offsets count is {geometry.offsets?.Count ?? 0}, at least 1 required.");
+        }
+
+        // Check for NaN or invalid values in geometry
+        var invalidStations = geometry.stations.Where(s => double.IsNaN((double)s.X) || s.X < 0).ToList();
+        if (invalidStations.Any())
+        {
+            throw new InvalidOperationException($"Invalid geometry: {invalidStations.Count} stations have invalid X values (NaN or negative).");
+        }
+
+        var invalidWaterlines = geometry.waterlines.Where(w => double.IsNaN((double)w.Z) || w.Z < 0).ToList();
+        if (invalidWaterlines.Any())
+        {
+            throw new InvalidOperationException($"Invalid geometry: {invalidWaterlines.Count} waterlines have invalid Z values (NaN or negative).");
+        }
+
+        var invalidOffsets = geometry.offsets.Where(o => double.IsNaN((double)o.HalfBreadthY) || o.HalfBreadthY < 0).ToList();
+        if (invalidOffsets.Any())
+        {
+            _logger.LogWarning("[PUSH] Found {Count} offsets with invalid half-breadth values (NaN or negative), but continuing", invalidOffsets.Count);
+        }
+
         var vesselDto = BuildVesselDto(candidate, mission, request);
         vesselDto.SourceDesign = BuildSourceDesign(candidate, mission, request, idempotencyKey);
+
+        // Log detailed information before sending
+        _logger.LogInformation(
+            "[PUSH] Preparing to push candidate {CandidateId} to hydrostatics. Vessel: Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m. Geometry: {StationCount} stations, {WaterlineCount} waterlines, {OffsetCount} offsets",
+            candidate.Id, vesselDto.Lpp, vesselDto.Beam, vesselDto.DesignDraft,
+            geometry.stations.Count, geometry.waterlines.Count, geometry.offsets.Count);
+
+        _logger.LogDebug(
+            "[PUSH] Vessel DTO details: Name={Name}, ShipdCategory={Category}, ShipdType={Type}, IdempotencyKey={Key}",
+            vesselDto.Name, vesselDto.ShipdCategory, vesselDto.ShipdType, idempotencyKey);
 
         var importRequest = new HydrostaticsImportRequestDto
         {
@@ -556,10 +602,30 @@ public class CandidateDesignService : ICandidateDesignService
             CreateDefaultLoadcase = true
         };
 
-        var importResult = await _dataServiceClient.ImportHydrostaticsVesselAsync(importRequest, cancellationToken);
-        if (importResult == null)
+        VesselDetailsDto importResult;
+        try
         {
-            throw new InvalidOperationException("DataService rejected the Hydrostatics import request.");
+            importResult = await _dataServiceClient.ImportHydrostaticsVesselAsync(importRequest, cancellationToken);
+            if (importResult == null)
+            {
+                _logger.LogError("[PUSH] DataService returned null response for candidate {CandidateId}", candidate.Id);
+                throw new InvalidOperationException("DataService rejected the Hydrostatics import request (null response).");
+            }
+
+            _logger.LogInformation("[PUSH] Successfully pushed candidate {CandidateId} to vessel {VesselId}", candidate.Id, importResult.Id);
+        }
+        catch (InvalidOperationException)
+        {
+            // Re-throw InvalidOperationException as-is (already has proper error message)
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "[PUSH] Failed to import vessel for candidate {CandidateId}. Vessel: Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m. Geometry counts: Stations={StationCount}, Waterlines={WaterlineCount}, Offsets={OffsetCount}",
+                candidate.Id, vesselDto.Lpp, vesselDto.Beam, vesselDto.DesignDraft,
+                geometry.stations.Count, geometry.waterlines.Count, geometry.offsets.Count);
+            throw;
         }
 
         await SavePushOperationAsync(candidate.Id, importResult.Id, importRequest.IdempotencyKey!, cancellationToken);
@@ -722,7 +788,31 @@ public class CandidateDesignService : ICandidateDesignService
                 HullFamily = candidate.HullFamily,
                 ShipdCategory = shipdCategory,
                 ShipdType = shipdType,
-                ShipdMaskVersion = shipdMaskVersion
+                ShipdMaskVersion = shipdMaskVersion,
+
+                // Form coefficients (from hull sizing)
+                PrismaticCoefficient = candidate.Cp,
+                MidshipCoefficient = candidate.Cm,
+                WaterplaneCoefficient = candidate.Cwp,
+
+                // Additional dimensions (from hull sizing)
+                Lwl = candidate.LwlM,
+                Loa = candidate.LoaM,
+                Depth = candidate.DM,
+
+                // Stability parameters (from hull sizing)
+                KbInitial = candidate.KbM,
+                LcbPctLpp = candidate.LcbPctLpp,
+                GmInitial = candidate.GmEstM,
+
+                // Propulsion data (from hull sizing)
+                EhpKw = candidate.EhpKw,
+                ShpKw = candidate.ShpKw,
+                FroudeNumber = candidate.Fn
+            },
+            Loading = new LoadingConditionsDto
+            {
+                DeadweightTonnes = candidate.DisplacementT // Use displacement as initial deadweight estimate
             }
         };
     }

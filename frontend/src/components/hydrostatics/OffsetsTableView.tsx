@@ -14,7 +14,7 @@ export const OffsetsTableView = observer(
     const displayUnits = settingsStore.preferredUnits;
     const lengthUnit = getUnitSymbol(displayUnits, "Length");
 
-    const maxItemsPerColumn = 10; // Show first 10 stations and waterlines
+    const maxItemsPerColumn = 25; // Show first 25 stations and waterlines (increased to show all BSRA stations)
 
     return (
       <g>

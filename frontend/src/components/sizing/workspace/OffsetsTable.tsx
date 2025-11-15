@@ -45,11 +45,9 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
   }, [candidate.geometryJson]);
 
   // Use actual geometry if available, otherwise generate using Wigley formula
-  const { offsets, stations, waterlines, stationLabels, waterlineLabels } = useMemo(() => {
+  const { offsets, waterlines, stationLabels, waterlineLabels } = useMemo(() => {
     if (geometryData) {
       // Use actual generated geometry
-      const actualStationCount = geometryData.stations.length;
-      const actualWaterlineCount = geometryData.waterlines.length;
 
       // Transpose offsets: geometry has [stationIndex][waterlineIndex], but table needs [waterlineIndex][stationIndex]
       const transposedOffsets = geometryData.waterlines.map((_, wlIdx) =>
@@ -128,7 +126,6 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
     waterlineCount,
   ]);
 
-  const effectiveStationCount = stations.length;
   const effectiveWaterlineCount = waterlines.length;
 
   return (

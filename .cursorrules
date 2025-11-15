@@ -57,6 +57,7 @@ This is a full-stack template project with:
 - [Terraform Debugging](.cursor/rules/terraform.md#debugging-terraform-managed-infrastructure)
 - [.NET Cloud Debugging](.cursor/rules/dotnet.md#debugging-net-applications-in-cloud)
 - [React Debugging](.cursor/rules/react-typescript.md#debugging-frontend-issues)
+- [API Integration Rules](.cursor/rules/api-integration.md) - **CRITICAL**: Read before implementing any API parameter handling
 
 ## Code Style
 
@@ -205,11 +206,13 @@ This is a full-stack template project with:
 ### Always Include
 
 - TypeScript types
-- Error handling
-- Logging
+- Error handling (see [API Integration Rules](.cursor/rules/api-integration.md) for patterns)
+- Logging (structured logging with context)
 - Tests
 - Documentation comments
 - Input validation
+- **Service dependency validation** (if required)
+- **Parameter name verification** (frontend and backend must match)
 
 ### Always Use
 
@@ -275,11 +278,17 @@ cd backend/DataService.Tests && dotnet test --filter "MigrationValidator"
 
 ## API Design
 
+**CRITICAL**: Before implementing any API integration, consult [API Integration Rules](.cursor/rules/api-integration.md)
+
 - Use RESTful conventions
 - Version APIs: `/api/v1/`
 - Use proper HTTP methods (GET, POST, PUT, DELETE)
 - Return consistent error responses
 - Include correlation IDs in headers
+- **Follow parameter mapping patterns** (frontend camelCase → backend lowercase)
+- **Validate service dependencies** before processing
+- **Implement comprehensive error handling** (catch ArgumentException and InvalidOperationException)
+- **Log all parameter adjustments** with context
 
 ## Security
 
@@ -450,3 +459,6 @@ Before implementing, consider:
 - Is this maintainable?
 - Does this follow the established patterns?
 - Will this work in all environments (dev/staging/prod)?
+- **For API integration**: Have I verified parameter names match in frontend and backend?
+- **For API integration**: Have I validated service dependencies are available?
+- **For API integration**: Have I implemented proper error handling and logging?

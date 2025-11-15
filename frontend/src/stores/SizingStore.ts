@@ -524,9 +524,40 @@ export class SizingStore {
 
     try {
       return await sizingApi.pushToHydrostatics(candidate.id, payload, idempotencyKey);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to push to hydrostatics";
+    } catch (error: any) {
+      // Try to extract specific error message from API response
+      let message = "Failed to push to hydrostatics";
+
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        if (typeof errorData === "object") {
+          // Check for error message in various formats
+          if (errorData.error) {
+            message = errorData.error;
+          } else if (errorData.message) {
+            message = errorData.message;
+          } else if (errorData.details) {
+            message = `${errorData.error || "Error"}: ${errorData.details}`;
+          }
+
+          // Add error type if available for better context
+          if (errorData.type) {
+            message = `[${errorData.type}] ${message}`;
+          }
+        } else if (typeof errorData === "string") {
+          message = errorData;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       this.error = message;
+      console.error("[SizingStore] Push to hydrostatics failed:", {
+        error,
+        message,
+        candidateId: candidate.id,
+        payload,
+      });
       throw new Error(message);
     }
   }

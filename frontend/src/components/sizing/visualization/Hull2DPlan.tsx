@@ -67,10 +67,46 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         return [];
       }
 
-      // Check if ShipD geometry is available (from backend)
+      // Check if geometry is available (OffsetsGridDto format from form-coefficient generator)
       if (candidate.geometryJson) {
         try {
-          const sections = JSON.parse(candidate.geometryJson) as {
+          const geometry = JSON.parse(candidate.geometryJson);
+
+          // Check if it's OffsetsGridDto format (from FormCoefficientHullGenerator)
+          if (geometry.stations && geometry.waterlines && geometry.offsets) {
+            console.log("[Hull2DPlan] Using OffsetsGrid geometry from backend", {
+              stationCount: geometry.stations.length,
+              waterlineCount: geometry.waterlines.length,
+            });
+
+            // Convert OffsetsGrid to waterlines format
+            // geometry.offsets is [stationIndex][waterlineIndex]
+            const result = geometry.waterlines.map((wlZ: number, wlIdx: number) => {
+              const points: [number, number][] = [];
+
+              // Extract half-breadths for this waterline across all stations
+              for (let stIdx = 0; stIdx < geometry.stations.length; stIdx++) {
+                const stationX = geometry.stations[stIdx];
+                const halfBreadth = geometry.offsets[stIdx]?.[wlIdx] ?? 0;
+                points.push([stationX, halfBreadth]);
+              }
+
+              return {
+                depth: wlZ,
+                points,
+                isDesignWaterline: Math.abs(wlZ - draftM) < 0.01,
+              };
+            });
+
+            console.log("[Hull2DPlan] Extracted waterlines from OffsetsGrid geometry", {
+              waterlineCount: result.length,
+              designWaterlineIndex: result.findIndex((wl: { isDesignWaterline: boolean }) => wl.isDesignWaterline),
+            });
+            return result;
+          }
+
+          // Check if it's ShipD format (legacy)
+          const sections = geometry as {
             stations?: Array<{
               position: number;
               offsets: Record<number, number>;
@@ -122,11 +158,12 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             });
             return result;
           } else {
-            console.warn("[Hull2DPlan] ShipD geometry has no stations, falling back");
+            // Debug log - this is expected when backend geometry hasn't been generated yet
+            console.debug("[Hull2DPlan] Geometry has no stations, falling back");
           }
         } catch (error) {
           console.error(
-            "[Hull2DPlan] Failed to parse ShipD geometry, falling back to parametric:",
+            "[Hull2DPlan] Failed to parse geometry, falling back to parametric:",
             error
           );
         }
@@ -141,7 +178,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         try {
           const shipdVector = JSON.parse(candidate.shipdParametersJson);
           if (Array.isArray(shipdVector) && shipdVector.length === 45) {
-            console.log("[Hull2DPlan] Generating ShipD geometry from parameters", {
+            // Debug log - called repeatedly during optimization
+            console.debug("[Hull2DPlan] Generating ShipD geometry from parameters", {
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
@@ -165,7 +203,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             );
 
             const result = extractWaterlinesFromShipD(sections, lppM, waterlineHeights, draftM);
-            console.log("[Hull2DPlan] Generated waterlines from ShipD parameters", {
+            // Debug log - called repeatedly during optimization
+            console.debug("[Hull2DPlan] Generated waterlines from ShipD parameters", {
               waterlineCount: result.length,
             });
             return result;
@@ -578,7 +617,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             {/* Waterlines with gradient strokes and animations */}
             {showWaterlines &&
               visibility.waterlines &&
-              waterlines.map((wl, idx) => {
+              waterlines.map((wl: { points: [number, number][]; isDesignWaterline: boolean; depth: number }, idx: number) => {
                 const paths = waterlinePath(wl.points);
                 const dimmed = hoveredLegendItem && hoveredLegendItem !== "waterlines";
                 const isHovered = hoveredWaterline === idx;

@@ -56,6 +56,60 @@ public class HoltropResistanceServiceTests
     }
 
     [Fact]
+    public async Task CalculateAsync_KCS_AgainstReference_WithinReasonableRange()
+    {
+        // Arrange - Use reference data from constants
+        var referenceData = KCSResistanceConstants.ResistanceData;
+
+        // Test a few speeds from the reference data
+        var testSpeeds = new[] { 1.0m, 1.5m, 2.0m, 2.5m, 3.0m }; // m/s
+
+        foreach (var speedMps in testSpeeds)
+        {
+            var reference = referenceData.FirstOrDefault(r => r.Speed_mps == speedMps);
+            if (reference == null) continue;
+
+            var speedKn = speedMps * 1.94384m; // Convert m/s to knots
+
+            var request = new ResistanceRequest(
+                LppM: ReferenceVessels.KCS.LppM,
+                LwlM: ReferenceVessels.KCS.LwlM,
+                BeamM: ReferenceVessels.KCS.BeamM,
+                DraftM: ReferenceVessels.KCS.DraftM,
+                Cb: ReferenceVessels.KCS.Cb,
+                Cp: ReferenceVessels.KCS.Cp,
+                Cwp: ReferenceVessels.KCS.Cwp,
+                Cm: ReferenceVessels.KCS.Cm,
+                SpeedKn: speedKn,
+                WaterDensityKgM3: 1025m,
+                KinematicViscosityM2S: 0.000001188m
+            );
+
+            // Act
+            var result = await _service.CalculateAsync(request, default);
+
+            // Assert - Compare total resistance (convert kN to N for comparison)
+            var computedResistanceN = result.TotalResistanceKn * 1000m; // Convert kN to N
+
+            // Note: Reference data is synthetic/test data, so we use a relaxed tolerance
+            // The goal is to ensure calculations are in the right order of magnitude
+            var resistanceRatio = computedResistanceN / reference.RT_ref_N;
+
+            // Resistance should be within 2x-0.5x of reference (allowing for method differences)
+            resistanceRatio.Should().BeInRange(0.5m, 2.0m,
+                $"Total resistance at {speedMps} m/s should be in reasonable range. " +
+                $"Reference: {reference.RT_ref_N:N} N, Computed: {computedResistanceN:N} N, Ratio: {resistanceRatio:F2}");
+
+            // Log for debugging
+            System.Diagnostics.Debug.WriteLine(
+                $"Speed: {speedMps} m/s ({speedKn:F2} kn), " +
+                $"Reference RT: {reference.RT_ref_N:N} N, " +
+                $"Computed RT: {computedResistanceN:N} N, " +
+                $"Ratio: {resistanceRatio:F2}");
+        }
+    }
+
+    [Fact]
     public async Task CalculateAsync_KVLCC2_ShouldProduceReasonableResistance()
     {
         // Arrange
@@ -216,4 +270,3 @@ public class HoltropResistanceServiceTests
         result.ShpKw.Should().BeApproximately(expectedShp, 1m, "SHP should include propulsive efficiency and margins");
     }
 }
-

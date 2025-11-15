@@ -37,7 +37,7 @@ public class SeedingController : ControllerBase
         var benchmarkCount = await _context.BenchmarkCases.CountAsync();
         var geometryCount = await _context.BenchmarkGeometries.CountAsync();
         var templateCount = await _context.BenchmarkCases.Where(b => b.HullType == "Template").CountAsync();
-        var wigleyGeometry = await _context.BenchmarkGeometries.AnyAsync(g => g.Case.Slug == "wigley-hull");
+        var wigleyGeometry = await _context.BenchmarkGeometries.AnyAsync(g => g.Case != null && g.Case.Slug == "wigley-hull");
 
         var errors = new List<string>();
         if (waterCount < 6) errors.Add($"Water properties: {waterCount}/6 (missing {6 - waterCount})");

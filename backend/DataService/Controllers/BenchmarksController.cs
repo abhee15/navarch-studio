@@ -65,6 +65,11 @@ public class BenchmarksController : ControllerBase
     public async Task<IActionResult> Ingest(string slug, CancellationToken ct)
     {
         // Simple guard to avoid accidental triggers; extend with auth in production
+        if (_ingest == null)
+        {
+            return BadRequest(new { error = "Ingestion service not available" });
+        }
+
         if (slug == "kcs") await _ingest.IngestKcsAsync(ct);
         else if (slug == "kvlcc2") await _ingest.IngestKvlcc2Async(ct);
         else if (slug == "wigley") await _ingest.IngestWigleyAsync(ct);

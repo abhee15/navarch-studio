@@ -30,6 +30,7 @@ public class ParametricCatalogImporter
     /// <param name="datasetName">Dataset identifier</param>
     /// <param name="maxRows">Limit import (for prototype: 5000)</param>
     /// <param name="skipRows">Sampling strategy (e.g., skip every other row)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     public async Task<ParametricImportResult> ImportFromShipDFolderAsync(
         string folderPath,
         string datasetName,

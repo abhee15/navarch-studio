@@ -54,10 +54,50 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
       const beam = candidate.beamM;
       const draft = candidate.draftM;
 
-      // Check if ShipD geometry is available (from backend)
+      // Check if geometry is available (OffsetsGridDto format from form-coefficient generator)
       if (candidate.geometryJson) {
         try {
-          const sectionsData = JSON.parse(candidate.geometryJson) as {
+          const geometry = JSON.parse(candidate.geometryJson);
+
+          // Check if it's OffsetsGridDto format (from FormCoefficientHullGenerator)
+          if (geometry.stations && geometry.waterlines && geometry.offsets) {
+            console.log("[Hull2DSections] Using OffsetsGrid geometry from backend", {
+              stationCount: geometry.stations.length,
+              waterlineCount: geometry.waterlines.length,
+            });
+
+            // Convert OffsetsGrid to sections format
+            // geometry.offsets is [stationIndex][waterlineIndex]
+            const result = geometry.stations.map((stationX: number, stIdx: number) => {
+              const points: [number, number][] = [];
+
+              // Extract half-breadths for this station across all waterlines
+              for (let wlIdx = 0; wlIdx < geometry.waterlines.length; wlIdx++) {
+                const wlZ = geometry.waterlines[wlIdx];
+                const halfBreadth = geometry.offsets[stIdx]?.[wlIdx] ?? 0;
+                points.push([halfBreadth, -wlZ]); // Negative Z because we're drawing from keel upward
+              }
+
+              // Determine if this is aft or forward section
+              const lpp = candidate.lppM;
+              const isAft = stationX < lpp / 2;
+
+              return {
+                station: stIdx,
+                points,
+                isAft,
+                hasBulb: false,
+              };
+            });
+
+            console.log("[Hull2DSections] Extracted sections from OffsetsGrid geometry", {
+              sectionCount: result.length,
+            });
+            return result;
+          }
+
+          // Check if it's ShipD format (legacy)
+          const sectionsData = geometry as {
             stations?: Array<{
               position: number;
               offsets: Record<number, number>;
@@ -88,8 +128,9 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               stationPositions: sectionsData.stationPositions || [],
             };
 
-            // Extract sections for body plan (use all stations or sample)
-            const stationIndices = Array.from({ length: stationCount + 1 }, (_, i) => i);
+            // Extract sections for body plan (use all stations)
+            const actualStationCount = sectionsData.stations.length;
+            const stationIndices = Array.from({ length: actualStationCount }, (_, i) => i);
             const result = extractSectionsFromShipD(shipdSections, stationIndices);
             console.log("[Hull2DSections] Extracted sections from ShipD geometry", {
               sectionCount: result.length,
@@ -97,11 +138,12 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
             });
             return result;
           } else {
-            console.warn("[Hull2DSections] ShipD geometry has no stations, falling back");
+            // Debug log - this is expected when backend geometry hasn't been generated yet
+            console.debug("[Hull2DSections] Geometry has no stations, falling back");
           }
         } catch (error) {
           console.error(
-            "[Hull2DSections] Failed to parse ShipD geometry, falling back to parametric:",
+            "[Hull2DSections] Failed to parse geometry, falling back to parametric:",
             error
           );
         }
@@ -116,7 +158,8 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
         try {
           const shipdVector = JSON.parse(candidate.shipdParametersJson);
           if (Array.isArray(shipdVector) && shipdVector.length === 45) {
-            console.log("[Hull2DSections] Generating ShipD geometry from parameters", {
+            // Debug log - called repeatedly during optimization
+            console.debug("[Hull2DSections] Generating ShipD geometry from parameters", {
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
@@ -134,7 +177,8 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
 
             const stationIndices = Array.from({ length: stationCount + 1 }, (_, i) => i);
             const result = extractSectionsFromShipD(shipdSections, stationIndices);
-            console.log("[Hull2DSections] Generated sections from ShipD parameters", {
+            // Debug log - called repeatedly during optimization
+            console.debug("[Hull2DSections] Generated sections from ShipD parameters", {
               sectionCount: result.length,
             });
             return result;
@@ -385,7 +429,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
 
             {/* Section curves with animations */}
             {visibility.sections &&
-              sections.map((section) => {
+              sections.map((section: { station: number; points: [number, number][]; isAft: boolean; hasBulb: boolean }) => {
                 if (section.station === 5) return null;
                 const isHovered = hoveredSection === section.station;
                 const isEndStation = section.station === 0 || section.station === 10;
@@ -518,7 +562,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               })}
 
             {/* Midship - special highlighting */}
-            {visibility.midship && sections.find((s) => s.station === 5) && (
+            {visibility.midship && sections.find((s: { station: number }) => s.station === 5) && (
               <g
                 style={{
                   opacity: hoveredLegendItem && hoveredLegendItem !== "midship" ? 0.3 : 0,
@@ -528,7 +572,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
               >
                 <path
                   d={generateSectionPath(
-                    sections.find((s) => s.station === 5)!.points as [number, number][],
+                    sections.find((s: { station: number }) => s.station === 5)!.points as [number, number][],
                     false
                   )}
                   fill="none"
@@ -539,7 +583,7 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
                 />
                 <path
                   d={generateSectionPath(
-                    sections.find((s) => s.station === 5)!.points as [number, number][],
+                    sections.find((s: { station: number }) => s.station === 5)!.points as [number, number][],
                     true
                   )}
                   fill="none"

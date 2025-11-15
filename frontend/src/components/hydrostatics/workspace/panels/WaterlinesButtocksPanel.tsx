@@ -70,11 +70,11 @@ export const WaterlinesButtocksPanel = observer(
         setWaterlines(waterlinesData.waterlines);
         setButtocks(buttocksData.buttocks);
 
-        // Select first 3 of each by default
+        // Select first 6 of each by default (increased to show more data)
         if (waterlinesData.waterlines.length > 0) {
           const wlToSelect = waterlinesData.waterlines.slice(
             0,
-            Math.min(3, waterlinesData.waterlines.length)
+            Math.min(6, waterlinesData.waterlines.length)
           );
           setSelectedWaterlines(wlToSelect.map((wl) => wl.waterlineIndex));
         }
@@ -82,7 +82,7 @@ export const WaterlinesButtocksPanel = observer(
         if (buttocksData.buttocks.length > 0) {
           const btToSelect = buttocksData.buttocks.slice(
             0,
-            Math.min(3, buttocksData.buttocks.length)
+            Math.min(6, buttocksData.buttocks.length)
           );
           setSelectedButtocks(btToSelect.map((bt) => bt.buttockIndex));
         }
@@ -399,7 +399,7 @@ export const WaterlinesButtocksPanel = observer(
             <div>
               <label className="text-[10px] font-medium text-foreground">Select Waterlines:</label>
               <div className="flex flex-wrap gap-1 mt-1">
-                {waterlines.slice(0, 10).map((wl) => (
+                {waterlines.slice(0, 25).map((wl) => (
                   <button
                     key={wl.waterlineIndex}
                     onClick={() => handleWaterlineToggle(wl.waterlineIndex)}

@@ -2161,10 +2161,50 @@ namespace DataService.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<decimal?>("Depth")
+                        .HasColumnType("numeric")
+                        .HasColumnName("depth");
+
+                    b.Property<decimal?>("EhpKw")
+                        .HasColumnType("numeric")
+                        .HasColumnName("ehp_kw");
+
+                    b.Property<decimal?>("FroudeNumber")
+                        .HasColumnType("numeric")
+                        .HasColumnName("froude_number");
+
+                    b.Property<decimal?>("GmInitial")
+                        .HasColumnType("numeric")
+                        .HasColumnName("gm_initial");
+
                     b.Property<string>("HullFamily")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("hull_family");
+
+                    b.Property<decimal?>("KbInitial")
+                        .HasColumnType("numeric")
+                        .HasColumnName("kb_initial");
+
+                    b.Property<decimal?>("LcbPctLpp")
+                        .HasColumnType("numeric")
+                        .HasColumnName("lcb_pct_lpp");
+
+                    b.Property<decimal?>("Loa")
+                        .HasColumnType("numeric")
+                        .HasColumnName("loa");
+
+                    b.Property<decimal?>("Lwl")
+                        .HasColumnType("numeric")
+                        .HasColumnName("lwl");
+
+                    b.Property<decimal?>("MidshipCoefficient")
+                        .HasColumnType("numeric")
+                        .HasColumnName("midship_coefficient");
+
+                    b.Property<decimal?>("PrismaticCoefficient")
+                        .HasColumnType("numeric")
+                        .HasColumnName("prismatic_coefficient");
 
                     b.Property<string>("ShipdCategory")
                         .HasMaxLength(100)
@@ -2180,6 +2220,10 @@ namespace DataService.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("shipd_type");
 
+                    b.Property<decimal?>("ShpKw")
+                        .HasColumnType("numeric")
+                        .HasColumnName("shp_kw");
+
                     b.Property<string>("Size")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -2193,6 +2237,10 @@ namespace DataService.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("vessel_type");
+
+                    b.Property<decimal?>("WaterplaneCoefficient")
+                        .HasColumnType("numeric")
+                        .HasColumnName("waterplane_coefficient");
 
                     b.HasKey("Id")
                         .HasName("pk_vessel_metadata");
