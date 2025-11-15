@@ -1,3 +1,6 @@
+using Shared.HullGenerators;
+using Shared.HullGenerators.Models;
+
 namespace Shared.TestData;
 
 /// <summary>
@@ -259,6 +262,60 @@ public static class HullTestData
             Cm = 0.667m,
             Cwp = cwp
         };
+    }
+
+    /// <summary>
+    /// Generates a hull form from form coefficients using parametric generation
+    /// This replaces the simplistic Wigley formula with a realistic form-coefficient-based approach
+    /// </summary>
+    /// <param name="length">Length between perpendiculars (m)</param>
+    /// <param name="beam">Maximum beam (m)</param>
+    /// <param name="designDraft">Design draft (m)</param>
+    /// <param name="cb">Block coefficient</param>
+    /// <param name="cp">Prismatic coefficient</param>
+    /// <param name="cm">Midship coefficient</param>
+    /// <param name="cwp">Waterplane coefficient</param>
+    /// <param name="lcbPercent">Longitudinal center of buoyancy as % of Lpp from aft (positive = forward)</param>
+    /// <param name="numStations">Number of stations (default: 23 for BSRA-compatible)</param>
+    /// <param name="numWaterlines">Number of waterlines (default: 13)</param>
+    /// <returns>Generated hull geometry (stations, waterlines, offsets)</returns>
+    public static (List<StationData> stations, List<WaterlineData> waterlines, List<OffsetData> offsets)
+        GenerateFromFormCoefficients(
+            decimal length = 100m,
+            decimal beam = 20m,
+            decimal designDraft = 10m,
+            decimal cb = 0.75m,
+            decimal cp = 0.80m,
+            decimal cm = 0.99m,
+            decimal cwp = 0.85m,
+            decimal lcbPercent = 0m,
+            int numStations = 23,
+            int numWaterlines = 13)
+    {
+        var generator = new FormCoefficientHullGenerator();
+        var dims = new HullDimensions(length, beam, designDraft, lcbPercent);
+
+        var geometry = generator.Generate(dims, cb, cp, cm, cwp, numStations, numWaterlines);
+
+        // Convert to test data format
+        var stations = geometry.Stations.Select((x, i) => new StationData { Index = i, X = x }).ToList();
+        var waterlines = geometry.Waterlines.Select((z, i) => new WaterlineData { Index = i, Z = z }).ToList();
+
+        var offsets = new List<OffsetData>();
+        for (int i = 0; i < geometry.Offsets.Count; i++)
+        {
+            for (int j = 0; j < geometry.Offsets[i].Count; j++)
+            {
+                offsets.Add(new OffsetData
+                {
+                    StationIndex = i,
+                    WaterlineIndex = j,
+                    HalfBreadthY = geometry.Offsets[i][j]
+                });
+            }
+        }
+
+        return (stations, waterlines, offsets);
     }
 }
 

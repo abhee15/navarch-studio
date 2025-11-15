@@ -25,6 +25,7 @@ public class SizingRunService : ISizingRunService
     private readonly IShipDConstraintValidator _shipdValidator;
     private readonly IShipDHullGeometryService? _shipdGeometryService;
     private readonly IDataServiceClient? _dataServiceClient;
+    private readonly IHullGeometryGeneratorService? _hullGeometryGenerator;
 
     private static readonly Dictionary<string, List<string>> VesselTypeFamilyHints = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -55,7 +56,8 @@ public class SizingRunService : ISizingRunService
         DataDriven.DataDrivenRealWorldSolver? dataDrivenSolver = null,
         DataDriven.DataDrivenParametricSolver? parametricSolver = null,
         IShipDHullGeometryService? shipdGeometryService = null,
-        IDataServiceClient? dataServiceClient = null)
+        IDataServiceClient? dataServiceClient = null,
+        IHullGeometryGeneratorService? hullGeometryGenerator = null)
     {
         _context = context;
         _firstPrinciplesSolver = firstPrinciplesSolver;
@@ -67,6 +69,7 @@ public class SizingRunService : ISizingRunService
         _parametricSolver = parametricSolver;
         _shipdGeometryService = shipdGeometryService;
         _dataServiceClient = dataServiceClient;
+        _hullGeometryGenerator = hullGeometryGenerator;
     }
 
     public async Task<List<SizingRunDto>> GetByMissionCaseIdAsync(Guid missionCaseId, string tenantId, CancellationToken cancellationToken = default)
@@ -345,8 +348,10 @@ public class SizingRunService : ISizingRunService
             {
                 var sc = solverCandidates[i];
 
-                // Generate ShipD geometry if parameters are available
+                // Generate geometry (ShipD or form-coefficient-based)
                 string? geometryJson = null;
+
+                // Priority 1: Try ShipD geometry if parameters are available
                 if (_shipdGeometryService != null && shipdMetadata != null && !string.IsNullOrEmpty(shipdVectorJson))
                 {
                     try
@@ -371,7 +376,52 @@ public class SizingRunService : ISizingRunService
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate ShipD geometry for candidate {Rank}. Continuing without geometry.", i + 1);
+                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate ShipD geometry for candidate {Rank}. Will try form-coefficient generator.", i + 1);
+                    }
+                }
+
+                // Priority 2: Generate form-coefficient-based offsets (for top 3 candidates or if ShipD failed)
+                // This ensures we always have geometry for the best candidates
+                if (string.IsNullOrEmpty(geometryJson) && _hullGeometryGenerator != null && i < 3)
+                {
+                    try
+                    {
+                        var offsetsGrid = await _hullGeometryGenerator.GenerateOffsetsFromCandidateAsync(
+                            sc,
+                            numStations: 23, // BSRA-compatible
+                            numWaterlines: 13,
+                            cancellationToken);
+
+                        if (offsetsGrid != null)
+                        {
+                            // Serialize offsets grid to JSON
+                            geometryJson = JsonSerializer.Serialize(offsetsGrid);
+                            _logger.LogInformation("[SIZING_RUN] Generated form-coefficient-based offsets for candidate {Rank}", i + 1);
+
+                            // Validate form coefficients (log warnings if mismatch)
+                            var validation = await _hullGeometryGenerator.ValidateFormCoefficientsAsync(
+                                sc,
+                                offsetsGrid,
+                                tolerance: 0.10m, // 10% tolerance for initial implementation
+                                cancellationToken);
+
+                            if (!validation.IsValid && validation.Warnings.Any())
+                            {
+                                _logger.LogWarning(
+                                    "[SIZING_RUN] Form coefficient validation warnings for candidate {Rank}: {Warnings}",
+                                    i + 1, string.Join("; ", validation.Warnings));
+                            }
+                            else
+                            {
+                                _logger.LogDebug(
+                                    "[SIZING_RUN] Form coefficient validation passed for candidate {Rank}",
+                                    i + 1);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate form-coefficient-based offsets for candidate {Rank}. Continuing without geometry.", i + 1);
                     }
                 }
 

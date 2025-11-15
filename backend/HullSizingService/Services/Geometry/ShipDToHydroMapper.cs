@@ -14,9 +14,35 @@ public class ShipDToHydroMapper : IShipDToHydroMapper
             throw new ArgumentNullException(nameof(sections));
         }
 
+        if (lpp <= 0)
+        {
+            throw new ArgumentException($"Lpp must be positive, got {lpp}", nameof(lpp));
+        }
+
+        if (sections.Stations == null || sections.Stations.Count == 0)
+        {
+            throw new ArgumentException("Sections must contain at least one station", nameof(sections));
+        }
+
         var stations = BuildStations(sections, lpp);
         var waterlines = BuildWaterlines(sections);
         var offsets = BuildOffsets(sections, stations.Count, waterlines);
+
+        // Validate minimum requirements
+        if (stations.Count < 3)
+        {
+            throw new InvalidOperationException($"Geometry conversion produced only {stations.Count} stations, minimum 3 required.");
+        }
+
+        if (waterlines.Count < 2)
+        {
+            throw new InvalidOperationException($"Geometry conversion produced only {waterlines.Count} waterlines, minimum 2 required.");
+        }
+
+        if (offsets.Count == 0)
+        {
+            throw new InvalidOperationException("Geometry conversion produced no offsets.");
+        }
 
         return (stations, waterlines, offsets);
     }

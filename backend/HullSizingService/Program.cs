@@ -154,6 +154,10 @@ try
     builder.Services.AddScoped<IShipDToHydroMapper, ShipDToHydroMapper>();
     Log.Information("ShipD parameterization, geometry, and Hydro mapper services registered");
 
+    // Hull Geometry Generator Service (form-coefficient-based)
+    builder.Services.AddScoped<IHullGeometryGeneratorService, HullGeometryGeneratorService>();
+    Log.Information("Hull geometry generator service registered (form-coefficient-based parametric generation)");
+
     // Mission Case Service
     builder.Services.AddScoped<HullSizingService.Services.IMissionCaseService, HullSizingService.Services.MissionCaseService>();
     Log.Information("Mission case service registered");
