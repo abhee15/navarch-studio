@@ -39,8 +39,10 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         var denormalized = DenormalizeParameters(shipdVector, metadata);
 
         // Extract longitudinal proportions
-        var lb = denormalized[1]; // Bow length ratio
-        var ls = denormalized[2]; // Stern length ratio
+        // CRITICAL: Lb and Ls are already ratios (0-1), use vector directly for region boundaries
+        // Denormalized values might be in different ranges, but for region calculation we need ratios
+        var lb = shipdVector[1]; // Bow length ratio (normalized 0-1)
+        var ls = shipdVector[2]; // Stern length ratio (normalized 0-1)
         var lm = 1.0m - lb - ls; // Mid-body length ratio
 
         // Calculate boundaries
@@ -68,6 +70,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 stationPos,
                 region,
                 denormalized,
+                shipdVector,
                 lppM,
                 beamM,
                 draftM,
@@ -292,6 +295,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         decimal stationPos,
         string region,
         Dictionary<int, decimal> denormalized,
+        decimal[] shipdVector,
         decimal lppM,
         decimal beamM,
         decimal draftM,
@@ -319,7 +323,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 var beta = denormalized[8]; // Flare angle (degrees)
                 var rc = denormalized[9]; // Curvature coefficient
                 var rk = denormalized[10]; // Knuckle coefficient
-                var kappaBow = denormalized.ContainsKey(14) ? denormalized[14] : 0.5m; // Curvature type (-1 to 1)
+                var kappaBow = denormalized[14]; // Curvature type (-1 to 1)
                 var cdrft = denormalized[19]; // Deadrise angle (degrees)
 
                 var heightRatio = height / draftM;
@@ -425,7 +429,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             {
                 // Stern section: use Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans, Kappa_stern
                 var atrans = denormalized[22];
-                var kappaStern = denormalized.ContainsKey(24) ? denormalized[24] : 0.5m; // Curvature type
+                var kappaStern = denormalized[24]; // Curvature type
                 var betaTrans = denormalized[27];
                 var bcTrans = denormalized[28];
                 var rcTrans = denormalized[29];
@@ -486,36 +490,107 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 }
             }
 
-            // LONGITUDINAL SCALING: Apply taper based on station position and region
+            // LONGITUDINAL SCALING: Apply taper based on station position, region, and hull family
             // This creates the actual bow/stern taper (hull narrows toward ends)
+            // CRITICAL: Different stern families require different taper profiles to avoid incorrect V-shapes
             decimal longitudinalScale = 1.0m;
 
             if (region == "bow")
             {
                 // Bow region: Taper from full beam at bowStart to centerline at bow tip (pos=1.0)
-                var lb = denormalized[1]; // Bow length ratio
-                var ls = denormalized[2]; // Stern length ratio
+                // Use normalized vector values for ratios (Lb, Ls are already 0-1 ratios)
+                var lb = shipdVector[1]; // Bow length ratio (normalized 0-1)
+                var ls = shipdVector[2]; // Stern length ratio (normalized 0-1)
                 var bowStart = 1.0m - lb - ls + ls; // Start of bow region
 
                 if (stationPos >= bowStart)
                 {
                     // Position within bow region: 0 = bow start (full beam), 1 = bow tip (centerline)
                     var bowPos = (stationPos - bowStart) / (1.0m - bowStart);
-                    // Taper: quadratic for smooth curve
-                    longitudinalScale = (decimal)Math.Pow((double)(1.0m - bowPos), 2.0);
+
+                    // Detect bow family from parameters
+                    var hasBulb = shipdVector[31] > 0.5m; // bit_BB (normalized 0-1, >0.5 = enabled)
+                    var beta = denormalized[8]; // Flare angle (degrees, denormalized)
+                    var rc = denormalized[9]; // Curvature coefficient (denormalized)
+
+                    if (hasBulb)
+                    {
+                        // Bulbous bow: More gradual, rounded taper (not sharp V)
+                        // Use higher power for smoother curve
+                        longitudinalScale = (decimal)Math.Pow((double)(1.0m - bowPos), 2.5);
+                    }
+                    else if (beta > 20m)
+                    {
+                        // High flare bow (wave piercing): More gradual taper
+                        longitudinalScale = (decimal)Math.Pow((double)(1.0m - bowPos), 2.2);
+                    }
+                    else
+                    {
+                        // Standard bow: Quadratic taper
+                        longitudinalScale = (decimal)Math.Pow((double)(1.0m - bowPos), 2.0);
+                    }
                 }
             }
             else if (region == "stern")
             {
                 // Stern region: Taper from centerline at stern tip (pos=0.0) to full beam at midStart
-                var ls = denormalized[2]; // Stern length ratio
+                // Use normalized vector value for ratio (Ls is already 0-1 ratio)
+                var ls = shipdVector[2]; // Stern length ratio (normalized 0-1)
+
+                // CRITICAL: Detect stern family from Atrans parameter
+                // Use normalized vector values (0-1 range) for family detection and calculations
+                var atransNorm = shipdVector[22]; // Transom area coefficient (normalized 0-1)
+                var bcTransNorm = shipdVector[28]; // Transom width ratio (normalized 0-1)
+                var rcTransNorm = shipdVector[29]; // Stern curvature coefficient (normalized 0-1)
 
                 if (stationPos <= ls)
                 {
                     // Position within stern region: 0 = stern tip (centerline), 1 = stern end (full beam)
                     var sternPos = stationPos / ls;
-                    // Taper: quadratic for smooth curve
-                    longitudinalScale = (decimal)Math.Pow((double)sternPos, 2.0);
+
+                    // TRANSOM STERN: When Atrans (normalized) > 0.5, maintain full beam until very close to transom
+                    // Then apply flat transom (not V-shape taper)
+                    // Note: Atrans normalized 0-1: 0 = pointed stern, 1 = full transom
+                    if (atransNorm > 0.5m)
+                    {
+                        // Transom stern: Maintain full beam until last 5-10% of stern
+                        // Then transition to transom width (flat stern)
+                        var transomStartPos = 0.90m; // Start transom at 90% of stern length
+
+                        if (sternPos < transomStartPos)
+                        {
+                            // Before transom: Maintain full beam (no V-shape taper)
+                            longitudinalScale = 1.0m;
+                        }
+                        else
+                        {
+                            // At transom: Transition to transom width
+                            var transomBlend = (sternPos - transomStartPos) / (1.0m - transomStartPos);
+                            // Transom width is typically 70-100% of beam (bcTransNorm controls this)
+                            // bcTransNorm is normalized 0-1, map to 0.7-1.0 range
+                            var transomWidthRatio = 0.7m + bcTransNorm * 0.3m; // 0.7 to 1.0
+                            longitudinalScale = 1.0m - (1.0m - transomWidthRatio) * transomBlend;
+                        }
+                    }
+                    else
+                    {
+                        // CRUISER/CANOE STERN: When Atrans < 0.5, use rounded/elliptical taper
+                        // Higher Rc_trans = fuller (rounder), Lower Rc_trans = finer (more pointed)
+                        // Use normalized vector value (0-1) for consistent exponent calculation
+                        var rcTransNorm = shipdVector[29]; // Rc_trans normalized 0-1
+                        var curveExponent = 2.0m + rcTransNorm * 1.0m; // Range: 2.0 (standard) to 3.0 (very rounded)
+
+                        // Use smoother, more gradual taper for cruiser/canoe sterns
+                        // Elliptical taper: sternPos^exponent (instead of sternPos^2)
+                        longitudinalScale = (decimal)Math.Pow((double)sternPos, (double)curveExponent);
+
+                        // Ensure minimum scale to avoid sharp V-shape
+                        if (longitudinalScale < 0.3m && sternPos > 0.3m)
+                        {
+                            // For cruiser/canoe sterns, maintain reasonable width even near tip
+                            longitudinalScale = 0.3m + (sternPos - 0.3m) * 0.7m / 0.7m;
+                        }
+                    }
                 }
             }
             // Midship region: longitudinalScale = 1.0 (no taper, full beam)

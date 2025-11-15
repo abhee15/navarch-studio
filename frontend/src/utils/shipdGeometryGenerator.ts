@@ -772,8 +772,9 @@ function generateStationOffsets(
       }
     }
 
-    // LONGITUDINAL SCALING: Apply taper based on station position and region
+    // LONGITUDINAL SCALING: Apply taper based on station position, region, and hull family
     // This creates the actual bow/stern taper (hull narrows toward ends)
+    // CRITICAL: Different stern families require different taper profiles to avoid incorrect V-shapes
     let longitudinalScale = 1.0;
 
     if (region === "bow") {
@@ -786,18 +787,73 @@ function generateStationOffsets(
       if (stationPos >= bowStart) {
         // Position within bow region: 0 = bow start (full beam), 1 = bow tip (centerline)
         const bowPos = (stationPos - bowStart) / (1.0 - bowStart);
-        // Taper: quadratic for smooth curve
-        longitudinalScale = Math.pow(1.0 - bowPos, 2.0);
+
+        // Detect bow family from parameters
+        const hasBulb = shipdVector[31] > 0.5; // bit_BB
+        const beta = denormalized[8] ?? 0; // Flare angle (degrees)
+        const rc = denormalized[9] ?? 0.5; // Curvature coefficient
+
+        if (hasBulb) {
+          // Bulbous bow: More gradual, rounded taper (not sharp V)
+          // Use higher power for smoother curve
+          longitudinalScale = Math.pow(1.0 - bowPos, 2.5);
+        } else if (beta > 20) {
+          // High flare bow (wave piercing): More gradual taper
+          longitudinalScale = Math.pow(1.0 - bowPos, 2.2);
+        } else {
+          // Standard bow: Quadratic taper
+          longitudinalScale = Math.pow(1.0 - bowPos, 2.0);
+        }
       }
     } else if (region === "stern") {
       // Stern region: Taper from centerline at stern tip (pos=0.0) to full beam at midStart
       const ls = shipdVector[2] ?? 0.3; // Stern length ratio (already a ratio)
 
+      // CRITICAL: Detect stern family from Atrans parameter
+      // Use normalized vector values (0-1 range) for family detection and calculations
+      const atransNorm = shipdVector[22] ?? 0; // Transom area coefficient (normalized 0-1)
+      const bcTransNorm = shipdVector[28] ?? 0.1; // Transom width ratio (normalized 0-1)
+      const rcTransNorm = shipdVector[29] ?? 0.25; // Stern curvature coefficient (normalized 0-1)
+
       if (stationPos <= ls) {
         // Position within stern region: 0 = stern tip (centerline), 1 = stern end (full beam)
         const sternPos = stationPos / ls;
-        // Taper: quadratic for smooth curve
-        longitudinalScale = Math.pow(sternPos, 2.0);
+
+        // TRANSOM STERN: When Atrans (normalized) > 0.5, maintain full beam until very close to transom
+        // Then apply flat transom (not V-shape taper)
+        // Note: Atrans normalized 0-1: 0 = pointed stern, 1 = full transom
+        if (atransNorm > 0.5) {
+          // Transom stern: Maintain full beam until last 5-10% of stern
+          // Then transition to transom width (flat stern)
+          const transomStartPos = 0.9; // Start transom at 90% of stern length
+
+          if (sternPos < transomStartPos) {
+            // Before transom: Maintain full beam (no V-shape taper)
+            longitudinalScale = 1.0;
+          } else {
+            // At transom: Transition to transom width
+            const transomBlend = (sternPos - transomStartPos) / (1.0 - transomStartPos);
+            // Transom width is typically 70-100% of beam (bcTransNorm controls this)
+            // bcTransNorm is normalized 0-1, map to 0.7-1.0 range
+            const transomWidthRatio = 0.7 + bcTransNorm * 0.3; // 0.7 to 1.0
+            longitudinalScale = 1.0 - (1.0 - transomWidthRatio) * transomBlend;
+          }
+        } else {
+          // CRUISER/CANOE STERN: When Atrans < 0.5, use rounded/elliptical taper
+          // Higher Rc_trans = fuller (rounder), Lower Rc_trans = finer (more pointed)
+          // Use normalized vector value (0-1) for consistent exponent calculation
+          const curveExponent = 2.0 + rcTransNorm * 1.0; // Range: 2.0 (standard) to 3.0 (very rounded)
+
+          // Use smoother, more gradual taper for cruiser/canoe sterns
+          // Elliptical taper: sternPos^exponent (instead of sternPos^2)
+          longitudinalScale = Math.pow(sternPos, curveExponent);
+
+          // Ensure minimum scale to avoid sharp V-shape
+          if (longitudinalScale < 0.3 && sternPos > 0.3) {
+            // For cruiser/canoe sterns, maintain reasonable width even near tip
+            longitudinalScale = 0.3 + ((sternPos - 0.3) * 0.7) / 0.7;
+          }
+        }
       }
     }
     // Midship region: longitudinalScale = 1.0 (no taper, full beam)
