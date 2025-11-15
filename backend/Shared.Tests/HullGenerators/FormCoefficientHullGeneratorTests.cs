@@ -522,4 +522,137 @@ public class FormCoefficientHullGeneratorTests
     }
 
     #endregion
+
+    #region BSRA Validation Tests
+
+    /// <summary>
+    /// Test to validate generated offsets against BSRA reference data
+    /// This test can be extended with actual AbCurves.xlsx reference data
+    /// </summary>
+    [Fact(Skip = "Requires AbCurves.xlsx reference data - to be populated with actual reference values")]
+    public void Generate_WithBSRAReferenceParameters_MatchesReferenceOffsets()
+    {
+        // Arrange - Use BSRA standard parameters (e.g., Cb=0.80 from reference document)
+        var dims = new HullDimensions(184.5m, 28m, 12.87m, 2.08m); // Example from BSRA reference
+        var generator = new FormCoefficientHullGenerator();
+        decimal cb = 0.80m;
+        decimal cp = 0.808m; // Approximate from Cb/Cm
+        decimal cm = 0.99m;
+        decimal cwp = 0.87m;
+
+        // Act
+        var geometry = generator.Generate(dims, cb, cp, cm, cwp, 23, 10); // BSRA standard: 23 stations, 10 waterlines
+
+        // Assert - Verify BSRA-compatible waterline heights
+        geometry.Waterlines.Should().HaveCount(10);
+
+        // Check that waterlines match BSRA standard percentages (within 1% tolerance)
+        var bsraPercentages = new[] { 7.69m, 15.38m, 23.08m, 38.46m, 53.85m, 69.23m, 84.62m, 100.0m, 115.38m, 130.77m };
+        for (int i = 0; i < geometry.Waterlines.Count; i++)
+        {
+            decimal expectedZ = dims.Draft * bsraPercentages[i] / 100.0m;
+            decimal actualZ = geometry.Waterlines[i];
+            decimal tolerance = dims.Draft * 0.01m; // 1% tolerance
+            Math.Abs(actualZ - expectedZ).Should().BeLessThan(tolerance,
+                $"Waterline {i} should match BSRA standard height");
+        }
+
+        // TODO: Add offset comparison with AbCurves.xlsx reference data
+        // Compare generated offsets to reference offsets at each station/waterline
+        // Expected tolerance: ±3% for half-breadths
+    }
+
+    /// <summary>
+    /// Test to validate sectional areas match BSRA reference
+    /// </summary>
+    [Fact(Skip = "Requires AbCurves.xlsx reference data - to be populated with actual reference values")]
+    public void Generate_WithBSRAReferenceParameters_MatchesReferenceSectionalAreas()
+    {
+        // Arrange
+        var dims = new HullDimensions(184.5m, 28m, 12.87m, 2.08m);
+        var generator = new FormCoefficientHullGenerator();
+        decimal cb = 0.80m;
+        decimal cp = 0.808m;
+        decimal cm = 0.99m;
+        decimal cwp = 0.87m;
+
+        // Act
+        var geometry = generator.Generate(dims, cb, cp, cm, cwp, 23, 10);
+
+        // Assert
+        // TODO: Calculate sectional areas from offsets and compare to AbCurves.xlsx reference
+        // Expected tolerance: ±2% for sectional areas
+
+        // Verify form coefficients match within improved tolerance
+        geometry.ComputedCoefficients.Should().NotBeNull();
+        var computed = geometry.ComputedCoefficients!;
+
+        // After improvements, we expect better accuracy
+        Math.Abs(computed.Cb - cb).Should().BeLessThan(cb * 0.05m, // 5% tolerance (improved from 10%)
+            "Block coefficient should match target more accurately");
+        Math.Abs(computed.Cp - cp).Should().BeLessThan(cp * 0.05m,
+            "Prismatic coefficient should match target more accurately");
+        Math.Abs(computed.Cm - cm).Should().BeLessThan(cm * 0.05m,
+            "Midship coefficient should match target more accurately");
+        Math.Abs(computed.Cwp - cwp).Should().BeLessThan(cwp * 0.05m,
+            "Waterplane coefficient should match target more accurately");
+    }
+
+    /// <summary>
+    /// Test to verify BSRA-compatible waterline generation
+    /// </summary>
+    [Fact]
+    public void Generate_With10Waterlines_UsesBSRAStandardHeights()
+    {
+        // Arrange
+        var dims = new HullDimensions(200m, 32m, 12m, 2.0m);
+        var generator = new FormCoefficientHullGenerator();
+        decimal draft = dims.Draft;
+
+        // Act
+        var geometry = generator.Generate(dims, 0.80m, 0.82m, 0.99m, 0.87m, 23, 10);
+
+        // Assert - Verify BSRA standard waterline heights
+        geometry.Waterlines.Should().HaveCount(10);
+
+        var bsraPercentages = new[] { 7.69m, 15.38m, 23.08m, 38.46m, 53.85m, 69.23m, 84.62m, 100.0m, 115.38m, 130.77m };
+        for (int i = 0; i < geometry.Waterlines.Count; i++)
+        {
+            decimal expectedZ = draft * bsraPercentages[i] / 100.0m;
+            decimal actualZ = geometry.Waterlines[i];
+            decimal tolerance = draft * 0.001m; // 0.1% tolerance for exact match
+            Math.Abs(actualZ - expectedZ).Should().BeLessThan(tolerance,
+                $"Waterline {i} should exactly match BSRA standard height {bsraPercentages[i]}%");
+        }
+    }
+
+    /// <summary>
+    /// Test to verify extended mode (13 waterlines) includes BSRA standard plus additional
+    /// </summary>
+    [Fact]
+    public void Generate_With13Waterlines_IncludesBSRAStandardPlusAdditional()
+    {
+        // Arrange
+        var dims = new HullDimensions(200m, 32m, 12m, 2.0m);
+        var generator = new FormCoefficientHullGenerator();
+        decimal draft = dims.Draft;
+
+        // Act
+        var geometry = generator.Generate(dims, 0.80m, 0.82m, 0.99m, 0.87m, 23, 13);
+
+        // Assert
+        geometry.Waterlines.Should().HaveCount(13);
+
+        // Verify design draft (100%) is included
+        geometry.Waterlines.Should().Contain(draft);
+
+        // Verify waterlines are monotonic
+        for (int i = 1; i < geometry.Waterlines.Count; i++)
+        {
+            geometry.Waterlines[i].Should().BeGreaterThan(geometry.Waterlines[i - 1],
+                "Waterlines should be monotonically increasing");
+        }
+    }
+
+    #endregion
 }

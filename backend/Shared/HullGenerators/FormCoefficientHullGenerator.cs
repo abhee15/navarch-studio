@@ -9,11 +9,8 @@ namespace Shared.HullGenerators;
 /// </summary>
 public class FormCoefficientHullGenerator : IHullGenerator
 {
-    // Calibration parameters (can be tuned to match BSRA/Series 60)
-    private const decimal SECTIONAL_AREA_EXPONENT = 2.0m; // Controls fullness of ends
-    private const decimal WATERLINE_BOW_EXPONENT = 2.5m; // Controls bow shape
-    private const decimal WATERLINE_STERN_EXPONENT = 2.0m; // Controls stern shape
-    private const decimal WATERLINE_FULLNESS_FACTOR = 0.5m; // Bow vs stern fullness balance
+    // Note: Calibration parameters are now Cb-dependent and calculated dynamically
+    // This provides better matching to BSRA/Series 60 characteristics
 
     /// <summary>
     /// Generate hull offsets from form coefficients
@@ -38,15 +35,15 @@ public class FormCoefficientHullGenerator : IHullGenerator
 
         // Step 1: Generate sectional area curve from Cp and LCB
         var sectionalAreas = GenerateSectionalAreaCurve(
-            stations, dims.Length, dims.Beam, dims.Draft, cm, cp, dims.LcbPercent);
+            stations, dims.Length, dims.Beam, dims.Draft, cm, cp, dims.LcbPercent, cb);
 
         // Step 2: Generate waterline half-breadths from Cwp
         var waterlineHalfBreadths = GenerateWaterlineHalfBreadths(
-            stations, dims.Length, dims.Beam, cwp);
+            stations, dims.Length, dims.Beam, cwp, cb);
 
         // Step 3: Generate section shapes from Cm (normalized profile)
         var sectionShapeProfile = GenerateSectionShapes(
-            waterlines, dims.Beam, dims.Draft, cm);
+            waterlines, dims.Beam, dims.Draft, cm, cb);
 
         // Step 4: Combine to generate offsets
         var offsets = CombineToOffsets(
@@ -101,16 +98,75 @@ public class FormCoefficientHullGenerator : IHullGenerator
     }
 
     /// <summary>
-    /// Generate waterlines from 0 to 1.3T
+    /// Generate waterlines using BSRA standard heights or extended mode
+    /// BSRA standard: A=7.69%, B=15.38%, C=23.08%, D=38.46%, E=53.85%, F=69.23%, G=84.62%, H=100%, J=115.38%, K=130.77%
     /// </summary>
     private List<decimal> GenerateWaterlines(decimal draft, int numWaterlines)
     {
         var waterlines = new List<decimal>();
-        decimal maxZ = draft * 1.3m; // Extend above design draft for visualization
 
-        for (int j = 0; j < numWaterlines; j++)
+        // BSRA standard waterline heights (% of draft)
+        var bsraStandardPercentages = new[]
         {
-            waterlines.Add(maxZ * j / (numWaterlines - 1));
+            7.69m, 15.38m, 23.08m, 38.46m, 53.85m, 69.23m, 84.62m, 100.0m, 115.38m, 130.77m
+        };
+
+        if (numWaterlines == 10)
+        {
+            // Use exact BSRA standard waterlines
+            foreach (var percentage in bsraStandardPercentages)
+            {
+                waterlines.Add(draft * percentage / 100.0m);
+            }
+        }
+        else if (numWaterlines == 13)
+        {
+            // Extended mode: Use BSRA standard plus additional waterlines
+            // Add waterlines at 0%, 25%, 50%, 75% for better definition
+            var extendedPercentages = new List<decimal> { 0m }; // Keel
+
+            // Add 25%, 50%, 75% if they don't overlap with BSRA standard
+            var additionalPercentages = new[] { 25.0m, 50.0m, 75.0m };
+            foreach (var pct in additionalPercentages)
+            {
+                // Check if this percentage is close to any BSRA standard (within 2%)
+                bool isCloseToBSRA = bsraStandardPercentages.Any(bsra => Math.Abs(bsra - pct) < 2.0m);
+                if (!isCloseToBSRA)
+                {
+                    extendedPercentages.Add(pct);
+                }
+            }
+
+            // Add all BSRA standard waterlines
+            extendedPercentages.AddRange(bsraStandardPercentages);
+
+            // Sort and take first 13
+            extendedPercentages.Sort();
+            extendedPercentages = extendedPercentages.Take(13).ToList();
+
+            // Convert to actual Z values
+            foreach (var percentage in extendedPercentages)
+            {
+                waterlines.Add(draft * percentage / 100.0m);
+            }
+        }
+        else
+        {
+            // For other counts, use equally spaced but ensure design draft (100%) is included
+            decimal maxZ = draft * 1.3m; // Extend above design draft for visualization
+
+            for (int j = 0; j < numWaterlines; j++)
+            {
+                decimal z = maxZ * j / (numWaterlines - 1);
+
+                // Ensure design draft is included (within 1% tolerance)
+                if (j == numWaterlines - 1 || Math.Abs(z - draft) < draft * 0.01m)
+                {
+                    z = draft; // Use exact design draft
+                }
+
+                waterlines.Add(z);
+            }
         }
 
         return waterlines;
@@ -118,7 +174,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
 
     /// <summary>
     /// Generate sectional area curve from Cp and LCB
-    /// Uses raised cosine base function: φ(ξ) = 1 - cos(πξ) where ξ = x/L
+    /// Uses raised cosine base function with Cb-dependent exponent to better match BSRA fig.54 curves
+    /// Higher Cb = fuller ends = lower exponent
     /// </summary>
     private List<decimal> GenerateSectionalAreaCurve(
         List<decimal> stations,
@@ -127,7 +184,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
         decimal draft,
         decimal cm,
         decimal cp,
-        decimal lcbPercent)
+        decimal lcbPercent,
+        decimal cb)
     {
         // Midship section area
         decimal amid = cm * beam * draft;
@@ -138,6 +196,11 @@ public class FormCoefficientHullGenerator : IHullGenerator
         var sectionalAreas = new List<decimal>();
         var baseShape = new List<decimal>();
 
+        // Adaptive exponent based on Cb (higher Cb = fuller ends = lower exponent)
+        // exp = 2.0 - 0.5 * (Cb - 0.65) clamped to reasonable range
+        decimal exponent = 2.0m - 0.5m * (cb - 0.65m);
+        exponent = Math.Clamp(exponent, 1.0m, 3.0m);
+
         // Generate base shape using raised cosine
         foreach (var x in stations)
         {
@@ -146,8 +209,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
             // Raised cosine: φ(ξ) = 1 - cos(πξ)
             decimal phi = 1m - (decimal)Math.Cos((double)((decimal)Math.PI * xi));
 
-            // Apply exponent for fullness control
-            decimal shapeValue = (decimal)Math.Pow((double)phi, (double)SECTIONAL_AREA_EXPONENT);
+            // Apply Cb-dependent exponent for fullness control
+            decimal shapeValue = (decimal)Math.Pow((double)phi, (double)exponent);
             baseShape.Add(shapeValue);
         }
 
@@ -181,8 +244,9 @@ public class FormCoefficientHullGenerator : IHullGenerator
     }
 
     /// <summary>
-    /// Apply LCB shift to sectional area curve
+    /// Apply LCB shift to sectional area curve using moment-based adjustment
     /// Positive LCB% = forward shift, Negative = aft shift
+    /// Uses iterative moment adjustment for more accurate LCB positioning
     /// </summary>
     private List<decimal> ApplyLCBShift(
         List<decimal> baseShape,
@@ -195,9 +259,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
             return baseShape; // No shift needed
         }
 
-        // Convert LCB% to shift distance
+        // Convert LCB% to target position
         // LCB% is from aft perpendicular, positive forward
-        // We need to shift the curve to achieve this LCB
         decimal targetLCB = length * (0.5m + lcbPercent / 100m); // Convert % to position
 
         // Calculate current LCB
@@ -205,47 +268,98 @@ public class FormCoefficientHullGenerator : IHullGenerator
         decimal currentMoment = IntegrateFirstMoment(stations, baseShape);
         decimal currentLCB = currentVolume > 0 ? currentMoment / currentVolume : length / 2m;
 
-        // Shift needed
-        decimal shiftNeeded = targetLCB - currentLCB;
-
-        // Apply shift by interpolating
-        var shifted = new List<decimal>();
-        foreach (var x in stations)
+        // If already close enough, return base shape
+        if (Math.Abs(currentLCB - targetLCB) < length * 0.001m) // 0.1% tolerance
         {
-            decimal shiftedX = x - shiftNeeded;
-
-            // Clamp to valid range and interpolate
-            if (shiftedX <= 0)
-            {
-                shifted.Add(0m);
-            }
-            else if (shiftedX >= length)
-            {
-                shifted.Add(0m);
-            }
-            else
-            {
-                // Find interpolated value
-                decimal value = Interpolate(stations, baseShape, shiftedX);
-                shifted.Add(value);
-            }
+            return baseShape;
         }
 
-        return shifted;
+        // Use iterative moment-based adjustment
+        var adjustedShape = new List<decimal>(baseShape);
+        const int maxIterations = 10;
+        const decimal convergenceTolerance = 0.001m; // 0.1% of length
+
+        for (int iter = 0; iter < maxIterations; iter++)
+        {
+            // Calculate current LCB
+            decimal iterVolume = IntegrateTrapezoidal(stations, adjustedShape);
+            decimal iterMoment = IntegrateFirstMoment(stations, adjustedShape);
+            decimal iterLCB = iterVolume > 0 ? iterMoment / iterVolume : length / 2m;
+
+            // Check convergence
+            decimal lcbError = Math.Abs(iterLCB - targetLCB) / length;
+            if (lcbError < convergenceTolerance)
+            {
+                break;
+            }
+
+            // Calculate adjustment needed
+            decimal lcbErrorAbs = targetLCB - iterLCB;
+
+            // Apply moment-based adjustment: shift the curve to adjust LCB
+            // Use a weighted adjustment that preserves volume
+            var newShape = new List<decimal>();
+            decimal adjustmentFactor = 0.3m; // Damping factor for stability
+
+            for (int i = 0; i < stations.Count; i++)
+            {
+                decimal x = stations[i];
+                decimal currentValue = adjustedShape[i];
+
+                // Apply adjustment based on position relative to target LCB
+                // Forward of target: increase if LCB needs to move forward, decrease if aft
+                // Aft of target: decrease if LCB needs to move forward, increase if aft
+                decimal positionFactor = (x - targetLCB) / length; // -0.5 to +0.5
+                decimal adjustment = 1.0m + positionFactor * adjustmentFactor * (lcbErrorAbs / length) * 2.0m;
+
+                decimal adjustedValue = currentValue * adjustment;
+                newShape.Add(Math.Max(0m, adjustedValue));
+            }
+
+            // Normalize to preserve volume
+            decimal newVolume = IntegrateTrapezoidal(stations, newShape);
+            if (newVolume > 0 && currentVolume > 0)
+            {
+                decimal volumeScale = currentVolume / newVolume;
+                for (int i = 0; i < newShape.Count; i++)
+                {
+                    newShape[i] *= volumeScale;
+                }
+            }
+
+            adjustedShape = newShape;
+        }
+
+        return adjustedShape;
     }
 
     /// <summary>
-    /// Generate waterline half-breadths from Cwp
-    /// Uses parametric planform curve
+    /// Generate waterline half-breadths from Cwp with Cb-dependent parameters
+    /// Uses parametric planform curve with Cb-dependent bow/stern exponents and fullness factor
+    /// Better matches BSRA waterline half-breadth characteristics
     /// </summary>
     private List<decimal> GenerateWaterlineHalfBreadths(
         List<decimal> stations,
         decimal length,
         decimal beam,
-        decimal cwp)
+        decimal cwp,
+        decimal cb)
     {
         var halfBreadths = new List<decimal>();
         decimal targetArea = cwp * length * beam;
+
+        // Cb-dependent exponents and fullness factor
+        // Bow exponent: 2.0 + 0.5 * (1 - Cb) - fuller hulls have less fine bows
+        decimal bowExponent = 2.0m + 0.5m * (1m - cb);
+        bowExponent = Math.Clamp(bowExponent, 1.5m, 3.0m);
+
+        // Stern exponent: 2.0 + 0.3 * (1 - Cb) - fuller hulls have less fine sterns
+        decimal sternExponent = 2.0m + 0.3m * (1m - cb);
+        sternExponent = Math.Clamp(sternExponent, 1.5m, 2.5m);
+
+        // Fullness factor: 0.4 + 0.2 * (Cb - 0.65) - higher Cb = more forward fullness
+        decimal fullnessFactor = 0.4m + 0.2m * (cb - 0.65m);
+        fullnessFactor = Math.Clamp(fullnessFactor, 0.3m, 0.7m);
 
         // Generate base shape
         var baseShape = new List<decimal>();
@@ -254,8 +368,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
             decimal xi = x / length; // Normalized position (0 to 1)
 
             // Parametric planform: y = (B/2) * (1 - αξ^p - (1-α)(1-ξ)^q)
-            decimal bowTerm = WATERLINE_FULLNESS_FACTOR * (decimal)Math.Pow((double)xi, (double)WATERLINE_BOW_EXPONENT);
-            decimal sternTerm = (1m - WATERLINE_FULLNESS_FACTOR) * (decimal)Math.Pow((double)(1m - xi), (double)WATERLINE_STERN_EXPONENT);
+            decimal bowTerm = fullnessFactor * (decimal)Math.Pow((double)xi, (double)bowExponent);
+            decimal sternTerm = (1m - fullnessFactor) * (decimal)Math.Pow((double)(1m - xi), (double)sternExponent);
             decimal shapeValue = 1m - bowTerm - sternTerm;
 
             baseShape.Add(Math.Max(0m, shapeValue));
@@ -290,25 +404,35 @@ public class FormCoefficientHullGenerator : IHullGenerator
     }
 
     /// <summary>
-    /// Generate section shapes from Cm
+    /// Generate section shapes from Cm with Cb influence
     /// Parametric profile: y(z) = (B/2) * (1 - (z/T)^p)^q
     /// Returns half-breadths for each waterline
+    /// Refined p and q calculation with Cb correction for better BSRA section shape matching
     /// </summary>
     private List<decimal> GenerateSectionShapes(
         List<decimal> waterlines,
         decimal beam,
         decimal draft,
-        decimal cm)
+        decimal cm,
+        decimal cb)
     {
         // Calculate p and q from Cm
-        // For U-sections (high Cm: 0.98-1.0): p ≈ 2, q ≈ 0.5
-        // For V-sections (low Cm: 0.85-0.90): p ≈ 1, q ≈ 2-3
+        // For U-sections (high Cm: 0.98-1.0): p ≈ 1.5-2.0, q ≈ 0.4-0.6
+        // For V-sections (low Cm: 0.85-0.90): p ≈ 0.8-1.2, q ≈ 1.5-2.5
         decimal p = 1m + 4m * (1m - cm);
         decimal q = 0.5m + 3m * (cm - 0.85m);
 
         // Clamp to reasonable ranges
         p = Math.Clamp(p, 0.5m, 3.0m);
         q = Math.Clamp(q, 0.3m, 4.0m);
+
+        // Add Cb correction: higher Cb tends to have fuller sections
+        // p_adjusted = p * (1 + 0.2 * (Cb - 0.75))
+        decimal cbCorrection = 1m + 0.2m * (cb - 0.75m);
+        p *= cbCorrection;
+
+        // Re-clamp after Cb correction
+        p = Math.Clamp(p, 0.5m, 3.0m);
 
         var sectionShapes = new List<decimal>();
 
@@ -383,12 +507,13 @@ public class FormCoefficientHullGenerator : IHullGenerator
             var halfBreadthsForArea = initialOffsets.Select(hb => 2m * hb).ToList();
             decimal currentArea = IntegrateTrapezoidal(waterlines, halfBreadthsForArea);
 
-            // Iteratively scale to match target area accurately
+            // Iteratively scale to match target area accurately using improved Newton-Raphson-like approach
             if (targetArea > 0 && currentArea > 0)
             {
-                // Use iterative refinement to match sectional area
+                // Use improved iterative refinement to match sectional area
                 var refinedOffsets = new List<decimal>(initialOffsets);
-                const int maxIterations = 5;
+                const int maxIterations = 10;
+                const decimal tolerance = 0.001m; // 0.1% tolerance
 
                 for (int iter = 0; iter < maxIterations; iter++)
                 {
@@ -396,13 +521,25 @@ public class FormCoefficientHullGenerator : IHullGenerator
                     var iterHalfBreadths = refinedOffsets.Select(hb => 2m * hb).ToList();
                     decimal iterArea = IntegrateTrapezoidal(waterlines, iterHalfBreadths);
 
-                    if (Math.Abs(iterArea - targetArea) / targetArea < 0.001m) // 0.1% tolerance
+                    // Check convergence
+                    decimal areaError = Math.Abs(iterArea - targetArea) / targetArea;
+                    if (areaError < tolerance)
                         break;
 
-                    // Calculate scale factor (area scales as square of half-breadth)
-                    decimal iterScaleFactor = (decimal)Math.Sqrt((double)(targetArea / iterArea));
+                    // Use Newton-Raphson-like approach: area scales as square of half-breadth
+                    // f(x) = area - target, f'(x) ≈ 2 * area / scale
+                    // scale_new = scale_old - f(scale) / f'(scale)
+                    // Simplified: scale_factor = sqrt(target / current) with damping
+                    decimal areaRatio = targetArea / iterArea;
+                    decimal iterScaleFactor = (decimal)Math.Pow((double)areaRatio, 0.5); // Square root for area scaling
 
-                    // Apply scaling with constraints
+                    // Apply damping for stability (especially near convergence)
+                    if (areaError < 0.05m) // Within 5%, use damping
+                    {
+                        iterScaleFactor = 1m + (iterScaleFactor - 1m) * 0.7m; // 70% of adjustment
+                    }
+
+                    // Apply scaling with constraints, using separate scaling for different draft regions
                     for (int j = 0; j < waterlines.Count; j++)
                     {
                         decimal z = waterlines[j];
@@ -413,19 +550,19 @@ public class FormCoefficientHullGenerator : IHullGenerator
                             // Above design draft: keep waterline constraint
                             refinedOffsets[j] = Math.Min(waterlineHalfBreadth, beam / 2m);
                         }
+                        else if (zNorm >= 0.95m)
+                        {
+                            // Near design draft (95-100%): blend with waterline constraint
+                            decimal draftBlend = (zNorm - 0.95m) / 0.05m; // Blend from 0.95T to 1.0T
+                            decimal scaledHalfBreadth = refinedOffsets[j] * iterScaleFactor;
+                            refinedOffsets[j] = scaledHalfBreadth * (1m - draftBlend) +
+                                                waterlineHalfBreadth * draftBlend;
+                            refinedOffsets[j] = Math.Clamp(refinedOffsets[j], 0m, beam / 2m);
+                        }
                         else
                         {
-                            // Scale but respect waterline constraint at design draft
+                            // Below 95% draft: scale freely
                             decimal scaledHalfBreadth = refinedOffsets[j] * iterScaleFactor;
-
-                            // At design draft, ensure we match waterline half-breadth
-                            if (zNorm >= 0.90m) // Near design draft
-                            {
-                                decimal draftBlend = (zNorm - 0.90m) / 0.10m; // Blend from 0.90T to 1.0T
-                                scaledHalfBreadth = scaledHalfBreadth * (1m - draftBlend) +
-                                                    waterlineHalfBreadth * draftBlend;
-                            }
-
                             refinedOffsets[j] = Math.Clamp(scaledHalfBreadth, 0m, beam / 2m);
                         }
                     }
