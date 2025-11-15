@@ -26,4 +26,10 @@
     <ProjectReference Include="..\..\packages\unit-conversion\dotnet\NavArch.UnitConversion\NavArch.UnitConversion.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Data\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
