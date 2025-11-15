@@ -577,7 +577,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                         // CRUISER/CANOE STERN: When Atrans < 0.5, use rounded/elliptical taper
                         // Higher Rc_trans = fuller (rounder), Lower Rc_trans = finer (more pointed)
                         // Use normalized vector value (0-1) for consistent exponent calculation
-                        var rcTransNorm = shipdVector[29]; // Rc_trans normalized 0-1
+                        // rcTransNorm already declared in outer scope (line 544)
                         var curveExponent = 2.0m + rcTransNorm * 1.0m; // Range: 2.0 (standard) to 3.0 (very rounded)
 
                         // Use smoother, more gradual taper for cruiser/canoe sterns

@@ -791,7 +791,6 @@ function generateStationOffsets(
         // Detect bow family from parameters
         const hasBulb = shipdVector[31] > 0.5; // bit_BB
         const beta = denormalized[8] ?? 0; // Flare angle (degrees)
-        const rc = denormalized[9] ?? 0.5; // Curvature coefficient
 
         if (hasBulb) {
           // Bulbous bow: More gradual, rounded taper (not sharp V)
