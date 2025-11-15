@@ -178,9 +178,10 @@ public class HullGeometryGeneratorServiceTests
     }
 
     [Theory]
-    [InlineData("tanker", 200.0, 32.0, 12.0, 0.80, 0.82, 0.99, 0.87, 2.0)]
-    [InlineData("container", 280.0, 44.0, 14.0, 0.65, 0.68, 0.98, 0.80, -1.5)]
-    [InlineData("bulk", 250.0, 40.0, 15.0, 0.75, 0.78, 0.99, 0.85, 1.0)]
+    [InlineData("tanker", 200.0, 32.0, 12.0, 0.80, 0.82, 0.99, 0.87, 2.0, "tanker")]
+    [InlineData("container", 280.0, 44.0, 14.0, 0.65, 0.68, 0.98, 0.80, -1.5, "container")]
+    [InlineData("bulk", 250.0, 40.0, 15.0, 0.75, 0.78, 0.99, 0.85, 1.0, "bulk_carrier")]
+    [InlineData("product_carrier", 185.0, 28.0, 12.87, 0.80, 0.82, 0.99, 0.87, 2.08, "product_carrier")]
     public async Task GenerateOffsetsFromCandidate_ForVesselType_ProducesValidGeometry(
         string hullFamily,
         double lpp,
@@ -190,7 +191,8 @@ public class HullGeometryGeneratorServiceTests
         double cp,
         double cm,
         double cwp,
-        double lcbPercent)
+        double lcbPercent,
+        string vesselType)
     {
         // Arrange
         var candidate = new SolverCandidate(
@@ -216,8 +218,8 @@ public class HullGeometryGeneratorServiceTests
             Score: 0.85m,
             Flags: new List<string>());
 
-        // Act
-        var offsets = await _service.GenerateOffsetsFromCandidateAsync(candidate);
+        // Act - Pass vessel type to test parent hull selection
+        var offsets = await _service.GenerateOffsetsFromCandidateAsync(candidate, vesselType: vesselType);
 
         // Assert
         offsets.Should().NotBeNull();
@@ -234,5 +236,82 @@ public class HullGeometryGeneratorServiceTests
                 halfBreadth.Should().BeLessThanOrEqualTo((decimal)beam / 2m);
             }
         }
+    }
+
+    [Fact]
+    public async Task GenerateOffsetsFromCandidate_WithProductCarrierVesselType_UsesParentHullGenerator()
+    {
+        // Arrange - Product Carrier with Cb=0.80 should use parent hull if available
+        var candidate = new SolverCandidate(
+            HullFamily: "product_carrier",
+            LppM: 185m,
+            LwlM: 190m,
+            LoaM: 195m,
+            BeamM: 28m,
+            DraftM: 12.87m,
+            DepthM: 16.4m,
+            Cb: 0.80m,
+            Cp: 0.82m,
+            Cwp: 0.87m,
+            Cm: 0.99m,
+            DisplacementT: 50000m,
+            Fn: 0.20m,
+            LwlOverLambda: null,
+            KbM: 6.0m,
+            LcbPctLpp: 2.08m,
+            GmEstM: 1.5m,
+            EhpKw: 5000m,
+            ShpKw: 6000m,
+            Score: 0.85m,
+            Flags: new List<string>());
+
+        // Act - Pass vessel type to enable parent hull selection
+        var offsets = await _service.GenerateOffsetsFromCandidateAsync(
+            candidate,
+            vesselType: "product_carrier");
+
+        // Assert
+        offsets.Should().NotBeNull();
+        offsets!.Stations.Should().HaveCount(23);
+        offsets.Waterlines.Should().NotBeEmpty();
+        offsets.Offsets.Should().HaveCount(23);
+    }
+
+    [Fact]
+    public async Task GenerateOffsetsFromCandidate_WithUnknownVesselType_FallsBackToParametric()
+    {
+        // Arrange
+        var candidate = new SolverCandidate(
+            HullFamily: "unknown_type",
+            LppM: 200m,
+            LwlM: 205m,
+            LoaM: 210m,
+            BeamM: 30m,
+            DraftM: 10m,
+            DepthM: 15m,
+            Cb: 0.75m,
+            Cp: 0.77m,
+            Cwp: 0.85m,
+            Cm: 0.98m,
+            DisplacementT: 40000m,
+            Fn: 0.20m,
+            LwlOverLambda: null,
+            KbM: 5.0m,
+            LcbPctLpp: 2.0m,
+            GmEstM: 1.5m,
+            EhpKw: 5000m,
+            ShpKw: 6000m,
+            Score: 0.85m,
+            Flags: new List<string>());
+
+        // Act - Unknown vessel type should fall back to parametric
+        var offsets = await _service.GenerateOffsetsFromCandidateAsync(
+            candidate,
+            vesselType: "unknown_type");
+
+        // Assert - Should still generate offsets using parametric method
+        offsets.Should().NotBeNull();
+        offsets!.Stations.Should().HaveCount(23);
+        offsets.Offsets.Should().HaveCount(23);
     }
 }

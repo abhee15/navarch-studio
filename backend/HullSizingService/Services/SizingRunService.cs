@@ -386,8 +386,13 @@ public class SizingRunService : ISizingRunService
                 {
                     try
                     {
+                        // Extract vessel type from sizing run (from ShipD result) or mission case
+                        // This allows the generator to use parent hull if available
+                        string? vesselType = run.VesselType ?? missionCase.MissionType;
+
                         var offsetsGrid = await _hullGeometryGenerator.GenerateOffsetsFromCandidateAsync(
                             sc,
+                            vesselType: vesselType,
                             numStations: 23, // BSRA-compatible
                             numWaterlines: 13,
                             cancellationToken);

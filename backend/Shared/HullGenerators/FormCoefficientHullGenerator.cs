@@ -1,3 +1,5 @@
+using Shared.HullGenerators.Fairing;
+using Shared.HullGenerators.Integration;
 using Shared.HullGenerators.Models;
 
 namespace Shared.HullGenerators;
@@ -11,6 +13,16 @@ public class FormCoefficientHullGenerator : IHullGenerator
 {
     // Note: Calibration parameters are now Cb-dependent and calculated dynamically
     // This provides better matching to BSRA/Series 60 characteristics
+
+    /// <summary>
+    /// Check if this generator can generate for the given vessel type and Cb
+    /// Parametric generator can always generate (it's the fallback)
+    /// </summary>
+    public static bool CanGenerate(string? vesselType, decimal cb)
+    {
+        // Parametric generator can always generate (it's the fallback)
+        return true;
+    }
 
     /// <summary>
     /// Generate hull offsets from form coefficients
@@ -50,9 +62,15 @@ public class FormCoefficientHullGenerator : IHullGenerator
             stations, waterlines, sectionalAreas, sectionShapeProfile, waterlineHalfBreadths,
             dims.Beam, dims.Draft, cm);
 
-        // Step 5: Validate and compute form coefficients
+        // Step 5: Fair the offsets using cubic spline (if BSRA standard layout)
+        if (numStations == 23)
+        {
+            offsets = FairOffsets(stations, waterlines, offsets);
+        }
+
+        // Step 6: Validate and compute form coefficients
         var computedCoeffs = ComputeFormCoefficients(
-            stations, waterlines, offsets, dims.Length, dims.Beam, dims.Draft);
+            stations, waterlines, offsets, dims.Length, dims.Beam, dims.Draft, cm);
 
         return new GeneratedHullGeometry
         {
@@ -591,7 +609,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
         List<List<decimal>> offsets,
         decimal length,
         decimal beam,
-        decimal draft)
+        decimal draft,
+        decimal cm)
     {
         // Filter waterlines up to design draft only
         var activeWaterlines = waterlines.Where(w => w <= draft).ToList();
@@ -630,7 +649,84 @@ public class FormCoefficientHullGenerator : IHullGenerator
             }
         }
 
-        decimal volume = IntegrateTrapezoidal(stations, sectionAreas);
+        // Use BSRA Simpson integration if we have 23 stations (BSRA standard)
+        decimal volume;
+        decimal lcb;
+        decimal lcbPercent;
+        decimal waterplaneArea;
+        decimal cwp;
+
+        if (stations.Count == 23)
+        {
+            // Use BSRA Simpson integration for accuracy
+            volume = BSRASimpsonIntegration.CalculateVolume(stations, sectionAreas, length);
+            lcb = BSRASimpsonIntegration.CalculateLCB(stations, sectionAreas, length);
+            lcbPercent = (lcb - length / 2.0m) / length * 100m;
+
+            // Compute Cwp - find waterline at design draft
+            int designDraftIndex = -1;
+            for (int j = 0; j < waterlines.Count; j++)
+            {
+                if (Math.Abs(waterlines[j] - draft) < 0.01m || (j > 0 && waterlines[j] > draft && waterlines[j - 1] <= draft))
+                {
+                    designDraftIndex = j;
+                    break;
+                }
+            }
+            if (designDraftIndex < 0) designDraftIndex = waterlines.Count - 1;
+
+            var waterlineHalfBreadths = new List<decimal>();
+            foreach (var stationOffsets in offsets)
+            {
+                if (designDraftIndex < stationOffsets.Count)
+                {
+                    waterlineHalfBreadths.Add(stationOffsets[designDraftIndex]);
+                }
+                else
+                {
+                    waterlineHalfBreadths.Add(0m);
+                }
+            }
+
+            waterplaneArea = BSRASimpsonIntegration.CalculateWaterplaneArea(stations, waterlineHalfBreadths, length);
+            cwp = waterplaneArea > 0 && length > 0 && beam > 0 ? waterplaneArea / (length * beam) : 0m;
+        }
+        else
+        {
+            // Fallback to trapezoidal for non-standard station counts
+            volume = IntegrateTrapezoidal(stations, sectionAreas);
+            decimal volumeMoment = IntegrateFirstMoment(stations, sectionAreas);
+            decimal lcbPosition = volume > 0 ? volumeMoment / volume : length / 2m;
+            lcbPercent = length > 0 ? ((lcbPosition / length) - 0.5m) * 100m : 0m;
+
+            // Compute Cwp - find waterline at design draft
+            int designDraftIndex = -1;
+            for (int j = 0; j < waterlines.Count; j++)
+            {
+                if (Math.Abs(waterlines[j] - draft) < 0.01m || (j > 0 && waterlines[j] > draft && waterlines[j - 1] <= draft))
+                {
+                    designDraftIndex = j;
+                    break;
+                }
+            }
+            if (designDraftIndex < 0) designDraftIndex = waterlines.Count - 1;
+
+            var waterlineHalfBreadths = new List<decimal>();
+            foreach (var stationOffsets in offsets)
+            {
+                if (designDraftIndex < stationOffsets.Count)
+                {
+                    waterlineHalfBreadths.Add(stationOffsets[designDraftIndex]);
+                }
+                else
+                {
+                    waterlineHalfBreadths.Add(0m);
+                }
+            }
+
+            waterplaneArea = IntegrateTrapezoidal(stations, waterlineHalfBreadths.Select(hb => 2m * hb).ToList());
+            cwp = waterplaneArea > 0 && length > 0 && beam > 0 ? waterplaneArea / (length * beam) : 0m;
+        }
 
         // Compute Cb
         decimal cb = volume > 0 ? volume / (length * beam * draft) : 0m;
@@ -642,42 +738,40 @@ public class FormCoefficientHullGenerator : IHullGenerator
         // Compute Cm
         int midshipIndex = sectionAreas.Count / 2;
         decimal midshipArea = midshipIndex < sectionAreas.Count ? sectionAreas[midshipIndex] : 0m;
-        decimal cm = midshipArea > 0 && beam > 0 && draft > 0 ? midshipArea / (beam * draft) : 0m;
+        decimal computedCm = midshipArea > 0 && beam > 0 && draft > 0 ? midshipArea / (beam * draft) : 0m;
 
-        // Compute Cwp - find waterline at design draft
-        int designDraftIndex = -1;
-        for (int j = 0; j < waterlines.Count; j++)
-        {
-            if (Math.Abs(waterlines[j] - draft) < 0.01m || (j > 0 && waterlines[j] > draft && waterlines[j - 1] <= draft))
-            {
-                designDraftIndex = j;
-                break;
-            }
-        }
-        if (designDraftIndex < 0) designDraftIndex = waterlines.Count - 1;
+        return new FormCoefficients(cb, cp, computedCm, cwp, lcbPercent, volume);
+    }
 
-        var waterlineHalfBreadths = new List<decimal>();
-        foreach (var stationOffsets in offsets)
+    /// <summary>
+    /// Fair offsets using cubic spline fairing (for BSRA standard layout)
+    /// </summary>
+    private List<List<decimal>> FairOffsets(
+        List<decimal> stations,
+        List<decimal> waterlines,
+        List<List<decimal>> offsets)
+    {
+        var faired = new List<List<decimal>>();
+
+        // Fair each waterline
+        for (int wlIdx = 0; wlIdx < waterlines.Count; wlIdx++)
         {
-            if (designDraftIndex < stationOffsets.Count)
-            {
-                waterlineHalfBreadths.Add(stationOffsets[designDraftIndex]);
-            }
-            else
-            {
-                waterlineHalfBreadths.Add(0m);
-            }
+            var halfBreadths = offsets.Select(st => st[wlIdx]).ToList();
+            var fairedHalfBreadths = CubicSplineFairing.FairWaterline(
+                stations, halfBreadths, waterlines[wlIdx]);
+
+            faired.Add(fairedHalfBreadths);
         }
 
-        decimal waterplaneArea = IntegrateTrapezoidal(stations, waterlineHalfBreadths.Select(hb => 2m * hb).ToList());
-        decimal cwp = waterplaneArea > 0 && length > 0 && beam > 0 ? waterplaneArea / (length * beam) : 0m;
+        // Transpose back to [station][waterline] format
+        var result = new List<List<decimal>>();
+        for (int stIdx = 0; stIdx < stations.Count; stIdx++)
+        {
+            var stationOffsets = faired.Select(wlOffsets => wlOffsets[stIdx]).ToList();
+            result.Add(stationOffsets);
+        }
 
-        // Compute LCB
-        decimal volumeMoment = IntegrateFirstMoment(stations, sectionAreas);
-        decimal lcbPosition = volume > 0 ? volumeMoment / volume : length / 2m;
-        decimal lcbPercent = length > 0 ? ((lcbPosition / length) - 0.5m) * 100m : 0m;
-
-        return new FormCoefficients(cb, cp, cm, cwp, lcbPercent, volume);
+        return result;
     }
 
     // Helper methods for numerical integration

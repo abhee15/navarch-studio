@@ -13,12 +13,14 @@ public interface IHullGeometryGeneratorService
     /// Generate offsets grid from a solver candidate
     /// </summary>
     /// <param name="candidate">Solver candidate with form coefficients</param>
+    /// <param name="vesselType">Optional vessel type (e.g., "product_carrier", "container") for parent hull selection</param>
     /// <param name="numStations">Number of stations (default: 23 for BSRA-compatible)</param>
     /// <param name="numWaterlines">Number of waterlines (default: 13)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Offsets grid DTO, or null if generation fails</returns>
     Task<OffsetsGridDto?> GenerateOffsetsFromCandidateAsync(
         Solver.SolverCandidate candidate,
+        string? vesselType = null,
         int numStations = 23,
         int numWaterlines = 13,
         CancellationToken cancellationToken = default);

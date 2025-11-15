@@ -7,17 +7,17 @@ namespace HullSizingService.Services.Geometry;
 
 /// <summary>
 /// Service for generating hull geometry (offsets) from solver candidates
-/// Uses form-coefficient-based parametric generation
+/// Uses HullGeneratorFactory to select appropriate generator (parent hull or parametric)
 /// </summary>
 public class HullGeometryGeneratorService : IHullGeometryGeneratorService
 {
-    private readonly IHullGenerator _hullGenerator;
+    private readonly HullGeneratorFactory _generatorFactory;
     private readonly ILogger<HullGeometryGeneratorService> _logger;
 
     public HullGeometryGeneratorService(
         ILogger<HullGeometryGeneratorService> logger)
     {
-        _hullGenerator = new FormCoefficientHullGenerator();
+        _generatorFactory = new HullGeneratorFactory();
         _logger = logger;
     }
 
@@ -26,6 +26,7 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
     /// </summary>
     public Task<OffsetsGridDto?> GenerateOffsetsFromCandidateAsync(
         Solver.SolverCandidate candidate,
+        string? vesselType = null,
         int numStations = 23,
         int numWaterlines = 13,
         CancellationToken cancellationToken = default)
@@ -35,8 +36,8 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
             try
             {
                 _logger.LogDebug(
-                    "[GEOMETRY_GEN] Generating offsets for candidate: L={Lpp}m, B={Beam}m, T={Draft}m, Cb={Cb}, Cp={Cp}, Cm={Cm}, Cwp={Cwp}, LCB={LCB}%",
-                    candidate.LppM, candidate.BeamM, candidate.DraftM, candidate.Cb, candidate.Cp, candidate.Cm, candidate.Cwp, candidate.LcbPctLpp);
+                    "[GEOMETRY_GEN] Generating offsets for candidate: L={Lpp}m, B={Beam}m, T={Draft}m, Cb={Cb}, Cp={Cp}, Cm={Cm}, Cwp={Cwp}, LCB={LCB}%, VesselType={VesselType}",
+                    candidate.LppM, candidate.BeamM, candidate.DraftM, candidate.Cb, candidate.Cp, candidate.Cm, candidate.Cwp, candidate.LcbPctLpp, vesselType ?? "unknown");
 
                 // Create hull dimensions
                 var dims = new HullDimensions(
@@ -45,8 +46,16 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
                     candidate.DraftM,
                     candidate.LcbPctLpp ?? 0m);
 
+                // Get appropriate generator (parent hull if available, otherwise parametric)
+                // Vessel type is passed from sizing run (from ShipD result or mission case)
+                var generator = _generatorFactory.GetGenerator(vesselType, candidate.Cb);
+
+                _logger.LogDebug(
+                    "[GEOMETRY_GEN] Using generator: {GeneratorType} for vessel type: {VesselType}, Cb: {Cb}",
+                    generator.GetType().Name, vesselType ?? "unknown", candidate.Cb);
+
                 // Generate geometry
-                var geometry = _hullGenerator.Generate(
+                var geometry = generator.Generate(
                     dims,
                     candidate.Cb,
                     candidate.Cp,
