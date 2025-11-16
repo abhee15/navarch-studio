@@ -1,4 +1,12 @@
-import { useMemo, useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
+import {
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+  useCallback,
+} from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid, PerspectiveCamera } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -60,10 +68,17 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
   // Three.js: X = transverse (half-breadth), Y = vertical (waterline Z), Z = longitudinal (station X)
   for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
     const waterlineZ = waterlines[wlIdx]; // Vertical position (Y in Three.js)
+    if (!Number.isFinite(waterlineZ)) {
+      continue;
+    }
 
     for (let stIdx = 0; stIdx < stations.length; stIdx++) {
       const stationX = stations[stIdx]; // Longitudinal position (Z in Three.js)
-      const halfBreadth = offsets[stIdx]?.[wlIdx] ?? 0; // Transverse position (X in Three.js)
+      if (!Number.isFinite(stationX)) {
+        continue;
+      }
+      const hbRaw = offsets[stIdx]?.[wlIdx];
+      const halfBreadth = Number.isFinite(hbRaw) ? Math.max(0, hbRaw as number) : 0; // Transverse position (X)
 
       // Port side (negative X)
       vertices.push(-halfBreadth, waterlineZ, stationX);
@@ -116,117 +131,24 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
 
   geometry.setIndex(indices);
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.computeVertexNormals();
-  geometry.computeBoundingBox();
-
-  return geometry;
-}
-
-/**
- * Generate parametric hull surface using modified Wigley hull equation (fallback)
- * Three.js coordinate system: X = transverse, Y = vertical, Z = longitudinal
- */
-function generateHullGeometryParametric(
-  lpp: number,
-  beam: number,
-  designDraft: number
-): THREE.BufferGeometry {
-  const geometry = new THREE.BufferGeometry();
-  const vertices: number[] = [];
-  const indices: number[] = [];
-
-  // Increased grid resolution for better quality
-  const xSegments = 60; // Longitudinal segments
-  const zSegments = 40; // Vertical segments
-
-  const halfBeam = beam / 2;
-
-  // Generate vertices
-  // Three.js: X = transverse, Y = vertical, Z = longitudinal
-  for (let zi = 0; zi <= zSegments; zi++) {
-    const y = (zi / zSegments) * designDraft; // Vertical (Y in Three.js)
-    const yNorm = y / designDraft; // Normalized [0, 1]
-
-    for (let xi = 0; xi <= xSegments; xi++) {
-      const z = (xi / xSegments) * lpp; // Longitudinal (Z in Three.js)
-      const zNorm = (2 * z) / lpp - 1; // Normalized [-1, 1]
-
-      // Modified Wigley hull equation
-      const x = halfBeam * (1 - yNorm * yNorm) * (1 - zNorm * zNorm); // Transverse (X in Three.js)
-
-      // Port side (negative X)
-      vertices.push(-x, y, z);
+  // Defensive check for NaNs
+  const posArr = geometry.getAttribute("position") as THREE.BufferAttribute;
+  let hasNaN = false;
+  {
+    const arr = posArr.array as unknown as number[];
+    for (let i = 0; i < arr.length; i++) {
+      if (!Number.isFinite(arr[i])) {
+        hasNaN = true;
+        break;
+      }
     }
   }
-
-  // Generate indices for triangles (port side)
-  for (let zi = 0; zi < zSegments; zi++) {
-    for (let xi = 0; xi < xSegments; xi++) {
-      const a = zi * (xSegments + 1) + xi;
-      const b = a + 1;
-      const c = a + (xSegments + 1);
-      const d = c + 1;
-
-      // Two triangles per quad
-      indices.push(a, c, b);
-      indices.push(b, c, d);
-    }
+  if (hasNaN) {
+    console.warn(
+      "[Vessel3DViewer] Invalid offsets produced NaN positions. Returning empty geometry."
+    );
+    return new THREE.BufferGeometry();
   }
-
-  // Mirror to starboard side
-  const portVertexCount = vertices.length / 3;
-  const portStartIndex = portVertexCount;
-
-  for (let zi = 0; zi <= zSegments; zi++) {
-    for (let xi = 0; xi <= xSegments; xi++) {
-      const idx = zi * (xSegments + 1) + xi;
-      const baseIdx = idx * 3;
-      const x = vertices[baseIdx];
-      const y = vertices[baseIdx + 1];
-      const z = vertices[baseIdx + 2];
-
-      // Starboard side (positive X, mirrored)
-      vertices.push(-x, y, z);
-    }
-  }
-
-  // Generate indices for starboard side
-  for (let zi = 0; zi < zSegments; zi++) {
-    for (let xi = 0; xi < xSegments; xi++) {
-      const a = portStartIndex + zi * (xSegments + 1) + xi;
-      const b = a + 1;
-      const c = a + (xSegments + 1);
-      const d = c + 1;
-
-      indices.push(a, b, c);
-      indices.push(b, d, c);
-    }
-  }
-
-  // Add keel/base surface
-  const keelStartIdx = vertices.length / 3;
-  for (let xi = 0; xi <= xSegments; xi++) {
-    const z = (xi / xSegments) * lpp; // Longitudinal (Z)
-    vertices.push(0, 0, z); // Centerline at keel (X=0, Y=0, Z=longitudinal)
-  }
-
-  // Connect keel to port and starboard
-  for (let xi = 0; xi < xSegments; xi++) {
-    const keelA = keelStartIdx + xi;
-    const keelB = keelStartIdx + xi + 1;
-    const portA = xi; // First waterline, port side
-    const portB = xi + 1;
-    const starA = portStartIndex + xi;
-    const starB = portStartIndex + xi + 1;
-
-    indices.push(keelA, portA, keelB);
-    indices.push(keelB, portA, portB);
-    indices.push(keelA, keelB, starA);
-    indices.push(keelB, starB, starA);
-  }
-
-  geometry.setIndex(indices);
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
   geometry.computeVertexNormals();
   geometry.computeBoundingBox();
 
@@ -234,24 +156,20 @@ function generateHullGeometryParametric(
 }
 
 function HullMesh({
-  lpp,
-  beam,
-  designDraft,
   wireframe,
   offsetsGrid,
 }: {
-  lpp: number;
-  beam: number;
-  designDraft: number;
   wireframe: boolean;
   offsetsGrid?: OffsetsGrid | null;
 }) {
   const geometry = useMemo(() => {
     if (offsetsGrid && offsetsGrid.stations.length > 0 && offsetsGrid.waterlines.length > 0) {
+      console.log("[HullMesh] Using actual offsets for geometry generation");
       return generateHullGeometryFromOffsets(offsetsGrid);
     }
-    return generateHullGeometryParametric(lpp, beam, designDraft);
-  }, [lpp, beam, designDraft, offsetsGrid]);
+    console.warn("[HullMesh] No offsets available; skipping mesh (no parametric fallback)");
+    return new THREE.BufferGeometry();
+  }, [offsetsGrid]);
 
   return (
     <mesh geometry={geometry} castShadow receiveShadow>
@@ -317,6 +235,7 @@ interface SceneContentProps extends Vessel3DViewerProps {
   showGrid: boolean;
   showAxes: boolean;
   offsetsGrid?: OffsetsGrid | null;
+  fitToView?: () => void;
 }
 
 function SceneContent({
@@ -334,31 +253,69 @@ function SceneContent({
   showGrid,
   showAxes,
   offsetsGrid,
+  fitToView,
 }: SceneContentProps) {
+  // Calculate bounds from actual offsets if available, otherwise use parametric dimensions
   const bounds = useMemo(() => {
+    if (offsetsGrid && offsetsGrid.stations.length > 0 && offsetsGrid.waterlines.length > 0) {
+      // Use actual dimensions from offsets
+      const maxStation = Math.max(...offsetsGrid.stations);
+      const maxWaterline = Math.max(...offsetsGrid.waterlines);
+      const maxHalfBreadth = Math.max(
+        ...offsetsGrid.offsets.flatMap((stationOffsets) => stationOffsets || [])
+      );
+      const maxDim = Math.max(maxStation, maxWaterline, maxHalfBreadth * 2);
+      return maxDim * 1.5;
+    }
+    // Fallback to parametric dimensions
     const maxDim = Math.max(lpp, beam, designDraft);
     return maxDim * 1.5;
-  }, [lpp, beam, designDraft]);
+  }, [lpp, beam, designDraft, offsetsGrid]);
 
-  // Auto-fit camera when parameters change significantly
+  // Calculate actual hull center and dimensions from offsets
+  const hullCenter = useMemo(() => {
+    if (offsetsGrid && offsetsGrid.stations.length > 0 && offsetsGrid.waterlines.length > 0) {
+      const maxStation = Math.max(...offsetsGrid.stations);
+      const maxWaterline = Math.max(...offsetsGrid.waterlines);
+      // Three.js: X = transverse (0 at centerline), Y = vertical, Z = longitudinal
+      return new THREE.Vector3(0, maxWaterline / 2, maxStation / 2);
+    }
+    // Fallback to parametric center
+    return new THREE.Vector3(0, designDraft / 2, lpp / 2);
+  }, [lpp, designDraft, offsetsGrid]);
+
+  // Auto-fit camera when parameters or offsets change
   // Three.js: X = transverse, Y = vertical, Z = longitudinal
   useEffect(() => {
     if (controlsRef.current && cameraRef.current) {
       // Reset controls and adjust camera position
-      const maxDim = Math.max(lpp, beam, designDraft);
-      const newBounds = maxDim * 1.5;
+      const newBounds = bounds;
 
       // Update camera position to fit new dimensions
-      // Center: X=0 (centerline), Y=draft/2 (mid-height), Z=lpp/2 (midship)
       const camera = cameraRef.current;
-      camera.position.set(newBounds, newBounds * 0.8, newBounds);
-      camera.lookAt(0, designDraft / 2, lpp / 2);
+      camera.position.set(
+        hullCenter.x + newBounds,
+        hullCenter.y + newBounds * 0.8,
+        hullCenter.z + newBounds
+      );
+      camera.lookAt(hullCenter.x, hullCenter.y, hullCenter.z);
 
       // Reset controls to update target
-      controlsRef.current.target.set(0, designDraft / 2, lpp / 2);
+      controlsRef.current.target.copy(hullCenter);
       controlsRef.current.update();
     }
-  }, [lpp, beam, designDraft, controlsRef, cameraRef]);
+  }, [bounds, hullCenter, controlsRef, cameraRef]);
+
+  // Auto-fit when offsets are loaded or changed
+  useEffect(() => {
+    if (offsetsGrid && fitToView) {
+      // Small delay to allow geometry to update
+      const timer = setTimeout(() => {
+        fitToView();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [offsetsGrid, fitToView]);
 
   return (
     <>
@@ -391,7 +348,7 @@ function SceneContent({
       {/* Grid helper - positioned at the base plane (Y=0) */}
       {/* Three.js: X = transverse, Y = vertical, Z = longitudinal */}
       {showGrid && (
-        <group position={[0, 0, lpp / 2]}>
+        <group position={[hullCenter.x, 0, hullCenter.z]}>
           <Grid
             args={[bounds * 2, 20]}
             cellColor="#6b7280"
@@ -406,13 +363,7 @@ function SceneContent({
       {showAxes && <axesHelper args={[bounds * 0.4]} />}
 
       {/* Hull */}
-      <HullMesh
-        lpp={lpp}
-        beam={beam}
-        designDraft={designDraft}
-        wireframe={wireframe}
-        offsetsGrid={offsetsGrid}
-      />
+      <HullMesh wireframe={wireframe} offsetsGrid={offsetsGrid} />
 
       {/* Waterplane */}
       <Waterplane lpp={lpp} beam={beam} draft={draft || designDraft} />
@@ -651,25 +602,106 @@ export const Vessel3DViewer = observer(
 
     // Load actual offsets if vesselId is provided
     useEffect(() => {
-      if (vesselId) {
-        geometryApi
-          .getOffsetsGrid(vesselId)
-          .then((grid) => {
-            if (grid && grid.stations.length > 0 && grid.waterlines.length > 0) {
-              setOffsetsGrid(grid);
-            }
-          })
-          .catch(() => {
-            // Silently fail - will use parametric fallback
-            setOffsetsGrid(null);
-          });
+      if (!vesselId) {
+        setOffsetsGrid(null);
+        return;
       }
+
+      let isCancelled = false;
+
+      const isFiniteArray = (arr: number[]) =>
+        Array.isArray(arr) && arr.every((v) => Number.isFinite(v));
+      const isValidGrid = (grid: OffsetsGrid | null | undefined) => {
+        if (!grid) return false;
+        if (!isFiniteArray(grid.stations) || !isFiniteArray(grid.waterlines)) return false;
+        if (!Array.isArray(grid.offsets) || grid.offsets.length !== grid.stations.length)
+          return false;
+        for (let i = 0; i < grid.offsets.length; i++) {
+          const row = grid.offsets[i];
+          if (!Array.isArray(row) || row.length !== grid.waterlines.length) return false;
+          for (let j = 0; j < row.length; j++) {
+            const v = row[j];
+            if (!Number.isFinite(v) || v < 0) return false;
+          }
+        }
+        return true;
+      };
+
+      const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+      const fetchWithRetry = async (retries = 3, baseDelayMs = 300) => {
+        let attempt = 0;
+        while (attempt <= retries && !isCancelled) {
+          try {
+            const grid = await geometryApi.getOffsetsGrid(vesselId);
+            if (isValidGrid(grid)) {
+              if (isCancelled) return;
+              console.log("[Vessel3DViewer] Loaded offsets (attempt", attempt + 1, "):", {
+                stations: grid.stations.length,
+                waterlines: grid.waterlines.length,
+                offsets: grid.offsets.length,
+                firstStation: grid.stations[0],
+                lastStation: grid.stations[grid.stations.length - 1],
+                firstWaterline: grid.waterlines[0],
+                lastWaterline: grid.waterlines[grid.waterlines.length - 1],
+              });
+              setOffsetsGrid(grid);
+              return;
+            } else {
+              console.warn("[Vessel3DViewer] Invalid offsets grid received; will retry.");
+            }
+          } catch (error) {
+            console.warn("[Vessel3DViewer] Failed to load offsets; will retry. Error:", error);
+          }
+
+          attempt++;
+          if (attempt <= retries && !isCancelled) {
+            const backoff = baseDelayMs * Math.pow(2, attempt - 1); // 300, 600, 1200...
+            await delay(backoff);
+          }
+        }
+
+        if (!isCancelled) {
+          console.error("[Vessel3DViewer] Offsets unavailable after retries; using fallback.");
+          setOffsetsGrid(null);
+        }
+      };
+
+      void fetchWithRetry();
+
+      return () => {
+        isCancelled = true;
+      };
     }, [vesselId]);
 
+    // Calculate bounds from actual offsets if available, otherwise use parametric dimensions
     const bounds = useMemo(() => {
+      if (offsetsGrid && offsetsGrid.stations.length > 0 && offsetsGrid.waterlines.length > 0) {
+        // Use actual dimensions from offsets
+        const maxStation = Math.max(...offsetsGrid.stations);
+        const maxWaterline = Math.max(...offsetsGrid.waterlines);
+        const maxHalfBreadth = Math.max(
+          ...offsetsGrid.offsets.flatMap((stationOffsets) => stationOffsets || [])
+        );
+        const maxDim = Math.max(maxStation, maxWaterline, maxHalfBreadth * 2);
+        return maxDim * 1.5;
+      }
+      // Fallback to parametric dimensions
       const maxDim = Math.max(lpp, beam, designDraft);
       return maxDim * 1.5;
-    }, [lpp, beam, designDraft]);
+    }, [lpp, beam, designDraft, offsetsGrid]);
+
+    // Calculate actual hull center and dimensions from offsets
+    const hullCenter = useMemo(() => {
+      if (offsetsGrid && offsetsGrid.stations.length > 0 && offsetsGrid.waterlines.length > 0) {
+        const maxStation = Math.max(...offsetsGrid.stations);
+        const maxWaterline = Math.max(...offsetsGrid.waterlines);
+        // Three.js: X = transverse (0 at centerline), Y = vertical, Z = longitudinal
+        return new THREE.Vector3(0, maxWaterline / 2, maxStation / 2);
+      }
+      // Fallback to parametric center
+      return new THREE.Vector3(0, designDraft / 2, lpp / 2);
+    }, [lpp, designDraft, offsetsGrid]);
 
     // Camera control functions
     const zoomIn = () => {
@@ -696,60 +728,64 @@ export const Vessel3DViewer = observer(
       }
     };
 
-    const fitToView = () => {
+    const fitToView = useCallback(() => {
       if (controlsRef.current && cameraRef.current) {
-        const maxDim = Math.max(lpp, beam, designDraft);
-        const fitBounds = maxDim * 1.5;
+        const fitBounds = bounds;
         const camera = cameraRef.current;
 
         // Calculate position to show entire hull
         // Three.js: X = transverse, Y = vertical, Z = longitudinal
-        const center = new THREE.Vector3(0, designDraft / 2, lpp / 2);
-        camera.position.set(center.x + fitBounds, center.y + fitBounds * 0.8, center.z + fitBounds);
+        camera.position.set(
+          hullCenter.x + fitBounds,
+          hullCenter.y + fitBounds * 0.8,
+          hullCenter.z + fitBounds
+        );
 
-        controlsRef.current.target.copy(center);
+        controlsRef.current.target.copy(hullCenter);
         controlsRef.current.update();
       }
-    };
+    }, [bounds, hullCenter]);
 
     const setView = (view: "front" | "side" | "back" | "top" | "bottom" | "isometric") => {
       if (!controlsRef.current || !cameraRef.current) return;
 
-      const maxDim = Math.max(lpp, beam, designDraft);
-      const distance = maxDim * 1.5;
+      const distance = bounds;
       // Three.js: X = transverse, Y = vertical, Z = longitudinal
-      const center = new THREE.Vector3(0, designDraft / 2, lpp / 2);
       const camera = cameraRef.current;
 
       switch (view) {
         case "front":
           // Looking from forward (positive Z)
-          camera.position.set(center.x, center.y, center.z + distance);
+          camera.position.set(hullCenter.x, hullCenter.y, hullCenter.z + distance);
           break;
         case "side":
           // Looking from starboard (positive X)
-          camera.position.set(center.x + distance, center.y, center.z);
+          camera.position.set(hullCenter.x + distance, hullCenter.y, hullCenter.z);
           break;
         case "back":
           // Looking from aft (negative Z)
-          camera.position.set(center.x, center.y, center.z - distance);
+          camera.position.set(hullCenter.x, hullCenter.y, hullCenter.z - distance);
           break;
         case "top":
           // Looking from above (positive Y)
-          camera.position.set(center.x, center.y + distance, center.z);
+          camera.position.set(hullCenter.x, hullCenter.y + distance, hullCenter.z);
           break;
         case "bottom":
           // Looking from below (negative Y)
-          camera.position.set(center.x, center.y - distance, center.z);
+          camera.position.set(hullCenter.x, hullCenter.y - distance, hullCenter.z);
           break;
         case "isometric":
           // Isometric view
-          camera.position.set(center.x + distance, center.y + distance * 0.8, center.z + distance);
+          camera.position.set(
+            hullCenter.x + distance,
+            hullCenter.y + distance * 0.8,
+            hullCenter.z + distance
+          );
           break;
       }
 
-      camera.lookAt(center);
-      controlsRef.current.target.copy(center);
+      camera.lookAt(hullCenter.x, hullCenter.y, hullCenter.z);
+      controlsRef.current.target.copy(hullCenter);
       controlsRef.current.update();
     };
 
@@ -794,6 +830,7 @@ export const Vessel3DViewer = observer(
             showGrid={showGrid}
             showAxes={showAxes}
             offsetsGrid={offsetsGrid}
+            fitToView={fitToView}
           />
         </Canvas>
         <ControlPanel

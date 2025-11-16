@@ -357,6 +357,10 @@ export class SizingStore {
           this.isLoading = false;
         }
       });
+
+      // Background: Poll for geometry readiness if needed (solver may finish shortly after)
+      // Do not block UI; only update when valid geometry is present to improve rendering stability
+      void this.pollCandidatesUntilGeometry(runId);
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to load candidates";
@@ -658,6 +662,67 @@ export class SizingStore {
       return window.crypto.randomUUID();
     }
     return `hydro-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  // Background helper: poll candidates until at least one has usable geometry
+  private async pollCandidatesUntilGeometry(runId: string, timeoutMs = 8000, intervalMs = 600) {
+    const deadline = Date.now() + timeoutMs;
+
+    // Simple validator: usable if geometryJson parses with stations OR a ShipD vector is present
+    const hasUsableGeometry = (c: CandidateDesign): boolean => {
+      if (c.geometryJson) {
+        try {
+          const parsed = JSON.parse(c.geometryJson) as {
+            stations?: Array<{ position: number; offsets: Record<number, number> }>;
+          };
+          if (parsed && Array.isArray(parsed.stations) && parsed.stations.length > 0) {
+            return true;
+          }
+        } catch {
+          // fall through
+        }
+      }
+      // Fallback: ShipD vector present (renderer can generate from vector)
+      if (c.shipdParametersJson) {
+        try {
+          const vec = JSON.parse(c.shipdParametersJson);
+          if (Array.isArray(vec) && vec.length === 45) {
+            return true;
+          }
+        } catch {
+          // fall through
+        }
+      }
+      return false;
+    };
+
+    // If we already have usable geometry, skip polling
+    if (this.candidates.some(hasUsableGeometry)) {
+      return;
+    }
+
+    while (Date.now() < deadline) {
+      try {
+        const refreshed = await sizingApi.getRunCandidates(runId);
+        if (Array.isArray(refreshed) && refreshed.some(hasUsableGeometry)) {
+          // Preserve selection if possible; update list
+          runInAction(() => {
+            this.candidates.length = 0;
+            refreshed.forEach((c) => this.candidates.push(c));
+            if (this.selectedCandidate) {
+              const sel = refreshed.find((c) => c.id === this.selectedCandidate?.id);
+              if (sel) this.selectedCandidate = sel;
+            }
+          });
+          console.log("[SizingStore] Geometry became available after polling; updated candidates.");
+          return;
+        }
+      } catch (err) {
+        console.debug("[SizingStore] Poll candidates retry failed:", err);
+      }
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    console.debug("[SizingStore] Geometry polling timed out; continuing with current candidates.");
   }
 }
 

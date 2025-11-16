@@ -334,15 +334,27 @@ function generateHull3DFromSections(
   for (const station of sections.stations) {
     // Convert station position (0=aft, 1=forward) to centered Z coordinate
     // 0 -> -lpp/2 (aft), 1 -> +lpp/2 (forward)
-    const z = (station.position - 0.5) * lppM; // Center at origin
+    const zRaw = (station.position - 0.5) * lppM; // Center at origin
+    if (!Number.isFinite(zRaw)) {
+      // Skip invalid station entirely
+      continue;
+    }
+    const z = zRaw;
 
     // Sort heights for consistent ordering
     const heights = Object.keys(station.offsets)
-      .map(Number)
+      .map((h) => Number(h))
+      .filter((h) => Number.isFinite(h))
       .sort((a, b) => a - b);
 
     for (const height of heights) {
-      const halfBreadth = station.offsets[height];
+      const halfBreadthRaw = station.offsets[height];
+      const heightValid = Number.isFinite(height);
+      const hbValid = Number.isFinite(halfBreadthRaw);
+      if (!heightValid) {
+        continue;
+      }
+      const halfBreadth = hbValid ? Math.max(0, halfBreadthRaw) : 0;
 
       // At keel (height=0), port and starboard share the same vertex (half-breadth=0)
       if (height === 0 || halfBreadth === 0) {
@@ -378,11 +390,16 @@ function generateHull3DFromSections(
     // Add bulb vertices if present
     if (station.hasBulb && station.bulbOffsets) {
       const bulbHeights = Object.keys(station.bulbOffsets)
-        .map(Number)
+        .map((h) => Number(h))
+        .filter((h) => Number.isFinite(h))
         .sort((a, b) => a - b);
 
       for (const height of bulbHeights) {
-        const halfBreadth = station.bulbOffsets[height];
+        const hbRaw = station.bulbOffsets[height];
+        if (!Number.isFinite(height) || !Number.isFinite(hbRaw)) {
+          continue;
+        }
+        const halfBreadth = Math.max(0, hbRaw);
 
         const keyBulbPort = `${station.position}-${height}-bulb-port`;
         if (!vertexMap.has(keyBulbPort)) {
@@ -407,14 +424,18 @@ function generateHull3DFromSections(
     const station2 = sections.stations[i + 1];
 
     const heights1 = Object.keys(station1.offsets)
-      .map(Number)
+      .map((h) => Number(h))
+      .filter((h) => Number.isFinite(h))
       .sort((a, b) => a - b);
     const heights2 = Object.keys(station2.offsets)
-      .map(Number)
+      .map((h) => Number(h))
+      .filter((h) => Number.isFinite(h))
       .sort((a, b) => a - b);
 
     // Match heights (interpolate if needed)
-    const allHeights = Array.from(new Set([...heights1, ...heights2])).sort((a, b) => a - b);
+    const allHeights = Array.from(new Set([...heights1, ...heights2]))
+      .filter((h) => Number.isFinite(h))
+      .sort((a, b) => a - b);
 
     for (let h = 0; h < allHeights.length - 1; h++) {
       const h1 = allHeights[h];
@@ -461,7 +482,8 @@ function generateHull3DFromSections(
   const bowStation = sections.stations.find((s) => Math.abs(s.position - 1.0) < 0.01);
   if (bowStation) {
     const bowHeights = Object.keys(bowStation.offsets)
-      .map(Number)
+      .map((h) => Number(h))
+      .filter((h) => Number.isFinite(h))
       .sort((a, b) => a - b);
 
     // Close bow end (connect all points at bow station)
@@ -492,7 +514,8 @@ function generateHull3DFromSections(
   const sternStation = sections.stations.find((s) => Math.abs(s.position - 0.0) < 0.01);
   if (sternStation) {
     const sternHeights = Object.keys(sternStation.offsets)
-      .map(Number)
+      .map((h) => Number(h))
+      .filter((h) => Number.isFinite(h))
       .sort((a, b) => a - b);
 
     // Close stern end (connect all points at stern station)
@@ -551,6 +574,24 @@ function generateHull3DFromSections(
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
   geometry.setIndex(indices);
+  // Defensive: if any NaN sneaks in, avoid crashing renderer
+  const posArr = geometry.getAttribute("position") as THREE.BufferAttribute;
+  let hasNaN = false;
+  {
+    const arr = posArr.array as unknown as number[];
+    for (let i = 0; i < arr.length; i++) {
+      if (!Number.isFinite(arr[i])) {
+        hasNaN = true;
+        break;
+      }
+    }
+  }
+  if (hasNaN) {
+    console.warn(
+      "[ShipD] Invalid hull geometry detected (NaN positions). Returning empty geometry."
+    );
+    return new THREE.BufferGeometry();
+  }
   geometry.computeVertexNormals();
 
   return geometry;

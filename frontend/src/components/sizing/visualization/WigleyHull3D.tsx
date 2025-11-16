@@ -58,6 +58,18 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
         return new THREE.BufferGeometry();
       }
 
+      // Helper to validate geometry positions (no NaNs)
+      const isGeometryValid = (geom: THREE.BufferGeometry | null | undefined) => {
+        if (!geom) return false;
+        const pos = geom.getAttribute("position") as THREE.BufferAttribute | undefined;
+        if (!pos) return false;
+        const arr = pos.array as unknown as number[];
+        for (let i = 0; i < arr.length; i++) {
+          if (!Number.isFinite(arr[i])) return false;
+        }
+        return true;
+      };
+
       // Check if ShipD geometry is available (from backend)
       if (candidate.geometryJson) {
         try {
@@ -72,13 +84,17 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
           };
           if (sections && sections.stations && Array.isArray(sections.stations)) {
             // Use ShipD geometry from backend
-            return generateShipDHull3D({
+            const fromSections = generateShipDHull3D({
               sections: {
                 stations: sections.stations,
                 stationPositions: sections.stationPositions || [],
               },
               lppM: lpp,
             });
+            if (isGeometryValid(fromSections)) {
+              return fromSections;
+            }
+            console.warn("[ParametricHull3D] Invalid geometry from sections; trying ShipD vector.");
           }
         } catch (error) {
           console.warn(
@@ -98,7 +114,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
           const shipdVector = JSON.parse(candidate.shipdParametersJson);
           if (Array.isArray(shipdVector) && shipdVector.length === 45) {
             // Generate ShipD geometry from vector
-            return generateShipDHull3D({
+            const fromVector = generateShipDHull3D({
               shipdVector,
               lppM: lpp,
               beamM: beam,
@@ -106,6 +122,12 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
               metadata: sizingStore.shipdParameters,
               resolution,
             });
+            if (isGeometryValid(fromVector)) {
+              return fromVector;
+            }
+            console.warn(
+              "[ParametricHull3D] Invalid geometry from vector; falling back to parametric."
+            );
           }
         } catch (error) {
           console.warn(
@@ -121,7 +143,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
       const verticalSegments = Math.max(8, Math.floor(40 * resolution));
 
       try {
-        return generateHull3DGeometry({
+        const parametric = generateHull3DGeometry({
           hullFamily: candidate.hullFamily,
           lppM: candidate.lppM,
           beamM: candidate.beamM,
@@ -134,6 +156,11 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
           longitudinalSegments,
           verticalSegments,
         });
+        if (isGeometryValid(parametric)) {
+          return parametric;
+        }
+        console.warn("[ParametricHull3D] Invalid parametric geometry; returning empty mesh.");
+        return new THREE.BufferGeometry();
       } catch (error) {
         console.error("[ParametricHull3D] Error generating hull geometry:", error);
         // Return empty geometry on error
