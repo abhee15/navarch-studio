@@ -57,18 +57,20 @@ function generateHullFromOffsets(offsetsGrid: OffsetsGrid): THREE.BufferGeometry
   const numWaterlines = waterlines.length;
 
   // Generate vertices - For each station and waterline, create port and starboard vertices
-  for (let i = 0; i < numStations; i++) {
-    const x = stations[i]; // Station x-position
+  // Coordinate convention (match Vessel3DViewer):
+  // X = transverse (half-breadth), Y = vertical (waterline height), Z = longitudinal (station position)
+  for (let stationIdx = 0; stationIdx < numStations; stationIdx++) {
+    const stationZ = stations[stationIdx]; // Longitudinal position (Z)
 
-    for (let j = 0; j < numWaterlines; j++) {
-      const z = waterlines[j]; // Waterline z-position
-      const halfBreadth = offsets[i][j]; // Half-breadth (y-offset)
+    for (let wlIdx = 0; wlIdx < numWaterlines; wlIdx++) {
+      const waterlineY = waterlines[wlIdx]; // Vertical position (Y)
+      const halfBreadth = offsets[stationIdx][wlIdx]; // Transverse half-breadth (X magnitude)
 
-      // Port side (negative y)
-      vertices.push(x, -halfBreadth, z);
+      // Port side (negative X)
+      vertices.push(-halfBreadth, waterlineY, stationZ);
 
-      // Starboard side (positive y)
-      vertices.push(x, halfBreadth, z);
+      // Starboard side (positive X)
+      vertices.push(halfBreadth, waterlineY, stationZ);
     }
   }
 
@@ -76,18 +78,19 @@ function generateHullFromOffsets(offsetsGrid: OffsetsGrid): THREE.BufferGeometry
   // For each quad (station[i] to station[i+1], waterline[j] to waterline[j+1]), create 2 triangles
   const verticesPerStation = numWaterlines * 2; // Port + starboard
 
-  for (let i = 0; i < numStations - 1; i++) {
-    for (let j = 0; j < numWaterlines - 1; j++) {
+  for (let stationIdx = 0; stationIdx < numStations - 1; stationIdx++) {
+    for (let wlIdx = 0; wlIdx < numWaterlines - 1; wlIdx++) {
       // Port side quad
-      const a = i * verticesPerStation + j * 2;
+      const a = stationIdx * verticesPerStation + wlIdx * 2;
       const b = a + verticesPerStation;
       const c = a + 2;
       const d = b + 2;
 
-      // Triangle 1 (a, c, b)
-      indices.push(a, c, b);
-      // Triangle 2 (b, c, d)
-      indices.push(b, c, d);
+      // Keep consistent winding across both sides
+      // Triangle 1
+      indices.push(a, b, c);
+      // Triangle 2
+      indices.push(b, d, c);
 
       // Starboard side quad
       const a2 = a + 1;
@@ -95,9 +98,9 @@ function generateHullFromOffsets(offsetsGrid: OffsetsGrid): THREE.BufferGeometry
       const c2 = c + 1;
       const d2 = d + 1;
 
-      // Triangle 1 (a2, b2, c2)
+      // Triangle 1
       indices.push(a2, b2, c2);
-      // Triangle 2 (b2, d2, c2)
+      // Triangle 2
       indices.push(b2, d2, c2);
     }
   }

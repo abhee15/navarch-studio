@@ -28,20 +28,20 @@ export function StationWaterlineOverlay({
 
       // Trace station curve from keel to deck (each waterline)
       for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
-        const z = waterlines[wlIdx];
-        const y = offsets[stIdx][wlIdx];
+        const waterlineY = waterlines[wlIdx]; // vertical
+        const halfBreadth = offsets[stIdx][wlIdx]; // transverse
 
-        // Port side
-        points.push(new THREE.Vector3(stationX, -y, z));
+        // Port side (negative X)
+        points.push(new THREE.Vector3(-halfBreadth, waterlineY, stationX));
       }
 
       // Mirror for starboard (reverse order for continuous line)
       for (let wlIdx = waterlines.length - 1; wlIdx >= 0; wlIdx--) {
-        const z = waterlines[wlIdx];
-        const y = offsets[stIdx][wlIdx];
+        const waterlineY = waterlines[wlIdx];
+        const halfBreadth = offsets[stIdx][wlIdx];
 
-        // Starboard side
-        points.push(new THREE.Vector3(stationX, y, z));
+        // Starboard side (positive X)
+        points.push(new THREE.Vector3(halfBreadth, waterlineY, stationX));
       }
 
       return { key: `station-${stIdx}`, points };
@@ -52,23 +52,23 @@ export function StationWaterlineOverlay({
   const waterlineLines = useMemo(() => {
     if (!showWaterlines || waterlines.length === 0) return [];
 
-    return waterlines.map((wlZ, wlIdx) => {
+    return waterlines.map((wlY, wlIdx) => {
       const points: THREE.Vector3[] = [];
 
       // Trace waterline from stern to bow (each station) - Port side
       for (let stIdx = 0; stIdx < stations.length; stIdx++) {
-        const x = stations[stIdx];
-        const y = offsets[stIdx][wlIdx];
+        const stationZ = stations[stIdx];
+        const halfBreadth = offsets[stIdx][wlIdx];
 
-        points.push(new THREE.Vector3(x, -y, wlZ)); // Port
+        points.push(new THREE.Vector3(-halfBreadth, wlY, stationZ)); // Port
       }
 
       // Continue from bow to stern on starboard side
       for (let stIdx = stations.length - 1; stIdx >= 0; stIdx--) {
-        const x = stations[stIdx];
-        const y = offsets[stIdx][wlIdx];
+        const stationZ = stations[stIdx];
+        const halfBreadth = offsets[stIdx][wlIdx];
 
-        points.push(new THREE.Vector3(x, y, wlZ)); // Starboard
+        points.push(new THREE.Vector3(halfBreadth, wlY, stationZ)); // Starboard
       }
 
       // Close the loop

@@ -64,6 +64,30 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
     return geometry; // Return empty geometry
   }
 
+  // Defensive: validate inputs are finite numbers and arrays are consistent
+  const allFinite = (arr: number[]) => arr.every((v) => Number.isFinite(v));
+  if (
+    !allFinite(stations as unknown as number[]) ||
+    !allFinite(waterlines as unknown as number[])
+  ) {
+    console.warn("[HullMesh] Invalid stations/waterlines (non-finite values). Skipping mesh.");
+    return geometry;
+  }
+  const expectedWaterlineCount = waterlines.length;
+  if (!offsets.every((row) => Array.isArray(row) && row.length === expectedWaterlineCount)) {
+    console.warn("[HullMesh] Offsets grid rows have inconsistent lengths. Skipping mesh.");
+    return geometry;
+  }
+  for (let s = 0; s < offsets.length; s++) {
+    for (let w = 0; w < offsets[s].length; w++) {
+      const hb = Number(offsets[s][w]);
+      if (!Number.isFinite(hb)) {
+        console.warn("[HullMesh] Found non-finite half-breadth at", { s, w, hb });
+        return geometry;
+      }
+    }
+  }
+
   // Generate vertices from actual offsets
   // Three.js: X = transverse (half-breadth), Y = vertical (waterline Z), Z = longitudinal (station X)
   for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
