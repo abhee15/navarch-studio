@@ -228,7 +228,8 @@ public class SizingRunService : ISizingRunService
             MaxCandidates = maxCandidates,
             MinFn = effectiveDto.Options?.MinFn,
             MaxFn = effectiveDto.Options?.MaxFn,
-            IncludeGeometry = effectiveDto.Options?.IncludeGeometry ?? false,
+            // Persist geometry by default to ensure offsets are available to the viewer
+            IncludeGeometry = effectiveDto.Options?.IncludeGeometry ?? true,
             AdditionalParameters = effectiveAdditionalParameters
         };
 

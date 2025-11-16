@@ -456,6 +456,7 @@ export const LinesPlanPanel = observer(({ vesselId, vessel }: LinesPlanPanelProp
             <g transform="translate(500, 0)">
               {visibility.grid && (
                 <LinesPlanGrid
+                  key={`profile-${minX}-${maxX}-${minZ}-${maxZ}`}
                   type="profile"
                   stations={bodyPlanData.stations}
                   waterlines={bodyPlanData.waterlines}

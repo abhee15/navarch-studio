@@ -51,8 +51,14 @@ export const LinesPlanGrid = observer(
           return height - ((value - minZ) / rangeZ) * height;
         } else {
           // Profile/Half-breadth: varies
-          const range = type === "profile" ? maxZ - minZ : maxY;
-          return height - (value / (range || 1)) * height;
+          if (type === "profile") {
+            // Use minZ offset to keep baseline consistent and avoid flipped rendering
+            const rangeZ = maxZ - minZ || 1;
+            return height - ((value - minZ) / rangeZ) * height;
+          }
+          // Half-breadth uses symmetric range around centerline; keep original normalization
+          const rangeYVal = maxY || 1;
+          return height - (value / rangeYVal) * height;
         }
       },
       [type, minZ, maxZ, maxY, height]
