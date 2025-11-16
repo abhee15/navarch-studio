@@ -17,7 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import type { HydroResult } from "../../types/hydrostatics";
+import type { HydroResult, OffsetsGrid } from "../../types/hydrostatics";
+import { geometryApi } from "../../services/hydrostaticsApi";
 
 interface Vessel3DViewerProps {
   lpp: number; // Length between perpendiculars
@@ -29,6 +30,7 @@ interface Vessel3DViewerProps {
   kg?: number; // Center of gravity vertical position
   lcg?: number; // Center of gravity longitudinal position
   currentResult?: HydroResult | null;
+  vesselId?: string; // Optional vessel ID to load actual offsets
 }
 
 export interface Vessel3DViewerRef {
@@ -40,10 +42,91 @@ export interface Vessel3DViewerRef {
 }
 
 /**
- * Generate parametric hull surface using modified Wigley hull equation
- * y(x,z) = (B/2) * (1 - z²/D²) * (1 - (2x/Lpp - 1)²)
+ * Generate hull geometry from actual offsets or parametric formula
+ * Three.js coordinate system: X = transverse (starboard/port), Y = vertical (up/down), Z = longitudinal (forward/back)
  */
-function generateHullGeometry(
+function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+  const vertices: number[] = [];
+  const indices: number[] = [];
+
+  const { stations, waterlines, offsets } = offsetsGrid;
+
+  if (stations.length === 0 || waterlines.length === 0 || offsets.length === 0) {
+    return geometry; // Return empty geometry
+  }
+
+  // Generate vertices from actual offsets
+  // Three.js: X = transverse (half-breadth), Y = vertical (waterline Z), Z = longitudinal (station X)
+  for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
+    const waterlineZ = waterlines[wlIdx]; // Vertical position (Y in Three.js)
+
+    for (let stIdx = 0; stIdx < stations.length; stIdx++) {
+      const stationX = stations[stIdx]; // Longitudinal position (Z in Three.js)
+      const halfBreadth = offsets[stIdx]?.[wlIdx] ?? 0; // Transverse position (X in Three.js)
+
+      // Port side (negative X)
+      vertices.push(-halfBreadth, waterlineZ, stationX);
+    }
+  }
+
+  // Generate indices for triangles
+  for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+    for (let stIdx = 0; stIdx < stations.length - 1; stIdx++) {
+      const a = wlIdx * stations.length + stIdx;
+      const b = a + 1;
+      const c = a + stations.length;
+      const d = c + 1;
+
+      // Two triangles per quad (port side)
+      indices.push(a, c, b);
+      indices.push(b, c, d);
+    }
+  }
+
+  // Mirror to starboard side
+  const portVertexCount = vertices.length / 3;
+  const portStartIndex = portVertexCount;
+
+  for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
+    for (let stIdx = 0; stIdx < stations.length; stIdx++) {
+      const idx = wlIdx * stations.length + stIdx;
+      const baseIdx = idx * 3;
+      const x = vertices[baseIdx];
+      const y = vertices[baseIdx + 1];
+      const z = vertices[baseIdx + 2];
+
+      // Starboard side (positive X, mirrored)
+      vertices.push(-x, y, z);
+    }
+  }
+
+  // Generate indices for starboard side
+  for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+    for (let stIdx = 0; stIdx < stations.length - 1; stIdx++) {
+      const a = portStartIndex + wlIdx * stations.length + stIdx;
+      const b = a + 1;
+      const c = a + stations.length;
+      const d = c + 1;
+
+      indices.push(a, b, c);
+      indices.push(b, d, c);
+    }
+  }
+
+  geometry.setIndex(indices);
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+
+  return geometry;
+}
+
+/**
+ * Generate parametric hull surface using modified Wigley hull equation (fallback)
+ * Three.js coordinate system: X = transverse, Y = vertical, Z = longitudinal
+ */
+function generateHullGeometryParametric(
   lpp: number,
   beam: number,
   designDraft: number
@@ -59,19 +142,20 @@ function generateHullGeometry(
   const halfBeam = beam / 2;
 
   // Generate vertices
+  // Three.js: X = transverse, Y = vertical, Z = longitudinal
   for (let zi = 0; zi <= zSegments; zi++) {
-    const z = (zi / zSegments) * designDraft;
-    const zNorm = z / designDraft; // Normalized z [0, 1]
+    const y = (zi / zSegments) * designDraft; // Vertical (Y in Three.js)
+    const yNorm = y / designDraft; // Normalized [0, 1]
 
     for (let xi = 0; xi <= xSegments; xi++) {
-      const x = (xi / xSegments) * lpp;
-      const xNorm = (2 * x) / lpp - 1; // Normalized x [-1, 1]
+      const z = (xi / xSegments) * lpp; // Longitudinal (Z in Three.js)
+      const zNorm = (2 * z) / lpp - 1; // Normalized [-1, 1]
 
       // Modified Wigley hull equation
-      const y = halfBeam * (1 - zNorm * zNorm) * (1 - xNorm * xNorm);
+      const x = halfBeam * (1 - yNorm * yNorm) * (1 - zNorm * zNorm); // Transverse (X in Three.js)
 
-      // Port side (negative y)
-      vertices.push(x, -y, z);
+      // Port side (negative X)
+      vertices.push(-x, y, z);
     }
   }
 
@@ -101,8 +185,8 @@ function generateHullGeometry(
       const y = vertices[baseIdx + 1];
       const z = vertices[baseIdx + 2];
 
-      // Starboard side (positive y, mirrored)
-      vertices.push(x, -y, z);
+      // Starboard side (positive X, mirrored)
+      vertices.push(-x, y, z);
     }
   }
 
@@ -122,15 +206,15 @@ function generateHullGeometry(
   // Add keel/base surface
   const keelStartIdx = vertices.length / 3;
   for (let xi = 0; xi <= xSegments; xi++) {
-    const x = (xi / xSegments) * lpp;
-    vertices.push(x, 0, 0); // Centerline at keel
+    const z = (xi / xSegments) * lpp; // Longitudinal (Z)
+    vertices.push(0, 0, z); // Centerline at keel (X=0, Y=0, Z=longitudinal)
   }
 
   // Connect keel to port and starboard
   for (let xi = 0; xi < xSegments; xi++) {
     const keelA = keelStartIdx + xi;
     const keelB = keelStartIdx + xi + 1;
-    const portA = xi;
+    const portA = xi; // First waterline, port side
     const portB = xi + 1;
     const starA = portStartIndex + xi;
     const starB = portStartIndex + xi + 1;
@@ -154,16 +238,20 @@ function HullMesh({
   beam,
   designDraft,
   wireframe,
+  offsetsGrid,
 }: {
   lpp: number;
   beam: number;
   designDraft: number;
   wireframe: boolean;
+  offsetsGrid?: OffsetsGrid | null;
 }) {
-  const geometry = useMemo(
-    () => generateHullGeometry(lpp, beam, designDraft),
-    [lpp, beam, designDraft]
-  );
+  const geometry = useMemo(() => {
+    if (offsetsGrid && offsetsGrid.stations.length > 0 && offsetsGrid.waterlines.length > 0) {
+      return generateHullGeometryFromOffsets(offsetsGrid);
+    }
+    return generateHullGeometryParametric(lpp, beam, designDraft);
+  }, [lpp, beam, designDraft, offsetsGrid]);
 
   return (
     <mesh geometry={geometry} castShadow receiveShadow>
@@ -182,9 +270,11 @@ function HullMesh({
 function Waterplane({ lpp, beam, draft }: { lpp: number; beam: number; draft: number }) {
   if (!draft || draft <= 0) return null;
 
+  // Three.js: X = transverse, Y = vertical, Z = longitudinal
+  // Waterplane is horizontal at Y = draft, centered at Z = lpp/2
   return (
-    <mesh position={[lpp / 2, 0, draft]} rotation={[-Math.PI / 2, 0, 0]}>
-      <planeGeometry args={[lpp * 1.2, beam * 1.2]} />
+    <mesh position={[0, draft, lpp / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[beam * 1.2, lpp * 1.2]} />
       <meshStandardMaterial color="#3b82f6" transparent opacity={0.3} side={THREE.DoubleSide} />
     </mesh>
   );
@@ -194,8 +284,9 @@ function BuoyancyMarker({ lcb, kb }: { lcb: number; kb: number }) {
   if (lcb === undefined || kb === undefined || lcb <= 0 || kb <= 0) return null;
 
   const markerSize = Math.max(lcb, kb) * 0.02;
+  // Three.js: X = transverse, Y = vertical, Z = longitudinal
   return (
-    <group position={[lcb, 0, kb]}>
+    <group position={[0, kb, lcb]}>
       <mesh>
         <sphereGeometry args={[markerSize, 16, 16]} />
         <meshStandardMaterial color="#10b981" />
@@ -208,8 +299,9 @@ function GravityMarker({ lcg, kg }: { lcg: number; kg: number }) {
   if (kg === undefined || lcg === undefined || kg <= 0 || lcg <= 0) return null;
 
   const markerSize = Math.max(lcg, kg) * 0.02;
+  // Three.js: X = transverse, Y = vertical, Z = longitudinal
   return (
-    <group position={[lcg, 0, kg]}>
+    <group position={[0, kg, lcg]}>
       <mesh>
         <sphereGeometry args={[markerSize, 16, 16]} />
         <meshStandardMaterial color="#ef4444" />
@@ -224,6 +316,7 @@ interface SceneContentProps extends Vessel3DViewerProps {
   wireframe: boolean;
   showGrid: boolean;
   showAxes: boolean;
+  offsetsGrid?: OffsetsGrid | null;
 }
 
 function SceneContent({
@@ -240,6 +333,7 @@ function SceneContent({
   wireframe,
   showGrid,
   showAxes,
+  offsetsGrid,
 }: SceneContentProps) {
   const bounds = useMemo(() => {
     const maxDim = Math.max(lpp, beam, designDraft);
@@ -247,6 +341,7 @@ function SceneContent({
   }, [lpp, beam, designDraft]);
 
   // Auto-fit camera when parameters change significantly
+  // Three.js: X = transverse, Y = vertical, Z = longitudinal
   useEffect(() => {
     if (controlsRef.current && cameraRef.current) {
       // Reset controls and adjust camera position
@@ -254,12 +349,13 @@ function SceneContent({
       const newBounds = maxDim * 1.5;
 
       // Update camera position to fit new dimensions
+      // Center: X=0 (centerline), Y=draft/2 (mid-height), Z=lpp/2 (midship)
       const camera = cameraRef.current;
       camera.position.set(newBounds, newBounds * 0.8, newBounds);
-      camera.lookAt(lpp / 2, 0, designDraft / 2);
+      camera.lookAt(0, designDraft / 2, lpp / 2);
 
       // Reset controls to update target
-      controlsRef.current.target.set(lpp / 2, 0, designDraft / 2);
+      controlsRef.current.target.set(0, designDraft / 2, lpp / 2);
       controlsRef.current.update();
     }
   }, [lpp, beam, designDraft, controlsRef, cameraRef]);
@@ -283,7 +379,7 @@ function SceneContent({
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
-        target={[lpp / 2, 0, designDraft / 2]}
+        target={[0, designDraft / 2, lpp / 2]}
       />
 
       {/* Enhanced Lighting */}
@@ -292,9 +388,10 @@ function SceneContent({
       <directionalLight position={[-10, 5, -5]} intensity={0.4} />
       <pointLight position={[0, 10, 0]} intensity={0.3} />
 
-      {/* Grid helper - positioned at the base plane (z=0) */}
+      {/* Grid helper - positioned at the base plane (Y=0) */}
+      {/* Three.js: X = transverse, Y = vertical, Z = longitudinal */}
       {showGrid && (
-        <group position={[lpp / 2, 0, 0]}>
+        <group position={[0, 0, lpp / 2]}>
           <Grid
             args={[bounds * 2, 20]}
             cellColor="#6b7280"
@@ -309,7 +406,13 @@ function SceneContent({
       {showAxes && <axesHelper args={[bounds * 0.4]} />}
 
       {/* Hull */}
-      <HullMesh lpp={lpp} beam={beam} designDraft={designDraft} wireframe={wireframe} />
+      <HullMesh
+        lpp={lpp}
+        beam={beam}
+        designDraft={designDraft}
+        wireframe={wireframe}
+        offsetsGrid={offsetsGrid}
+      />
 
       {/* Waterplane */}
       <Waterplane lpp={lpp} beam={beam} draft={draft || designDraft} />
@@ -531,7 +634,7 @@ function ControlPanel({
 
 export const Vessel3DViewer = observer(
   forwardRef<Vessel3DViewerRef, Vessel3DViewerProps>(function Vessel3DViewer(
-    { lpp, beam, designDraft, draft, kb, lcb, kg, lcg, currentResult },
+    { lpp, beam, designDraft, draft, kb, lcb, kg, lcg, currentResult, vesselId },
     ref
   ) {
     const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -540,10 +643,28 @@ export const Vessel3DViewer = observer(
     const [showGrid, setShowGrid] = useState(true);
     const [showAxes, setShowAxes] = useState(true);
     const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed by default
+    const [offsetsGrid, setOffsetsGrid] = useState<OffsetsGrid | null>(null);
 
     const displayDraft = draft ?? currentResult?.draft ?? designDraft;
     const displayKb = kb ?? currentResult?.kBz;
     const displayLcb = lcb ?? currentResult?.lCBx;
+
+    // Load actual offsets if vesselId is provided
+    useEffect(() => {
+      if (vesselId) {
+        geometryApi
+          .getOffsetsGrid(vesselId)
+          .then((grid) => {
+            if (grid && grid.stations.length > 0 && grid.waterlines.length > 0) {
+              setOffsetsGrid(grid);
+            }
+          })
+          .catch(() => {
+            // Silently fail - will use parametric fallback
+            setOffsetsGrid(null);
+          });
+      }
+    }, [vesselId]);
 
     const bounds = useMemo(() => {
       const maxDim = Math.max(lpp, beam, designDraft);
@@ -582,7 +703,8 @@ export const Vessel3DViewer = observer(
         const camera = cameraRef.current;
 
         // Calculate position to show entire hull
-        const center = new THREE.Vector3(lpp / 2, 0, designDraft / 2);
+        // Three.js: X = transverse, Y = vertical, Z = longitudinal
+        const center = new THREE.Vector3(0, designDraft / 2, lpp / 2);
         camera.position.set(center.x + fitBounds, center.y + fitBounds * 0.8, center.z + fitBounds);
 
         controlsRef.current.target.copy(center);
@@ -595,26 +717,33 @@ export const Vessel3DViewer = observer(
 
       const maxDim = Math.max(lpp, beam, designDraft);
       const distance = maxDim * 1.5;
-      const center = new THREE.Vector3(lpp / 2, 0, designDraft / 2);
+      // Three.js: X = transverse, Y = vertical, Z = longitudinal
+      const center = new THREE.Vector3(0, designDraft / 2, lpp / 2);
       const camera = cameraRef.current;
 
       switch (view) {
         case "front":
+          // Looking from forward (positive Z)
           camera.position.set(center.x, center.y, center.z + distance);
           break;
         case "side":
+          // Looking from starboard (positive X)
           camera.position.set(center.x + distance, center.y, center.z);
           break;
         case "back":
+          // Looking from aft (negative Z)
           camera.position.set(center.x, center.y, center.z - distance);
           break;
         case "top":
+          // Looking from above (positive Y)
           camera.position.set(center.x, center.y + distance, center.z);
           break;
         case "bottom":
+          // Looking from below (negative Y)
           camera.position.set(center.x, center.y - distance, center.z);
           break;
         case "isometric":
+          // Isometric view
           camera.position.set(center.x + distance, center.y + distance * 0.8, center.z + distance);
           break;
       }
@@ -664,6 +793,7 @@ export const Vessel3DViewer = observer(
             wireframe={wireframe}
             showGrid={showGrid}
             showAxes={showAxes}
+            offsetsGrid={offsetsGrid}
           />
         </Canvas>
         <ControlPanel

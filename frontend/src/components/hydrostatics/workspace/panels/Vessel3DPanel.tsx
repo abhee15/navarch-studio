@@ -110,6 +110,7 @@ export const Vessel3DPanel = observer(function Vessel3DPanel({
           kg={kg}
           lcg={lcg}
           currentResult={currentResult}
+          vesselId={vessel.id}
         />
       </div>
 
