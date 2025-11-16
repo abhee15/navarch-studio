@@ -1,3 +1,4 @@
+using System;
 using DataService.Data;
 using DataService.Services.Hydrostatics;
 using DataService.Services.Seakeeping;
@@ -5,6 +6,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Shared.DTOs;
 using Shared.Models;
 using Xunit;
 
@@ -39,7 +41,7 @@ public class StripTheoryEngineTests : IDisposable
         var vessel = new Vessel
         {
             Id = _vesselId,
-            UserId = Guid.NewGuid().ToString(),
+            UserId = Guid.NewGuid(),
             Name = "Test Vessel",
             Lpp = 100m,
             Beam = 20m,
@@ -112,15 +114,31 @@ public class StripTheoryEngineTests : IDisposable
                     .Select(w => w.Z)
                     .ToList();
                 var offsets = new List<List<decimal>>();
-                foreach (var station in _context.Stations.Where(s => s.VesselId == _vesselId).OrderBy(s => s.StationIndex))
+                var orderedStations = _context.Stations
+                    .Where(s => s.VesselId == _vesselId)
+                    .OrderBy(s => s.StationIndex)
+                    .ToList();
+
+                // Ensure we have offsets for all stations and all waterlines
+                foreach (var station in orderedStations)
                 {
-                    var stationOffsets = _context.Offsets
-                        .Where(o => o.VesselId == _vesselId && o.StationIndex == station.StationIndex)
-                        .OrderBy(o => o.WaterlineIndex)
-                        .Select(o => o.HalfBreadthY)
+                    var stationOffsets = new List<decimal>();
+                    var orderedWaterlines = _context.Waterlines
+                        .Where(w => w.VesselId == _vesselId)
+                        .OrderBy(w => w.WaterlineIndex)
                         .ToList();
+
+                    foreach (var waterline in orderedWaterlines)
+                    {
+                        var offset = _context.Offsets
+                            .FirstOrDefault(o => o.VesselId == _vesselId
+                                && o.StationIndex == station.StationIndex
+                                && o.WaterlineIndex == waterline.WaterlineIndex);
+                        stationOffsets.Add(offset?.HalfBreadthY ?? 0m);
+                    }
                     offsets.Add(stationOffsets);
                 }
+
                 return new OffsetsGridDto
                 {
                     Stations = stations,
@@ -168,16 +186,27 @@ public class StripTheoryEngineTests : IDisposable
         expectedA33.Should().BeGreaterThan(0);
     }
 
-    [Fact(Skip = "Requires real DataDbContext - convert to integration test with in-memory database")]
+    [Fact]
     public async Task ComputeCoefficients_NoGeometry_ThrowsException()
     {
         // Arrange
-        var vesselId = Guid.NewGuid();
+        var vesselIdWithoutGeometry = Guid.NewGuid();
         var frequencies = new[] { 0.4 };
+        var draft = 5.0;
 
-        // TODO: Convert to integration test with real in-memory database
+        // Mock geometry service to return null (no geometry)
+        _mockGeometry
+            .Setup(g => g.GetOffsetsGridAsync(vesselIdWithoutGeometry, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((OffsetsGridDto?)null);
 
         // Act & Assert
-        Assert.True(true);
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _engine.ComputeCoefficientsAsync(vesselIdWithoutGeometry, draft, frequencies));
+    }
+
+    public void Dispose()
+    {
+        _context?.Database.EnsureDeleted();
+        _context?.Dispose();
     }
 }

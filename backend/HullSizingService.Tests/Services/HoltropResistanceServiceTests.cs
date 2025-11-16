@@ -55,7 +55,21 @@ public class HoltropResistanceServiceTests
         result.EhpKw.Should().BeInRange(5000m, 50000m, "EHP should be in reasonable range for large container ship");
     }
 
-    [Fact(Skip = "Simplified Holtrop method accuracy needs calibration against KCS reference data - computed resistance is ~50x higher than reference. Will be improved in future resistance method refinement.")]
+    /// <summary>
+    /// PHASE 3 WORK: Holtrop-Mennen resistance method accuracy calibration test
+    ///
+    /// This test validates that the simplified Holtrop-Mennen resistance calculation
+    /// produces results within reasonable range compared to KCS (Kriso Container Ship)
+    /// reference data.
+    ///
+    /// Current status: Simplified Holtrop method accuracy needs calibration. Computed
+    /// resistance is ~50x higher than reference, indicating the method needs refinement
+    /// or a more complete implementation.
+    ///
+    /// For now, this test is skipped. Resistance method accuracy will be improved in
+    /// future resistance method refinement (Phase 3).
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Simplified Holtrop method accuracy needs calibration against KCS reference data - computed resistance is ~50x higher than reference. Will be improved in future resistance method refinement")]
     public async Task CalculateAsync_KCS_AgainstReference_WithinReasonableRange()
     {
         // Arrange - Use reference data from constants

@@ -87,7 +87,18 @@ public class StabilityIntegrationTests : IDisposable
         }
     }
 
-    [Fact(Skip = "TODO: Wall-sided vs Full method showing 42,000% difference - full method needs debugging")]
+    /// <summary>
+    /// PHASE 3 WORK: Stability calculation method agreement test
+    ///
+    /// This test validates that Wall-sided and Full stability calculation methods
+    /// produce similar results at small angles (where both should be valid).
+    ///
+    /// Current status: Wall-sided vs Full method showing 42,000% difference - full method needs debugging.
+    /// This indicates a significant issue with the full method implementation.
+    ///
+    /// For now, this test is skipped. Full method will be debugged and fixed in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Wall-sided vs Full method showing 42,000% difference - full method needs debugging")]
     public async Task Test10_WallSidedVsFullMethod_AgreementAtSmallAngles()
     {
         // Arrange
@@ -279,4 +290,3 @@ public class StabilityIntegrationTests : IDisposable
         _context.Dispose();
     }
 }
-

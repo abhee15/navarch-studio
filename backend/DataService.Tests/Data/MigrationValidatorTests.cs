@@ -31,17 +31,17 @@ public class MigrationValidatorTests : IDisposable
 
     /// <summary>
     /// Integration test: Validates migration order and schema with real database
-    /// 
+    ///
     /// PHASE 3 WORK: This test requires a real PostgreSQL database provider because:
     /// 1. MigrationValidator uses GetAppliedMigrationsAsync() which is relational-specific
     /// 2. MigrationValidator queries information_schema (PostgreSQL-specific)
     /// 3. In-memory database doesn't support these operations
-    /// 
+    ///
     /// To run this test:
     /// 1. Set up a test PostgreSQL database
     /// 2. Apply migrations to the test database
     /// 3. Run as integration test with [Trait("Category", "Integration")]
-    /// 
+    ///
     /// For now, this test is skipped. The MigrationValidator is tested in production
     /// where it runs on startup with a real database connection.
     /// </summary>
@@ -59,17 +59,17 @@ public class MigrationValidatorTests : IDisposable
 
     /// <summary>
     /// Integration test: Validates column names match migrations
-    /// 
+    ///
     /// PHASE 3 WORK: This test ensures that the column names in MigrationValidator
     /// match what's actually in the migrations. It requires a real database because:
     /// 1. MigrationValidator queries information_schema.columns (PostgreSQL-specific)
     /// 2. In-memory database doesn't support information_schema queries
-    /// 
+    ///
     /// Manual verification steps (can be done without running test):
     /// 1. Check that all column names in MigrationValidator are snake_case
     /// 2. Verify they exist in the actual migration files
     /// 3. Ensure no PascalCase property names are used
-    /// 
+    ///
     /// For now, this test is skipped. Column name validation is verified manually
     /// and during code review when migrations are added.
     /// </summary>

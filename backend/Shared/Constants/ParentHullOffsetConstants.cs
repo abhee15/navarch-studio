@@ -104,4 +104,3 @@ public static class ParentHullOffsetConstants
         return null;
     }
 }
-

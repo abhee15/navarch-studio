@@ -157,7 +157,17 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.Cb:F4}, Got: {computed.Cb:F4}");
     }
 
-    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
+    /// <summary>
+    /// PHASE 3 WORK: Waterplane interpolation accuracy for complex hull forms
+    ///
+    /// This test validates center of buoyancy (KB, LCB) accuracy for Wigley hull.
+    ///
+    /// Current status: Waterplane interpolation for complex hull forms needs refinement.
+    /// Barge tests pass, but Wigley hull (parabolic form) needs more work.
+    ///
+    /// For now, this test is skipped. Waterplane interpolation will be improved in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_CenterOfBuoyancy_WithinTwoPercent()
     {
         // Arrange
@@ -183,7 +193,12 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.LCB:F2}, Got: {computed.LCBx:F2}");
     }
 
-    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
+    /// <summary>
+    /// PHASE 3 WORK: Waterplane interpolation accuracy for complex hull forms
+    ///
+    /// See WigleyHull_CenterOfBuoyancy_WithinTwoPercent for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_WaterplaneArea_WithinTwoPercent()
     {
         // Arrange
@@ -203,7 +218,12 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.Awp:F2}, Got: {computed.Awp:F2}");
     }
 
-    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
+    /// <summary>
+    /// PHASE 3 WORK: Waterplane interpolation accuracy for complex hull forms
+    ///
+    /// See WigleyHull_CenterOfBuoyancy_WithinTwoPercent for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_MetacentricRadius_WithinFivePercent()
     {
         // Arrange - Note: Metacentric radius has relaxed tolerance (5%) due to
@@ -224,7 +244,12 @@ public class WigleyHullTests : IDisposable
             $"Expected: {analytical.BMt:F3}, Got: {computed.BMt:F3}");
     }
 
-    [Fact(Skip = "TODO: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
+    /// <summary>
+    /// PHASE 3 WORK: Waterplane interpolation accuracy for complex hull forms
+    ///
+    /// See WigleyHull_CenterOfBuoyancy_WithinTwoPercent for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Waterplane interpolation for complex hull forms - barge tests pass, Wigley needs more work")]
     public async Task WigleyHull_FormCoefficients_WithinTwoPercent()
     {
         // Arrange
@@ -252,7 +277,17 @@ public class WigleyHullTests : IDisposable
 
     // ============ GZ Stability Tests ============
 
-    [Fact(Skip = "TODO: GZ curve shape validation failing - needs stability calculator review")]
+    /// <summary>
+    /// PHASE 3 WORK: GZ curve shape validation for stability calculations
+    ///
+    /// This test validates that GZ (righting arm) curves have the correct shape:
+    /// monotonic increase to peak, then gradual decrease.
+    ///
+    /// Current status: GZ curve shape validation failing - needs stability calculator review.
+    ///
+    /// For now, this test is skipped. Stability calculator will be reviewed and improved in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: GZ curve shape validation failing - needs stability calculator review")]
     public async Task WigleyHull_GZCurve_HasCorrectShape()
     {
         // Arrange
@@ -280,7 +315,16 @@ public class WigleyHullTests : IDisposable
         Assert.True(result.Points.Count > 10, "Should have sufficient data points");
     }
 
-    [Fact(Skip = "TODO: Max GZ angle returns 0° instead of 30-50° - needs investigation")]
+    /// <summary>
+    /// PHASE 3 WORK: Max GZ angle accuracy for stability calculations
+    ///
+    /// This test validates that the angle at maximum GZ is in the expected range (30-50°).
+    ///
+    /// Current status: Max GZ angle returns 0° instead of 30-50° - needs investigation.
+    ///
+    /// For now, this test is skipped. Max GZ angle calculation will be fixed in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Max GZ angle returns 0° instead of 30-50° - needs investigation")]
     public async Task WigleyHull_MaxGZ_InExpectedRange()
     {
         // Arrange
@@ -308,7 +352,16 @@ public class WigleyHullTests : IDisposable
             $"Max GZ should be reasonable (0.1-2.0m), got {result.MaxGZ}m");
     }
 
-    [Fact(Skip = "TODO: GZ at 10° is negative instead of positive - stability calculator needs fix")]
+    /// <summary>
+    /// PHASE 3 WORK: GZ value accuracy for stability calculations
+    ///
+    /// This test validates that GZ values are positive at small angles (e.g., 10°).
+    ///
+    /// Current status: GZ at 10° is negative instead of positive - stability calculator needs fix.
+    ///
+    /// For now, this test is skipped. GZ value calculation will be fixed in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: GZ at 10° is negative instead of positive - stability calculator needs fix")]
     public async Task WigleyHull_GZValues_InReasonableRange()
     {
         // Arrange

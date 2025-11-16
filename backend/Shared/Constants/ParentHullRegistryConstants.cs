@@ -380,4 +380,3 @@ public class ParentHullRegistryEntry
     public string Source { get; init; } = string.Empty;
     public string? Notes { get; init; }
 }
-

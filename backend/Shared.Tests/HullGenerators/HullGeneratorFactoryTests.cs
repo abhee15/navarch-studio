@@ -19,7 +19,9 @@ public class HullGeneratorFactoryTests
 
         // Assert
         generator.Should().NotBeNull();
-        generator.Should().BeOfType<ParentHullHullGenerator>();
+        // Factory now returns vessel-type-specific generator (ProductCarrierHullGenerator)
+        // which is a parent hull generator, so we check for the base type
+        generator.Should().BeAssignableTo<ParentHullHullGenerator>();
     }
 
     [Fact]

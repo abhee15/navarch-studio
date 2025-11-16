@@ -38,7 +38,22 @@ public class FormCoefficientHullGeneratorTests
 
     #region Form Coefficient Accuracy Tests
 
-    [Fact(Skip = "Form coefficient accuracy needs calibration - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: Form coefficient accuracy calibration test
+    ///
+    /// This test validates that the parametric hull generator produces form coefficients
+    /// (Cb, Cp, Cm, Cwp) that match target values within tolerance.
+    ///
+    /// Current status: Algorithm needs calibration - computed coefficients may deviate
+    /// from targets. This requires:
+    /// 1. Algorithm refinement for better coefficient matching
+    /// 2. Calibration against reference hull forms (BSRA, Series 60)
+    /// 3. Validation with real-world vessel data
+    ///
+    /// For now, this test is skipped. The generator produces valid geometry but
+    /// coefficient accuracy needs improvement in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Form coefficient accuracy needs calibration - algorithm refinement required for better coefficient matching")]
     public void Generate_WithStandardTankerCoefficients_ProducesAccurateFormCoefficients()
     {
         // Arrange - Tanker: High Cb, full form
@@ -67,7 +82,12 @@ public class FormCoefficientHullGeneratorTests
             "Waterplane coefficient should match target");
     }
 
-    [Fact(Skip = "Form coefficient accuracy needs calibration - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: Form coefficient accuracy calibration test for container ships
+    ///
+    /// See Generate_WithStandardTankerCoefficients_ProducesAccurateFormCoefficients for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Form coefficient accuracy needs calibration - algorithm refinement required")]
     public void Generate_WithContainerShipCoefficients_ProducesAccurateFormCoefficients()
     {
         // Arrange - Container: Moderate Cb, fine ends
@@ -91,7 +111,12 @@ public class FormCoefficientHullGeneratorTests
         Math.Abs(computed.Cwp - cwp).Should().BeLessThan(cwp * FORM_COEFFICIENT_TOLERANCE);
     }
 
-    [Fact(Skip = "Form coefficient accuracy needs calibration - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: Form coefficient accuracy calibration test for bulk carriers
+    ///
+    /// See Generate_WithStandardTankerCoefficients_ProducesAccurateFormCoefficients for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Form coefficient accuracy needs calibration - algorithm refinement required")]
     public void Generate_WithBulkerCoefficients_ProducesAccurateFormCoefficients()
     {
         // Arrange - Bulker: Moderate-high Cb
@@ -115,7 +140,12 @@ public class FormCoefficientHullGeneratorTests
         Math.Abs(computed.Cwp - cwp).Should().BeLessThan(cwp * FORM_COEFFICIENT_TOLERANCE);
     }
 
-    [Fact(Skip = "Form coefficient accuracy needs calibration - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: Form coefficient accuracy calibration test for fast ferries
+    ///
+    /// See Generate_WithStandardTankerCoefficients_ProducesAccurateFormCoefficients for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Form coefficient accuracy needs calibration - algorithm refinement required")]
     public void Generate_WithFastFerryCoefficients_ProducesAccurateFormCoefficients()
     {
         // Arrange - Fast Ferry: Low Cb, fine form
@@ -143,7 +173,18 @@ public class FormCoefficientHullGeneratorTests
 
     #region Volume Accuracy Tests
 
-    [Fact(Skip = "Volume accuracy needs algorithm refinement - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: Volume accuracy calibration test
+    ///
+    /// This test validates that the generated hull volume matches the target displacement
+    /// calculated from form coefficients (V = Cb * L * B * T).
+    ///
+    /// Current status: Volume calculation needs algorithm refinement. The computed volume
+    /// may deviate from target by more than acceptable tolerance.
+    ///
+    /// For now, this test is skipped. Volume calculation accuracy will be improved in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Volume accuracy needs algorithm refinement - computed volume may deviate from target")]
     public void Generate_WithTargetDisplacement_ProducesReasonableVolume()
     {
         // Arrange
@@ -177,7 +218,18 @@ public class FormCoefficientHullGeneratorTests
 
     #region LCB Accuracy Tests
 
-    [Fact(Skip = "LCB positioning needs refinement - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: LCB (Longitudinal Center of Buoyancy) positioning accuracy test
+    ///
+    /// This test validates that the generated hull's LCB position matches the target LCB
+    /// specified in hull dimensions.
+    ///
+    /// Current status: LCB positioning algorithm needs refinement. The computed LCB may
+    /// not match the target position accurately.
+    ///
+    /// For now, this test is skipped. LCB positioning accuracy will be improved in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: LCB positioning needs refinement - computed LCB may not match target accurately")]
     public void Generate_WithForwardLCB_ProducesCorrectLCBPosition()
     {
         // Arrange - LCB 2% forward of amidships
@@ -200,7 +252,12 @@ public class FormCoefficientHullGeneratorTests
             $"LCB should match target within {LCB_TOLERANCE}%");
     }
 
-    [Fact(Skip = "LCB positioning needs refinement - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: LCB positioning accuracy test for aft LCB
+    ///
+    /// See Generate_WithForwardLCB_ProducesCorrectLCBPosition for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: LCB positioning needs refinement - computed LCB may not match target accurately")]
     public void Generate_WithAftLCB_ProducesCorrectLCBPosition()
     {
         // Arrange - LCB 1.5% aft of amidships
@@ -222,7 +279,12 @@ public class FormCoefficientHullGeneratorTests
         lcbError.Should().BeLessThan(LCB_TOLERANCE);
     }
 
-    [Fact(Skip = "LCB positioning needs algorithm refinement - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: LCB positioning accuracy test for midship LCB
+    ///
+    /// See Generate_WithForwardLCB_ProducesCorrectLCBPosition for details.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: LCB positioning needs refinement - computed LCB may not match target accurately")]
     public void Generate_WithMidshipLCB_ProducesCorrectLCBPosition()
     {
         // Arrange - LCB at amidships
@@ -289,7 +351,18 @@ public class FormCoefficientHullGeneratorTests
         geometry.ComputedCoefficients.Should().NotBeNull();
     }
 
-    [Fact(Skip = "Cm accuracy needs calibration - computed Cm (0.517) significantly lower than target (0.99). Will be improved in Phase 3 calibration")]
+    /// <summary>
+    /// PHASE 3 WORK: Midship coefficient (Cm) accuracy calibration test
+    ///
+    /// This test validates that high Cm values produce U-shaped sections as expected.
+    ///
+    /// Current status: Cm accuracy needs calibration. Computed Cm (0.517) is significantly
+    /// lower than target (0.99), indicating the algorithm needs refinement to properly
+    /// represent U-shaped sections.
+    ///
+    /// For now, this test is skipped. Cm accuracy will be improved in Phase 3 calibration.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Cm accuracy needs calibration - computed Cm (0.517) significantly lower than target (0.99). Algorithm refinement required for U-shaped sections")]
     public void Generate_WithHighCm_ProducesUShapedSections()
     {
         // Arrange - High Cm = U-shaped sections
@@ -419,7 +492,19 @@ public class FormCoefficientHullGeneratorTests
         }
     }
 
-    [Fact(Skip = "Sectional area accuracy needs calibration - midship area (307.67) significantly lower than expected (~490). Sectional area curve generation needs refinement. Will be improved in Phase 3 calibration")]
+    /// <summary>
+    /// PHASE 3 WORK: Sectional area accuracy calibration test
+    ///
+    /// This test validates that sectional areas are computed correctly and volume
+    /// accumulates monotonically along the hull length.
+    ///
+    /// Current status: Sectional area accuracy needs calibration. Midship area (307.67)
+    /// is significantly lower than expected (~490), indicating sectional area curve
+    /// generation needs refinement.
+    ///
+    /// For now, this test is skipped. Sectional area accuracy will be improved in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Sectional area accuracy needs calibration - midship area (307.67) significantly lower than expected (~490). Sectional area curve generation needs refinement")]
     public void Generate_ProducesMonotonicVolumeAccumulation()
     {
         // Arrange
@@ -482,7 +567,15 @@ public class FormCoefficientHullGeneratorTests
 
     #region Vessel Type Specific Tests
 
-    [Theory(Skip = "Form coefficient accuracy needs calibration - will be improved in Phase 3")]
+    /// <summary>
+    /// PHASE 3 WORK: Form coefficient accuracy calibration test for multiple vessel types
+    ///
+    /// This theory test validates form coefficient accuracy across different vessel types
+    /// (container, tanker, bulk carrier, fishing vessel).
+    ///
+    /// See Generate_WithStandardTankerCoefficients_ProducesAccurateFormCoefficients for details.
+    /// </summary>
+    [Theory(Skip = "PHASE 3: Form coefficient accuracy needs calibration - algorithm refinement required for multiple vessel types")]
     [InlineData("container", 280.0, 44.0, 14.0, 0.65, 0.68, 0.98, 0.80, -1.5)]
     [InlineData("tanker", 200.0, 32.0, 12.0, 0.80, 0.82, 0.99, 0.87, 2.0)]
     [InlineData("bulk", 250.0, 40.0, 15.0, 0.75, 0.78, 0.99, 0.85, 1.0)]

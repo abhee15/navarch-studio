@@ -9,13 +9,17 @@ using Xunit;
 
 namespace IdentityService.Tests.Integration;
 
-public class UsersControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class UsersControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>, IDisposable
 {
     private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
+    private readonly string _databaseName;
 
     public UsersControllerIntegrationTests(WebApplicationFactory<Program> factory)
     {
+        // Use a shared database name for all tests in this class instance
+        _databaseName = $"TestDb_{Guid.NewGuid()}";
+
         _factory = factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
@@ -28,6 +32,14 @@ public class UsersControllerIntegrationTests : IClassFixture<WebApplicationFacto
                     services.Remove(dbContextDescriptor);
                 }
 
+                // Remove IdentityDbContext registration
+                var identityDbContextDescriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(IdentityDbContext));
+                if (identityDbContextDescriptor != null)
+                {
+                    services.Remove(identityDbContextDescriptor);
+                }
+
                 // Remove DbContextOptions
                 var dbContextOptionsDescriptor = services.Where(
                     d => d.ServiceType.IsGenericType &&
@@ -38,17 +50,17 @@ public class UsersControllerIntegrationTests : IClassFixture<WebApplicationFacto
                     services.Remove(descriptor);
                 }
 
-                // Add in-memory database
+                // Add in-memory database with shared name
                 services.AddDbContext<IdentityDbContext>(options =>
                 {
-                    options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}");
+                    options.UseInMemoryDatabase(_databaseName);
                 });
             });
         });
         _client = _factory.CreateClient();
     }
 
-    [Fact(Skip = "Integration test requires proper database provider configuration")]
+    [Fact]
     public async Task CreateUser_ReturnsCreatedUser()
     {
         // Arrange
@@ -70,7 +82,7 @@ public class UsersControllerIntegrationTests : IClassFixture<WebApplicationFacto
         user.Name.Should().Be(createUserDto.Name);
     }
 
-    [Fact(Skip = "Integration test requires proper database provider configuration")]
+    [Fact]
     public async Task GetUser_ReturnsUser()
     {
         // Arrange
@@ -93,9 +105,9 @@ public class UsersControllerIntegrationTests : IClassFixture<WebApplicationFacto
         user.Should().NotBeNull();
         user!.Id.Should().Be(createdUser.Id);
     }
+
+    public void Dispose()
+    {
+        _client?.Dispose();
+    }
 }
-
-
-
-
-

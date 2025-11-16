@@ -8,7 +8,18 @@ namespace Shared.Tests.HullGenerators.Integration;
 /// </summary>
 public class BSRASimpsonIntegrationTests
 {
-    [Fact(Skip = "Volume calculation needs verification - test data may not match actual BSRA reference. Will be validated after calibration")]
+    /// <summary>
+    /// PHASE 3 WORK: BSRA Simpson integration volume calculation verification test
+    ///
+    /// This test validates that volume calculation using BSRA Simpson multipliers
+    /// produces correct results matching BSRA reference data.
+    ///
+    /// Current status: Test data may not match actual BSRA reference. Volume calculation
+    /// needs verification against authoritative BSRA data sources.
+    ///
+    /// For now, this test is skipped. Will be validated after calibration in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: Volume calculation needs verification - test data may not match actual BSRA reference. Will be validated after calibration")]
     public void CalculateVolume_WithBSRAStations_ReturnsCorrectVolume()
     {
         // Arrange - Create BSRA standard 23 stations (normalized 0-10)
@@ -33,7 +44,18 @@ public class BSRASimpsonIntegrationTests
         volume.Should().BeApproximately(52827m, 2641m); // ±5%
     }
 
-    [Fact(Skip = "LCB calculation returns value from midship (can be negative for aft LCB). Test data needs verification. Will be validated after calibration")]
+    /// <summary>
+    /// PHASE 3 WORK: BSRA Simpson integration LCB calculation verification test
+    ///
+    /// This test validates that LCB (Longitudinal Center of Buoyancy) calculation
+    /// using BSRA Simpson multipliers produces correct results.
+    ///
+    /// Current status: LCB calculation returns value from midship (can be negative for aft LCB).
+    /// Test data needs verification against authoritative BSRA data sources.
+    ///
+    /// For now, this test is skipped. Will be validated after calibration in Phase 3.
+    /// </summary>
+    [Fact(Skip = "PHASE 3: LCB calculation returns value from midship (can be negative for aft LCB). Test data needs verification. Will be validated after calibration")]
     public void CalculateLCB_WithBSRAStations_ReturnsCorrectLCB()
     {
         // Arrange - Create BSRA standard 23 stations (normalized 0-10, then scaled)

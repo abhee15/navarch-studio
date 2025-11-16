@@ -24,7 +24,7 @@ public static class KCSResistanceReference
     public static List<KCSResistanceRecord> LoadResistanceData(string? csvPath = null)
     {
         // Use constants instead of CSV file
-        return KCSResistanceReferenceConstants.GetResistanceData();
+        return KCSResistanceConstants.ResistanceData.ToList();
     }
 
     /// <summary>
