@@ -70,6 +70,14 @@ public class FormCoefficientHullGenerator : IHullGenerator
         if (numStations == 23)
         {
             offsets = FairOffsets(stations, waterlines, offsets);
+            // Ensure all faired offsets are non-negative (fairing can produce negative values)
+            for (int i = 0; i < offsets.Count; i++)
+            {
+                for (int j = 0; j < offsets[i].Count; j++)
+                {
+                    offsets[i][j] = Math.Max(0m, offsets[i][j]);
+                }
+            }
         }
 
         // Step 6: Validate and compute form coefficients
