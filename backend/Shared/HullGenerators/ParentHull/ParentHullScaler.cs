@@ -28,16 +28,18 @@ public static class ParentHullScaler
     /// </summary>
     public static ScaledHullData ScaleOffsets(
         ParentHullData parent,
-        ScaleFactors scale)
+        ScaleFactors scale,
+        decimal lengthTarget)
     {
         // Scale stations (length)
         // Stations in CSV are normalized 0-10 (BSRA standard)
         // Convert to actual positions: station_actual = (station_normalized / 10) * Lbp_target
+        // Simplified: normalizedStation * lengthTarget (instead of normalizedStation * scale.Length * parent.Lbp)
         var scaledStations = parent.Stations.Select(s =>
         {
             // s is normalized 0-10, convert to actual length for target vessel
             decimal normalizedStation = s / 10.0m; // Normalize to 0-1
-            return normalizedStation * (scale.Length * parent.Lbp);
+            return normalizedStation * lengthTarget;
         }).ToList();
 
         // Scale waterlines (draft)

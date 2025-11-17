@@ -68,7 +68,7 @@ public class ParentHullHullGenerator : IHullGenerator
                 "Scale factors: L={LengthScale:F3}, B={BreadthScale:F3}, T={DraftScale:F3}",
                 scaleFactors.Length, scaleFactors.Breadth, scaleFactors.Draft);
 
-            var scaledHull = ParentHullScaler.ScaleOffsets(parentHull, scaleFactors);
+            var scaledHull = ParentHullScaler.ScaleOffsets(parentHull, scaleFactors, dims.Length);
 
             // Step 2: Adjust LCB by swinging sections
             var adjustedOffsets = LCBSectionSwing.AdjustLCB(

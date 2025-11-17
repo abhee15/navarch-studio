@@ -1,5 +1,7 @@
+using Shared.Constants;
 using Shared.DTOs;
 using Shared.HullGenerators;
+using Shared.HullGenerators.Integration;
 using Shared.HullGenerators.Models;
 using Shared.Models.Sizing;
 
@@ -97,8 +99,10 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "[GEOMETRY_GEN] Failed to generate offsets for candidate: L={Lpp}m, B={Beam}m, T={Draft}m",
-                    candidate.LppM, candidate.BeamM, candidate.DraftM);
+                    "[GEOMETRY_GEN] Failed to generate offsets for candidate: L={Lpp}m, B={Beam}m, T={Draft}m, Cb={Cb}, Cp={Cp}, Cm={Cm}, Cwp={Cwp}, LCB={LCB}%, VesselType={VesselType}, GeneratorType={GeneratorType}, ErrorType={ErrorType}, ErrorMessage={ErrorMessage}",
+                    candidate.LppM, candidate.BeamM, candidate.DraftM, candidate.Cb, candidate.Cp, candidate.Cm, candidate.Cwp, candidate.LcbPctLpp ?? 0m,
+                    vesselType ?? "unknown", _generatorFactory.GetGenerator(vesselType, candidate.Cb).GetType().Name,
+                    ex.GetType().Name, ex.Message);
                 return null;
             }
         }, cancellationToken);
@@ -110,13 +114,18 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
     public Task<GeometryValidationResult> ValidateFormCoefficientsAsync(
         Solver.SolverCandidate candidate,
         OffsetsGridDto offsets,
-        decimal tolerance = 0.10m,
+        decimal? tolerance = null,
         CancellationToken cancellationToken = default)
     {
         return Task.Run(() =>
         {
             try
             {
+                // Use BSRA validation tolerances if not specified (aligned with OffsetValidator)
+                // Convert percentage tolerance to decimal: 2.0% = 0.02
+                decimal effectiveTolerance = tolerance ?? (BSRAConstants.ValidationTolerances.CbTolerancePercent / 100m);
+                decimal lcbTolerancePercent = BSRAConstants.ValidationTolerances.LcbTolerancePercent;
+
                 // Compute form coefficients from offsets
                 var computed = ComputeFormCoefficientsFromOffsets(
                     offsets.Stations,
@@ -126,7 +135,7 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
                     candidate.BeamM,
                     candidate.DraftM);
 
-                // Calculate errors
+                // Calculate errors (as percentages)
                 decimal cbError = Math.Abs(computed.Cb - candidate.Cb) / candidate.Cb;
                 decimal cpError = Math.Abs(computed.Cp - candidate.Cp) / candidate.Cp;
                 decimal cmError = Math.Abs(computed.Cm - candidate.Cm) / candidate.Cm;
@@ -135,23 +144,23 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
                     ? Math.Abs(computed.LcbPercent.Value - candidate.LcbPctLpp.Value)
                     : null;
 
-                // Check if within tolerance
-                bool isValid = cbError <= tolerance &&
-                              cpError <= tolerance &&
-                              cmError <= tolerance &&
-                              cwpError <= tolerance &&
-                              (lcbError == null || lcbError <= tolerance * 100m); // LCB tolerance is in percentage points
+                // Check if within tolerance (aligned with OffsetValidator)
+                bool isValid = cbError <= effectiveTolerance &&
+                              cpError <= effectiveTolerance &&
+                              cmError <= effectiveTolerance &&
+                              cwpError <= (BSRAConstants.ValidationTolerances.WaterplaneAreaTolerancePercent / 100m) &&
+                              (lcbError == null || lcbError <= lcbTolerancePercent);
 
                 var warnings = new List<string>();
-                if (cbError > tolerance)
+                if (cbError > effectiveTolerance)
                     warnings.Add($"Cb error: {cbError * 100:F1}% (target: {candidate.Cb}, computed: {computed.Cb:F4})");
-                if (cpError > tolerance)
+                if (cpError > effectiveTolerance)
                     warnings.Add($"Cp error: {cpError * 100:F1}% (target: {candidate.Cp}, computed: {computed.Cp:F4})");
-                if (cmError > tolerance)
+                if (cmError > effectiveTolerance)
                     warnings.Add($"Cm error: {cmError * 100:F1}% (target: {candidate.Cm}, computed: {computed.Cm:F4})");
-                if (cwpError > tolerance)
+                if (cwpError > (BSRAConstants.ValidationTolerances.WaterplaneAreaTolerancePercent / 100m))
                     warnings.Add($"Cwp error: {cwpError * 100:F1}% (target: {candidate.Cwp}, computed: {computed.Cwp:F4})");
-                if (lcbError.HasValue && lcbError > tolerance * 100m)
+                if (lcbError.HasValue && lcbError > lcbTolerancePercent)
                     warnings.Add($"LCB error: {lcbError:F2}% (target: {candidate.LcbPctLpp}%, computed: {computed.LcbPercent:F2}%)");
 
                 if (warnings.Any())
@@ -237,8 +246,30 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
             }
         }
 
-        // Compute volume
-        decimal volume = IntegrateTrapezoidal(stations, sectionAreas);
+        // Compute volume - use BSRA Simpson for 23 stations, otherwise trapezoidal
+        decimal volume;
+        decimal lcbPosition;
+        if (stations.Count == 23)
+        {
+            try
+            {
+                volume = BSRASimpsonIntegration.CalculateVolume(stations, sectionAreas, length);
+                lcbPosition = BSRASimpsonIntegration.CalculateLCB(stations, sectionAreas, length);
+            }
+            catch (ArgumentException)
+            {
+                // Fallback to trapezoidal if BSRA integration fails (e.g., stations don't match BSRA layout)
+                volume = IntegrateTrapezoidal(stations, sectionAreas);
+                decimal volumeMoment = IntegrateFirstMoment(stations, sectionAreas);
+                lcbPosition = volume > 0 ? volumeMoment / volume : length / 2m;
+            }
+        }
+        else
+        {
+            volume = IntegrateTrapezoidal(stations, sectionAreas);
+            decimal volumeMoment = IntegrateFirstMoment(stations, sectionAreas);
+            lcbPosition = volume > 0 ? volumeMoment / volume : length / 2m;
+        }
 
         // Compute Cb
         decimal cb = volume > 0 ? volume / (length * beam * draft) : 0m;
@@ -277,12 +308,27 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
             }
         }
 
-        decimal waterplaneArea = IntegrateTrapezoidal(stations, waterlineHalfBreadths.Select(hb => 2m * hb).ToList());
+        // Compute waterplane area - use BSRA Simpson for 23 stations, otherwise trapezoidal
+        decimal waterplaneArea;
+        if (stations.Count == 23)
+        {
+            try
+            {
+                waterplaneArea = BSRASimpsonIntegration.CalculateWaterplaneArea(stations, waterlineHalfBreadths, length);
+            }
+            catch (ArgumentException)
+            {
+                // Fallback to trapezoidal if BSRA integration fails
+                waterplaneArea = IntegrateTrapezoidal(stations, waterlineHalfBreadths.Select(hb => 2m * hb).ToList());
+            }
+        }
+        else
+        {
+            waterplaneArea = IntegrateTrapezoidal(stations, waterlineHalfBreadths.Select(hb => 2m * hb).ToList());
+        }
         decimal cwp = waterplaneArea > 0 && length > 0 && beam > 0 ? waterplaneArea / (length * beam) : 0m;
 
-        // Compute LCB
-        decimal volumeMoment = IntegrateFirstMoment(stations, sectionAreas);
-        decimal lcbPosition = volume > 0 ? volumeMoment / volume : length / 2m;
+        // Compute LCB percentage
         decimal? lcbPercent = length > 0 ? ((lcbPosition / length) - 0.5m) * 100m : null;
 
         return (cb, cp, cm, cwp, lcbPercent);

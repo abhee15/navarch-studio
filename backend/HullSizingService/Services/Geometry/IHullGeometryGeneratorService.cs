@@ -42,7 +42,7 @@ public interface IHullGeometryGeneratorService
     Task<GeometryValidationResult> ValidateFormCoefficientsAsync(
         Solver.SolverCandidate candidate,
         OffsetsGridDto offsets,
-        decimal tolerance = 0.10m,
+        decimal? tolerance = null,
         CancellationToken cancellationToken = default);
 }
 

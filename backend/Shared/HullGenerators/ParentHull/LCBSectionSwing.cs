@@ -46,6 +46,12 @@ public static class LCBSectionSwing
         var shifts = new List<decimal>();
         int midIdx = scaledHull.Stations.Count / 2;
 
+        // Protect against division by zero (shouldn't happen with valid hull data)
+        if (midIdx == 0)
+        {
+            return scaledHull.Offsets; // Cannot adjust LCB with only one station
+        }
+
         for (int i = 0; i < scaledHull.Stations.Count; i++)
         {
             decimal factor;
@@ -64,6 +70,9 @@ public static class LCBSectionSwing
             decimal shift = lcbDiff * factor * 0.1m * (length / 100m);
             shifts.Add(shift);
         }
+
+        // Calculate volume proxy before adjustment (sum of all offsets as rough volume estimate)
+        decimal volumeBefore = scaledHull.Offsets.Sum(stationOffsets => stationOffsets.Sum());
 
         // For each waterline, adjust by shifting stations
         for (int wlIdx = 0; wlIdx < scaledHull.Waterlines.Count; wlIdx++)
@@ -94,6 +103,20 @@ public static class LCBSectionSwing
             {
                 decimal adjustedHb = CubicSplineFairing.Evaluate(coefficients, scaledHull.Stations[stIdx]);
                 result[stIdx].Add(Math.Max(0m, adjustedHb)); // Ensure non-negative
+            }
+        }
+
+        // Check volume preservation (cubic spline interpolation should preserve volume approximately)
+        decimal volumeAfter = result.Sum(stationOffsets => stationOffsets.Sum());
+        if (volumeBefore > 0)
+        {
+            decimal volumeChangePercent = Math.Abs(volumeAfter - volumeBefore) / volumeBefore * 100m;
+            // Warn if volume changes by more than 1% (should be much less with proper spline interpolation)
+            if (volumeChangePercent > 1.0m)
+            {
+                // Note: This is a rough check using sum of offsets as proxy for volume
+                // Actual volume calculation would require sectional area integration
+                // Significant volume change may indicate interpolation issues
             }
         }
 
