@@ -712,6 +712,12 @@ public class FormCoefficientHullGenerator : IHullGenerator
                 stationOffsets = initialOffsets;
             }
 
+            // Final safety clamp: ensure all offsets are non-negative
+            for (int j = 0; j < stationOffsets.Count; j++)
+            {
+                stationOffsets[j] = Math.Max(0m, Math.Clamp(stationOffsets[j], 0m, beam / 2m));
+            }
+
             offsets.Add(stationOffsets);
         }
 
