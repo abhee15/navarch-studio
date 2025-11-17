@@ -194,6 +194,16 @@ public class CandidateDesign
     /// </summary>
     public string? GeometryJson { get; set; }
 
+    /// <summary>
+    /// Status of geometry generation
+    /// </summary>
+    public GeometryGenerationStatus GeometryGenerationStatus { get; set; } = GeometryGenerationStatus.Success;
+
+    /// <summary>
+    /// Error message if geometry generation failed
+    /// </summary>
+    public string? GeometryGenerationError { get; set; }
+
     // Metadata
 
     /// <summary>
@@ -231,6 +241,3 @@ public class CandidateDesign
     /// </summary>
     public SizingRun SizingRun { get; set; } = null!;
 }
-
-
-

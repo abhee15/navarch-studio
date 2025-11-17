@@ -29,6 +29,11 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
   const hasWarnings = flags.some((f) => f.includes("constrained") || f.includes("exceeded"));
 
+  // Check if geometry generation failed
+  const geometryGenerationFailed =
+    candidate.geometryGenerationStatus === "BothFailed" ||
+    candidate.geometryGenerationStatus === "FormCoefficientFailed";
+
   // Check if ShipD parameters are available
   const hasShipD = useMemo(() => {
     return !!candidate.shipdParametersJson || !!candidate.geometryJson;
@@ -93,19 +98,29 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
             </div>
           </div>
 
-          {/* Warning Badge */}
-          {flags.length > 0 && (
-            <div
-              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                hasWarnings
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-accent/20 text-accent-foreground"
-              }`}
-            >
-              {hasWarnings && <AlertTriangle className="h-3 w-3" />}
-              {flags.length} {flags.length === 1 ? "flag" : "flags"}
-            </div>
-          )}
+          {/* Warning Badges */}
+          <div className="flex items-center gap-2">
+            {/* Geometry Generation Failure Badge */}
+            {geometryGenerationFailed && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                <AlertTriangle className="h-3 w-3" />
+                No Geometry
+              </div>
+            )}
+            {/* Flags Badge */}
+            {flags.length > 0 && (
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  hasWarnings
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-accent/20 text-accent-foreground"
+                }`}
+              >
+                {hasWarnings && <AlertTriangle className="h-3 w-3" />}
+                {flags.length} {flags.length === 1 ? "flag" : "flags"}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

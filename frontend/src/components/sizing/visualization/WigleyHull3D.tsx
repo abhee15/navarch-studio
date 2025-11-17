@@ -6,6 +6,10 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { generateHull3DGeometry } from "../../../utils/hullShapeGenerator";
 import { generateShipDHull3D } from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
+import {
+  normalizeGeometry,
+  convertOffsetsGridToShipD,
+} from "../../../utils/geometryFormatConverter";
 
 interface ParametricHull3DProps {
   candidate: CandidateDesign;
@@ -70,35 +74,66 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
         return true;
       };
 
-      // Check if ShipD geometry is available (from backend)
+      // Check if geometry is available (from backend) - handle both ShipD and OffsetsGrid formats
       if (candidate.geometryJson) {
         try {
-          const sections = JSON.parse(candidate.geometryJson) as {
-            stations?: Array<{
-              position: number;
-              offsets: Record<number, number>;
-              hasBulb?: boolean;
-              bulbOffsets?: Record<number, number>;
-            }>;
-            stationPositions?: number[];
-          };
-          if (sections && sections.stations && Array.isArray(sections.stations)) {
-            // Use ShipD geometry from backend
+          // Normalize geometry to OffsetsGrid format (handles both ShipD and OffsetsGrid)
+          const normalizedGeometry = normalizeGeometry(candidate.geometryJson);
+
+          if (normalizedGeometry) {
+            // Convert OffsetsGrid to ShipD format for 3D generation
+            const shipdSections = convertOffsetsGridToShipD(normalizedGeometry);
+
+            // Use converted geometry for 3D generation
+            // Disable smoothing to preserve family-specific shape characteristics
+            // Smoothing can mask differences between bow/midship/stern families
             const fromSections = generateShipDHull3D({
               sections: {
-                stations: sections.stations,
-                stationPositions: sections.stationPositions || [],
+                stations: shipdSections.stations,
+                stationPositions: shipdSections.stationPositions || [],
               },
               lppM: lpp,
+              smooth: false, // Disable interpolation to preserve family-specific differences
             });
             if (isGeometryValid(fromSections)) {
               return fromSections;
             }
-            console.warn("[ParametricHull3D] Invalid geometry from sections; trying ShipD vector.");
+            console.warn(
+              "[ParametricHull3D] Invalid geometry from normalized sections; trying ShipD vector."
+            );
+          } else {
+            // Fallback: Try parsing as ShipD format directly (legacy support)
+            const sections = JSON.parse(candidate.geometryJson) as {
+              stations?: Array<{
+                position: number;
+                offsets: Record<number, number>;
+                hasBulb?: boolean;
+                bulbOffsets?: Record<number, number>;
+              }>;
+              stationPositions?: number[];
+            };
+            if (sections && sections.stations && Array.isArray(sections.stations)) {
+              // Use ShipD geometry from backend
+              // Disable smoothing to preserve family-specific shape characteristics
+              const fromSections = generateShipDHull3D({
+                sections: {
+                  stations: sections.stations,
+                  stationPositions: sections.stationPositions || [],
+                },
+                lppM: lpp,
+                smooth: false, // Disable interpolation to preserve family-specific differences
+              });
+              if (isGeometryValid(fromSections)) {
+                return fromSections;
+              }
+              console.warn(
+                "[ParametricHull3D] Invalid geometry from sections; trying ShipD vector."
+              );
+            }
           }
         } catch (error) {
           console.warn(
-            "[ParametricHull3D] Failed to parse ShipD geometry, falling back to parametric:",
+            "[ParametricHull3D] Failed to parse geometry, falling back to parametric:",
             error
           );
         }
@@ -135,6 +170,19 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             error
           );
         }
+      }
+
+      // Check geometry generation status - don't use fallback if generation failed
+      if (
+        candidate.geometryGenerationStatus === "BothFailed" ||
+        candidate.geometryGenerationStatus === "FormCoefficientFailed"
+      ) {
+        // Geometry generation failed - return empty geometry instead of misleading fallback
+        console.warn(
+          "[ParametricHull3D] Geometry generation failed, not using fallback:",
+          candidate.geometryGenerationError
+        );
+        return new THREE.BufferGeometry();
       }
 
       // Fallback: Use vessel-type-specific hull shape generator

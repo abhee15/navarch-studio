@@ -176,6 +176,8 @@ public class SizingDbContext : DbContext
             entity.Property(e => e.ScoresJson).HasColumnType("jsonb");
             entity.Property(e => e.FlagsJson).HasColumnType("jsonb");
             entity.Property(e => e.GeometryJson).HasColumnType("jsonb");
+            entity.Property(e => e.GeometryGenerationStatus).HasConversion<int>();
+            entity.Property(e => e.GeometryGenerationError).HasMaxLength(1000);
 
             // Indexes
             entity.HasIndex(e => e.SizingRunId);

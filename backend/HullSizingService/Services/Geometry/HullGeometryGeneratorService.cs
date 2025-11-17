@@ -29,6 +29,9 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
         string? vesselType = null,
         int numStations = 23,
         int numWaterlines = 13,
+        string? bowFamily = null,
+        string? midshipFamily = null,
+        string? sternFamily = null,
         CancellationToken cancellationToken = default)
     {
         return Task.Run(() =>
@@ -36,8 +39,8 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
             try
             {
                 _logger.LogDebug(
-                    "[GEOMETRY_GEN] Generating offsets for candidate: L={Lpp}m, B={Beam}m, T={Draft}m, Cb={Cb}, Cp={Cp}, Cm={Cm}, Cwp={Cwp}, LCB={LCB}%, VesselType={VesselType}",
-                    candidate.LppM, candidate.BeamM, candidate.DraftM, candidate.Cb, candidate.Cp, candidate.Cm, candidate.Cwp, candidate.LcbPctLpp, vesselType ?? "unknown");
+                    "[GEOMETRY_GEN] Generating offsets for candidate: L={Lpp}m, B={Beam}m, T={Draft}m, Cb={Cb}, Cp={Cp}, Cm={Cm}, Cwp={Cwp}, LCB={LCB}%, VesselType={VesselType}, Bow={BowFamily}, Midship={MidshipFamily}, Stern={SternFamily}",
+                    candidate.LppM, candidate.BeamM, candidate.DraftM, candidate.Cb, candidate.Cp, candidate.Cm, candidate.Cwp, candidate.LcbPctLpp, vesselType ?? "unknown", bowFamily ?? "none", midshipFamily ?? "none", sternFamily ?? "none");
 
                 // Create hull dimensions
                 var dims = new HullDimensions(
@@ -54,7 +57,7 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
                     "[GEOMETRY_GEN] Using generator: {GeneratorType} for vessel type: {VesselType}, Cb: {Cb}",
                     generator.GetType().Name, vesselType ?? "unknown", candidate.Cb);
 
-                // Generate geometry
+                // Generate geometry with ShipD family parameters
                 var geometry = generator.Generate(
                     dims,
                     candidate.Cb,
@@ -62,7 +65,11 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
                     candidate.Cm,
                     candidate.Cwp,
                     numStations,
-                    numWaterlines);
+                    numWaterlines,
+                    bowFamily,
+                    midshipFamily,
+                    sternFamily,
+                    vesselType);
 
                 // Convert to DTO format
                 var offsetsGrid = new OffsetsGridDto

@@ -1,9 +1,14 @@
 import { useMemo, useState, forwardRef } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
-import { generateHullWaterlines } from "../../../utils/hullShapeGenerator";
 import { extractWaterlinesFromShipD } from "../../../utils/shipd2DGeometry";
 import { generateShipDSections } from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
+import { generateSmoothCurve } from "../../../utils/splineInterpolation";
+import {
+  generateFormCoefficientHull,
+  type HullDimensions,
+} from "../../../utils/formCoefficientHullGenerator";
+import { normalizeGeometry } from "../../../utils/geometryFormatConverter";
 
 interface Hull2DPlanProps {
   candidate: CandidateDesign;
@@ -51,8 +56,22 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
     const { sizingStore } = useStore();
 
+    // Check geometry generation status - don't use fallback if generation failed
+    const geometryGenerationFailed =
+      candidate.geometryGenerationStatus === "BothFailed" ||
+      candidate.geometryGenerationStatus === "FormCoefficientFailed";
+
     // Generate waterlines - prioritize ShipD geometry if available
     const waterlines = useMemo(() => {
+      // If geometry generation failed, return empty (will show error message)
+      if (geometryGenerationFailed) {
+        console.warn(
+          "[Hull2DPlan] Geometry generation failed, not using fallback:",
+          candidate.geometryGenerationError
+        );
+        return [];
+      }
+
       // Validate candidate dimensions early to prevent NaN propagation
       const lppM = candidate.lppM;
       const beamM = candidate.beamM;
@@ -70,24 +89,32 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Check if geometry is available (OffsetsGridDto format from form-coefficient generator)
       if (candidate.geometryJson) {
         try {
-          const geometry = JSON.parse(candidate.geometryJson);
+          // Debug: Log geometryJson content to diagnose format detection issues
+          console.log("[Hull2DPlan] Checking geometryJson:", {
+            hasGeometryJson: !!candidate.geometryJson,
+            geometryJsonLength: candidate.geometryJson?.length,
+            geometryJsonPreview: candidate.geometryJson?.substring(0, 200),
+            geometryGenerationStatus: candidate.geometryGenerationStatus,
+          });
 
-          // Check if it's OffsetsGridDto format (from FormCoefficientHullGenerator)
-          if (geometry.stations && geometry.waterlines && geometry.offsets) {
+          // Normalize geometry to OffsetsGrid format (handles both ShipD and OffsetsGrid)
+          const normalizedGeometry = normalizeGeometry(candidate.geometryJson);
+
+          if (normalizedGeometry) {
             console.log("[Hull2DPlan] Using OffsetsGrid geometry from backend", {
-              stationCount: geometry.stations.length,
-              waterlineCount: geometry.waterlines.length,
+              stationCount: normalizedGeometry.stations.length,
+              waterlineCount: normalizedGeometry.waterlines.length,
             });
 
             // Convert OffsetsGrid to waterlines format
-            // geometry.offsets is [stationIndex][waterlineIndex]
-            const result = geometry.waterlines.map((wlZ: number, wlIdx: number) => {
+            // normalizedGeometry.offsets is [stationIndex][waterlineIndex]
+            const result = normalizedGeometry.waterlines.map((wlZ: number, wlIdx: number) => {
               const points: [number, number][] = [];
 
               // Extract half-breadths for this waterline across all stations
-              for (let stIdx = 0; stIdx < geometry.stations.length; stIdx++) {
-                const stationX = geometry.stations[stIdx];
-                const halfBreadth = geometry.offsets[stIdx]?.[wlIdx] ?? 0;
+              for (let stIdx = 0; stIdx < normalizedGeometry.stations.length; stIdx++) {
+                const stationX = normalizedGeometry.stations[stIdx];
+                const halfBreadth = normalizedGeometry.offsets[stIdx]?.[wlIdx] ?? 0;
                 points.push([stationX, halfBreadth]);
               }
 
@@ -107,7 +134,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             return result;
           }
 
-          // Check if it's ShipD format (legacy)
+          // Check if it's ShipD format (legacy) - normalizeGeometry returned null, try direct parsing
+          const geometry = JSON.parse(candidate.geometryJson);
           const sections = geometry as {
             stations?: Array<{
               position: number;
@@ -229,30 +257,72 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         });
       }
 
-      // Fallback: Use vessel-type-specific waterline generator
-      const generatedWaterlines = generateHullWaterlines({
-        hullFamily: candidate.hullFamily,
-        lppM: lppM,
-        beamM: beamM,
-        draftM: draftM,
-        cb: candidate.cb,
-        cp: candidate.cp,
-        cwp: candidate.cwp,
-        cm: candidate.cm,
-        lcbPctLpp: candidate.lcbPctLpp,
-        waterlineCount,
-        pointsPerWaterline: 60,
-      });
+      // Fallback: Generate using FormCoefficientHullGenerator (solver logic)
+      // This ensures non-isometric geometry matching solver output
+      try {
+        const dims: HullDimensions = {
+          length: lppM,
+          beam: beamM,
+          draft: draftM,
+          lcbPercent: candidate.lcbPctLpp ?? 0,
+        };
 
-      // Convert to format expected by rendering code
-      return generatedWaterlines.map((wl) => ({
-        depth: wl.depth,
-        points: wl.points.map((pt) => [pt.x, pt.y] as [number, number]),
-        isDesignWaterline: wl.isDesignWaterline,
-      }));
+        const generated = generateFormCoefficientHull(
+          dims,
+          candidate.cb ?? 0.68,
+          candidate.cp ?? 0.73,
+          candidate.cm ?? 0.93,
+          candidate.cwp ?? 0.8,
+          23, // BSRA stations
+          13, // BSRA waterlines
+          candidate.bowFamily,
+          candidate.midshipFamily,
+          candidate.sternFamily,
+          sizingStore.currentRun?.vesselType ?? candidate.vesselType
+        );
+
+        // Convert OffsetsGrid to waterlines format (reuse existing logic)
+        // generated.offsets is [stationIndex][waterlineIndex]
+        const result = generated.waterlines.map((wlZ: number, wlIdx: number) => {
+          const points: [number, number][] = [];
+
+          // Extract half-breadths for this waterline across all stations
+          for (let stIdx = 0; stIdx < generated.stations.length; stIdx++) {
+            const stationX = generated.stations[stIdx];
+            const halfBreadth = generated.offsets[stIdx]?.[wlIdx] ?? 0;
+            points.push([stationX, halfBreadth]);
+          }
+
+          return {
+            depth: wlZ,
+            points,
+            isDesignWaterline: Math.abs(wlZ - draftM) < 0.01,
+          };
+        });
+
+        console.log("[Hull2DPlan] Generated waterlines using FormCoefficientHullGenerator", {
+          waterlineCount: result.length,
+        });
+
+        return result;
+      } catch (error) {
+        console.error(
+          "[Hull2DPlan] Failed to generate geometry using FormCoefficientHullGenerator:",
+          error
+        );
+        // Return empty - will show error message
+        return [];
+      }
     }, [
-      candidate.hullFamily,
+      geometryGenerationFailed,
+      candidate.geometryGenerationError,
       candidate.lppM,
+      candidate.bowFamily,
+      candidate.midshipFamily,
+      candidate.sternFamily,
+      candidate.vesselType,
+      candidate.geometryGenerationStatus,
+      sizingStore.currentRun?.vesselType,
       candidate.beamM,
       candidate.draftM,
       candidate.cb,
@@ -359,8 +429,15 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         return { starboard: "", port: "", closed: "" };
       }
 
+      // Use spline interpolation for smooth curves
+      // Convert to format expected by spline utility (x = x, y = y)
+      const splinePoints = validPoints.map(([x, y]) => ({ x, y }));
+
+      // Interpolate for smoothness (80 points for good balance)
+      const interpolated = generateSmoothCurve(splinePoints, 80);
+
       // Starboard side: points from stern to bow (x from -lpp/2 to +lpp/2, y >= 0)
-      const starboardPoints = validPoints.map(([x, y]) => toSVG(x, y));
+      const starboardPoints = interpolated.map((p) => toSVG(p.x, p.y));
       const starboardPath = starboardPoints
         .map(([x, y], i) => {
           // Validate coordinates before formatting
@@ -375,7 +452,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
       // Port side: reverse the points and negate y to create closed loop
       // We reverse so the path goes: bow centerline → port side → stern centerline
-      const portPoints = [...validPoints].reverse().map(([x, y]) => toSVG(x, -y));
+      const portPoints = [...interpolated].reverse().map((p) => toSVG(p.x, -p.y));
       const portPath = portPoints
         .map(([x, y], i) => {
           // Validate coordinates before formatting
@@ -393,6 +470,37 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
       return { starboard: starboardPath, port: portPath, closed: closedPath };
     };
+
+    // Show error message if geometry generation failed
+    if (geometryGenerationFailed) {
+      return (
+        <div className="w-full h-full p-4 relative flex flex-col">
+          <div className="flex-1 bg-gradient-to-b from-blue-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg shadow-inner flex flex-col items-center justify-center">
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 shadow-lg max-w-md">
+              <div className="p-6">
+                <h3 className="text-red-800 dark:text-red-200 font-bold flex items-center gap-2 mb-2">
+                  Geometry Generation Failed
+                </h3>
+                <p className="text-red-700 dark:text-red-300 text-sm mb-3">
+                  Unable to generate hull geometry for this candidate. The plan view cannot be
+                  displayed.
+                </p>
+                {candidate.geometryGenerationError && (
+                  <div className="mt-3 p-3 bg-red-100 dark:bg-red-900/30 rounded border border-red-200 dark:border-red-800">
+                    <p className="text-xs font-mono text-red-800 dark:text-red-200">
+                      {candidate.geometryGenerationError}
+                    </p>
+                  </div>
+                )}
+                <p className="text-red-600 dark:text-red-400 text-xs mt-3">
+                  Please try adjusting parameters or contact support if this issue persists.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="w-full h-full p-4 relative flex flex-col">

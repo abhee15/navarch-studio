@@ -3,12 +3,20 @@ import type { CandidateDesign } from "../../../types/sizing";
 import {
   extractButtocksFromShipD,
   extractSheerlineFromShipD,
+  extractButtocksFromOffsetsGrid,
+  extractSheerlineFromOffsetsGrid,
 } from "../../../utils/shipd2DGeometry";
+import { normalizeGeometry } from "../../../utils/geometryFormatConverter";
 import {
   generateShipDSections,
   type ShipDHullStation,
 } from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
+import { generateSmoothCurve } from "../../../utils/splineInterpolation";
+import {
+  generateFormCoefficientHull,
+  type HullDimensions,
+} from "../../../utils/formCoefficientHullGenerator";
 
 interface Hull2DProfileProps {
   candidate: CandidateDesign;
@@ -54,8 +62,22 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
 
     const { sizingStore } = useStore();
 
+    // Check geometry generation status - don't use fallback if generation failed
+    const geometryGenerationFailed =
+      candidate.geometryGenerationStatus === "BothFailed" ||
+      candidate.geometryGenerationStatus === "FormCoefficientFailed";
+
     // Generate buttocks - prioritize ShipD geometry if available
     const buttocks = useMemo(() => {
+      // If geometry generation failed, return empty (will show error message)
+      if (geometryGenerationFailed) {
+        console.warn(
+          "[Hull2DProfile] Geometry generation failed, not using fallback:",
+          candidate.geometryGenerationError
+        );
+        return [];
+      }
+
       const lpp = candidate.lppM;
       const beam = candidate.beamM;
       const draft = candidate.draftM;
@@ -77,9 +99,46 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         return [];
       }
 
-      // Check if ShipD geometry is available (from backend)
+      // Check if geometry is available (OffsetsGrid or ShipD format from backend)
       if (candidate.geometryJson) {
         try {
+          // Debug: Log geometryJson content to diagnose format detection issues
+          console.log("[Hull2DProfile] Checking geometryJson:", {
+            hasGeometryJson: !!candidate.geometryJson,
+            geometryJsonLength: candidate.geometryJson?.length,
+            geometryJsonPreview: candidate.geometryJson?.substring(0, 200),
+            geometryGenerationStatus: candidate.geometryGenerationStatus,
+          });
+
+          // Normalize geometry to OffsetsGrid format (handles both ShipD and OffsetsGrid)
+          const normalizedGeometry = normalizeGeometry(candidate.geometryJson);
+
+          if (normalizedGeometry) {
+            console.log("[Hull2DProfile] Using OffsetsGrid geometry from backend", {
+              stationCount: normalizedGeometry.stations.length,
+              waterlineCount: normalizedGeometry.waterlines.length,
+            });
+
+            // Generate buttock offsets
+            const buttockOffsets = Array.from(
+              { length: buttockCount + 1 },
+              (_, i) => (i / buttockCount) * (beam / 2)
+            );
+
+            const result = extractButtocksFromOffsetsGrid(
+              normalizedGeometry,
+              lpp,
+              draft,
+              buttockOffsets
+            );
+            console.log("[Hull2DProfile] Extracted buttocks from OffsetsGrid geometry", {
+              buttockCount: result.length,
+              centerlineIndex: result.findIndex((b) => b.isCenterline),
+            });
+            return result;
+          }
+
+          // Fallback: Try ShipD format (legacy)
           const sections = JSON.parse(candidate.geometryJson) as {
             stations?: Array<{
               position: number;
@@ -94,7 +153,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             Array.isArray(sections.stations) &&
             sections.stations.length > 0
           ) {
-            console.log("[Hull2DProfile] Using ShipD geometry from backend", {
+            console.log("[Hull2DProfile] Using ShipD geometry from backend (legacy)", {
               stationCount: sections.stations.length,
             });
 
@@ -122,11 +181,11 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             return result;
           } else {
             // Debug log - this is expected when backend geometry hasn't been generated yet
-            console.debug("[Hull2DProfile] ShipD geometry has no stations, falling back");
+            console.debug("[Hull2DProfile] Geometry has no stations, falling back");
           }
         } catch (error) {
           console.error(
-            "[Hull2DProfile] Failed to parse ShipD geometry, falling back to parametric:",
+            "[Hull2DProfile] Failed to parse geometry, falling back to parametric:",
             error
           );
         }
@@ -188,63 +247,104 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         });
       }
 
-      // Fallback: Use parametric generation
-      const lines = [];
+      // Fallback: Generate using FormCoefficientHullGenerator (solver logic)
+      // This ensures non-isometric geometry matching solver output
+      try {
+        const dims: HullDimensions = {
+          length: lpp,
+          beam,
+          draft,
+          lcbPercent: candidate.lcbPctLpp ?? 0,
+        };
 
-      for (let i = 0; i <= buttockCount; i++) {
-        const yPos = (i / buttockCount) * (beam / 2);
-        const points: [number, number][] = [];
-        const numPoints = 60;
+        const generated = generateFormCoefficientHull(
+          dims,
+          candidate.cb ?? 0.68,
+          candidate.cp ?? 0.73,
+          candidate.cm ?? 0.93,
+          candidate.cwp ?? 0.8,
+          23, // BSRA stations
+          13, // BSRA waterlines
+          candidate.bowFamily,
+          candidate.midshipFamily,
+          candidate.sternFamily,
+          sizingStore.currentRun?.vesselType ?? candidate.vesselType
+        );
 
-        for (let j = 0; j <= numPoints; j++) {
-          const x = (j / numPoints) * lpp - lpp / 2;
-          const xNorm = (2 * j) / numPoints - 1;
-          const longitudinalFactor = 1 - xNorm * xNorm;
+        // Generate buttock offsets
+        const buttockOffsets = Array.from(
+          { length: buttockCount + 1 },
+          (_, i) => (i / buttockCount) * (beam / 2)
+        );
 
-          if (longitudinalFactor <= 0) {
-            points.push([x, 0]);
-            continue;
-          }
+        // Extract buttocks from generated OffsetsGrid
+        const result = extractButtocksFromOffsetsGrid(
+          {
+            stations: generated.stations,
+            waterlines: generated.waterlines,
+            offsets: generated.offsets,
+          },
+          lpp,
+          draft,
+          buttockOffsets
+        );
 
-          const maxYAtX = (beam / 2) * longitudinalFactor;
-          if (yPos > maxYAtX) {
-            points.push([x, 0]);
-            continue;
-          }
-
-          const ratio = yPos / maxYAtX;
-          const zOverT = Math.sqrt(Math.max(0, 1 - ratio));
-          const z = -draft * zOverT;
-          points.push([x, z]);
-        }
-
-        lines.push({
-          transverseOffset: yPos,
-          points,
-          isCenterline: i === 0,
+        console.log("[Hull2DProfile] Generated buttocks using FormCoefficientHullGenerator", {
+          buttockCount: result.length,
         });
-      }
 
-      return lines;
+        return result;
+      } catch (error) {
+        console.error(
+          "[Hull2DProfile] Failed to generate geometry using FormCoefficientHullGenerator:",
+          error
+        );
+        // Return empty - will show error message
+        return [];
+      }
     }, [
+      geometryGenerationFailed,
+      candidate.geometryGenerationError,
       candidate.lppM,
       candidate.beamM,
       candidate.draftM,
+      candidate.cb,
+      candidate.cp,
+      candidate.cm,
+      candidate.cwp,
+      candidate.lcbPctLpp,
+      candidate.bowFamily,
+      candidate.midshipFamily,
+      candidate.sternFamily,
+      candidate.vesselType,
+      candidate.geometryGenerationStatus,
       candidate.geometryJson,
       candidate.shipdParametersJson,
       sizingStore.shipdParameters,
+      sizingStore.currentRun?.vesselType,
       buttockCount,
     ]);
 
-    // Generate sheerline - prioritize ShipD geometry if available
+    // Generate sheerline - prioritize OffsetsGrid geometry if available
     const sheerline = useMemo(() => {
       const lpp = candidate.lppM;
       const depth = candidate.depthM;
       const draft = candidate.draftM;
 
-      // Check if ShipD geometry is available
+      // Check if geometry is available (OffsetsGrid or ShipD format)
       if (candidate.geometryJson) {
         try {
+          // Normalize geometry to OffsetsGrid format (handles both ShipD and OffsetsGrid)
+          const normalizedGeometry = normalizeGeometry(candidate.geometryJson);
+
+          if (normalizedGeometry) {
+            console.log("[Hull2DProfile] Using OffsetsGrid geometry for sheerline", {
+              stationCount: normalizedGeometry.stations.length,
+            });
+            return extractSheerlineFromOffsetsGrid(normalizedGeometry, lpp, depth, draft);
+          }
+
+          // Fallback: Try ShipD format (legacy)
           const sections = JSON.parse(candidate.geometryJson) as {
             stations?: Array<{
               position: number;
@@ -266,26 +366,73 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             return extractSheerlineFromShipD(shipdSections, lpp, depth, draft);
           }
         } catch (error) {
-          console.warn("[Hull2DProfile] Failed to parse ShipD geometry for sheerline:", error);
+          console.warn("[Hull2DProfile] Failed to parse geometry for sheerline:", error);
         }
       }
 
-      // Fallback: Use parametric generation
-      const freeboard = depth - draft;
-      const points: [number, number][] = [];
-      const numPoints = 60;
+      // Fallback: Generate using FormCoefficientHullGenerator (solver logic)
+      try {
+        const dims: HullDimensions = {
+          length: lpp,
+          beam: candidate.beamM ?? 30,
+          draft,
+          lcbPercent: candidate.lcbPctLpp ?? 0,
+        };
 
-      for (let i = 0; i <= numPoints; i++) {
-        const x = (i / numPoints) * lpp - lpp / 2;
-        const xNorm = (2 * i) / numPoints - 1;
-        // Subtle sheer (higher at bow/stern)
-        const sheer = 0.01 * lpp * (xNorm * xNorm);
-        const y = freeboard + sheer;
-        points.push([x, y]);
+        const generated = generateFormCoefficientHull(
+          dims,
+          candidate.cb ?? 0.68,
+          candidate.cp ?? 0.73,
+          candidate.cm ?? 0.93,
+          candidate.cwp ?? 0.8,
+          23, // BSRA stations
+          13, // BSRA waterlines
+          candidate.bowFamily,
+          candidate.midshipFamily,
+          candidate.sternFamily,
+          sizingStore.currentRun?.vesselType ?? candidate.vesselType
+        );
+
+        // Extract sheerline from generated OffsetsGrid
+        const result = extractSheerlineFromOffsetsGrid(
+          {
+            stations: generated.stations,
+            waterlines: generated.waterlines,
+            offsets: generated.offsets,
+          },
+          lpp,
+          depth,
+          draft
+        );
+
+        console.log("[Hull2DProfile] Generated sheerline using FormCoefficientHullGenerator");
+
+        return result;
+      } catch (error) {
+        console.error(
+          "[Hull2DProfile] Failed to generate sheerline using FormCoefficientHullGenerator:",
+          error
+        );
+        // Return empty - will show error message
+        return [];
       }
-
-      return points;
-    }, [candidate.lppM, candidate.depthM, candidate.draftM, candidate.geometryJson]);
+    }, [
+      candidate.lppM,
+      candidate.depthM,
+      candidate.draftM,
+      candidate.beamM,
+      candidate.cb,
+      candidate.cp,
+      candidate.cm,
+      candidate.cwp,
+      candidate.lcbPctLpp,
+      candidate.bowFamily,
+      candidate.midshipFamily,
+      candidate.sternFamily,
+      candidate.vesselType,
+      candidate.geometryJson,
+      sizingStore.currentRun?.vesselType,
+    ]);
 
     const padding = 80;
     const svgWidth = 900;
@@ -339,12 +486,20 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         return "";
       }
 
-      return validPoints
-        .map(([x, y], i) => {
-          const [svgX, svgY] = toSVG(x, y);
+      // Use spline interpolation for smooth curves
+      // Convert to format expected by spline utility (x = x, y = y)
+      const splinePoints = validPoints.map(([x, y]) => ({ x, y }));
+
+      // Interpolate for smoothness (80 points for good balance)
+      const interpolated = generateSmoothCurve(splinePoints, 80);
+
+      // Convert back and generate SVG path
+      return interpolated
+        .map((p, i) => {
+          const [svgX, svgY] = toSVG(p.x, p.y);
           // Validate coordinates before formatting
           if (!Number.isFinite(svgX) || !Number.isFinite(svgY)) {
-            console.warn("[Hull2DProfile] Invalid SVG coordinate:", { svgX, svgY, x, y });
+            console.warn("[Hull2DProfile] Invalid SVG coordinate:", { svgX, svgY, x: p.x, y: p.y });
             return "";
           }
           return `${i === 0 ? "M" : "L"} ${svgX.toFixed(2)},${svgY.toFixed(2)}`;
@@ -352,6 +507,37 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
         .filter((segment) => segment !== "")
         .join(" ");
     };
+
+    // Show error message if geometry generation failed
+    if (geometryGenerationFailed) {
+      return (
+        <div className="w-full h-full p-4 relative flex flex-col">
+          <div className="flex-1 bg-gradient-to-b from-sky-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg shadow-inner flex flex-col items-center justify-center">
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 shadow-lg max-w-md">
+              <div className="p-6">
+                <h3 className="text-red-800 dark:text-red-200 font-bold flex items-center gap-2 mb-2">
+                  Geometry Generation Failed
+                </h3>
+                <p className="text-red-700 dark:text-red-300 text-sm mb-3">
+                  Unable to generate hull geometry for this candidate. The profile view cannot be
+                  displayed.
+                </p>
+                {candidate.geometryGenerationError && (
+                  <div className="mt-3 p-3 bg-red-100 dark:bg-red-900/30 rounded border border-red-200 dark:border-red-800">
+                    <p className="text-xs font-mono text-red-800 dark:text-red-200">
+                      {candidate.geometryGenerationError}
+                    </p>
+                  </div>
+                )}
+                <p className="text-red-600 dark:text-red-400 text-xs mt-3">
+                  Please try adjusting parameters or contact support if this issue persists.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="w-full h-full p-4 relative flex flex-col">
@@ -692,7 +878,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             )}
 
             <text x={20} y={svgHeight - 10} className="fill-gray-500" style={{ fontSize: "10px" }}>
-              Scale 1:{Math.round(1 / scale)}
+              Scale 1:{scale > 0 && Number.isFinite(scale) ? Math.round(1 / scale) : "N/A"}
             </text>
           </svg>
         </div>

@@ -34,7 +34,11 @@ public class FormCoefficientHullGenerator : IHullGenerator
         decimal cm,
         decimal cwp,
         int numStations = 23,
-        int numWaterlines = 13)
+        int numWaterlines = 13,
+        string? bowFamily = null,
+        string? midshipFamily = null,
+        string? sternFamily = null,
+        string? vesselType = null)
     {
         // Validate inputs
         ValidateInputs(dims, cb, cp, cm, cwp, numStations, numWaterlines);
@@ -49,13 +53,13 @@ public class FormCoefficientHullGenerator : IHullGenerator
         var sectionalAreas = GenerateSectionalAreaCurve(
             stations, dims.Length, dims.Beam, dims.Draft, cm, cp, dims.LcbPercent, cb);
 
-        // Step 2: Generate waterline half-breadths from Cwp
+        // Step 2: Generate waterline half-breadths from Cwp with ShipD family adjustments
         var waterlineHalfBreadths = GenerateWaterlineHalfBreadths(
-            stations, dims.Length, dims.Beam, cwp, cb);
+            stations, dims.Length, dims.Beam, cwp, cb, bowFamily, sternFamily, vesselType);
 
-        // Step 3: Generate section shapes from Cm (normalized profile)
+        // Step 3: Generate section shapes from Cm with ShipD family adjustments
         var sectionShapeProfile = GenerateSectionShapes(
-            waterlines, dims.Beam, dims.Draft, cm, cb);
+            waterlines, dims.Beam, dims.Draft, cm, cb, midshipFamily, vesselType);
 
         // Step 4: Combine to generate offsets
         var offsets = CombineToOffsets(
@@ -352,7 +356,82 @@ public class FormCoefficientHullGenerator : IHullGenerator
     }
 
     /// <summary>
-    /// Generate waterline half-breadths from Cwp with Cb-dependent parameters
+    /// Get bow family multiplier for bow exponent adjustment
+    /// Based on ShipD parameterization recommendations
+    /// </summary>
+    private decimal GetBowFamilyMultiplier(string? bowFamily)
+    {
+        if (string.IsNullOrWhiteSpace(bowFamily))
+            return 1.0m;
+
+        return bowFamily.ToLowerInvariant() switch
+        {
+            "bulbous_bow" => 0.5m,   // Fuller bow (bulb adds volume) - INCREASED from 0.7m for more visible difference
+            "axe_bow" => 1.8m,       // Very fine bow (sharp entry) - INCREASED from 1.5m
+            "fine_entry" => 1.5m,    // Fine entry (streamlined) - INCREASED from 1.2m for more visible difference
+            "blunt_bow" => 0.4m,     // Very full bow (blunt entry) - INCREASED from 0.6m
+            _ => 1.0m                 // Default: no adjustment
+        };
+    }
+
+    /// <summary>
+    /// Get stern family multiplier for stern exponent adjustment
+    /// Based on ShipD parameterization recommendations
+    /// </summary>
+    private decimal GetSternFamilyMultiplier(string? sternFamily)
+    {
+        if (string.IsNullOrWhiteSpace(sternFamily))
+            return 1.0m;
+
+        return sternFamily.ToLowerInvariant() switch
+        {
+            "transom_stern" => 0.5m,  // Full, blunt stern (flat transom) - INCREASED from 0.7m for more visible difference
+            "twin_skeg" => 0.7m,      // Full stern (with skegs) - INCREASED from 0.8m
+            "cruiser_stern" => 1.0m,  // Moderate fullness
+            "fine_stern" => 1.6m,     // Fine, streamlined stern - INCREASED from 1.3m
+            "canoe_stern" => 1.8m,    // Very fine, canoe-like stern - INCREASED from 1.4m for more visible difference
+            _ => 1.0m                  // Default: no adjustment
+        };
+    }
+
+    /// <summary>
+    /// Get midship family adjustment for section shape
+    /// Based on ShipD parameterization recommendations
+    /// </summary>
+    private (decimal cmAdjustment, decimal betaAdjustment) GetMidshipFamilyAdjustment(string? midshipFamily)
+    {
+        if (string.IsNullOrWhiteSpace(midshipFamily))
+            return (0m, 0m);
+
+        return midshipFamily.ToLowerInvariant() switch
+        {
+            "full_midship" => (0.08m, -8m),   // U-shaped sections (higher Cm, lower Beta) - INCREASED for more visible difference
+            "fine_midship" => (-0.08m, 8m),   // V-shaped sections (lower Cm, higher Beta) - INCREASED
+            "deep_v_midship" => (-0.12m, 15m), // Very deep V-sections (lower Cm, much higher Beta) - INCREASED for more visible difference
+            _ => (0m, 0m)                      // Default: no adjustment
+        };
+    }
+
+    /// <summary>
+    /// Get vessel type multiplier for additional shape adjustments
+    /// </summary>
+    private decimal GetVesselTypeMultiplier(string? vesselType)
+    {
+        if (string.IsNullOrWhiteSpace(vesselType))
+            return 1.0m;
+
+        return vesselType.ToLowerInvariant() switch
+        {
+            "yacht" or "recreational" => 1.1m,  // Slightly finer (yachts are more streamlined)
+            "cargo" or "bulk" or "general_cargo" => 0.9m,  // Slightly fuller (cargo vessels are fuller)
+            "container" => 1.0m,                 // Neutral (optimized for speed)
+            "tanker" => 0.85m,                   // Fuller (tankers are very full)
+            _ => 1.0m                            // Default: no adjustment
+        };
+    }
+
+    /// <summary>
+    /// Generate waterline half-breadths from Cwp with Cb-dependent parameters and ShipD family adjustments
     /// Uses parametric planform curve with Cb-dependent bow/stern exponents and fullness factor
     /// Better matches BSRA waterline half-breadth characteristics
     /// </summary>
@@ -361,22 +440,41 @@ public class FormCoefficientHullGenerator : IHullGenerator
         decimal length,
         decimal beam,
         decimal cwp,
-        decimal cb)
+        decimal cb,
+        string? bowFamily = null,
+        string? sternFamily = null,
+        string? vesselType = null)
     {
         var halfBreadths = new List<decimal>();
         decimal targetArea = cwp * length * beam;
 
-        // Cb-dependent exponents and fullness factor
+        // Cb-dependent base exponents
         // Bow exponent: 2.0 + 0.5 * (1 - Cb) - fuller hulls have less fine bows
-        decimal bowExponent = 2.0m + 0.5m * (1m - cb);
-        bowExponent = Math.Clamp(bowExponent, 1.5m, 3.0m);
+        decimal baseBowExponent = 2.0m + 0.5m * (1m - cb);
 
         // Stern exponent: 2.0 + 0.3 * (1 - Cb) - fuller hulls have less fine sterns
-        decimal sternExponent = 2.0m + 0.3m * (1m - cb);
-        sternExponent = Math.Clamp(sternExponent, 1.5m, 2.5m);
+        decimal baseSternExponent = 2.0m + 0.3m * (1m - cb);
+
+        // Apply ShipD family multipliers
+        decimal bowFamilyMultiplier = GetBowFamilyMultiplier(bowFamily);
+        decimal sternFamilyMultiplier = GetSternFamilyMultiplier(sternFamily);
+        decimal vesselTypeMultiplier = GetVesselTypeMultiplier(vesselType);
+
+        // Combine multipliers (bow and stern are independent, vessel type applies to both)
+        decimal bowExponent = baseBowExponent * bowFamilyMultiplier * vesselTypeMultiplier;
+        decimal sternExponent = baseSternExponent * sternFamilyMultiplier * vesselTypeMultiplier;
+
+        // Clamp to reasonable ranges
+        bowExponent = Math.Clamp(bowExponent, 1.0m, 4.0m);
+        sternExponent = Math.Clamp(sternExponent, 1.0m, 3.5m);
 
         // Fullness factor: 0.4 + 0.2 * (Cb - 0.65) - higher Cb = more forward fullness
+        // Adjust based on bow family (bulbous bow tends to have more forward fullness)
         decimal fullnessFactor = 0.4m + 0.2m * (cb - 0.65m);
+        if (bowFamily?.ToLowerInvariant() == "bulbous_bow")
+        {
+            fullnessFactor += 0.1m; // Bulbous bow adds forward fullness
+        }
         fullnessFactor = Math.Clamp(fullnessFactor, 0.3m, 0.7m);
 
         // Generate base shape
@@ -422,7 +520,7 @@ public class FormCoefficientHullGenerator : IHullGenerator
     }
 
     /// <summary>
-    /// Generate section shapes from Cm with Cb influence
+    /// Generate section shapes from Cm with Cb influence and ShipD midship family adjustments
     /// Parametric profile: y(z) = (B/2) * (1 - (z/T)^p)^q
     /// Returns half-breadths for each waterline
     /// Refined p and q calculation with Cb correction for better BSRA section shape matching
@@ -432,13 +530,30 @@ public class FormCoefficientHullGenerator : IHullGenerator
         decimal beam,
         decimal draft,
         decimal cm,
-        decimal cb)
+        decimal cb,
+        string? midshipFamily = null,
+        string? vesselType = null)
     {
-        // Calculate p and q from Cm
+        // Apply midship family adjustments to Cm
+        var (cmAdjustment, betaAdjustment) = GetMidshipFamilyAdjustment(midshipFamily);
+        decimal adjustedCm = cm + cmAdjustment;
+        adjustedCm = Math.Clamp(adjustedCm, 0.7m, 1.0m); // Keep within reasonable bounds
+
+        // Calculate p and q from adjusted Cm
         // For U-sections (high Cm: 0.98-1.0): p ≈ 1.5-2.0, q ≈ 0.4-0.6
         // For V-sections (low Cm: 0.85-0.90): p ≈ 0.8-1.2, q ≈ 1.5-2.5
-        decimal p = 1m + 4m * (1m - cm);
-        decimal q = 0.5m + 3m * (cm - 0.85m);
+        decimal p = 1m + 4m * (1m - adjustedCm);
+        decimal q = 0.5m + 3m * (adjustedCm - 0.85m);
+
+        // Apply beta adjustment (affects section shape: higher beta = more V-shaped)
+        // Beta adjustment affects p: higher beta → lower p (more V-shaped)
+        if (betaAdjustment != 0m)
+        {
+            // Convert beta adjustment (degrees) to p adjustment
+            // Higher beta (more V-shaped) → lower p
+            decimal pAdjustment = -betaAdjustment / 10m; // Scale: 10 degrees ≈ 0.1 p change
+            p += pAdjustment;
+        }
 
         // Clamp to reasonable ranges
         p = Math.Clamp(p, 0.5m, 3.0m);
@@ -447,6 +562,10 @@ public class FormCoefficientHullGenerator : IHullGenerator
         // Add Cb correction: higher Cb tends to have fuller sections
         // p_adjusted = p * (1 + 0.2 * (Cb - 0.75))
         decimal cbCorrection = 1m + 0.2m * (cb - 0.75m);
+
+        // Apply vessel type multiplier (affects section fullness)
+        decimal vesselTypeMultiplier = GetVesselTypeMultiplier(vesselType);
+        cbCorrection *= vesselTypeMultiplier;
         p *= cbCorrection;
 
         // Re-clamp after Cb correction

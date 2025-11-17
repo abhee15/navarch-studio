@@ -10,6 +10,7 @@
 
 import * as THREE from "three";
 import type { ShipDParameterMetadata } from "../types/sizing";
+import { generateSmoothCurve } from "./splineInterpolation";
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -59,16 +60,16 @@ export interface ShipDGeometryParams {
  * Generates 3D hull geometry from ShipD parameter vector or backend geometry data
  */
 export function generateShipDHull3D(
-  params: ShipDGeometryParams | { sections: ShipDHullSections; lppM: number }
+  params: ShipDGeometryParams | { sections: ShipDHullSections; lppM: number; smooth?: boolean }
 ): THREE.BufferGeometry {
   // If sections are provided (from backend), use them directly
   if ("sections" in params) {
-    return generateHull3DFromSections(params.sections, params.lppM);
+    return generateHull3DFromSections(params.sections, params.lppM, params.smooth ?? true);
   }
 
   // Otherwise, generate from ShipD vector
   const sections = generateShipDSections(params);
-  return generateHull3DFromSections(sections, params.lppM);
+  return generateHull3DFromSections(sections, params.lppM, true);
 }
 
 /**
@@ -314,12 +315,170 @@ export function generateShipDBulb(
 // ============================================================================
 
 /**
+ * Interpolates hull sections to increase resolution for smooth 3D rendering
+ * Uses cubic spline interpolation to create smooth surfaces
+ */
+function interpolateSections(
+  sections: ShipDHullSections,
+  stationMultiplier: number = 2,
+  heightMultiplier: number = 2
+): ShipDHullSections {
+  if (sections.stations.length === 0) {
+    return sections;
+  }
+
+  // Use imported spline utilities for smooth interpolation
+
+  const interpolatedStations: ShipDHullSections["stations"] = [];
+  const interpolatedPositions: number[] = [];
+
+  // Get all unique heights across all stations
+  const allHeights = new Set<number>();
+  for (const station of sections.stations) {
+    for (const height of Object.keys(station.offsets).map(Number)) {
+      if (Number.isFinite(height)) {
+        allHeights.add(height);
+      }
+    }
+  }
+  const sortedHeights = Array.from(allHeights).sort((a, b) => a - b);
+
+  // Interpolate stations (longitudinal)
+  const originalPositions = sections.stations.map((s) => s.position).sort((a, b) => a - b);
+  const numInterpStations = Math.max(
+    sections.stations.length,
+    Math.floor(sections.stations.length * stationMultiplier)
+  );
+
+  for (let i = 0; i < numInterpStations; i++) {
+    const t = i / (numInterpStations - 1);
+    const targetPos =
+      originalPositions[0] +
+      t * (originalPositions[originalPositions.length - 1] - originalPositions[0]);
+
+    // Find surrounding stations for interpolation
+    let lowerIdx = -1;
+    let upperIdx = -1;
+    for (let j = 0; j < originalPositions.length; j++) {
+      if (originalPositions[j] <= targetPos) {
+        lowerIdx = j;
+      }
+      if (originalPositions[j] >= targetPos && upperIdx === -1) {
+        upperIdx = j;
+        break;
+      }
+    }
+
+    // Get surrounding stations
+    const lowerStation =
+      lowerIdx >= 0
+        ? sections.stations.find((s) => Math.abs(s.position - originalPositions[lowerIdx]) < 0.001)
+        : null;
+    const upperStation =
+      upperIdx >= 0
+        ? sections.stations.find((s) => Math.abs(s.position - originalPositions[upperIdx]) < 0.001)
+        : null;
+
+    if (!lowerStation && !upperStation) continue;
+    if (lowerStation && !upperStation) {
+      // Use lower station
+      interpolatedStations.push({ ...lowerStation, position: targetPos });
+      interpolatedPositions.push(targetPos);
+      continue;
+    }
+    if (!lowerStation && upperStation) {
+      // Use upper station
+      interpolatedStations.push({ ...upperStation, position: targetPos });
+      interpolatedPositions.push(targetPos);
+      continue;
+    }
+
+    // Interpolate between lower and upper stations
+    const lowerPos = lowerStation!.position;
+    const upperPos = upperStation!.position;
+    const posRange = upperPos - lowerPos;
+    const interpFactor = posRange > 0.001 ? (targetPos - lowerPos) / posRange : 0;
+
+    // Interpolate offsets at each height
+    const interpolatedOffsets: Record<number, number> = {};
+    for (const height of sortedHeights) {
+      const lowerOffset = lowerStation!.offsets[height] ?? 0;
+      const upperOffset = upperStation!.offsets[height] ?? 0;
+      interpolatedOffsets[height] = lowerOffset + interpFactor * (upperOffset - lowerOffset);
+    }
+
+    interpolatedStations.push({
+      position: targetPos,
+      offsets: interpolatedOffsets,
+      hasBulb: lowerStation!.hasBulb || upperStation!.hasBulb,
+    });
+    interpolatedPositions.push(targetPos);
+  }
+
+  // Interpolate heights (vertical) for each station
+  const numInterpHeights = Math.max(
+    sortedHeights.length,
+    Math.floor(sortedHeights.length * heightMultiplier)
+  );
+  const interpolatedHeights: number[] = [];
+  if (sortedHeights.length > 0) {
+    const minHeight = sortedHeights[0];
+    const maxHeight = sortedHeights[sortedHeights.length - 1];
+    for (let i = 0; i < numInterpHeights; i++) {
+      const t = i / (numInterpHeights - 1);
+      interpolatedHeights.push(minHeight + t * (maxHeight - minHeight));
+    }
+  }
+
+  // For each interpolated station, interpolate offsets at interpolated heights
+  for (const station of interpolatedStations) {
+    const originalHeights = Object.keys(station.offsets)
+      .map(Number)
+      .filter((h) => Number.isFinite(h))
+      .sort((a, b) => a - b);
+
+    if (originalHeights.length < 2) continue;
+
+    // Create smooth curve through original points
+    const points = originalHeights.map((h) => ({
+      x: h,
+      y: station.offsets[h] ?? 0,
+    }));
+
+    const smoothCurve = generateSmoothCurve(points, numInterpHeights);
+
+    // Update offsets with interpolated values
+    const newOffsets: Record<number, number> = {};
+    for (const point of smoothCurve) {
+      newOffsets[point.x] = Math.max(0, point.y);
+    }
+    station.offsets = newOffsets;
+  }
+
+  return {
+    stations: interpolatedStations,
+    stationPositions: interpolatedPositions,
+  };
+}
+
+/**
  * Generates 3D geometry from hull sections
+ * Uses smooth interpolation to create high-resolution, smooth surfaces
  */
 function generateHull3DFromSections(
   sections: ShipDHullSections,
-  lppM: number
+  lppM: number,
+  smooth: boolean = true
 ): THREE.BufferGeometry {
+  // CRITICAL: Sort stations by position to ensure correct ordering (aft to forward: 0 to 1)
+  // This prevents helical twist in 3D view if stations are not in correct order
+  const sortedSections = {
+    ...sections,
+    stations: [...sections.stations].sort((a, b) => a.position - b.position),
+  };
+
+  // Interpolate sections for smooth rendering if requested
+  const finalSections = smooth ? interpolateSections(sortedSections, 2, 2) : sortedSections;
   const geometry = new THREE.BufferGeometry();
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -331,7 +490,7 @@ function generateHull3DFromSections(
   // First pass: create vertices
   // Three.js coordinate system: X = right/left (starboard/port), Y = up/down (height), Z = forward/back (longitudinal)
   // Center hull at origin: longitudinal from -lpp/2 (aft) to +lpp/2 (forward)
-  for (const station of sections.stations) {
+  for (const station of finalSections.stations) {
     // Convert station position (0=aft, 1=forward) to centered Z coordinate
     // 0 -> -lpp/2 (aft), 1 -> +lpp/2 (forward)
     const zRaw = (station.position - 0.5) * lppM; // Center at origin
@@ -419,9 +578,9 @@ function generateHull3DFromSections(
   }
 
   // Second pass: create faces (connect adjacent stations and heights)
-  for (let i = 0; i < sections.stations.length - 1; i++) {
-    const station1 = sections.stations[i];
-    const station2 = sections.stations[i + 1];
+  for (let i = 0; i < finalSections.stations.length - 1; i++) {
+    const station1 = finalSections.stations[i];
+    const station2 = finalSections.stations[i + 1];
 
     const heights1 = Object.keys(station1.offsets)
       .map((h) => Number(h))
@@ -479,7 +638,7 @@ function generateHull3DFromSections(
   }
 
   // Add closing faces at bow (position = 1, forward end)
-  const bowStation = sections.stations.find((s) => Math.abs(s.position - 1.0) < 0.01);
+  const bowStation = finalSections.stations.find((s) => Math.abs(s.position - 1.0) < 0.01);
   if (bowStation) {
     const bowHeights = Object.keys(bowStation.offsets)
       .map((h) => Number(h))
@@ -511,7 +670,7 @@ function generateHull3DFromSections(
   }
 
   // Add closing faces at stern (position = 0, aft end)
-  const sternStation = sections.stations.find((s) => Math.abs(s.position - 0.0) < 0.01);
+  const sternStation = finalSections.stations.find((s) => Math.abs(s.position - 0.0) < 0.01);
   if (sternStation) {
     const sternHeights = Object.keys(sternStation.offsets)
       .map((h) => Number(h))
@@ -545,7 +704,7 @@ function generateHull3DFromSections(
   // Add bottom closing face (keel) - connect all stations at height=0
   // At keel (height=0), port and starboard share the same vertex (half-breadth=0)
   const keelVertices: number[] = [];
-  for (const station of sections.stations) {
+  for (const station of finalSections.stations) {
     // At height=0, both port and starboard reference the same keel vertex
     const keelVertex =
       vertexMap.get(`${station.position}-0-keel`) ||

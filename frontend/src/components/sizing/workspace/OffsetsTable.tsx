@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import type { CandidateDesign } from "../../../types/sizing";
 import { Table } from "lucide-react";
+import { normalizeGeometry, type OffsetsGrid } from "../../../utils/geometryFormatConverter";
+import {
+  generateFormCoefficientHull,
+  validateNonIsometric,
+  type HullDimensions,
+} from "../../../utils/formCoefficientHullGenerator";
 
 interface OffsetsTableProps {
   candidate: CandidateDesign;
@@ -8,44 +14,49 @@ interface OffsetsTableProps {
   waterlineCount?: number;
 }
 
-interface OffsetsGrid {
-  stations: number[];
-  waterlines: number[];
-  offsets: number[][]; // [stationIndex][waterlineIndex]
-}
+// OffsetsGrid interface moved to geometryFormatConverter
 
 /**
  * Offsets Table - Traditional Naval Architecture Table of Offsets
  *
  * Shows half-breadths at each station and waterline intersection
  * Professional engineering format
- * Uses actual generated geometry if available, otherwise falls back to Wigley formula
+ * Uses actual generated geometry if available, otherwise generates using FormCoefficientHullGenerator (solver logic)
  */
 export const OffsetsTable: React.FC<OffsetsTableProps> = ({
   candidate,
   stationCount,
   waterlineCount,
 }) => {
-  // Try to parse geometry from GeometryJson
+  // Normalize geometry to OffsetsGrid format (handles both ShipD and OffsetsGrid formats)
   const geometryData = useMemo<OffsetsGrid | null>(() => {
     if (!candidate.geometryJson) return null;
     try {
-      const parsed = JSON.parse(candidate.geometryJson);
-      if (parsed.stations && parsed.waterlines && parsed.offsets) {
-        return {
-          stations: parsed.stations,
-          waterlines: parsed.waterlines,
-          offsets: parsed.offsets,
-        };
-      }
+      // Use geometry format converter to normalize any format to OffsetsGrid
+      return normalizeGeometry(candidate.geometryJson);
     } catch (e) {
-      console.warn("Failed to parse geometryJson:", e);
+      console.error("Failed to normalize geometry:", e);
+      return null;
     }
-    return null;
   }, [candidate.geometryJson]);
 
-  // Use actual geometry if available, otherwise generate using Wigley formula
+  // Check geometry generation status - show error if generation failed
+  const geometryGenerationFailed =
+    candidate.geometryGenerationStatus === "BothFailed" ||
+    candidate.geometryGenerationStatus === "FormCoefficientFailed";
+
+  // Use actual geometry if available, otherwise show error or generate using fallback
   const { offsets, waterlines, stationLabels, waterlineLabels } = useMemo(() => {
+    // If geometry generation failed, return empty data (will show error message)
+    if (geometryGenerationFailed) {
+      return {
+        offsets: [],
+        waterlines: [],
+        stationLabels: [],
+        waterlineLabels: [],
+      };
+    }
+
     if (geometryData) {
       // Use actual generated geometry
 
@@ -72,60 +83,135 @@ export const OffsetsTable: React.FC<OffsetsTableProps> = ({
       };
     }
 
-    // Fallback: Generate using Wigley hull form
+    // Fallback: Generate using FormCoefficientHullGenerator (solver logic)
+    // This ensures non-isometric geometry matching solver output
     const effectiveStationCount = stationCount ?? 23; // Match BSRA-compatible generation
     const effectiveWaterlineCount = waterlineCount ?? 13; // Match generation
 
-    const lpp = candidate.lppM;
-    const beam = candidate.beamM;
-    const draft = candidate.draftM;
+    const lpp = candidate.lppM ?? 200;
+    const beam = candidate.beamM ?? 30;
+    const draft = candidate.draftM ?? 12;
 
-    const stationFractions = Array.from(
-      { length: effectiveStationCount },
-      (_, i) => i / (effectiveStationCount - 1)
-    );
-    const waterlineFractions = Array.from(
-      { length: effectiveWaterlineCount },
-      (_, i) => i / (effectiveWaterlineCount - 1)
-    );
+    // Use form coefficients from candidate
+    const cb = candidate.cb ?? 0.68;
+    const cp = candidate.cp ?? 0.73;
+    const cm = candidate.cm ?? 0.93;
+    const cwp = candidate.cwp ?? 0.8;
+    const lcbPercent = candidate.lcbPctLpp ?? 0.5;
 
-    const generatedOffsets = waterlineFractions.map((wlFraction) => {
-      const z = wlFraction * draft; // Depth from keel
+    try {
+      // Generate using FormCoefficientHullGenerator (solver logic)
+      const dims: HullDimensions = {
+        length: lpp,
+        beam,
+        draft,
+        lcbPercent,
+      };
 
-      return stationFractions.map((stationFraction) => {
-        const x = stationFraction * lpp;
+      const generated = generateFormCoefficientHull(
+        dims,
+        cb,
+        cp,
+        cm,
+        cwp,
+        effectiveStationCount,
+        effectiveWaterlineCount,
+        candidate.bowFamily,
+        candidate.midshipFamily,
+        candidate.sternFamily,
+        candidate.vesselType
+      );
 
-        // Wigley form: y = (B/2) * (1 - z²/T²) * (1 - (2x/L - 1)²)
-        const zTerm = 1 - Math.pow(z / draft, 2);
-        const xTerm = 1 - Math.pow(2 * (x / lpp) - 1, 2);
-        const halfBreadth = (beam / 2) * zTerm * xTerm;
+      // Validate non-isometric (should always pass for FormCoefficientHullGenerator)
+      const isValid = validateNonIsometric(generated);
+      if (!isValid) {
+        console.warn(
+          "[OffsetsTable] Generated geometry appears isometric - this should not happen with FormCoefficientHullGenerator"
+        );
+      }
 
-        return halfBreadth;
+      // Create station labels (AP, 1, 2, ..., ⚓, ..., FP)
+      const labels = generated.stations.map((_, idx) => {
+        if (idx === 0) return "AP";
+        if (idx === Math.floor(generated.stations.length / 2)) return "⚓︎";
+        if (idx === generated.stations.length - 1) return "FP";
+        return idx.toString();
       });
-    });
 
-    const labels = stationFractions.map((_, idx) => {
-      if (idx === 0) return "AP";
-      if (idx === Math.floor(effectiveStationCount / 2)) return "⚓︎";
-      if (idx === effectiveStationCount - 1) return "FP";
-      return idx.toString();
-    });
+      // Transpose offsets: generator has [stationIndex][waterlineIndex], but table needs [waterlineIndex][stationIndex]
+      const transposedOffsets = generated.waterlines.map((_, wlIdx) =>
+        generated.stations.map((_, stIdx) => generated.offsets[stIdx]?.[wlIdx] ?? 0)
+      );
 
-    return {
-      offsets: generatedOffsets,
-      stations: stationFractions.map((f) => f * lpp),
-      waterlines: waterlineFractions.map((f) => f * draft),
-      stationLabels: labels,
-      waterlineLabels: waterlineFractions.map((f) => (f * draft).toFixed(2)),
-    };
+      return {
+        offsets: transposedOffsets,
+        stations: generated.stations,
+        waterlines: generated.waterlines,
+        stationLabels: labels,
+        waterlineLabels: generated.waterlines.map((z) => z.toFixed(2)),
+      };
+    } catch (error) {
+      console.error(
+        "[OffsetsTable] Failed to generate geometry using FormCoefficientHullGenerator:",
+        error
+      );
+      // Return empty data - will show error message
+      return {
+        offsets: [],
+        stations: [],
+        waterlines: [],
+        stationLabels: [],
+        waterlineLabels: [],
+      };
+    }
   }, [
     geometryData,
+    geometryGenerationFailed,
     candidate.lppM,
     candidate.beamM,
     candidate.draftM,
+    candidate.cb,
+    candidate.cp,
+    candidate.cm,
+    candidate.cwp,
+    candidate.lcbPctLpp,
+    candidate.bowFamily,
+    candidate.midshipFamily,
+    candidate.sternFamily,
+    candidate.vesselType,
     stationCount,
     waterlineCount,
   ]);
+
+  // Show error message if geometry generation failed
+  if (geometryGenerationFailed) {
+    return (
+      <div className="w-full overflow-auto">
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 shadow-lg">
+          <div className="p-6">
+            <h3 className="text-red-800 dark:text-red-200 font-bold flex items-center gap-2 mb-2">
+              <Table className="h-4 w-4" />
+              Geometry Generation Failed
+            </h3>
+            <p className="text-red-700 dark:text-red-300 text-sm mb-3">
+              Unable to generate hull geometry for this candidate. The offsets table cannot be
+              displayed.
+            </p>
+            {candidate.geometryGenerationError && (
+              <div className="mt-3 p-3 bg-red-100 dark:bg-red-900/30 rounded border border-red-200 dark:border-red-800">
+                <p className="text-xs font-mono text-red-800 dark:text-red-200">
+                  {candidate.geometryGenerationError}
+                </p>
+              </div>
+            )}
+            <p className="text-red-600 dark:text-red-400 text-xs mt-3">
+              Please try adjusting parameters or contact support if this issue persists.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full overflow-auto">

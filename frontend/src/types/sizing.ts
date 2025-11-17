@@ -228,6 +228,9 @@ export interface CandidateDesign {
 
   // Geometry
   geometryJson?: string;
+  geometryGenerationStatus?: "Success" | "ShipDFailed" | "FormCoefficientFailed" | "BothFailed";
+  geometryGenerationError?: string;
+  hasValidGeometry?: boolean;
 
   // Scoring
   flagsJson: string;

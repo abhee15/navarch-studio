@@ -1,3 +1,5 @@
+using Shared.Models.Sizing;
+
 namespace Shared.DTOs.Sizing;
 
 /// <summary>
@@ -83,6 +85,21 @@ public record CandidateDesignDto
 
     // Geometry (optional, large)
     public string? GeometryJson { get; init; }
+
+    /// <summary>
+    /// Status of geometry generation
+    /// </summary>
+    public GeometryGenerationStatus GeometryGenerationStatus { get; init; } = GeometryGenerationStatus.Success;
+
+    /// <summary>
+    /// Error message if geometry generation failed
+    /// </summary>
+    public string? GeometryGenerationError { get; init; }
+
+    /// <summary>
+    /// Whether the candidate has valid geometry
+    /// </summary>
+    public bool HasValidGeometry => GeometryGenerationStatus == GeometryGenerationStatus.Success && !string.IsNullOrEmpty(GeometryJson);
 
     public DateTime CreatedAt { get; init; }
 

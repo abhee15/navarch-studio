@@ -16,6 +16,9 @@ public interface IHullGeometryGeneratorService
     /// <param name="vesselType">Optional vessel type (e.g., "product_carrier", "container") for parent hull selection</param>
     /// <param name="numStations">Number of stations (default: 23 for BSRA-compatible)</param>
     /// <param name="numWaterlines">Number of waterlines (default: 13)</param>
+    /// <param name="bowFamily">Optional ShipD bow family (e.g., "bulbous_bow", "axe_bow") to influence shape</param>
+    /// <param name="midshipFamily">Optional ShipD midship family (e.g., "full_midship", "fine_midship") to influence shape</param>
+    /// <param name="sternFamily">Optional ShipD stern family (e.g., "transom_stern", "fine_stern") to influence shape</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Offsets grid DTO, or null if generation fails</returns>
     Task<OffsetsGridDto?> GenerateOffsetsFromCandidateAsync(
@@ -23,6 +26,9 @@ public interface IHullGeometryGeneratorService
         string? vesselType = null,
         int numStations = 23,
         int numWaterlines = 13,
+        string? bowFamily = null,
+        string? midshipFamily = null,
+        string? sternFamily = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

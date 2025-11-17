@@ -29,6 +29,7 @@ public class ParentHullHullGenerator : IHullGenerator
 
     /// <summary>
     /// Generate hull offsets from form coefficients using parent hull approach
+    /// Note: ShipD family parameters are ignored as parent hulls already have their shape characteristics
     /// </summary>
     public GeneratedHullGeometry Generate(
         HullDimensions dims,
@@ -37,18 +38,23 @@ public class ParentHullHullGenerator : IHullGenerator
         decimal cm,
         decimal cwp,
         int numStations = 23,
-        int numWaterlines = 13)
+        int numWaterlines = 13,
+        string? bowFamily = null,
+        string? midshipFamily = null,
+        string? sternFamily = null,
+        string? vesselType = null)
     {
         // Validate inputs
         ValidateInputs(dims, cb, cp, cm, cwp, numStations, numWaterlines);
 
-        // Use default vessel type from constructor, or fallback to "product_carrier"
-        string vesselType = _defaultVesselType ?? "product_carrier";
+        // Use vessel type from parameter, or default from constructor, or fallback to "product_carrier"
+        // Note: ShipD family parameters are ignored as parent hulls already have their shape characteristics
+        string effectiveVesselType = vesselType ?? _defaultVesselType ?? "product_carrier";
 
         try
         {
             // Try to load parent hull
-            var parentHull = _loader.LoadParentHull(vesselType, cb);
+            var parentHull = _loader.LoadParentHull(effectiveVesselType, cb);
 
             _logger?.LogInformation(
                 "Using parent hull: {VesselType}, Cb={Cb}, Source={Source}",

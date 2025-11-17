@@ -312,9 +312,14 @@ function calculateHalfBreadth(
       break;
 
     default:
-      // Fallback to modified Wigley
-      console.warn(`Unknown hull family '${family}', using Wigley fallback`);
-      horizontalShape = wigleyFallback(xNorm);
+      // Fallback: Use form-coefficient-based shape (not Wigley)
+      // This ensures non-isometric geometry even for unknown families
+      console.warn(
+        `Unknown hull family '${family}', using form-coefficient-based fallback (not Wigley)`
+      );
+      // Use a generic parametric shape based on form coefficients
+      // Similar to container but more generic
+      horizontalShape = containerShapeFunction(xNorm, cp, cb);
   }
 
   // Apply vertical distribution
@@ -437,12 +442,8 @@ function roroShapeFunction(xNorm: number, cp: number, cb: number): number {
   return Math.pow(1.0 - taperX, exponent);
 }
 
-/**
- * Wigley fallback for unknown hull types
- */
-function wigleyFallback(xNorm: number): number {
-  return 1.0 - xNorm * xNorm;
-}
+// Note: Wigley fallback removed - now using form-coefficient-based fallback
+// This ensures non-isometric geometry matching solver output
 
 /**
  * Vertical distribution function

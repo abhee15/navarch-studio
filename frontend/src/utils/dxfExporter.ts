@@ -3,9 +3,12 @@
  *
  * Generates AutoCAD-compatible DXF files from hull geometry
  * Format: ASCII DXF R14/2000 (widely supported)
+ * Uses actual geometry or FormCoefficientHullGenerator (solver logic) - NOT Wigley
  */
 
 import type { CandidateDesign } from "../types/sizing";
+import { normalizeGeometry, type OffsetsGrid } from "./geometryFormatConverter";
+import { generateFormCoefficientHull, type HullDimensions } from "./formCoefficientHullGenerator";
 
 interface Point2D {
   x: number;
@@ -83,13 +86,59 @@ export function generateDXF(candidate: CandidateDesign): string {
   const minY = -beam - 5;
   const maxY = beam + 5;
 
-  // Generate waterlines (plan view - XY plane at different Z depths)
-  // Waterlines show the hull shape at different drafts (looking from above)
-  const waterlineCount = 7;
+  // Get geometry (actual or generated using FormCoefficientHullGenerator)
+  let geometry: OffsetsGrid | null = null;
+
+  if (candidate.geometryJson) {
+    // Try to use actual geometry
+    geometry = normalizeGeometry(candidate.geometryJson);
+  }
+
+  if (!geometry) {
+    // Generate using FormCoefficientHullGenerator (solver logic)
+    try {
+      const dims: HullDimensions = {
+        length: lpp,
+        beam,
+        draft,
+        lcbPercent: candidate.lcbPctLpp ?? 0.5,
+      };
+
+      const generated = generateFormCoefficientHull(
+        dims,
+        candidate.cb ?? 0.68,
+        candidate.cp ?? 0.73,
+        candidate.cm ?? 0.93,
+        candidate.cwp ?? 0.8,
+        23, // BSRA standard
+        13,
+        candidate.bowFamily,
+        candidate.midshipFamily,
+        candidate.sternFamily,
+        candidate.vesselType
+      );
+
+      geometry = {
+        stations: generated.stations,
+        waterlines: generated.waterlines,
+        offsets: generated.offsets,
+      };
+    } catch (error) {
+      console.error("[dxfExporter] Failed to generate geometry:", error);
+      throw new Error("Failed to generate hull geometry for DXF export");
+    }
+  }
+
+  // Generate waterlines from geometry (plan view - XY plane at different Z depths)
+  const waterlineCount = Math.min(7, geometry.waterlines.length);
   for (let wlIdx = 0; wlIdx < waterlineCount; wlIdx++) {
-    // Z ranges from -draft (baseline) to 0 (waterline) for plan view
-    const z = -draft + (draft * wlIdx) / (waterlineCount - 1);
-    const waterlinePoints = generateWaterlinePoints(lpp, beam, draft, z, 50);
+    const z = geometry.waterlines[wlIdx];
+    const waterlinePoints = generateWaterlinePointsFromGeometry(
+      geometry,
+      z,
+      lpp,
+      50 // resolution
+    );
 
     // Only generate if we have valid points
     if (waterlinePoints.length > 1) {
@@ -107,18 +156,18 @@ export function generateDXF(candidate: CandidateDesign): string {
 
   // Generate stations as vertical lines in plan view (XY plane)
   // Stations are vertical slices through the hull
-  const stationCount = 11;
+  const stationCount = Math.min(11, geometry.stations.length);
   for (let stIdx = 0; stIdx < stationCount; stIdx++) {
-    const x = -lpp / 2 + (lpp * stIdx) / (stationCount - 1);
+    const stationX = geometry.stations[stIdx];
+    const x = stationX - lpp / 2; // Convert to centered coordinates
 
     // At each station, find the maximum half-breadth at any waterline
     let maxHalfBreadth = 0;
-    for (let wlIdx = 0; wlIdx < waterlineCount; wlIdx++) {
-      const z = -draft + (draft * wlIdx) / (waterlineCount - 1);
-      const xNorm = (2 * x) / lpp;
-      const zNorm = z / draft;
-      const halfBreadth = (beam / 2) * (1 - xNorm * xNorm) * (1 - zNorm * zNorm);
-      maxHalfBreadth = Math.max(maxHalfBreadth, halfBreadth);
+    if (geometry.offsets[stIdx]) {
+      for (let wlIdx = 0; wlIdx < geometry.waterlines.length; wlIdx++) {
+        const halfBreadth = geometry.offsets[stIdx][wlIdx] ?? 0;
+        maxHalfBreadth = Math.max(maxHalfBreadth, halfBreadth);
+      }
     }
 
     // Draw station line (vertical line in plan view)
@@ -156,26 +205,57 @@ export function generateDXF(candidate: CandidateDesign): string {
 }
 
 /**
- * Generate waterline points using Wigley parabolic form
+ * Generate waterline points from geometry (OffsetsGrid format)
+ * Uses actual geometry or FormCoefficientHullGenerator output - NOT Wigley
  */
-function generateWaterlinePoints(
+function generateWaterlinePointsFromGeometry(
+  geometry: OffsetsGrid,
+  targetZ: number,
   lpp: number,
-  beam: number,
-  draft: number,
-  z: number,
   resolution: number
 ): Point2D[] {
   const points: Point2D[] = [];
 
+  // Find the waterline index closest to targetZ
+  let targetWaterlineIdx = 0;
+  let minDiff = Math.abs(geometry.waterlines[0] - targetZ);
+  for (let i = 1; i < geometry.waterlines.length; i++) {
+    const diff = Math.abs(geometry.waterlines[i] - targetZ);
+    if (diff < minDiff) {
+      minDiff = diff;
+      targetWaterlineIdx = i;
+    }
+  }
+
+  // Generate points along the waterline by interpolating between stations
   for (let i = 0; i <= resolution; i++) {
-    const x = -lpp / 2 + (lpp * i) / resolution;
+    const xNorm = i / resolution; // 0 to 1
+    const x = -lpp / 2 + lpp * xNorm; // Convert to centered coordinates
 
-    // Wigley form: y = (B/2) * (1 - (2x/L)²) * (1 - (z/T)²)
-    const xNorm = (2 * x) / lpp;
-    const zNorm = z / draft;
-    const y = (beam / 2) * (1 - xNorm * xNorm) * (1 - zNorm * zNorm);
+    // Find station indices to interpolate between
+    for (let j = 0; j < geometry.stations.length - 1; j++) {
+      const stationX = geometry.stations[j];
+      const nextStationX = geometry.stations[j + 1];
+      const stationXNorm = stationX / lpp; // Normalize to 0-1
 
-    points.push({ x, y });
+      if (xNorm >= stationXNorm && xNorm <= nextStationX / lpp) {
+        // Interpolate between stations
+        const nextStationXNorm = nextStationX / lpp;
+        const t = (xNorm - stationXNorm) / (nextStationXNorm - stationXNorm);
+
+        const halfBreadth1 = geometry.offsets[j]?.[targetWaterlineIdx] ?? 0;
+        const halfBreadth2 = geometry.offsets[j + 1]?.[targetWaterlineIdx] ?? 0;
+        const y = halfBreadth1 + t * (halfBreadth2 - halfBreadth1);
+
+        points.push({ x, y });
+        break;
+      } else if (j === geometry.stations.length - 2) {
+        // Use last station
+        const y = geometry.offsets[geometry.stations.length - 1]?.[targetWaterlineIdx] ?? 0;
+        points.push({ x, y });
+        break;
+      }
+    }
   }
 
   return points;

@@ -27,6 +27,13 @@ public class SizingRunService : ISizingRunService
     private readonly IDataServiceClient? _dataServiceClient;
     private readonly IHullGeometryGeneratorService? _hullGeometryGenerator;
 
+    // JSON serializer options with camelCase naming (matches API response format)
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
+    };
+
     private static readonly Dictionary<string, List<string>> VesselTypeFamilyHints = new(StringComparer.OrdinalIgnoreCase)
     {
         ["general_cargo"] = new() { "cargo", "container", "bulk", "roro", "osv" },
@@ -349,60 +356,40 @@ public class SizingRunService : ISizingRunService
             {
                 var sc = solverCandidates[i];
 
-                // Generate geometry (ShipD or form-coefficient-based)
+                // Generate geometry (OffsetsGrid is primary, ShipD is secondary)
                 string? geometryJson = null;
+                var geometryStatus = GeometryGenerationStatus.Success;
+                string? geometryError = null;
 
-                // Priority 1: Try ShipD geometry if parameters are available
-                if (_shipdGeometryService != null && shipdMetadata != null && !string.IsNullOrEmpty(shipdVectorJson))
+                // Priority 1: Always generate form-coefficient-based OffsetsGrid for ALL candidates
+                // This ensures solver-generated geometry is available for all candidates
+                if (_hullGeometryGenerator != null)
                 {
                     try
                     {
-                        var shipdVector = JsonSerializer.Deserialize<decimal[]>(shipdVectorJson);
-                        if (shipdVector != null && shipdVector.Length == 45)
-                        {
-                            // Generate hull sections
-                            var sections = await _shipdGeometryService.GenerateSectionsAsync(
-                                shipdVector,
-                                sc.LppM,
-                                sc.BeamM,
-                                sc.DraftM,
-                                shipdMetadata,
-                                stationCount: 20,
-                                cancellationToken);
-
-                            // Serialize sections to JSON
-                            geometryJson = JsonSerializer.Serialize(sections);
-                            _logger.LogDebug("[SIZING_RUN] Generated ShipD geometry for candidate {Rank}", i + 1);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate ShipD geometry for candidate {Rank}. Will try form-coefficient generator.", i + 1);
-                    }
-                }
-
-                // Priority 2: Generate form-coefficient-based offsets (for top 3 candidates or if ShipD failed)
-                // This ensures we always have geometry for the best candidates
-                if (string.IsNullOrEmpty(geometryJson) && _hullGeometryGenerator != null && i < 3)
-                {
-                    try
-                    {
-                        // Extract vessel type from sizing run (from ShipD result) or mission case
-                        // This allows the generator to use parent hull if available
+                        // Extract vessel type and ShipD families from sizing run (from ShipD result) or mission case
+                        // This allows the generator to use parent hull if available and apply ShipD family adjustments
                         string? vesselType = run.VesselType ?? missionCase.MissionType;
+                        string? bowFamily = run.BowFamily ?? missionCase.BowFamily;
+                        string? midshipFamily = run.MidshipFamily ?? missionCase.MidshipFamily;
+                        string? sternFamily = run.SternFamily ?? missionCase.SternFamily;
 
                         var offsetsGrid = await _hullGeometryGenerator.GenerateOffsetsFromCandidateAsync(
                             sc,
                             vesselType: vesselType,
                             numStations: 23, // BSRA-compatible
                             numWaterlines: 13,
+                            bowFamily: bowFamily,
+                            midshipFamily: midshipFamily,
+                            sternFamily: sternFamily,
                             cancellationToken);
 
                         if (offsetsGrid != null)
                         {
-                            // Serialize offsets grid to JSON
-                            geometryJson = JsonSerializer.Serialize(offsetsGrid);
-                            _logger.LogInformation("[SIZING_RUN] Generated form-coefficient-based offsets for candidate {Rank}", i + 1);
+                            // Serialize offsets grid to JSON (primary geometry format)
+                            // Use camelCase naming to match API response format and frontend expectations
+                            geometryJson = JsonSerializer.Serialize(offsetsGrid, JsonOptions);
+                            _logger.LogInformation("[SIZING_RUN] Generated form-coefficient-based OffsetsGrid for candidate {Rank}", i + 1);
 
                             // Validate form coefficients (log warnings if mismatch)
                             var validation = await _hullGeometryGenerator.ValidateFormCoefficientsAsync(
@@ -424,10 +411,73 @@ public class SizingRunService : ISizingRunService
                                     i + 1);
                             }
                         }
+                        else
+                        {
+                            // OffsetsGrid generation failed
+                            geometryStatus = GeometryGenerationStatus.FormCoefficientFailed;
+                            geometryError = "Form-coefficient generation returned null";
+                            _logger.LogWarning("[SIZING_RUN] OffsetsGrid generation returned null for candidate {Rank}. Will try ShipD as fallback.", i + 1);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate form-coefficient-based offsets for candidate {Rank}. Continuing without geometry.", i + 1);
+                        geometryStatus = GeometryGenerationStatus.FormCoefficientFailed;
+                        geometryError = $"Form-coefficient generation failed: {ex.Message}";
+                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate OffsetsGrid for candidate {Rank}. Will try ShipD as fallback.", i + 1);
+                    }
+                }
+
+                // Priority 2: Try ShipD geometry as fallback if OffsetsGrid generation failed
+                // ShipD geometry is stored separately and can be used for 3D visualization
+                if (string.IsNullOrEmpty(geometryJson) && _shipdGeometryService != null && shipdMetadata != null && !string.IsNullOrEmpty(shipdVectorJson))
+                {
+                    try
+                    {
+                        var shipdVector = JsonSerializer.Deserialize<decimal[]>(shipdVectorJson);
+                        if (shipdVector != null && shipdVector.Length == 45)
+                        {
+                            // Generate hull sections
+                            var sections = await _shipdGeometryService.GenerateSectionsAsync(
+                                shipdVector,
+                                sc.LppM,
+                                sc.BeamM,
+                                sc.DraftM,
+                                shipdMetadata,
+                                stationCount: 20,
+                                cancellationToken);
+
+                            // Serialize sections to JSON (fallback geometry format)
+                            // Use camelCase naming to match API response format and frontend expectations
+                            geometryJson = JsonSerializer.Serialize(sections, JsonOptions);
+                            _logger.LogInformation("[SIZING_RUN] Generated ShipD geometry as fallback for candidate {Rank}", i + 1);
+
+                            // Update status to indicate ShipD was used as fallback
+                            if (geometryStatus == GeometryGenerationStatus.FormCoefficientFailed)
+                            {
+                                geometryStatus = GeometryGenerationStatus.ShipDFailed; // ShipD succeeded but OffsetsGrid failed
+                                geometryError = $"{geometryError}; Using ShipD geometry as fallback";
+                            }
+                            else
+                            {
+                                geometryStatus = GeometryGenerationStatus.Success;
+                                geometryError = null;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Both OffsetsGrid and ShipD failed
+                        if (geometryStatus == GeometryGenerationStatus.FormCoefficientFailed)
+                        {
+                            geometryStatus = GeometryGenerationStatus.BothFailed;
+                            geometryError = $"{geometryError}; ShipD geometry generation also failed: {ex.Message}";
+                        }
+                        else
+                        {
+                            geometryStatus = GeometryGenerationStatus.ShipDFailed;
+                            geometryError = $"ShipD geometry generation failed: {ex.Message}";
+                        }
+                        _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate ShipD geometry as fallback for candidate {Rank}. Candidate will have no geometry.", i + 1);
                     }
                 }
 
@@ -465,7 +515,9 @@ public class SizingRunService : ISizingRunService
                     Score = sc.Score,
                     Rank = i + 1,
                     IsSelected = i == 0, // First candidate is selected by default
-                    GeometryJson = geometryJson, // ShipD geometry if available
+                    GeometryJson = geometryJson, // ShipD or OffsetsGrid geometry if available
+                    GeometryGenerationStatus = geometryStatus,
+                    GeometryGenerationError = geometryError,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -689,6 +741,8 @@ public class SizingRunService : ISizingRunService
             Rank = entity.Rank,
             IsSelected = entity.IsSelected,
             GeometryJson = entity.GeometryJson,
+            GeometryGenerationStatus = entity.GeometryGenerationStatus,
+            GeometryGenerationError = entity.GeometryGenerationError,
             CreatedAt = entity.CreatedAt,
 
             // Provenance (Data-Driven Mode)

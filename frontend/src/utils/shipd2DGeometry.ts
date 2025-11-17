@@ -6,6 +6,7 @@
  */
 
 import type { ShipDHullSections } from "./shipdGeometryGenerator";
+import type { OffsetsGrid } from "./geometryFormatConverter";
 
 /**
  * Extract waterlines from ShipD sections for Plan View
@@ -388,6 +389,169 @@ export function extractSheerlineFromShipD(
       const maxHeight = heights[0];
       const freeboard = maxHeight - draftM;
       const x = (station.position - 0.5) * lppM;
+      points.push([x, freeboard]);
+    }
+  }
+
+  return points;
+}
+
+/**
+ * Extract buttocks from OffsetsGrid format for Profile View
+ */
+export function extractButtocksFromOffsetsGrid(
+  offsetsGrid: OffsetsGrid,
+  lppM: number,
+  draftM: number,
+  buttockOffsets: number[] = []
+): Array<{ transverseOffset: number; points: Array<[number, number]>; isCenterline: boolean }> {
+  // Validate inputs
+  if (!Number.isFinite(lppM) || lppM <= 0) {
+    console.warn("[extractButtocksFromOffsetsGrid] Invalid lppM:", lppM);
+    return [];
+  }
+  if (!Number.isFinite(draftM) || draftM <= 0) {
+    console.warn("[extractButtocksFromOffsetsGrid] Invalid draftM:", draftM);
+    return [];
+  }
+
+  const { stations, waterlines, offsets } = offsetsGrid;
+
+  if (!stations || !waterlines || !offsets || stations.length === 0 || waterlines.length === 0) {
+    console.warn("[extractButtocksFromOffsetsGrid] Invalid OffsetsGrid data");
+    return [];
+  }
+
+  const buttocks: Array<{
+    transverseOffset: number;
+    points: Array<[number, number]>;
+    isCenterline: boolean;
+  }> = [];
+
+  // If no offsets specified, generate default buttocks
+  if (buttockOffsets.length === 0) {
+    // Find max half-breadth across all stations and waterlines
+    const maxHalfBreadth = Math.max(
+      ...offsets.flatMap((stationOffsets) => (stationOffsets ? stationOffsets : []))
+    );
+    buttockOffsets = Array.from({ length: 5 }, (_, i) => (i / 4) * maxHalfBreadth);
+  }
+
+  for (const yOffset of buttockOffsets) {
+    const points: Array<[number, number]> = [];
+
+    // For each station, find the height (waterline) where half-breadth equals yOffset
+    for (let stIdx = 0; stIdx < stations.length; stIdx++) {
+      const stationX = stations[stIdx];
+      const stationOffsets = offsets[stIdx];
+
+      if (!stationOffsets || stationOffsets.length === 0) continue;
+
+      // Find the waterline where half-breadth equals yOffset
+      let z = 0; // Default to keel (waterline 0)
+
+      // Search through waterlines to find where half-breadth matches yOffset
+      for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+        const wl1 = waterlines[wlIdx];
+        const wl2 = waterlines[wlIdx + 1];
+        const y1 = stationOffsets[wlIdx] ?? 0;
+        const y2 = stationOffsets[wlIdx + 1] ?? 0;
+
+        // Check if yOffset is between y1 and y2
+        if (yOffset >= Math.min(y1, y2) && yOffset <= Math.max(y1, y2)) {
+          // Interpolate height
+          if (Math.abs(y2 - y1) > 0.001) {
+            const t = (yOffset - y1) / (y2 - y1);
+            z = wl1 + t * (wl2 - wl1);
+          } else {
+            z = wl1;
+          }
+          break;
+        }
+      }
+
+      // If yOffset is beyond max half-breadth, use highest waterline
+      const maxY = Math.max(...stationOffsets);
+      if (yOffset > maxY && waterlines.length > 0) {
+        z = waterlines[waterlines.length - 1];
+      }
+
+      // Convert station X position to longitudinal coordinate
+      // OffsetsGrid stations are in meters from AP (0 = AP, Lpp = FP)
+      // Profile view expects: x = 0 at midship, -Lpp/2 at AP, +Lpp/2 at FP
+      // Convert: profileX = stationX - Lpp/2
+      const x = stationX - lppM / 2;
+      // Profile view expects: y = 0 at waterline, negative below (keel = -draft)
+      // OffsetsGrid waterlines are in meters from keel (0 = keel, draft = waterline)
+      // Convert: profileY = z - draft (so keel = -draft, waterline = 0)
+      const profileY = z - draftM;
+
+      if (Number.isFinite(x) && Number.isFinite(profileY)) {
+        points.push([x, profileY]);
+      }
+    }
+
+    if (points.length > 0) {
+      buttocks.push({
+        transverseOffset: yOffset,
+        points,
+        isCenterline: Math.abs(yOffset) < 0.01,
+      });
+    }
+  }
+
+  return buttocks;
+}
+
+/**
+ * Extract sheerline from OffsetsGrid format
+ */
+export function extractSheerlineFromOffsetsGrid(
+  offsetsGrid: OffsetsGrid,
+  lppM: number,
+  depthM: number,
+  draftM: number
+): Array<[number, number]> {
+  const { stations, waterlines, offsets } = offsetsGrid;
+
+  if (!stations || !waterlines || !offsets || stations.length === 0 || waterlines.length === 0) {
+    console.warn("[extractSheerlineFromOffsetsGrid] Invalid OffsetsGrid data");
+    return [];
+  }
+
+  const points: Array<[number, number]> = [];
+
+  // For each station, find the maximum waterline (deck level)
+  for (let stIdx = 0; stIdx < stations.length; stIdx++) {
+    const stationX = stations[stIdx];
+    const stationOffsets = offsets[stIdx];
+
+    if (!stationOffsets || stationOffsets.length === 0) continue;
+
+    // Find the highest waterline with non-zero half-breadth (deck level)
+    let maxHeight = 0;
+    for (let wlIdx = waterlines.length - 1; wlIdx >= 0; wlIdx--) {
+      const halfBreadth = stationOffsets[wlIdx] ?? 0;
+      if (halfBreadth > 0.01) {
+        // Non-zero half-breadth indicates deck level
+        maxHeight = waterlines[wlIdx];
+        break;
+      }
+    }
+
+    // If no deck level found, use depth
+    if (maxHeight < draftM) {
+      maxHeight = depthM;
+    }
+
+    const freeboard = maxHeight - draftM;
+    // Convert station X position to longitudinal coordinate
+    // OffsetsGrid stations are in meters from AP (0 = AP, Lpp = FP)
+    // Profile view expects: x = 0 at midship, -Lpp/2 at AP, +Lpp/2 at FP
+    // Convert: profileX = stationX - Lpp/2
+    const x = stationX - lppM / 2;
+
+    if (Number.isFinite(x) && Number.isFinite(freeboard)) {
       points.push([x, freeboard]);
     }
   }

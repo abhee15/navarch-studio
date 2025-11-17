@@ -311,10 +311,10 @@ resource "aws_apprunner_service" "ai_agent_service" {
           ASPNETCORE_ENVIRONMENT = var.environment == "prod" ? "Production" : "Staging"
           # OpenAI API key will be set as a secret in Secrets Manager and injected by App Runner
           # For now, using empty string - needs to be configured post-deployment
-          OpenAI__ApiKey       = ""  # TODO: Set this via Secrets Manager
-          OpenAI__Model        = "gpt-4o-mini"
-          OpenAI__MaxTokens    = "2000"
-          OpenAI__Temperature  = "0.3"
+          OpenAI__ApiKey         = "" # TODO: Set this via Secrets Manager
+          OpenAI__Model          = "gpt-4o-mini"
+          OpenAI__MaxTokens      = "2000"
+          OpenAI__Temperature    = "0.3"
           OpenAI__TimeoutSeconds = "30"
         }
       }
@@ -331,7 +331,7 @@ resource "aws_apprunner_service" "ai_agent_service" {
 
   network_configuration {
     egress_configuration {
-      egress_type = "DEFAULT"  # Needs internet access for OpenAI API
+      egress_type = "DEFAULT" # Needs internet access for OpenAI API
     }
   }
 
@@ -372,15 +372,15 @@ resource "aws_apprunner_service" "api_gateway" {
 
         runtime_environment_variables = merge({
           # Use Staging for dev/staging so auto-migrations run, Production for prod
-          ASPNETCORE_ENVIRONMENT       = var.environment == "prod" ? "Production" : "Staging"
-          Services__IdentityService    = "https://${aws_apprunner_service.identity_service.service_url}"
-          Services__DataService        = "https://${aws_apprunner_service.data_service.service_url}"
-          Services__HullSizingService  = "https://${aws_apprunner_service.hull_sizing_service.service_url}"
-          Services__AIAgentService     = "https://${aws_apprunner_service.ai_agent_service.service_url}"
-          Cognito__UserPoolId          = var.cognito_user_pool_id
-          Cognito__AppClientId         = var.cognito_user_pool_client_id
-          Cognito__Domain              = var.cognito_domain
-          Cognito__Region              = data.aws_region.current.name
+          ASPNETCORE_ENVIRONMENT      = var.environment == "prod" ? "Production" : "Staging"
+          Services__IdentityService   = "https://${aws_apprunner_service.identity_service.service_url}"
+          Services__DataService       = "https://${aws_apprunner_service.data_service.service_url}"
+          Services__HullSizingService = "https://${aws_apprunner_service.hull_sizing_service.service_url}"
+          Services__AIAgentService    = "https://${aws_apprunner_service.ai_agent_service.service_url}"
+          Cognito__UserPoolId         = var.cognito_user_pool_id
+          Cognito__AppClientId        = var.cognito_user_pool_client_id
+          Cognito__Domain             = var.cognito_domain
+          Cognito__Region             = data.aws_region.current.name
           },
           # CORS - Add CloudFront origin (use index 10 to ADD to appsettings origins, not replace)
           var.cloudfront_distribution_domain != "" ? {

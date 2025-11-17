@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, runInAction, computed } from "mobx";
 import type {
   MissionCase,
   CreateMissionCaseDto,
@@ -57,17 +57,85 @@ export class SizingStore {
   wizardStep = 1;
   locks: SizingLocksDto = {};
 
+  // Granular loading state tracking
+  loadingStates = {
+    candidates: false,
+    run: false,
+    metadata: false,
+    mission: false,
+    export: false,
+  };
+
   // Workspace view
   viewMode: "3d" | "2d" | "table" = "3d";
   compareMode = false;
 
   constructor() {
     makeAutoObservable(this);
+    // Validate state on initialization
+    this.validateState();
+  }
+
+  // Computed values for derived state
+  @computed
+  get hasSelectedCandidate(): boolean {
+    return this.selectedCandidate !== null;
+  }
+
+  @computed
+  get selectedCandidateWithFlags(): CandidateWithFlags | null {
+    if (!this.selectedCandidate) return null;
+    return this.getCandidateWithFlags(this.selectedCandidate);
+  }
+
+  @computed
+  get hasUsableGeometry(): boolean {
+    return this.candidates.some((c) => {
+      const status = c.geometryGenerationStatus;
+      // Check if geometry generation succeeded (Success means at least one method succeeded)
+      return (
+        status === "Success" ||
+        (status !== "BothFailed" && status !== "FormCoefficientFailed" && status !== undefined)
+      );
+    });
+  }
+
+  @computed
+  get isLoadingAny(): boolean {
+    return (
+      this.isLoading ||
+      Object.values(this.loadingStates).some(Boolean) ||
+      this.isShipdMetadataLoading
+    );
+  }
+
+  // State validation
+  private validateState(): void {
+    // Ensure selected candidate exists in candidates array
+    if (this.selectedCandidate) {
+      const exists = this.candidates.some((c) => c.id === this.selectedCandidate?.id);
+      if (!exists) {
+        console.warn(
+          "[SizingStore] Selected candidate not in candidates array, clearing selection"
+        );
+        this.selectedCandidate = null;
+      }
+    }
+
+    // Ensure compare candidates exist in candidates array
+    this.compareCandidates = this.compareCandidates.filter((compareCandidate) =>
+      this.candidates.some((c) => c.id === compareCandidate.id)
+    );
+
+    // Update compare mode based on remaining candidates
+    if (this.compareCandidates.length === 0) {
+      this.compareMode = false;
+    }
   }
 
   // Mission Cases
   async loadMissionCases() {
-    this.isLoading = true;
+    this.loadingStates.mission = true;
     this.error = null;
     try {
       const cases = await sizingApi.getMissionCases();
@@ -80,12 +148,12 @@ export class SizingStore {
         } else {
           console.warn("[SizingStore] getMissionCases returned non-array:", cases);
         }
-        this.isLoading = false;
+        this.loadingStates.mission = false;
       });
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to load mission cases";
-        this.isLoading = false;
+        this.loadingStates.mission = false;
       });
     }
   }
@@ -152,18 +220,26 @@ export class SizingStore {
   }
 
   async selectMission(id: string) {
-    this.isLoading = true;
+    this.loadingStates.mission = true;
     this.error = null;
     try {
       const mission = await sizingApi.getMissionCase(id);
       runInAction(() => {
         this.selectedMission = mission;
-        this.isLoading = false;
+        // Clear related state when mission changes
+        this.currentRun = null;
+        this.candidates.length = 0;
+        this.selectedCandidate = null;
+        this.compareCandidates.length = 0;
+        this.compareMode = false;
+        this.loadingStates.mission = false;
+        // Validate state after update
+        this.validateState();
       });
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to load mission case";
-        this.isLoading = false;
+        this.loadingStates.mission = false;
       });
     }
   }
@@ -282,7 +358,7 @@ export class SizingStore {
 
   async loadSizingRun(runId: string, skipLoadingState = false) {
     if (!skipLoadingState) {
-      this.isLoading = true;
+      this.loadingStates.run = true;
     }
     this.error = null;
     try {
@@ -290,14 +366,16 @@ export class SizingStore {
       runInAction(() => {
         this.currentRun = run;
         if (!skipLoadingState) {
-          this.isLoading = false;
+          this.loadingStates.run = false;
         }
+        // Validate state after loading
+        this.validateState();
       });
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to load sizing run";
         if (!skipLoadingState) {
-          this.isLoading = false;
+          this.loadingStates.run = false;
         }
       });
       throw error;
@@ -306,7 +384,7 @@ export class SizingStore {
 
   async loadCandidates(runId: string, skipLoadingState = false) {
     if (!skipLoadingState) {
-      this.isLoading = true;
+      this.loadingStates.candidates = true;
     }
     this.error = null;
     try {
@@ -326,7 +404,16 @@ export class SizingStore {
 
         // Extract parameters from vector if available
         if (c.shipdParametersJson && this.shipdParameters.length > 0) {
-          return extractShipDParameters(c, this.shipdParameters);
+          try {
+            return extractShipDParameters(c, this.shipdParameters);
+          } catch (error) {
+            console.error(
+              "[SizingStore] Failed to extract ShipD parameters for candidate:",
+              c.id,
+              error
+            );
+            return c; // Return original candidate if extraction fails
+          }
         }
 
         return c;
@@ -354,8 +441,10 @@ export class SizingStore {
           console.warn("[SizingStore] getRunCandidates returned non-array:", candidates);
         }
         if (!skipLoadingState) {
-          this.isLoading = false;
+          this.loadingStates.candidates = false;
         }
+        // Validate state after loading
+        this.validateState();
       });
 
       // Background: Poll for geometry readiness if needed (solver may finish shortly after)
@@ -365,7 +454,7 @@ export class SizingStore {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to load candidates";
         if (!skipLoadingState) {
-          this.isLoading = false;
+          this.loadingStates.candidates = false;
         }
       });
       throw error;
@@ -374,7 +463,8 @@ export class SizingStore {
 
   async loadRunAndCandidates(runId: string) {
     // Load both run and candidates in parallel, managing loading state centrally
-    this.isLoading = true;
+    this.loadingStates.run = true;
+    this.loadingStates.candidates = true;
     this.error = null;
     try {
       await Promise.all([
@@ -391,47 +481,81 @@ export class SizingStore {
       }
 
       runInAction(() => {
-        this.isLoading = false;
+        this.loadingStates.run = false;
+        this.loadingStates.candidates = false;
+        // Validate state after loading
+        this.validateState();
       });
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to load run and candidates";
-        this.isLoading = false;
+        this.loadingStates.run = false;
+        this.loadingStates.candidates = false;
       });
     }
   }
 
   selectCandidate(id: string) {
     const candidate = this.candidates.find((c) => c.id === id);
-    if (candidate) {
+    if (!candidate) {
+      console.warn("[SizingStore] Candidate not found:", id);
+      this.error = `Candidate ${id} not found in current candidates list`;
+      return;
+    }
+
+    runInAction(() => {
       // Ensure parameters are extracted if missing
       let updatedCandidate = candidate;
       if (
         candidate.shipdParametersJson &&
         (candidate.bowLengthRatio == null || candidate.sternLengthRatio == null)
       ) {
-        updatedCandidate = extractShipDParameters(candidate, this.shipdParameters);
-        // Update in candidates array
-        const index = this.candidates.findIndex((c) => c.id === id);
-        if (index >= 0) {
-          this.candidates[index] = updatedCandidate;
+        try {
+          updatedCandidate = extractShipDParameters(candidate, this.shipdParameters);
+          // Update in candidates array
+          const index = this.candidates.findIndex((c) => c.id === id);
+          if (index >= 0) {
+            this.candidates[index] = updatedCandidate;
+          }
+        } catch (error) {
+          console.error("[SizingStore] Failed to extract ShipD parameters:", error);
+          // Continue with original candidate if extraction fails
         }
       }
       this.selectedCandidate = updatedCandidate;
-    }
+      this.error = null; // Clear any previous errors
+      // Validate state after selection
+      this.validateState();
+    });
   }
 
   updateCandidate(updatedCandidate: CandidateDesign) {
+    // Validate candidate structure
+    if (!updatedCandidate || !updatedCandidate.id) {
+      console.error("[SizingStore] Invalid candidate update:", updatedCandidate);
+      this.error = "Invalid candidate data";
+      return;
+    }
+
     runInAction(() => {
       // Update in candidates array
       const index = this.candidates.findIndex((c) => c.id === updatedCandidate.id);
       if (index >= 0) {
         this.candidates[index] = updatedCandidate;
+      } else {
+        console.warn("[SizingStore] Candidate not found in array, adding:", updatedCandidate.id);
+        this.candidates.push(updatedCandidate);
       }
 
-      // Update selected candidate if it's the same one
+      // Update selected candidate if it's the same one (maintain reference if possible)
       if (this.selectedCandidate?.id === updatedCandidate.id) {
-        this.selectedCandidate = updatedCandidate;
+        // If it's the same reference, update properties to maintain reactivity
+        if (this.selectedCandidate === this.candidates[index]) {
+          // Already updated via array update, just ensure reference is maintained
+          this.selectedCandidate = this.candidates[index];
+        } else {
+          this.selectedCandidate = updatedCandidate;
+        }
       }
 
       // Update in compare candidates if present
@@ -439,6 +563,9 @@ export class SizingStore {
       if (compareIndex >= 0) {
         this.compareCandidates[compareIndex] = updatedCandidate;
       }
+
+      // Validate state after update
+      this.validateState();
     });
   }
 
@@ -462,7 +589,7 @@ export class SizingStore {
   }
 
   async exportCandidate(id: string, format: ExportFormat) {
-    this.isLoading = true;
+    this.loadingStates.export = true;
     this.error = null;
     try {
       const blob = await sizingApi.exportCandidate(id, format);
@@ -478,12 +605,12 @@ export class SizingStore {
       document.body.removeChild(a);
 
       runInAction(() => {
-        this.isLoading = false;
+        this.loadingStates.export = false;
       });
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : "Failed to export candidate";
-        this.isLoading = false;
+        this.loadingStates.export = false;
       });
     }
   }
@@ -614,6 +741,13 @@ export class SizingStore {
     this.wizardStep = 1;
     this.locks = {};
     this.error = null;
+    this.isLoading = false;
+    // Clear all loading states
+    Object.keys(this.loadingStates).forEach((key) => {
+      this.loadingStates[key as keyof typeof this.loadingStates] = false;
+    });
+    this.isShipdMetadataLoading = false;
+    this.shipdMetadataError = null;
   }
 
   private buildDefaultVesselName(candidate: CandidateDesign): string {

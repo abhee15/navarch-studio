@@ -3,6 +3,12 @@ import type { CandidateDesign } from "../../../types/sizing";
 import { extractSectionsFromShipD } from "../../../utils/shipd2DGeometry";
 import { generateShipDSections } from "../../../utils/shipdGeometryGenerator";
 import { useStore } from "../../../stores";
+import { generateSmoothCurve } from "../../../utils/splineInterpolation";
+import {
+  generateFormCoefficientHull,
+  type HullDimensions,
+} from "../../../utils/formCoefficientHullGenerator";
+import { normalizeGeometry } from "../../../utils/geometryFormatConverter";
 
 interface Hull2DSectionsProps {
   candidate: CandidateDesign;
@@ -49,32 +55,54 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
 
     const { sizingStore } = useStore();
 
+    // Check geometry generation status - don't use fallback if generation failed
+    const geometryGenerationFailed =
+      candidate.geometryGenerationStatus === "BothFailed" ||
+      candidate.geometryGenerationStatus === "FormCoefficientFailed";
+
     // Generate sections - prioritize ShipD geometry if available
     const sections = useMemo(() => {
+      // If geometry generation failed, return empty (will show error message)
+      if (geometryGenerationFailed) {
+        console.warn(
+          "[Hull2DSections] Geometry generation failed, not using fallback:",
+          candidate.geometryGenerationError
+        );
+        return [];
+      }
+
       const beam = candidate.beamM;
       const draft = candidate.draftM;
 
       // Check if geometry is available (OffsetsGridDto format from form-coefficient generator)
       if (candidate.geometryJson) {
         try {
-          const geometry = JSON.parse(candidate.geometryJson);
+          // Debug: Log geometryJson content to diagnose format detection issues
+          console.log("[Hull2DSections] Checking geometryJson:", {
+            hasGeometryJson: !!candidate.geometryJson,
+            geometryJsonLength: candidate.geometryJson?.length,
+            geometryJsonPreview: candidate.geometryJson?.substring(0, 200),
+            geometryGenerationStatus: candidate.geometryGenerationStatus,
+          });
 
-          // Check if it's OffsetsGridDto format (from FormCoefficientHullGenerator)
-          if (geometry.stations && geometry.waterlines && geometry.offsets) {
+          // Normalize geometry to OffsetsGrid format (handles both ShipD and OffsetsGrid)
+          const normalizedGeometry = normalizeGeometry(candidate.geometryJson);
+
+          if (normalizedGeometry) {
             console.log("[Hull2DSections] Using OffsetsGrid geometry from backend", {
-              stationCount: geometry.stations.length,
-              waterlineCount: geometry.waterlines.length,
+              stationCount: normalizedGeometry.stations.length,
+              waterlineCount: normalizedGeometry.waterlines.length,
             });
 
             // Convert OffsetsGrid to sections format
-            // geometry.offsets is [stationIndex][waterlineIndex]
-            const result = geometry.stations.map((stationX: number, stIdx: number) => {
+            // normalizedGeometry.offsets is [stationIndex][waterlineIndex]
+            const result = normalizedGeometry.stations.map((stationX: number, stIdx: number) => {
               const points: [number, number][] = [];
 
               // Extract half-breadths for this station across all waterlines
-              for (let wlIdx = 0; wlIdx < geometry.waterlines.length; wlIdx++) {
-                const wlZ = geometry.waterlines[wlIdx];
-                const halfBreadth = geometry.offsets[stIdx]?.[wlIdx] ?? 0;
+              for (let wlIdx = 0; wlIdx < normalizedGeometry.waterlines.length; wlIdx++) {
+                const wlZ = normalizedGeometry.waterlines[wlIdx];
+                const halfBreadth = normalizedGeometry.offsets[stIdx]?.[wlIdx] ?? 0;
                 points.push([halfBreadth, -wlZ]); // Negative Z because we're drawing from keel upward
               }
 
@@ -121,7 +149,8 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
             return result;
           }
 
-          // Check if it's ShipD format (legacy)
+          // Check if it's ShipD format (legacy) - normalizeGeometry returned null, try direct parsing
+          const geometry = JSON.parse(candidate.geometryJson);
           const sectionsData = geometry as {
             stations?: Array<{
               position: number;
@@ -226,52 +255,145 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
         });
       }
 
-      // Fallback: Use parametric generation
-      const sectionCurves = [];
+      // Fallback: Generate using FormCoefficientHullGenerator (solver logic)
+      // This ensures non-isometric geometry matching solver output
+      try {
+        const lpp = candidate.lppM;
+        const dims: HullDimensions = {
+          length: lpp,
+          beam,
+          draft,
+          lcbPercent: candidate.lcbPctLpp ?? 0,
+        };
 
-      for (let i = 0; i <= stationCount; i++) {
-        const stationNum = i;
-        const xNorm = (2 * i) / stationCount - 1;
-        const longitudinalFactor = 1 - xNorm * xNorm;
+        const generated = generateFormCoefficientHull(
+          dims,
+          candidate.cb ?? 0.68,
+          candidate.cp ?? 0.73,
+          candidate.cm ?? 0.93,
+          candidate.cwp ?? 0.8,
+          23, // BSRA stations
+          13, // BSRA waterlines
+          candidate.bowFamily,
+          candidate.midshipFamily,
+          candidate.sternFamily,
+          sizingStore.currentRun?.vesselType ?? candidate.vesselType
+        );
 
-        if (longitudinalFactor <= 0) {
-          sectionCurves.push({
-            station: stationNum,
-            points: [[0, 0]],
-            isAft: stationNum <= 5,
+        // Convert OffsetsGrid to sections format (reuse existing logic)
+        // generated.offsets is [stationIndex][waterlineIndex]
+        const result = generated.stations.map((stationX: number, stIdx: number) => {
+          const points: [number, number][] = [];
+
+          // Extract half-breadths for this station across all waterlines
+          for (let wlIdx = 0; wlIdx < generated.waterlines.length; wlIdx++) {
+            const wlZ = generated.waterlines[wlIdx];
+            const halfBreadth = generated.offsets[stIdx]?.[wlIdx] ?? 0;
+            points.push([halfBreadth, -wlZ]); // Negative Z because we're drawing from keel upward
+          }
+
+          // Sort points by Z coordinate (height) to ensure proper ordering
+          points.sort((a, b) => a[1] - b[1]);
+
+          // Remove duplicate or very close points that could cause sharp angles
+          const cleanedPoints: Array<[number, number]> = [];
+          const tolerance = 0.001; // 1mm tolerance for point deduplication
+
+          for (let i = 0; i < points.length; i++) {
+            const current = points[i];
+            if (cleanedPoints.length === 0) {
+              cleanedPoints.push(current);
+              continue;
+            }
+
+            const last = cleanedPoints[cleanedPoints.length - 1];
+            const distance = Math.sqrt(
+              Math.pow(current[0] - last[0], 2) + Math.pow(current[1] - last[1], 2)
+            );
+
+            // Only add point if it's sufficiently different from the last point
+            if (distance > tolerance) {
+              cleanedPoints.push(current);
+            }
+          }
+
+          // Determine if this is aft or forward section
+          const isAft = stationX < lpp / 2;
+
+          return {
+            station: stIdx,
+            points: cleanedPoints,
+            isAft,
             hasBulb: false,
-          });
-          continue;
-        }
-
-        const points: [number, number][] = [];
-        const numPoints = 40;
-
-        for (let j = 0; j <= numPoints; j++) {
-          const z = -(j / numPoints) * draft;
-          const zNorm = z / draft;
-          const y = (beam / 2) * (1 - zNorm * zNorm) * longitudinalFactor;
-          points.push([y, z]);
-        }
-
-        sectionCurves.push({
-          station: stationNum,
-          points,
-          isAft: stationNum <= 5,
-          hasBulb: false,
+          };
         });
-      }
 
-      return sectionCurves;
+        console.log("[Hull2DSections] Generated sections using FormCoefficientHullGenerator", {
+          sectionCount: result.length,
+        });
+
+        return result;
+      } catch (error) {
+        console.error(
+          "[Hull2DSections] Failed to generate geometry using FormCoefficientHullGenerator:",
+          error
+        );
+        // Return empty - will show error message
+        return [];
+      }
     }, [
+      geometryGenerationFailed,
+      candidate.geometryGenerationError,
+      candidate.geometryGenerationStatus,
       candidate.beamM,
       candidate.draftM,
       candidate.lppM,
+      candidate.cb,
+      candidate.cp,
+      candidate.cm,
+      candidate.cwp,
+      candidate.lcbPctLpp,
+      candidate.bowFamily,
+      candidate.midshipFamily,
+      candidate.sternFamily,
+      candidate.vesselType,
       candidate.geometryJson,
       candidate.shipdParametersJson,
       sizingStore.shipdParameters,
+      sizingStore.currentRun?.vesselType,
       stationCount,
     ]);
+
+    // Show error message if geometry generation failed
+    if (geometryGenerationFailed) {
+      return (
+        <div className="w-full h-full p-4 relative flex flex-col">
+          <div className="flex-1 bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg shadow-inner flex flex-col items-center justify-center">
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 shadow-lg max-w-md">
+              <div className="p-6">
+                <h3 className="text-red-800 dark:text-red-200 font-bold flex items-center gap-2 mb-2">
+                  Geometry Generation Failed
+                </h3>
+                <p className="text-red-700 dark:text-red-300 text-sm mb-3">
+                  Unable to generate hull geometry for this candidate. The sections view cannot be
+                  displayed.
+                </p>
+                {candidate.geometryGenerationError && (
+                  <div className="mt-3 p-3 bg-red-100 dark:bg-red-900/30 rounded border border-red-200 dark:border-red-800">
+                    <p className="text-xs font-mono text-red-800 dark:text-red-200">
+                      {candidate.geometryGenerationError}
+                    </p>
+                  </div>
+                )}
+                <p className="text-red-600 dark:text-red-400 text-xs mt-3">
+                  Please try adjusting parameters or contact support if this issue persists.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     const padding = 60;
     const svgWidth = 600;
@@ -340,15 +462,20 @@ export const Hull2DSections = forwardRef<SVGSVGElement, Hull2DSectionsProps>(
           .join(" ");
       }
 
-      // Use smooth curves with proper line joins
-      // The point deduplication above should eliminate most sharp angles
-      // Use smooth line joins in SVG to further reduce visual artifacts
-      return validPoints
-        .map(([y, z], i) => {
-          const [sx, sy] = toSVG(y, z, isAft);
+      // Use spline interpolation for smooth curves
+      // Convert to format expected by spline utility (x = z, y = y)
+      const splinePoints = validPoints.map(([y, z]) => ({ x: z, y }));
+
+      // Interpolate for smoothness (80 points for good balance between smoothness and performance)
+      const interpolated = generateSmoothCurve(splinePoints, 80);
+
+      // Convert back and generate SVG path
+      return interpolated
+        .map((p, i) => {
+          const [sx, sy] = toSVG(p.y, p.x, isAft);
           // Validate coordinates before formatting
           if (!Number.isFinite(sx) || !Number.isFinite(sy)) {
-            console.warn("[Hull2DSections] Invalid SVG coordinate:", { sx, sy, y, z });
+            console.warn("[Hull2DSections] Invalid SVG coordinate:", { sx, sy, y: p.y, z: p.x });
             return "";
           }
           return `${i === 0 ? "M" : "L"} ${sx.toFixed(2)},${sy.toFixed(2)}`;
