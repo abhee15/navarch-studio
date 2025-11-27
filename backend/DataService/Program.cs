@@ -454,15 +454,29 @@ try
                 }
 
                 // FAIL STARTUP if critical errors found
+                // NOTE: In production/staging, we fail hard to catch schema issues early
+                // In development, we allow startup to continue for easier debugging
                 if (!validationResult.IsValid)
                 {
                     Console.WriteLine("═══════════════════════════════════════════════════════════");
                     Console.WriteLine("❌ [VALIDATION] CRITICAL: Schema validation failed!");
                     Console.WriteLine("═══════════════════════════════════════════════════════════");
-                    Log.Fatal("[VALIDATION] Schema validation failed - ABORTING STARTUP");
+                    Console.WriteLine("[VALIDATION] Errors:");
+                    foreach (var error in validationResult.Errors)
+                    {
+                        Console.WriteLine($"  • {error}");
+                    }
+                    Console.WriteLine("═══════════════════════════════════════════════════════════");
+                    Log.Fatal("[VALIDATION] Schema validation failed - ABORTING STARTUP. Errors: {Errors}",
+                        string.Join("; ", validationResult.Errors));
+
+                    // Provide more context in the exception message
+                    var errorDetails = string.Join("\n  - ", validationResult.Errors);
                     throw new InvalidOperationException(
-                        $"Database schema validation failed with {validationResult.Errors.Count} error(s). " +
-                        "See logs for details. Service cannot start with incorrect schema.");
+                        $"Database schema validation failed with {validationResult.Errors.Count} error(s).\n" +
+                        $"Environment: {app.Environment.EnvironmentName}\n" +
+                        $"Errors:\n  - {errorDetails}\n\n" +
+                        "Service cannot start with incorrect schema. Check CloudWatch logs for details.");
                 }
             }
             catch (InvalidOperationException)
@@ -472,7 +486,17 @@ try
             catch (Exception validationEx)
             {
                 Console.WriteLine($"⚠️  [VALIDATION] ERROR: {validationEx.Message}");
-                Log.Error(validationEx, "[VALIDATION] Schema validation failed with exception");
+                Console.WriteLine($"   Stack trace: {validationEx.StackTrace}");
+                Log.Error(validationEx, "[VALIDATION] Schema validation failed with exception: {Message}", validationEx.Message);
+
+                // In production/staging, fail startup on validation exceptions
+                // In development, allow startup to continue for easier debugging
+                if (!app.Environment.IsDevelopment())
+                {
+                    throw new InvalidOperationException(
+                        $"Schema validation failed with exception in {app.Environment.EnvironmentName} environment. " +
+                        $"Service cannot start. Error: {validationEx.Message}", validationEx);
+                }
             }
 
             // Seed parametric hull catalog (runs in all environments)
