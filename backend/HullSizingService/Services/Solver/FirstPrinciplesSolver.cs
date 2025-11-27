@@ -442,11 +442,13 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
                 g => g.OrderByDescending(w => w.Id).First().Weight);
 
         // Default weights if not found
-        var deltaWeight = weights.GetValueOrDefault("delta_balance", 0.35m);
-        var powerWeight = weights.GetValueOrDefault("installed_power", 0.25m);
-        var constraintsWeight = weights.GetValueOrDefault("constraints_ok", 0.20m);
-        var stabilityWeight = weights.GetValueOrDefault("stability_screen", 0.10m);
-        var volumeWeight = weights.GetValueOrDefault("teu_or_volume_fit", 0.10m);
+        // Adjusted to include mission-type match bonus (0.12 = 12%)
+        var deltaWeight = weights.GetValueOrDefault("delta_balance", 0.33m);
+        var powerWeight = weights.GetValueOrDefault("installed_power", 0.23m);
+        var constraintsWeight = weights.GetValueOrDefault("constraints_ok", 0.18m);
+        var stabilityWeight = weights.GetValueOrDefault("stability_screen", 0.09m);
+        var volumeWeight = weights.GetValueOrDefault("teu_or_volume_fit", 0.05m);
+        var missionMatchWeight = weights.GetValueOrDefault("mission_type_match", 0.12m);
 
         var maxShp = candidates.Max(c => c.ShpKw) ?? 1.0m;
         var minShp = candidates.Min(c => c.ShpKw) ?? 0.0m;
@@ -483,6 +485,11 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             // 5. Volume/TEU fit (placeholder for MVP)
             score += 0.8m * volumeWeight;
 
+            // 6. Mission-type match bonus (NEW)
+            // Give bonus for hull families that match the vessel's mission type
+            var missionMatchScore = CalculateMissionTypeMatchScore(candidate.HullFamily, mission.MissionType);
+            score += missionMatchScore * missionMatchWeight;
+
             // Create new candidate with score
             scoredCandidates.Add(candidate with { Score = score });
         }
@@ -493,5 +500,79 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             .ToList();
 
         return ranked;
+    }
+
+    /// <summary>
+    /// Calculate mission-type match score for hull family selection
+    /// Returns 1.0 for perfect match, 0.5 for compatible, 0.0 for mismatch
+    /// </summary>
+    private static decimal CalculateMissionTypeMatchScore(string hullFamily, string missionType)
+    {
+        // Normalize to lowercase for comparison
+        var family = hullFamily.ToLowerInvariant();
+        var type = missionType.ToLowerInvariant();
+
+        // Perfect match: hull family name matches mission type
+        if (family == type) return 1.0m;
+
+        // Compatible matches based on vessel characteristics
+        var compatibilityMap = new Dictionary<string, List<string>>
+        {
+            // Container ships work best with container family
+            { "container", new List<string> { "container", "cargo", "roro" } },
+
+            // Tankers work best with tanker family
+            { "tanker", new List<string> { "tanker", "lng", "bulk" } },
+
+            // Bulk carriers work best with bulk family
+            { "bulk", new List<string> { "bulk", "cargo", "tanker" } },
+
+            // General cargo is versatile
+            { "cargo", new List<string> { "cargo", "bulk", "container", "roro" } },
+
+            // RoRo / Car carriers
+            { "roro", new List<string> { "roro", "cargo", "container" } },
+
+            // LNG carriers
+            { "lng", new List<string> { "lng", "tanker" } },
+
+            // Offshore vessels
+            { "osv", new List<string> { "osv", "fishing", "tugboat" } },
+            { "offshore", new List<string> { "osv", "fishing", "tugboat" } },
+
+            // Fishing vessels
+            { "fishing", new List<string> { "fishing", "osv", "cargo" } },
+
+            // Tugboats
+            { "tugboat", new List<string> { "tugboat", "osv", "fishing" } },
+
+            // Yachts (displacement)
+            { "yacht_disp", new List<string> { "yacht_disp", "yacht_semi", "fishing" } },
+            { "yacht", new List<string> { "yacht_disp", "yacht_semi", "fishing" } },
+
+            // High-speed craft
+            { "hsc", new List<string> { "hsc_planing", "hsc_semi", "ferry" } },
+            { "ferry", new List<string> { "hsc_planing", "hsc_semi", "ferry", "roro" } },
+            { "fast_ferry", new List<string> { "hsc_planing", "hsc_semi", "ferry" } },
+
+            // Naval vessels
+            { "naval", new List<string> { "patrol", "osv", "cargo" } },
+            { "patrol", new List<string> { "patrol", "hsc_planing", "osv" } },
+        };
+
+        // Check if mission type has compatible families
+        if (compatibilityMap.TryGetValue(type, out var compatibleFamilies))
+        {
+            // Perfect match (already checked above, but for clarity)
+            if (compatibleFamilies.Count > 0 && compatibleFamilies[0] == family)
+                return 1.0m;
+
+            // Compatible match
+            if (compatibleFamilies.Contains(family))
+                return 0.5m;
+        }
+
+        // No match or compatibility
+        return 0.0m;
     }
 }
