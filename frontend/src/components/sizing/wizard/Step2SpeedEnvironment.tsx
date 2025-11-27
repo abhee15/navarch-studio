@@ -1,8 +1,16 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import type { CreateMissionCaseDto } from "../../../types/sizing";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
+import { FormField } from "../../ui/form-field";
+import { AlertTriangle } from "lucide-react";
+import {
+  validateField,
+  isStep2Valid,
+  type ValidationErrors,
+  type TouchedFields,
+} from "../../../utils/wizardValidation";
 
 interface Step2Props {
   formData: Partial<CreateMissionCaseDto>;
@@ -20,7 +28,42 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
   onNext,
   onPrevious,
 }) => {
-  const isValid = formData.serviceSpeedKn && formData.serviceSpeedKn > 0;
+  // Validation state
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState<TouchedFields>({});
+
+  // Check if form is valid for Next button
+  const isValid = isStep2Valid(formData);
+
+  // Handle field change with validation
+  const handleFieldChange = useCallback(
+    (fieldName: string, value: any) => {
+      // Update form data
+      updateFormData({ [fieldName]: value });
+
+      // Mark field as touched
+      setTouched((prev) => ({ ...prev, [fieldName]: true }));
+
+      // Validate field
+      const error = validateField(fieldName, value, { ...formData, [fieldName]: value });
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: error,
+      }));
+    },
+    [formData, updateFormData]
+  );
+
+  // Handle field blur (mark as touched)
+  const handleFieldBlur = useCallback((fieldName: string) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+  }, []);
+
+  // Count active errors
+  const activeErrors = Object.values(errors).filter(
+    (error) => error !== null && error !== undefined
+  );
+  const hasErrors = activeErrors.length > 0;
 
   return (
     <div className="space-y-6">
@@ -32,36 +75,44 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
       </div>
 
       {/* Service Speed */}
-      <div className="space-y-2">
-        <Label htmlFor="serviceSpeedKn">Service Speed (knots) *</Label>
+      <FormField
+        label="Service Speed (knots)"
+        htmlFor="serviceSpeedKn"
+        required
+        error={errors.serviceSpeedKn}
+        touched={touched.serviceSpeedKn}
+        helpText="Typical: Tanker 14-16kn, Bulk carrier 14-15kn, Container 20-25kn, Fast ferry 30-40kn"
+      >
         <Input
           id="serviceSpeedKn"
           type="number"
           step="0.5"
           placeholder="e.g., 22"
           value={formData.serviceSpeedKn || ""}
-          onChange={(e) => updateFormData({ serviceSpeedKn: parseFloat(e.target.value) })}
+          onChange={(e) => handleFieldChange("serviceSpeedKn", parseFloat(e.target.value))}
+          onBlur={() => handleFieldBlur("serviceSpeedKn")}
         />
-        <p className="text-xs text-muted-foreground">
-          Typical: Tanker 14-16kn, Bulk carrier 14-15kn, Container 20-25kn, Fast ferry 30-40kn
-        </p>
-      </div>
+      </FormField>
 
       {/* Sea Margin */}
-      <div className="space-y-2">
-        <Label htmlFor="seaMarginPct">Sea Margin (%)</Label>
+      <FormField
+        label="Sea Margin (%)"
+        htmlFor="seaMarginPct"
+        required
+        error={errors.seaMarginPct}
+        touched={touched.seaMarginPct}
+        helpText="Allowance for hull fouling and weather. Typical: 15-20%"
+      >
         <Input
           id="seaMarginPct"
           type="number"
           step="1"
           placeholder="e.g., 15"
           value={formData.seaMarginPct || ""}
-          onChange={(e) => updateFormData({ seaMarginPct: parseFloat(e.target.value) })}
+          onChange={(e) => handleFieldChange("seaMarginPct", parseFloat(e.target.value))}
+          onBlur={() => handleFieldBlur("seaMarginPct")}
         />
-        <p className="text-xs text-muted-foreground">
-          Allowance for hull fouling and weather. Typical: 15-20%
-        </p>
-      </div>
+      </FormField>
 
       {/* Environment - Significant Wave Height */}
       <div className="space-y-2">
@@ -109,6 +160,30 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
           Range at service speed. Used for fuel tank sizing.
         </p>
       </div>
+
+      {/* Error Summary Panel */}
+      {hasErrors && (
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">
+                Please fix the following {activeErrors.length === 1 ? "error" : "errors"}:
+              </h3>
+              <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                {Object.entries(errors).map(
+                  ([field, error]) =>
+                    error && (
+                      <li key={field} className="leading-relaxed">
+                        {error}
+                      </li>
+                    )
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex justify-between pt-6 border-t border-border">

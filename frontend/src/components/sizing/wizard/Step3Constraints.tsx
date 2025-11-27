@@ -1,8 +1,16 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import type { CreateMissionCaseDto } from "../../../types/sizing";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
+import { FormField } from "../../ui/form-field";
+import { AlertTriangle } from "lucide-react";
+import {
+  validateField,
+  isStep3Valid,
+  type ValidationErrors,
+  type TouchedFields,
+} from "../../../utils/wizardValidation";
 
 interface Step3Props {
   formData: Partial<CreateMissionCaseDto>;
@@ -28,6 +36,43 @@ export const Step3Constraints: React.FC<Step3Props> = ({
   onNext,
   onPrevious,
 }) => {
+  // Validation state
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState<TouchedFields>({});
+
+  // Check if form is valid for Next button
+  const isValid = isStep3Valid(formData);
+
+  // Handle field change with validation
+  const handleFieldChange = useCallback(
+    (fieldName: string, value: any) => {
+      // Update form data
+      updateFormData({ [fieldName]: value });
+
+      // Mark field as touched
+      setTouched((prev) => ({ ...prev, [fieldName]: true }));
+
+      // Validate field
+      const error = validateField(fieldName, value, { ...formData, [fieldName]: value });
+      setErrors((prev) => ({
+        ...prev,
+        [fieldName]: error,
+      }));
+    },
+    [formData, updateFormData]
+  );
+
+  // Handle field blur (mark as touched)
+  const handleFieldBlur = useCallback((fieldName: string) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+  }, []);
+
+  // Count active errors
+  const activeErrors = Object.values(errors).filter(
+    (error) => error !== null && error !== undefined
+  );
+  const hasErrors = activeErrors.length > 0;
+
   const applyPreset = (preset: (typeof CANAL_PRESETS)[0]) => {
     updateFormData({
       capLoaM: preset.loa || undefined,
@@ -35,6 +80,10 @@ export const Step3Constraints: React.FC<Step3Props> = ({
       capDraftM: preset.draft || undefined,
       capAirdraftM: preset.airdraft || undefined,
     });
+
+    // Clear touched state and errors when applying preset
+    setTouched({});
+    setErrors({});
   };
 
   return (
@@ -79,30 +128,44 @@ export const Step3Constraints: React.FC<Step3Props> = ({
         </div>
 
         {/* Max Beam */}
-        <div className="space-y-2">
-          <Label htmlFor="capBeamM">Max Beam (m)</Label>
+        <FormField
+          label="Max Beam (m)"
+          htmlFor="capBeamM"
+          error={errors.capBeamM}
+          touched={touched.capBeamM}
+          helpText="Maximum beam constraint (optional)"
+        >
           <Input
             id="capBeamM"
             type="number"
             step="0.1"
             placeholder="e.g., 32.3"
             value={formData.capBeamM || ""}
-            onChange={(e) => updateFormData({ capBeamM: parseFloat(e.target.value) || undefined })}
+            onChange={(e) => handleFieldChange("capBeamM", parseFloat(e.target.value) || undefined)}
+            onBlur={() => handleFieldBlur("capBeamM")}
           />
-        </div>
+        </FormField>
 
         {/* Max Draft */}
-        <div className="space-y-2">
-          <Label htmlFor="capDraftM">Max Draft (m)</Label>
+        <FormField
+          label="Max Draft (m)"
+          htmlFor="capDraftM"
+          error={errors.capDraftM}
+          touched={touched.capDraftM}
+          helpText="Maximum draft constraint (optional)"
+        >
           <Input
             id="capDraftM"
             type="number"
             step="0.1"
             placeholder="e.g., 12.0"
             value={formData.capDraftM || ""}
-            onChange={(e) => updateFormData({ capDraftM: parseFloat(e.target.value) || undefined })}
+            onChange={(e) =>
+              handleFieldChange("capDraftM", parseFloat(e.target.value) || undefined)
+            }
+            onBlur={() => handleFieldBlur("capDraftM")}
           />
-        </div>
+        </FormField>
 
         {/* Max Airdraft */}
         <div className="space-y-2">
@@ -121,12 +184,38 @@ export const Step3Constraints: React.FC<Step3Props> = ({
         </div>
       </div>
 
+      {/* Error Summary Panel */}
+      {hasErrors && (
+        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-red-800 dark:text-red-200">
+                Please fix the following {activeErrors.length === 1 ? "error" : "errors"}:
+              </h3>
+              <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                {Object.entries(errors).map(
+                  ([field, error]) =>
+                    error && (
+                      <li key={field} className="leading-relaxed">
+                        {error}
+                      </li>
+                    )
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="flex justify-between pt-6 border-t border-border">
         <Button variant="outline" onClick={onPrevious}>
           ← Previous
         </Button>
-        <Button onClick={onNext}>Next: Options & Review →</Button>
+        <Button onClick={onNext} disabled={!isValid || hasErrors}>
+          Next: Options & Review →
+        </Button>
       </div>
     </div>
   );
