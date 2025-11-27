@@ -24,6 +24,8 @@ export interface ShipDHullStation {
   offsets: Record<number, number>; // height (m) -> half-breadth (m)
   hasBulb?: boolean;
   bulbOffsets?: Record<number, number>;
+  hasSkeg?: boolean;
+  skegOffsets?: Record<number, number>;
 }
 
 /**
@@ -216,11 +218,20 @@ export function generateShipDSections(
     );
 
     // Check for bulb (only in bow region)
+    // CRITICAL: bit flags should use normalized vector directly, not denormalized
     const hasBulb = region === "bow" && shipdVector[31] > 0.5; // bit_BB
     let bulbOffsets: Record<number, number> | undefined;
 
     if (hasBulb) {
-      bulbOffsets = generateBulbOffsets(stationPos, shipdVector, lppM, beamM, draftM);
+      bulbOffsets = generateBulbOffsets(stationPos, denormalized, shipdVector, lppM, beamM, draftM);
+    }
+
+    // Check for skeg (only in stern region)
+    const hasSkeg = region === "stern" && shipdVector[32] > 0.5; // bit_SB
+    let skegOffsets: Record<number, number> | undefined;
+
+    if (hasSkeg) {
+      skegOffsets = generateSkegOffsets(stationPos, denormalized, shipdVector, lppM, beamM, draftM);
     }
 
     stations.push({
@@ -228,6 +239,8 @@ export function generateShipDSections(
       offsets,
       hasBulb,
       bulbOffsets,
+      hasSkeg,
+      skegOffsets,
     });
   }
 
@@ -575,6 +588,53 @@ function generateHull3DFromSections(
         }
       }
     }
+
+    // Add skeg vertices if present
+    // Skeg may extend below keel (negative heights)
+    if (station.hasSkeg && station.skegOffsets) {
+      const skegHeights = Object.keys(station.skegOffsets)
+        .map((h) => Number(h))
+        .filter((h) => Number.isFinite(h))
+        .sort((a, b) => a - b);
+
+      for (const height of skegHeights) {
+        const hbRaw = station.skegOffsets[height];
+        if (!Number.isFinite(height) || !Number.isFinite(hbRaw)) {
+          continue;
+        }
+        const halfBreadth = Math.max(0, hbRaw);
+
+        // At keel (height=0 or negative), port and starboard may share the same vertex
+        if (height <= 0 || halfBreadth === 0) {
+          const keyKeel = `${station.position}-${height}-skeg-keel`;
+          if (!vertexMap.has(keyKeel)) {
+            vertices.push(0, height, z); // X=0 (centerline), Y=height (may be negative), Z=longitudinal
+            normals.push(0, 1, 0); // Normal pointing up (will be recomputed)
+            const keelIndex = vertexIndex++;
+            vertexMap.set(keyKeel, keelIndex);
+            // Both port and starboard reference the same keel vertex
+            vertexMap.set(`${station.position}-${height}-skeg-port`, keelIndex);
+            vertexMap.set(`${station.position}-${height}-skeg-starboard`, keelIndex);
+          }
+        } else {
+          // Port side (negative X)
+          const keySkegPort = `${station.position}-${height}-skeg-port`;
+          if (!vertexMap.has(keySkegPort)) {
+            vertices.push(-halfBreadth, height, z); // X=port, Y=height (may be negative), Z=longitudinal
+            normals.push(-1, 0, 0); // Normal pointing port (will be recomputed)
+            vertexMap.set(keySkegPort, vertexIndex++);
+          }
+
+          // Starboard side (positive X)
+          const keySkegStarboard = `${station.position}-${height}-skeg-starboard`;
+          if (!vertexMap.has(keySkegStarboard)) {
+            vertices.push(halfBreadth, height, z); // X=starboard, Y=height (may be negative), Z=longitudinal
+            normals.push(1, 0, 0); // Normal pointing starboard (will be recomputed)
+            vertexMap.set(keySkegStarboard, vertexIndex++);
+          }
+        }
+      }
+    }
   }
 
   // Second pass: create faces (connect adjacent stations and heights)
@@ -582,14 +642,42 @@ function generateHull3DFromSections(
     const station1 = finalSections.stations[i];
     const station2 = finalSections.stations[i + 1];
 
-    const heights1 = Object.keys(station1.offsets)
-      .map((h) => Number(h))
-      .filter((h) => Number.isFinite(h))
-      .sort((a, b) => a - b);
-    const heights2 = Object.keys(station2.offsets)
-      .map((h) => Number(h))
-      .filter((h) => Number.isFinite(h))
-      .sort((a, b) => a - b);
+    // Collect all heights from main offsets, bulb offsets, and skeg offsets
+    const heights1 = new Set<number>();
+    Object.keys(station1.offsets).forEach((h) => {
+      const height = Number(h);
+      if (Number.isFinite(height)) heights1.add(height);
+    });
+    if (station1.hasBulb && station1.bulbOffsets) {
+      Object.keys(station1.bulbOffsets).forEach((h) => {
+        const height = Number(h);
+        if (Number.isFinite(height)) heights1.add(height);
+      });
+    }
+    if (station1.hasSkeg && station1.skegOffsets) {
+      Object.keys(station1.skegOffsets).forEach((h) => {
+        const height = Number(h);
+        if (Number.isFinite(height)) heights1.add(height);
+      });
+    }
+
+    const heights2 = new Set<number>();
+    Object.keys(station2.offsets).forEach((h) => {
+      const height = Number(h);
+      if (Number.isFinite(height)) heights2.add(height);
+    });
+    if (station2.hasBulb && station2.bulbOffsets) {
+      Object.keys(station2.bulbOffsets).forEach((h) => {
+        const height = Number(h);
+        if (Number.isFinite(height)) heights2.add(height);
+      });
+    }
+    if (station2.hasSkeg && station2.skegOffsets) {
+      Object.keys(station2.skegOffsets).forEach((h) => {
+        const height = Number(h);
+        if (Number.isFinite(height)) heights2.add(height);
+      });
+    }
 
     // Match heights (interpolate if needed)
     const allHeights = Array.from(new Set([...heights1, ...heights2]))
@@ -603,11 +691,40 @@ function generateHull3DFromSections(
       // Note: Half-breadths are not used in simplified mesh generation
       // The mesh is generated directly from vertex positions stored in vertexMap
 
+      // Helper function to get vertex, checking both regular and skeg vertices
+      const getVertex = (
+        stationPos: number,
+        height: number,
+        side: "port" | "starboard"
+      ): number | undefined => {
+        // Try regular vertex first
+        let vertex = vertexMap.get(`${stationPos}-${height}-${side}`);
+        if (vertex !== undefined) return vertex;
+
+        // Try skeg vertex
+        vertex = vertexMap.get(`${stationPos}-${height}-skeg-${side}`);
+        if (vertex !== undefined) return vertex;
+
+        // Try bulb vertex
+        vertex = vertexMap.get(`${stationPos}-${height}-bulb-${side}`);
+        if (vertex !== undefined) return vertex;
+
+        // Try keel vertex (for centerline)
+        if (side === "port" || side === "starboard") {
+          vertex = vertexMap.get(`${stationPos}-${height}-keel`);
+          if (vertex !== undefined) return vertex;
+          vertex = vertexMap.get(`${stationPos}-${height}-skeg-keel`);
+          if (vertex !== undefined) return vertex;
+        }
+
+        return undefined;
+      };
+
       // Create quad (two triangles) for port side
-      const v1_port = vertexMap.get(`${station1.position}-${h1}-port`);
-      const v2_port = vertexMap.get(`${station1.position}-${h2}-port`);
-      const v3_port = vertexMap.get(`${station2.position}-${h1}-port`);
-      const v4_port = vertexMap.get(`${station2.position}-${h2}-port`);
+      const v1_port = getVertex(station1.position, h1, "port");
+      const v2_port = getVertex(station1.position, h2, "port");
+      const v3_port = getVertex(station2.position, h1, "port");
+      const v4_port = getVertex(station2.position, h2, "port");
 
       if (
         v1_port !== undefined &&
@@ -620,10 +737,10 @@ function generateHull3DFromSections(
       }
 
       // Create quad for starboard side
-      const v1_starboard = vertexMap.get(`${station1.position}-${h1}-starboard`);
-      const v2_starboard = vertexMap.get(`${station1.position}-${h2}-starboard`);
-      const v3_starboard = vertexMap.get(`${station2.position}-${h1}-starboard`);
-      const v4_starboard = vertexMap.get(`${station2.position}-${h2}-starboard`);
+      const v1_starboard = getVertex(station1.position, h1, "starboard");
+      const v2_starboard = getVertex(station1.position, h2, "starboard");
+      const v3_starboard = getVertex(station2.position, h1, "starboard");
+      const v4_starboard = getVertex(station2.position, h2, "starboard");
 
       if (
         v1_starboard !== undefined &&
@@ -637,23 +754,59 @@ function generateHull3DFromSections(
     }
   }
 
+  // Helper function to get vertex for closing faces (checks regular, bulb, and skeg)
+  const getClosingVertex = (
+    stationPos: number,
+    height: number,
+    side: "port" | "starboard"
+  ): number | undefined => {
+    // Try regular vertex first
+    let vertex = vertexMap.get(`${stationPos}-${height}-${side}`);
+    if (vertex !== undefined) return vertex;
+
+    // Try bulb vertex (for bow)
+    vertex = vertexMap.get(`${stationPos}-${height}-bulb-${side}`);
+    if (vertex !== undefined) return vertex;
+
+    // Try skeg vertex (for stern)
+    vertex = vertexMap.get(`${stationPos}-${height}-skeg-${side}`);
+    if (vertex !== undefined) return vertex;
+
+    // Try keel vertex (for centerline)
+    vertex = vertexMap.get(`${stationPos}-${height}-keel`);
+    if (vertex !== undefined) return vertex;
+    vertex = vertexMap.get(`${stationPos}-${height}-skeg-keel`);
+    if (vertex !== undefined) return vertex;
+
+    return undefined;
+  };
+
   // Add closing faces at bow (position = 1, forward end)
   const bowStation = finalSections.stations.find((s) => Math.abs(s.position - 1.0) < 0.01);
   if (bowStation) {
-    const bowHeights = Object.keys(bowStation.offsets)
-      .map((h) => Number(h))
-      .filter((h) => Number.isFinite(h))
-      .sort((a, b) => a - b);
+    // Collect all heights from main offsets and bulb offsets
+    const bowHeights = new Set<number>();
+    Object.keys(bowStation.offsets).forEach((h) => {
+      const height = Number(h);
+      if (Number.isFinite(height)) bowHeights.add(height);
+    });
+    if (bowStation.hasBulb && bowStation.bulbOffsets) {
+      Object.keys(bowStation.bulbOffsets).forEach((h) => {
+        const height = Number(h);
+        if (Number.isFinite(height)) bowHeights.add(height);
+      });
+    }
+    const sortedBowHeights = Array.from(bowHeights).sort((a, b) => a - b);
 
     // Close bow end (connect all points at bow station)
-    for (let h = 0; h < bowHeights.length - 1; h++) {
-      const h1 = bowHeights[h];
-      const h2 = bowHeights[h + 1];
+    for (let h = 0; h < sortedBowHeights.length - 1; h++) {
+      const h1 = sortedBowHeights[h];
+      const h2 = sortedBowHeights[h + 1];
 
-      const v1_port = vertexMap.get(`${bowStation.position}-${h1}-port`);
-      const v2_port = vertexMap.get(`${bowStation.position}-${h2}-port`);
-      const v1_starboard = vertexMap.get(`${bowStation.position}-${h1}-starboard`);
-      const v2_starboard = vertexMap.get(`${bowStation.position}-${h2}-starboard`);
+      const v1_port = getClosingVertex(bowStation.position, h1, "port");
+      const v2_port = getClosingVertex(bowStation.position, h2, "port");
+      const v1_starboard = getClosingVertex(bowStation.position, h1, "starboard");
+      const v2_starboard = getClosingVertex(bowStation.position, h2, "starboard");
 
       // Create triangle closing the bow (port and starboard meet at centerline)
       if (
@@ -672,20 +825,29 @@ function generateHull3DFromSections(
   // Add closing faces at stern (position = 0, aft end)
   const sternStation = finalSections.stations.find((s) => Math.abs(s.position - 0.0) < 0.01);
   if (sternStation) {
-    const sternHeights = Object.keys(sternStation.offsets)
-      .map((h) => Number(h))
-      .filter((h) => Number.isFinite(h))
-      .sort((a, b) => a - b);
+    // Collect all heights from main offsets and skeg offsets (skeg may extend below keel)
+    const sternHeights = new Set<number>();
+    Object.keys(sternStation.offsets).forEach((h) => {
+      const height = Number(h);
+      if (Number.isFinite(height)) sternHeights.add(height);
+    });
+    if (sternStation.hasSkeg && sternStation.skegOffsets) {
+      Object.keys(sternStation.skegOffsets).forEach((h) => {
+        const height = Number(h);
+        if (Number.isFinite(height)) sternHeights.add(height);
+      });
+    }
+    const sortedSternHeights = Array.from(sternHeights).sort((a, b) => a - b);
 
     // Close stern end (connect all points at stern station)
-    for (let h = 0; h < sternHeights.length - 1; h++) {
-      const h1 = sternHeights[h];
-      const h2 = sternHeights[h + 1];
+    for (let h = 0; h < sortedSternHeights.length - 1; h++) {
+      const h1 = sortedSternHeights[h];
+      const h2 = sortedSternHeights[h + 1];
 
-      const v1_port = vertexMap.get(`${sternStation.position}-${h1}-port`);
-      const v2_port = vertexMap.get(`${sternStation.position}-${h2}-port`);
-      const v1_starboard = vertexMap.get(`${sternStation.position}-${h1}-starboard`);
-      const v2_starboard = vertexMap.get(`${sternStation.position}-${h2}-starboard`);
+      const v1_port = getClosingVertex(sternStation.position, h1, "port");
+      const v2_port = getClosingVertex(sternStation.position, h2, "port");
+      const v1_starboard = getClosingVertex(sternStation.position, h1, "starboard");
+      const v2_starboard = getClosingVertex(sternStation.position, h2, "starboard");
 
       // Create triangle closing the stern (port and starboard meet at centerline)
       if (
@@ -874,24 +1036,53 @@ function generateStationOffsets(
         halfBreadth = Math.max(0, baseHalfBreadth);
       }
     } else if (region === "midship") {
-      // Midship section: use bit_EP_S (sheer), bit_EP_T (tumblehome)
-      const bitEPS = denormalized[20] > 0.5; // Sheer extrusion
-      const bitEPT = denormalized[21] > 0.5; // Tumblehome
+      // Midship section: Check for deep_v_midship (yacht) vs standard midship
+      // Deep V midship uses: Adrft (17), Bdrft (18), Cdrft (19)
+      // Standard midship uses: bit_EP_S (20), bit_EP_T (21)
+
+      // Detect deep V midship: Cdrft (deadrise angle) > 20 degrees indicates deep V
+      const cdrft = denormalized[19]; // Deadrise angle (degrees)
+      const isDeepV = cdrft > 20; // Deep V midship typically has higher deadrise
 
       const heightRatio = height / draftM;
 
       // CORRECT VERTICAL PROFILE: Midship typically parallel below waterline
       if (height <= draftM) {
-        // BELOW WATERLINE: Gentle expansion from keel to waterline
-        // Midship has less deadrise, more parallel sides
+        // BELOW WATERLINE
+        if (isDeepV) {
+          // DEEP V MIDSHIP (yacht): Use Adrft, Bdrft, Cdrft for deadrise control
+          const adrft = denormalized[17]; // Draft rocker coefficient A
+          const bdrft = denormalized[18]; // Draft rocker coefficient B
 
-        const keelHalfBreadth = (beamM / 2) * 0.2; // Midship keel ~20% of beam (wider than bow)
+          // Deep V has more deadrise (narrower keel, wider at waterline)
+          // Cdrft controls the deadrise angle directly
+          const deadriseAngle = cdrft; // Already in degrees
+          const deadriseReduction = Math.tan((deadriseAngle * Math.PI) / 180) * (draftM - height);
 
-        // Simple gentle expansion (midship is typically straighter)
-        const expansionRatio = Math.pow(heightRatio, 0.8); // Gentle curve
-        const baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+          // Keel width is narrower for deep V (more deadrise)
+          const keelHalfBreadth = Math.max(0, (beamM / 2) * (0.05 + adrft * 0.05)); // 5-10% of beam, modulated by Adrft
 
-        halfBreadth = baseHalfBreadth;
+          // Expansion curve with deadrise effect
+          // Bdrft affects the curve shape
+          const curvePower = 1.5 - bdrft * 0.5; // Range: 1.0-1.5 (more V-shaped)
+          const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
+
+          const baseHalfBreadth =
+            keelHalfBreadth +
+            (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.2) * expansionRatio;
+
+          halfBreadth = Math.max(0, baseHalfBreadth);
+        } else {
+          // STANDARD MIDSHIP: Gentle expansion from keel to waterline
+          // Midship has less deadrise, more parallel sides
+          const keelHalfBreadth = (beamM / 2) * 0.2; // Midship keel ~20% of beam (wider than bow)
+
+          // Simple gentle expansion (midship is typically straighter)
+          const expansionRatio = Math.pow(heightRatio, 0.8); // Gentle curve
+          const baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+
+          halfBreadth = baseHalfBreadth;
+        }
       } else {
         // ABOVE WATERLINE
         const aboveWLHeight = height - draftM;
@@ -900,72 +1091,150 @@ function generateStationOffsets(
 
         let baseHalfBreadth = beamM / 2;
 
-        // Sheer (outward curve at deck)
-        if (bitEPS && aboveWLRatio > 0.6) {
-          baseHalfBreadth *= 1 + ((aboveWLRatio - 0.6) / 0.4) * 0.08;
-        }
+        if (isDeepV) {
+          // Deep V midship: Use Adrft/Bdrft for sheer effects above waterline
+          const adrft = denormalized[17];
+          const bdrft = denormalized[18];
 
-        // Tumblehome (inward curve at deck)
-        if (bitEPT && aboveWLRatio > 0.5) {
-          baseHalfBreadth *= 1 - ((aboveWLRatio - 0.5) / 0.5) * 0.15;
+          // Adrft affects outward curve (sheer)
+          if (adrft > 0 && aboveWLRatio > 0.5) {
+            baseHalfBreadth *= 1 + adrft * ((aboveWLRatio - 0.5) / 0.5) * 0.05;
+          }
+
+          // Bdrft affects inward curve (tumblehome)
+          if (bdrft < 0 && aboveWLRatio > 0.5) {
+            baseHalfBreadth *= 1 + bdrft * ((aboveWLRatio - 0.5) / 0.5) * 0.05;
+          }
+        } else {
+          // STANDARD MIDSHIP: Use bit_EP_S (sheer), bit_EP_T (tumblehome)
+          const bitEPS = denormalized[20] > 0.5; // Sheer extrusion
+          const bitEPT = denormalized[21] > 0.5; // Tumblehome
+
+          // Sheer (outward curve at deck)
+          if (bitEPS && aboveWLRatio > 0.6) {
+            baseHalfBreadth *= 1 + ((aboveWLRatio - 0.6) / 0.4) * 0.08;
+          }
+
+          // Tumblehome (inward curve at deck)
+          if (bitEPT && aboveWLRatio > 0.5) {
+            baseHalfBreadth *= 1 - ((aboveWLRatio - 0.5) / 0.5) * 0.15;
+          }
         }
 
         halfBreadth = baseHalfBreadth;
       }
     } else {
-      // Stern section: use Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans, Kappa_stern
-      const atrans = denormalized[22]; // Transom area coefficient
+      // Stern section: Detect transom_stern vs canoe_stern from Atrans parameter
+      // Transom stern uses: Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans, Kappa_stern
+      // Canoe stern uses: Adel_stern (25), Bdel_stern (26)
+
+      // CRITICAL: Use normalized vector for family detection (consistent with backend)
+      const atransNorm = shipdVector[22] ?? 0; // Transom area coefficient (normalized 0-1)
+      const isTransomStern = atransNorm > 0.5; // Transom when > 0.5, canoe when <= 0.5
+
       const kappaStern = denormalized[24]; // Curvature type (-1 to 1, concave to convex)
       const betaTrans = denormalized[27]; // Stern rake angle
       const bcTrans = denormalized[28]; // Transom width ratio
       const rcTrans = denormalized[29]; // Stern curvature coefficient
       const rkTrans = denormalized[30]; // Stern knuckle coefficient
+      const adelStern = denormalized[25]; // Canoe stern sheer coefficient A
+      const bdelStern = denormalized[26]; // Canoe stern sheer coefficient B
 
       const heightRatio = height / draftM;
 
       // CORRECT VERTICAL PROFILE: Similar to bow but with stern characteristics
       if (height <= draftM) {
         // BELOW WATERLINE: Expand from narrow keel to wide waterline
-
         const keelHalfBreadth = (beamM / 2) * 0.15; // Stern keel slightly wider than bow
 
-        // Curvature expansion
-        const curvePower = 2.5 - rcTrans * 1.5; // Range: 1.0 (full) to 2.5 (fine)
-        const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
+        if (isTransomStern) {
+          // TRANSOM STERN: Use transom parameters
+          const atrans = denormalized[22];
 
-        let baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+          // Curvature expansion
+          const curvePower = 2.5 - rcTrans * 1.5; // Range: 1.0 (full) to 2.5 (fine)
+          const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
 
-        // Transom effect (flat stern) - only near the very aft
-        if (stationPos < 0.15 && atrans > 0.5) {
-          const transomWidth = beamM * bcTrans;
-          const transomBlend = (0.15 - stationPos) / 0.15; // Blend over aft 15%
-          baseHalfBreadth =
-            baseHalfBreadth * (1 - transomBlend * atrans) +
-            (transomWidth / 2) * transomBlend * atrans;
+          let baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+
+          // Transom effect (flat stern) - only near the very aft
+          if (stationPos < 0.15 && atrans > 0.5) {
+            const transomWidth = beamM * bcTrans;
+            const transomBlend = (0.15 - stationPos) / 0.15; // Blend over aft 15%
+            baseHalfBreadth =
+              baseHalfBreadth * (1 - transomBlend * atrans) +
+              (transomWidth / 2) * transomBlend * atrans;
+          }
+
+          // Stern knuckle
+          if (rkTrans > 0.3 && heightRatio > 0.3 && heightRatio < 0.6) {
+            const knuckleFactor = 1 - Math.abs(heightRatio - 0.45) / 0.15;
+            baseHalfBreadth *= 1 + rkTrans * knuckleFactor * 0.12;
+          }
+
+          // Apply convex/concave control
+          if (Math.abs(kappaStern) > 0.1) {
+            const convexEffect = kappaStern * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
+            baseHalfBreadth *= 1 + convexEffect;
+          }
+
+          halfBreadth = Math.max(0, baseHalfBreadth);
+        } else {
+          // CANOE STERN (yacht): Use Adel_stern, Bdel_stern for rounded stern shape
+          // Canoe stern has more rounded, elliptical sections (less V-shaped)
+
+          // Curvature expansion - canoe stern is more rounded (higher power)
+          const curvePower = 2.0 + rcTrans * 1.0; // Range: 2.0-3.0 (more rounded)
+          const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
+
+          let baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+
+          // Adel_stern and Bdel_stern affect the stern curvature
+          // Adel_stern: affects the vertical curvature (sheer)
+          // Bdel_stern: affects the horizontal curvature (roundness)
+          if (Math.abs(adelStern) > 0.1) {
+            const adelEffect = adelStern * Math.sin(heightRatio * Math.PI) * 0.1;
+            baseHalfBreadth *= 1 + adelEffect;
+          }
+
+          if (Math.abs(bdelStern) > 0.1) {
+            const bdelEffect = bdelStern * Math.cos((heightRatio * Math.PI) / 2) * 0.08;
+            baseHalfBreadth *= 1 + bdelEffect;
+          }
+
+          // Apply convex/concave control (less pronounced for canoe stern)
+          if (Math.abs(kappaStern) > 0.1) {
+            const convexEffect = kappaStern * Math.sin((heightRatio * Math.PI) / 2) * 0.05; // Reduced effect
+            baseHalfBreadth *= 1 + convexEffect;
+          }
+
+          halfBreadth = Math.max(0, baseHalfBreadth);
         }
-
-        // Stern knuckle
-        if (rkTrans > 0.3 && heightRatio > 0.3 && heightRatio < 0.6) {
-          const knuckleFactor = 1 - Math.abs(heightRatio - 0.45) / 0.15;
-          baseHalfBreadth *= 1 + rkTrans * knuckleFactor * 0.12;
-        }
-
-        // Apply convex/concave control
-        if (Math.abs(kappaStern) > 0.1) {
-          const convexEffect = kappaStern * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
-          baseHalfBreadth *= 1 + convexEffect;
-        }
-
-        halfBreadth = Math.max(0, baseHalfBreadth);
       } else {
-        // ABOVE WATERLINE: Rake effect
+        // ABOVE WATERLINE
         const aboveWLHeight = height - draftM;
         let baseHalfBreadth = beamM / 2;
 
-        // Apply rake (aft overhang)
-        if (betaTrans > 5 && stationPos < 0.2) {
-          const rakeExpansion = Math.tan((betaTrans * Math.PI) / 180) * aboveWLHeight;
-          baseHalfBreadth += rakeExpansion * 0.15;
+        if (isTransomStern) {
+          // TRANSOM STERN: Apply rake (aft overhang)
+          if (betaTrans > 5 && stationPos < 0.2) {
+            const rakeExpansion = Math.tan((betaTrans * Math.PI) / 180) * aboveWLHeight;
+            baseHalfBreadth += rakeExpansion * 0.15;
+          }
+        } else {
+          // CANOE STERN: Use Adel_stern/Bdel_stern for sheer effects above waterline
+          const freeboard = draftM * 0.35;
+          const aboveWLRatio = Math.min(aboveWLHeight / freeboard, 1.0);
+
+          // Adel_stern affects outward curve (sheer) above waterline
+          if (adelStern > 0 && aboveWLRatio > 0.4) {
+            baseHalfBreadth *= 1 + adelStern * ((aboveWLRatio - 0.4) / 0.6) * 0.08;
+          }
+
+          // Bdel_stern affects inward curve (tumblehome) above waterline
+          if (bdelStern < 0 && aboveWLRatio > 0.5) {
+            baseHalfBreadth *= 1 + bdelStern * ((aboveWLRatio - 0.5) / 0.5) * 0.1;
+          }
         }
 
         halfBreadth = Math.max(0, baseHalfBreadth);
@@ -1078,6 +1347,7 @@ function generateStationOffsets(
  */
 function generateBulbOffsets(
   stationPos: number,
+  denormalized: Record<number, number>,
   shipdVector: number[],
   _lppM: number,
   beamM: number,
@@ -1085,16 +1355,22 @@ function generateBulbOffsets(
 ): Record<number, number> {
   const offsets: Record<number, number> = {};
 
-  // Bulb parameters - these are ratios, use vector directly
-  const lbb = shipdVector[33]; // Bulb length ratio
-  const hbb = shipdVector[34]; // Bulb height ratio
-  const bbb = shipdVector[35]; // Bulb width ratio
-  const lbbm = shipdVector[36]; // Bulb asymmetry (fore/aft position) - NOW USED!
-  const rbb = shipdVector[37]; // Bulb fillet radius - NOW USED!
+  // Bulb parameters - denormalized values are already the ratios to use
+  const lbb = denormalized[33]; // Bulb length ratio (denormalized: actual ratio range 0-0.2)
+  const hbb = denormalized[34]; // Bulb height ratio (denormalized: actual ratio range 0-1)
+  const bbb = denormalized[35]; // Bulb width ratio (denormalized: actual ratio range 0-1)
+  const lbbm = denormalized[36]; // Bulb asymmetry (fore/aft position) - denormalized: actual range -1 to +1
+  const rbb = denormalized[37]; // Bulb fillet radius - denormalized: actual range 0.05-0.33
 
   // Bulb is only in forward section
-  const bowStart = 1.0 - (shipdVector[1] ?? 0.3) - (shipdVector[2] ?? 0.3); // Start of bow region
-  const bulbExtent = lbb * 0.7; // Bulb extends forward
+  // CRITICAL: Use normalized vector for region boundaries (consistent with backend)
+  const lb = shipdVector[1] ?? 0.3; // Bow length ratio (normalized 0-1)
+  const bowStart = 1.0 - lb; // Start of bow region (0 = aft, 1 = forward)
+  // Bulb extent: lbb is denormalized ratio (0-0.2), which is already the ratio of Lpp
+  // Since stationPos is normalized (0-1), bulbExtent should also be normalized
+  // lbb is already a ratio (e.g., 0.1 = 10% of Lpp), so normalized extent = lbb
+  // Take 70% of bulb length for extent
+  const bulbExtent = lbb * 0.7; // Bulb extends forward (70% of bulb length ratio, normalized)
 
   if (stationPos > bowStart && stationPos < bowStart + bulbExtent) {
     // Position within bulb (0 = start, 1 = forward end)
@@ -1125,6 +1401,103 @@ function generateBulbOffsets(
       const verticalProfile = Math.pow(1 - Math.pow(heightRatio, verticalExp), 1 / verticalExp);
 
       const halfBreadth = (bulbWidth / 2) * longitudinalProfile * verticalProfile;
+      offsets[height] = Math.max(0, halfBreadth);
+    }
+  }
+
+  return offsets;
+}
+
+/**
+ * Generates skeg offsets for a station in the stern region
+ * Skeg is a stern appendage that extends below the keel or at a vertical offset
+ * Supports both single skeg and twin skeg configurations
+ */
+function generateSkegOffsets(
+  stationPos: number,
+  denormalized: Record<number, number>,
+  shipdVector: number[],
+  _lppM: number,
+  beamM: number,
+  draftM: number
+): Record<number, number> {
+  const offsets: Record<number, number> = {};
+
+  // Skeg parameters
+  const skZ = denormalized[23]; // SK_z - vertical offset control (0-1 normalized)
+  const kappaSB = denormalized[38]; // Kappa_SB - skeg curvature parameter
+  const lsb = denormalized[39]; // Lsb - skeg length ratio (0-1 normalized, range: 0-0.2)
+  const hsb = denormalized[41]; // Hsb - skeg height ratio (for twin skeg, 0-1 normalized)
+  const bsb = denormalized[42]; // Bsb - skeg breadth ratio (0-1 normalized)
+  const lsbm = denormalized[43]; // Lsbm - skeg longitudinal moment coefficient (-1 to +1 normalized)
+  const rsb = denormalized[44]; // Rsb - skeg radius coefficient (0.05-0.33 normalized)
+
+  // Check if twin skeg (bit_SB > 0.5) or single skeg
+  // For twin skeg, use Hsb; for single skeg, use HSBOA (index 40)
+  const isTwinSkeg = shipdVector[32] > 0.5; // bit_SB
+  const hsboa = denormalized[40]; // HSBOA - skeg height to breadth ratio (for single skeg)
+
+  // Skeg is only in stern region
+  // CRITICAL: stationPos is normalized (0-1), where 0=aft, 1=forward
+  // ls (normalized) is the normalized position where stern ends (e.g., 0.3 means stern is 30% of normalized length)
+  // lsb (denormalized) is the skeg length as a ratio (0-0.2 range, e.g., 0.1 = 10% ratio)
+  // Since skeg is within stern region, and lsb is a ratio, we need to determine what lsb is a ratio of
+  // Most likely: lsb is ratio of stern length, so skeg extent = lsb * ls (normalized stern length)
+  const ls = shipdVector[2] ?? 0.3; // Stern length ratio (normalized 0-1, position where stern ends)
+  const skegStart = 0.0; // Start at stern tip (position 0.0 = aft)
+  // lsb is denormalized ratio (0-0.2), ls is normalized position (0-1)
+  // If lsb is ratio of stern length: skeg extent = lsb * ls (both as ratios in normalized space)
+  // This gives skeg extent as a fraction of the normalized coordinate system
+  const skegExtent = lsb * ls; // Skeg extends aft from stern tip (normalized extent)
+
+  if (stationPos >= skegStart && stationPos <= skegExtent) {
+    // Position within skeg (0 = stern tip, 1 = skeg end)
+    const skegPos = skegExtent > 0.001 ? stationPos / skegExtent : 0;
+
+    // Apply longitudinal moment (Lsbm) for asymmetry
+    // lsbm range: -1 to +1, where 0.5 is neutral
+    // Convert to -0.3 to +0.3 shift
+    const asymmetryShift = (lsbm - 0.5) * 0.6; // -0.3 to +0.3
+    const adjustedPos = Math.max(0, Math.min(1, skegPos + asymmetryShift));
+
+    // Skeg dimensions
+    const skegHeight = isTwinSkeg ? hsb * draftM : hsboa * beamM; // Height for twin skeg, height-to-breadth ratio for single
+    const skegBreadth = bsb * beamM;
+    const skegVerticalOffset = skZ * draftM; // SK_z controls vertical position (0 = keel, 1 = draft)
+
+    // Skeg extends below keel (negative heights) or at vertical offset
+    // Vertical offset: positive = above keel, negative = below keel
+    const skegBaseHeight = skegVerticalOffset - skegHeight; // Base of skeg (may be negative)
+
+    // Longitudinal profile: use fillet radius to control shape
+    // Higher rsb = rounder, lower rsb = more pointed
+    // rsb range: 0.05-0.33, convert to exponent range 1.5-2.5
+    const longitudinalExp = 1.5 + rsb * 1.0; // 1.5-2.5
+    const longitudinalProfile = Math.pow(
+      1 - Math.pow(adjustedPos, longitudinalExp),
+      1 / longitudinalExp
+    );
+
+    // Generate skeg offsets at various heights
+    const heightSteps = 12;
+    for (let h = 0; h <= heightSteps; h++) {
+      const heightRatio = h / heightSteps; // 0 to 1
+      const height = skegBaseHeight + heightRatio * skegHeight; // Height from keel (may be negative)
+
+      // Vertical profile: ellipsoid with fillet control
+      // Higher rsb = rounder (lower exponent), lower rsb = more pointed (higher exponent)
+      const verticalExp = 1.8 + (1 - rsb) * 0.5; // 1.8-2.3 (inverse relationship)
+      const verticalProfile = Math.pow(1 - Math.pow(heightRatio, verticalExp), 1 / verticalExp);
+
+      // Apply curvature parameter (Kappa_SB) for convex/concave control
+      let curvatureEffect = 1.0;
+      if (Math.abs(kappaSB - 0.5) > 0.1) {
+        const convexEffect = (kappaSB - 0.5) * 2 * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
+        curvatureEffect = 1 + convexEffect;
+      }
+
+      const halfBreadth =
+        (skegBreadth / 2) * longitudinalProfile * verticalProfile * curvatureEffect;
       offsets[height] = Math.max(0, halfBreadth);
     }
   }

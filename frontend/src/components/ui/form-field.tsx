@@ -57,7 +57,7 @@ export const FormField: React.FC<FormFieldProps> = ({
       {/* Clone child element and add error styling */}
       {React.cloneElement(children, {
         className: cn(
-          (children.props as any).className,
+          (children.props as Record<string, unknown>).className as string | undefined,
           hasError &&
             "border-red-500 dark:border-red-400 focus-visible:ring-red-500 dark:focus-visible:ring-red-400"
         ),
@@ -67,7 +67,7 @@ export const FormField: React.FC<FormFieldProps> = ({
           : helpText
             ? `${htmlFor}-help`
             : undefined,
-      } as any)}
+      } as Record<string, unknown>)}
 
       {/* Help text - shown when no error */}
       {!hasError && helpText && (

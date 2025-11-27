@@ -45,7 +45,7 @@ export const Step3Constraints: React.FC<Step3Props> = ({
 
   // Handle field change with validation
   const handleFieldChange = useCallback(
-    (fieldName: string, value: any) => {
+    (fieldName: string, value: string | number | undefined) => {
       // Update form data
       updateFormData({ [fieldName]: value });
 

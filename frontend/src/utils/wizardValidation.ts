@@ -14,22 +14,24 @@ export type TouchedFields = Record<string, boolean>;
  */
 export function validateField(
   fieldName: string,
-  value: any,
+  value: string | number | undefined | null,
   formData: Partial<CreateMissionCaseDto>
 ): string | null {
   switch (fieldName) {
     // Step 1: Mission & Cargo
-    case "name":
-      if (!value || value.trim().length === 0) {
+    case "name": {
+      const strVal = String(value || "");
+      if (!strVal || strVal.trim().length === 0) {
         return "Vessel name is required";
       }
-      if (value.trim().length < 3) {
+      if (strVal.trim().length < 3) {
         return "Name must be at least 3 characters";
       }
-      if (value.length > 100) {
+      if (strVal.length > 100) {
         return "Name is too long (maximum 100 characters)";
       }
       return null;
+    }
 
     case "missionCategory":
       if (!value) {
@@ -44,7 +46,7 @@ export function validateField(
       return null;
 
     case "teuCount":
-    case "cargoValue":
+    case "cargoValue": {
       if (value === undefined || value === null || value === "") {
         if (formData.cargoBasis === "teu") {
           return "TEU count is required";
@@ -55,7 +57,7 @@ export function validateField(
         }
         return "Cargo value is required";
       }
-      const numValue = parseFloat(value);
+      const numValue = parseFloat(String(value));
       if (isNaN(numValue) || numValue <= 0) {
         if (formData.cargoBasis === "teu") {
           return "TEU count must be greater than 0";
@@ -77,13 +79,14 @@ export function validateField(
         return "Cargo volume seems unusually high (maximum 500,000 m³)";
       }
       return null;
+    }
 
     case "cargoVolumeM3":
       if (formData.cargoBasis === "volume") {
         if (value === undefined || value === null || value === "") {
           return "Cargo volume is required";
         }
-        const vol = parseFloat(value);
+        const vol = parseFloat(String(value));
         if (isNaN(vol) || vol <= 0) {
           return "Cargo volume must be greater than 0";
         }
@@ -98,7 +101,7 @@ export function validateField(
         if (value === undefined || value === null || value === "") {
           return "Cargo density is required for volume-based cargo";
         }
-        const density = parseFloat(value);
+        const density = parseFloat(String(value));
         if (isNaN(density) || density <= 0) {
           return "Cargo density must be greater than 0";
         }
@@ -112,11 +115,11 @@ export function validateField(
       return null;
 
     // Step 2: Speed & Environment
-    case "serviceSpeedKn":
+    case "serviceSpeedKn": {
       if (value === undefined || value === null || value === "") {
         return "Service speed is required";
       }
-      const speed = parseFloat(value);
+      const speed = parseFloat(String(value));
       if (isNaN(speed)) {
         return "Please enter a valid number";
       }
@@ -127,12 +130,13 @@ export function validateField(
         return "Speed seems unusually high (maximum 50 knots)";
       }
       return null;
+    }
 
-    case "seaMarginPct":
+    case "seaMarginPct": {
       if (value === undefined || value === null || value === "") {
         return "Sea margin is required";
       }
-      const margin = parseFloat(value);
+      const margin = parseFloat(String(value));
       if (isNaN(margin)) {
         return "Please enter a valid number";
       }
@@ -143,11 +147,12 @@ export function validateField(
         return "Sea margin seems too high (maximum 50%)";
       }
       return null;
+    }
 
     // Step 3: Constraints
     case "capBeamM":
       if (value !== undefined && value !== null && value !== "") {
-        const beam = parseFloat(value);
+        const beam = parseFloat(String(value));
         if (isNaN(beam)) {
           return "Please enter a valid number";
         }
@@ -162,7 +167,7 @@ export function validateField(
 
     case "capDraftM":
       if (value !== undefined && value !== null && value !== "") {
-        const draft = parseFloat(value);
+        const draft = parseFloat(String(value));
         if (isNaN(draft)) {
           return "Please enter a valid number";
         }
@@ -199,7 +204,12 @@ export function validateStep1(
 
   fieldsToValidate.forEach((field) => {
     if (touched[field]) {
-      const error = validateField(field, (formData as any)[field], formData);
+      const fieldValue = formData[field as keyof CreateMissionCaseDto];
+      const error = validateField(
+        field,
+        fieldValue as string | number | undefined | null,
+        formData
+      );
       if (error) {
         errors[field] = error;
       }
@@ -222,7 +232,12 @@ export function validateStep2(
 
   fieldsToValidate.forEach((field) => {
     if (touched[field]) {
-      const error = validateField(field, (formData as any)[field], formData);
+      const fieldValue = formData[field as keyof CreateMissionCaseDto];
+      const error = validateField(
+        field,
+        fieldValue as string | number | undefined | null,
+        formData
+      );
       if (error) {
         errors[field] = error;
       }
@@ -245,7 +260,12 @@ export function validateStep3(
 
   fieldsToValidate.forEach((field) => {
     if (touched[field]) {
-      const error = validateField(field, (formData as any)[field], formData);
+      const fieldValue = formData[field as keyof CreateMissionCaseDto];
+      const error = validateField(
+        field,
+        fieldValue as string | number | undefined | null,
+        formData
+      );
       if (error) {
         errors[field] = error;
       }

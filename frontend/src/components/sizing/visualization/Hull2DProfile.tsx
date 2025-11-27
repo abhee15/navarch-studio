@@ -163,6 +163,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                 offsets: s.offsets,
                 hasBulb: s.hasBulb || false,
                 bulbOffsets: s.bulbOffsets,
+                hasSkeg: s.hasSkeg || false,
+                skegOffsets: s.skegOffsets,
               })),
               stationPositions: sections.stationPositions || [],
             };

@@ -37,7 +37,7 @@ export const Step2SpeedEnvironment: React.FC<Step2Props> = ({
 
   // Handle field change with validation
   const handleFieldChange = useCallback(
-    (fieldName: string, value: any) => {
+    (fieldName: string, value: string | number | undefined) => {
       // Update form data
       updateFormData({ [fieldName]: value });
 

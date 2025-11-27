@@ -61,37 +61,70 @@ export function extractWaterlinesFromShipD(
     // First, collect all starboard side points (half-breadth > 0)
     for (const station of sortedStations) {
       // Find closest offset at this height (interpolate if needed)
+      // Check main offsets first, then skeg offsets (skeg may extend below keel)
       const offsets = station.offsets;
       const heights = Object.keys(offsets)
         .map(Number)
         .sort((a, b) => a - b);
 
-      if (heights.length === 0) continue;
-
-      // Find height range with proper interpolation
       let halfBreadth = 0;
-      if (height <= heights[0]) {
-        // Below lowest point - use keel value (should be 0 at keel)
-        halfBreadth = height <= 0 ? 0 : offsets[heights[0]];
-      } else if (height >= heights[heights.length - 1]) {
-        // Above highest point - extrapolate or use maximum
-        halfBreadth = offsets[heights[heights.length - 1]];
-      } else {
-        // Interpolate between adjacent heights
-        for (let i = 0; i < heights.length - 1; i++) {
-          if (height >= heights[i] && height <= heights[i + 1]) {
-            const h1 = heights[i];
-            const h2 = heights[i + 1];
-            const y1 = offsets[h1];
-            const y2 = offsets[h2];
-            if (h2 - h1 > 0.001) {
-              // Avoid division by zero
-              const t = (height - h1) / (h2 - h1);
-              halfBreadth = y1 + t * (y2 - y1);
-            } else {
-              halfBreadth = y1;
+
+      // Check skeg offsets first if present (skeg may extend below keel with negative heights)
+      if (station.hasSkeg && station.skegOffsets) {
+        const skegHeights = Object.keys(station.skegOffsets)
+          .map(Number)
+          .sort((a, b) => a - b);
+
+        // Check if height is within skeg range
+        if (
+          skegHeights.length > 0 &&
+          height >= skegHeights[0] &&
+          height <= skegHeights[skegHeights.length - 1]
+        ) {
+          // Interpolate skeg offset
+          for (let i = 0; i < skegHeights.length - 1; i++) {
+            if (height >= skegHeights[i] && height <= skegHeights[i + 1]) {
+              const h1 = skegHeights[i];
+              const h2 = skegHeights[i + 1];
+              const y1 = station.skegOffsets[h1];
+              const y2 = station.skegOffsets[h2];
+              if (h2 - h1 > 0.001) {
+                const t = (height - h1) / (h2 - h1);
+                halfBreadth = y1 + t * (y2 - y1);
+              } else {
+                halfBreadth = y1;
+              }
+              break;
             }
-            break;
+          }
+        }
+      }
+
+      // If no skeg offset found or height is above skeg, check main offsets
+      if (halfBreadth === 0 && heights.length > 0) {
+        if (height <= heights[0]) {
+          // Below lowest point - use keel value (should be 0 at keel)
+          halfBreadth = height <= 0 ? 0 : offsets[heights[0]];
+        } else if (height >= heights[heights.length - 1]) {
+          // Above highest point - extrapolate or use maximum
+          halfBreadth = offsets[heights[heights.length - 1]];
+        } else {
+          // Interpolate between adjacent heights
+          for (let i = 0; i < heights.length - 1; i++) {
+            if (height >= heights[i] && height <= heights[i + 1]) {
+              const h1 = heights[i];
+              const h2 = heights[i + 1];
+              const y1 = offsets[h1];
+              const y2 = offsets[h2];
+              if (h2 - h1 > 0.001) {
+                // Avoid division by zero
+                const t = (height - h1) / (h2 - h1);
+                halfBreadth = y1 + t * (y2 - y1);
+              } else {
+                halfBreadth = y1;
+              }
+              break;
+            }
           }
         }
       }
@@ -221,22 +254,35 @@ export function extractButtocksFromShipD(
 
     for (const station of sortedStations) {
       // Find height at this transverse offset
+      // Check both main offsets and skeg offsets (skeg may extend below keel)
       const offsets = station.offsets;
-      const heights = Object.keys(offsets)
+
+      // Combine main offsets and skeg offsets for search
+      const allOffsets: Record<number, number> = { ...offsets };
+      if (station.hasSkeg && station.skegOffsets) {
+        // Merge skeg offsets (may have negative heights)
+        for (const [h, halfBreadth] of Object.entries(station.skegOffsets)) {
+          const height = Number(h);
+          // Use maximum of main offset and skeg offset at same height
+          allOffsets[height] = Math.max(allOffsets[height] || 0, halfBreadth);
+        }
+      }
+
+      const allHeights = Object.keys(allOffsets)
         .map(Number)
         .sort((a, b) => a - b);
 
-      if (heights.length === 0) continue;
+      if (allHeights.length === 0) continue;
 
       // Find the height where half-breadth equals yOffset
-      // Heights are positive: 0 = keel, draftM = waterline
+      // Heights may be negative (skeg below keel): negative = below keel, 0 = keel, draftM = waterline
       let z = 0; // Default to keel
 
-      for (let i = 0; i < heights.length - 1; i++) {
-        const h1 = heights[i];
-        const h2 = heights[i + 1];
-        const y1 = offsets[h1];
-        const y2 = offsets[h2];
+      for (let i = 0; i < allHeights.length - 1; i++) {
+        const h1 = allHeights[i];
+        const h2 = allHeights[i + 1];
+        const y1 = allOffsets[h1];
+        const y2 = allOffsets[h2];
 
         if (yOffset >= Math.min(y1, y2) && yOffset <= Math.max(y1, y2)) {
           // Interpolate height
@@ -247,9 +293,9 @@ export function extractButtocksFromShipD(
       }
 
       // If yOffset is beyond max half-breadth, use highest point
-      const maxY = Math.max(...Object.values(offsets));
-      if (yOffset > maxY && heights.length > 0) {
-        z = heights[heights.length - 1];
+      const maxY = Math.max(...Object.values(allOffsets));
+      if (yOffset > maxY && allHeights.length > 0) {
+        z = allHeights[allHeights.length - 1];
       }
 
       // Convert station position (0-1) to longitudinal coordinate (-Lpp/2 to +Lpp/2)
@@ -318,6 +364,22 @@ export function extractSectionsFromShipD(
 
       for (const height of bulbHeights) {
         const halfBreadth = station.bulbOffsets[height];
+        // Only add if not already present at this height
+        if (!points.some((p) => Math.abs(p[1] - height) < 0.001)) {
+          points.push([halfBreadth, height]);
+        }
+      }
+    }
+
+    // Add skeg points if present (merge with main offsets)
+    // Skeg may extend below keel (negative heights)
+    if (station.hasSkeg && station.skegOffsets) {
+      const skegHeights = Object.keys(station.skegOffsets)
+        .map(Number)
+        .sort((a, b) => a - b);
+
+      for (const height of skegHeights) {
+        const halfBreadth = station.skegOffsets[height];
         // Only add if not already present at this height
         if (!points.some((p) => Math.abs(p[1] - height) < 0.001)) {
           points.push([halfBreadth, height]);

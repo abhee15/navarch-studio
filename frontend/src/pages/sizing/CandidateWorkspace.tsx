@@ -15,7 +15,7 @@ import { ResistanceCurvePanel } from "../../components/sizing/workspace/Resistan
 import { SensitivityPanel } from "../../components/sizing/workspace/SensitivityPanel";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
-import { adjustParameter } from "../../services/sizingApi";
+import { adjustParameter, getCandidate } from "../../services/sizingApi";
 import type { CandidateDesign } from "../../types/sizing";
 import { AppHeader } from "../../components/AppHeader";
 import {
@@ -50,19 +50,33 @@ export const CandidateWorkspace: React.FC = observer(() => {
   const mission = sizingStore.selectedMission;
 
   useEffect(() => {
-    if (candidateId && (!candidate || candidate.id !== candidateId)) {
-      // Load candidate details
-      // For now, candidate should already be in store from results page
-      const found = sizingStore.candidates.find((c) => c.id === candidateId);
-      if (found) {
-        sizingStore.selectCandidate(candidateId);
+    const loadCandidate = async () => {
+      if (candidateId && (!candidate || candidate.id !== candidateId)) {
+        // First try to find in store
+        const found = sizingStore.candidates.find((c) => c.id === candidateId);
+        if (found) {
+          sizingStore.selectCandidate(candidateId);
+        } else {
+          // If not in store, fetch from API
+          try {
+            const fetchedCandidate = await getCandidate(candidateId);
+            // Add to store and select
+            sizingStore.candidates.push(fetchedCandidate);
+            sizingStore.selectCandidate(candidateId);
+          } catch (error) {
+            console.error("Failed to load candidate:", error);
+            toast.error("Failed to load candidate design");
+          }
+        }
       }
-    }
-    // Ensure ShipD metadata is loaded if candidate has ShipD parameters
-    // This will also trigger parameter extraction in selectCandidate
-    if (candidate?.shipdParametersJson) {
-      sizingStore.ensureShipDMetadataLoaded();
-    }
+      // Ensure ShipD metadata is loaded if candidate has ShipD parameters
+      // This will also trigger parameter extraction in selectCandidate
+      if (candidate?.shipdParametersJson) {
+        sizingStore.ensureShipDMetadataLoaded();
+      }
+    };
+
+    loadCandidate();
   }, [candidateId, candidate, sizingStore]);
 
   const handleHome = () => {
