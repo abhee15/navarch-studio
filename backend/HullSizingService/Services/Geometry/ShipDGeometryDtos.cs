@@ -41,6 +41,17 @@ public record HullStationDto
     /// Bulb offsets if present (height from keel -> half-breadth)
     /// </summary>
     public Dictionary<decimal, decimal>? BulbOffsets { get; init; }
+
+    /// <summary>
+    /// Whether this station includes skeg geometry
+    /// </summary>
+    public bool HasSkeg { get; init; }
+
+    /// <summary>
+    /// Skeg offsets if present (height from keel -> half-breadth)
+    /// Skeg may extend below keel (negative heights) or at vertical offset
+    /// </summary>
+    public Dictionary<decimal, decimal>? SkegOffsets { get; init; }
 }
 
 /// <summary>
@@ -84,4 +95,3 @@ public record ShipDValidationResultDto
     /// </summary>
     public List<string> Warnings { get; init; } = new();
 }
-

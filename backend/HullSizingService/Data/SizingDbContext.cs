@@ -142,6 +142,7 @@ public class SizingDbContext : DbContext
             entity.Property(e => e.MidshipFamily).HasMaxLength(50);
             entity.Property(e => e.SternFamily).HasMaxLength(50);
             entity.Property(e => e.ShipdParametersJson).HasColumnType("jsonb");
+            entity.Property(e => e.WeightBreakdownJson).HasColumnType("jsonb");
 
             // Principal dimensions - numeric(12,4)
             entity.Property(e => e.LppM).HasColumnType("numeric(12,4)");

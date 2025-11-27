@@ -83,6 +83,15 @@ public class ShipDToHydroMapper : IShipDToHydroMapper
                     heights.Add(Math.Round(height, 6, MidpointRounding.AwayFromZero));
                 }
             }
+
+            // Include skeg heights (may be negative - skeg extends below keel)
+            if (station.SkegOffsets != null)
+            {
+                foreach (var height in station.SkegOffsets.Keys)
+                {
+                    heights.Add(Math.Round(height, 6, MidpointRounding.AwayFromZero));
+                }
+            }
         }
 
         return heights.Select((z, index) => new WaterlineDto
@@ -118,21 +127,39 @@ public class ShipDToHydroMapper : IShipDToHydroMapper
 
     private static decimal LookupHalfBreadth(HullStationDto station, decimal height)
     {
+        // Check main offsets first
         if (station.Offsets.TryGetValue(height, out var value))
         {
             return value;
         }
 
+        // Check skeg offsets (skeg may extend below keel with negative heights)
+        // Use maximum of main offset and skeg offset if both exist at same height
+        if (station.SkegOffsets != null && station.SkegOffsets.TryGetValue(height, out var skegValue))
+        {
+            // If main offset exists, use maximum; otherwise use skeg value
+            if (station.Offsets.TryGetValue(height, out var mainValue))
+            {
+                return Math.Max(mainValue, skegValue);
+            }
+            return skegValue;
+        }
+
+        // Check bulb offsets
         if (station.BulbOffsets != null && station.BulbOffsets.TryGetValue(height, out var bulbValue))
         {
             return bulbValue;
         }
 
-        // heights may have rounding differences - attempt fuzzy lookup across both dictionaries
+        // Heights may have rounding differences - attempt fuzzy lookup across all dictionaries
         var candidates = station.Offsets.AsEnumerable();
         if (station.BulbOffsets != null)
         {
             candidates = candidates.Concat(station.BulbOffsets);
+        }
+        if (station.SkegOffsets != null)
+        {
+            candidates = candidates.Concat(station.SkegOffsets);
         }
 
         var match = candidates

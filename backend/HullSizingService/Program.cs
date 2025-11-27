@@ -174,6 +174,10 @@ try
     builder.Services.AddScoped<HullSizingService.Services.IDesignSpaceExplorationService, HullSizingService.Services.DesignSpaceExplorationService>();
     Log.Information("Design space exploration service registered");
 
+    // Engineering Services
+    builder.Services.AddScoped<HullSizingService.Services.Engineering.IWeightEstimationService, HullSizingService.Services.Engineering.WeightEstimationService>();
+    Log.Information("Weight estimation service registered");
+
     // Hull Family Service
     builder.Services.AddScoped<HullSizingService.Services.IHullFamilyService, HullSizingService.Services.HullFamilyService>();
     Log.Information("Hull family service registered");

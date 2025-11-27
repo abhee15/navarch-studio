@@ -234,6 +234,13 @@ public class CandidateDesign
     /// </summary>
     public string? SolverMode { get; set; }
 
+    // Engineering Details (JSON serialized)
+
+    /// <summary>
+    /// Weight breakdown estimate (JSON serialized WeightBreakdown)
+    /// </summary>
+    public string? WeightBreakdownJson { get; set; }
+
     // Navigation Properties
 
     /// <summary>

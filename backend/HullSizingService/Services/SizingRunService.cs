@@ -26,6 +26,7 @@ public class SizingRunService : ISizingRunService
     private readonly IShipDHullGeometryService? _shipdGeometryService;
     private readonly IDataServiceClient? _dataServiceClient;
     private readonly IHullGeometryGeneratorService? _hullGeometryGenerator;
+    private readonly Engineering.IWeightEstimationService _weightService;
 
     // JSON serializer options with camelCase naming (matches API response format)
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -60,6 +61,7 @@ public class SizingRunService : ISizingRunService
         IConfiguration configuration,
         IShipDParameterAdapter shipdAdapter,
         IShipDConstraintValidator shipdValidator,
+        Engineering.IWeightEstimationService weightService,
         DataDriven.DataDrivenRealWorldSolver? dataDrivenSolver = null,
         DataDriven.DataDrivenParametricSolver? parametricSolver = null,
         IShipDHullGeometryService? shipdGeometryService = null,
@@ -72,6 +74,7 @@ public class SizingRunService : ISizingRunService
         _configuration = configuration;
         _shipdAdapter = shipdAdapter;
         _shipdValidator = shipdValidator;
+        _weightService = weightService;
         _dataDrivenSolver = dataDrivenSolver;
         _parametricSolver = parametricSolver;
         _shipdGeometryService = shipdGeometryService;
@@ -481,6 +484,30 @@ public class SizingRunService : ISizingRunService
                     }
                 }
 
+                // Calculate weight breakdown
+                string? weightBreakdownJson = null;
+                try
+                {
+                    var weightBreakdown = _weightService.EstimateWeights(
+                        lppM: sc.LppM,
+                        beamM: sc.BeamM,
+                        depthM: sc.DepthM,
+                        draftM: sc.DraftM,
+                        cb: sc.Cb,
+                        displacementT: sc.DisplacementT,
+                        shpKw: sc.ShpKw,
+                        missionType: missionCase.MissionType,
+                        enduranceNm: missionCase.EnduranceNm,
+                        serviceSpeedKn: missionCase.ServiceSpeedKn
+                    );
+                    weightBreakdownJson = JsonSerializer.Serialize(weightBreakdown, JsonOptions);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[SIZING_RUN] Failed to calculate weight breakdown for candidate {Rank}", i + 1);
+                    // Continue without weight breakdown - not critical for candidate generation
+                }
+
                 var entity = new CandidateDesign
                 {
                     Id = Guid.NewGuid(),
@@ -518,6 +545,7 @@ public class SizingRunService : ISizingRunService
                     GeometryJson = geometryJson, // ShipD or OffsetsGrid geometry if available
                     GeometryGenerationStatus = geometryStatus,
                     GeometryGenerationError = geometryError,
+                    WeightBreakdownJson = weightBreakdownJson,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -732,6 +760,7 @@ public class SizingRunService : ISizingRunService
             LwlOverLambda = entity.LwlOverLambda,
             KbM = entity.KbM,
             LcbPctLpp = entity.LcbPctLpp,
+            WeightBreakdownJson = entity.WeightBreakdownJson,
             KgEstM = null, // Not in model
             GmEstM = entity.GmEstM,
             EhpKw = entity.EhpKw,

@@ -19,6 +19,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -118,6 +120,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -217,6 +221,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -317,6 +323,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.35,
+      "sternLengthRatio": 0.35,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -416,6 +424,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -516,6 +526,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -615,6 +627,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -715,6 +729,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -815,6 +831,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -914,6 +932,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -1013,6 +1033,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -1112,6 +1134,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.45,
+      "sternLengthRatio": 0.35,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -1212,6 +1236,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.35,
+      "sternLengthRatio": 0.35,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [
@@ -1311,6 +1337,8 @@
     ],
     "maskVersion": 1,
     "additionalParameters": {
+      "bowLengthRatio": 0.30,
+      "sternLengthRatio": 0.30,
       "conditionalInputs": {
         "bow": {
           "bulbous_bow": [

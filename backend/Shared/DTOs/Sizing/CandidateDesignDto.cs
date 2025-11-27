@@ -101,6 +101,12 @@ public record CandidateDesignDto
     /// </summary>
     public bool HasValidGeometry => GeometryGenerationStatus == GeometryGenerationStatus.Success && !string.IsNullOrEmpty(GeometryJson);
 
+    // Engineering Details
+    /// <summary>
+    /// Weight breakdown estimate (JSON serialized)
+    /// </summary>
+    public string? WeightBreakdownJson { get; init; }
+
     public DateTime CreatedAt { get; init; }
 
     // Provenance (Data-Driven Mode)

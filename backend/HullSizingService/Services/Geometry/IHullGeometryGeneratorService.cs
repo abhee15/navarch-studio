@@ -36,7 +36,7 @@ public interface IHullGeometryGeneratorService
     /// </summary>
     /// <param name="candidate">Original solver candidate</param>
     /// <param name="offsets">Generated offsets</param>
-    /// <param name="tolerance">Tolerance for comparison (default: 0.10 = 10%)</param>
+    /// <param name="tolerance">Tolerance for comparison (null = use BSRA default 2%)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Validation result with computed coefficients and errors</returns>
     Task<GeometryValidationResult> ValidateFormCoefficientsAsync(
