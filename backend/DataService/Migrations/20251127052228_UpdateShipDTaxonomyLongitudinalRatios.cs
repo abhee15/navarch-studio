@@ -26,7 +26,7 @@ namespace DataService.Migrations
             foreach (var type in standardDefaults)
             {
                 migrationBuilder.Sql($@"
-                    UPDATE ship_d_vessel_taxonomy
+                    UPDATE data.shipd_vessel_taxonomy
                     SET additional_parameters_json =
                         COALESCE(additional_parameters_json, '{{}}'::jsonb) ||
                         '{{""bowLengthRatio"": 0.30, ""sternLengthRatio"": 0.30}}'::jsonb
@@ -36,7 +36,7 @@ namespace DataService.Migrations
 
             // Fishing vessels (Lb=0.35, Ls=0.35)
             migrationBuilder.Sql(@"
-                UPDATE ship_d_vessel_taxonomy
+                UPDATE data.shipd_vessel_taxonomy
                 SET additional_parameters_json =
                     COALESCE(additional_parameters_json, '{}'::jsonb) ||
                     '{""bowLengthRatio"": 0.35, ""sternLengthRatio"": 0.35}'::jsonb
@@ -45,7 +45,7 @@ namespace DataService.Migrations
 
             // Yachts (Lb=0.45, Ls=0.35)
             migrationBuilder.Sql(@"
-                UPDATE ship_d_vessel_taxonomy
+                UPDATE data.shipd_vessel_taxonomy
                 SET additional_parameters_json =
                     COALESCE(additional_parameters_json, '{}'::jsonb) ||
                     '{""bowLengthRatio"": 0.45, ""sternLengthRatio"": 0.35}'::jsonb
@@ -58,7 +58,7 @@ namespace DataService.Migrations
         {
             // Remove bowLengthRatio and sternLengthRatio from all vessel types
             migrationBuilder.Sql(@"
-                UPDATE ship_d_vessel_taxonomy
+                UPDATE data.shipd_vessel_taxonomy
                 SET additional_parameters_json =
                     additional_parameters_json - 'bowLengthRatio' - 'sternLengthRatio'
                 WHERE additional_parameters_json IS NOT NULL;
