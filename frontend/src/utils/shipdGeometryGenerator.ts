@@ -10,7 +10,7 @@
 
 import * as THREE from "three";
 import type { ShipDParameterMetadata } from "../types/sizing";
-import { generateSmoothCurve } from "./splineInterpolation";
+import { createCubicSpline, evaluateSpline } from "./splineInterpolation";
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -458,27 +458,53 @@ function interpolateSections(
   }
 
   // For each interpolated station, interpolate offsets at interpolated heights
+  // CRITICAL: Ensure all stations use the exact same height set for proper mesh connectivity
+  // This prevents gaps between stations when creating mesh faces
   for (const station of interpolatedStations) {
     const originalHeights = Object.keys(station.offsets)
       .map(Number)
       .filter((h) => Number.isFinite(h))
       .sort((a, b) => a - b);
 
-    if (originalHeights.length < 2) continue;
+    const newOffsets: Record<number, number> = {};
 
-    // Create smooth curve through original points
+    if (originalHeights.length < 2) {
+      // If insufficient points, create offsets at all interpolated heights using nearest neighbor
+      for (const height of interpolatedHeights) {
+        // Find nearest original height
+        let nearestHeight = originalHeights[0] ?? 0;
+        let minDist = Infinity;
+        for (const origH of originalHeights) {
+          const dist = Math.abs(origH - height);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestHeight = origH;
+          }
+        }
+        newOffsets[height] = Math.max(0, station.offsets[nearestHeight] ?? 0);
+      }
+      station.offsets = newOffsets;
+      continue;
+    }
+
+    // Create smooth spline through original points
     const points = originalHeights.map((h) => ({
       x: h,
       y: station.offsets[h] ?? 0,
     }));
 
-    const smoothCurve = generateSmoothCurve(points, numInterpHeights);
+    // Create spline segments for evaluation
+    const segments = createCubicSpline(points);
 
-    // Update offsets with interpolated values
-    const newOffsets: Record<number, number> = {};
-    for (const point of smoothCurve) {
-      newOffsets[point.x] = Math.max(0, point.y);
+    // CRITICAL: Evaluate spline at exact interpolatedHeights values
+    // This ensures all stations have identical height keys, preventing mesh gaps
+    for (const height of interpolatedHeights) {
+      if (Number.isFinite(height)) {
+        const interpolatedY = evaluateSpline(segments, height);
+        newOffsets[height] = Math.max(0, interpolatedY);
+      }
     }
+
     station.offsets = newOffsets;
   }
 
@@ -711,24 +737,26 @@ function generateHull3DFromSections(
       // The mesh is generated directly from vertex positions stored in vertexMap
 
       // Helper function to get vertex, checking both regular and skeg vertices
+      // CRITICAL: After interpolation, all stations should have identical heights,
+      // so exact matching should work. This function handles edge cases (bulb, skeg, keel).
       const getVertex = (
         stationPos: number,
         height: number,
         side: "port" | "starboard"
       ): number | undefined => {
-        // Try regular vertex first
+        // Try exact match first (should work after interpolation ensures identical heights)
         let vertex = vertexMap.get(`${stationPos}-${height}-${side}`);
         if (vertex !== undefined) return vertex;
 
-        // Try skeg vertex
+        // Try skeg vertex (for stern extensions below keel)
         vertex = vertexMap.get(`${stationPos}-${height}-skeg-${side}`);
         if (vertex !== undefined) return vertex;
 
-        // Try bulb vertex
+        // Try bulb vertex (for bulbous bow)
         vertex = vertexMap.get(`${stationPos}-${height}-bulb-${side}`);
         if (vertex !== undefined) return vertex;
 
-        // Try keel vertex (for centerline)
+        // Try keel vertex (for centerline at height=0 or when half-breadth=0)
         if (side === "port" || side === "starboard") {
           vertex = vertexMap.get(`${stationPos}-${height}-keel`);
           if (vertex !== undefined) return vertex;
