@@ -62,11 +62,25 @@ export interface ShipDGeometryParams {
  * Generates 3D hull geometry from ShipD parameter vector or backend geometry data
  */
 export function generateShipDHull3D(
-  params: ShipDGeometryParams | { sections: ShipDHullSections; lppM: number; smooth?: boolean }
+  params:
+    | ShipDGeometryParams
+    | {
+        sections: ShipDHullSections;
+        lppM: number;
+        smooth?: boolean;
+        stationMultiplier?: number;
+        heightMultiplier?: number;
+      }
 ): THREE.BufferGeometry {
   // If sections are provided (from backend), use them directly
   if ("sections" in params) {
-    return generateHull3DFromSections(params.sections, params.lppM, params.smooth ?? true);
+    return generateHull3DFromSections(
+      params.sections,
+      params.lppM,
+      params.smooth ?? true,
+      params.stationMultiplier,
+      params.heightMultiplier
+    );
   }
 
   // Otherwise, generate from ShipD vector
@@ -481,7 +495,9 @@ function interpolateSections(
 function generateHull3DFromSections(
   sections: ShipDHullSections,
   lppM: number,
-  smooth: boolean = true
+  smooth: boolean = true,
+  stationMultiplier: number = 3,
+  heightMultiplier: number = 3
 ): THREE.BufferGeometry {
   // CRITICAL: Sort stations by position to ensure correct ordering (aft to forward: 0 to 1)
   // This prevents helical twist in 3D view if stations are not in correct order
@@ -491,7 +507,10 @@ function generateHull3DFromSections(
   };
 
   // Interpolate sections for smooth rendering if requested
-  const finalSections = smooth ? interpolateSections(sortedSections, 2, 2) : sortedSections;
+  // Use higher multipliers (3x) for smoother 3D surfaces, especially in Isometric view
+  const finalSections = smooth
+    ? interpolateSections(sortedSections, stationMultiplier, heightMultiplier)
+    : sortedSections;
   const geometry = new THREE.BufferGeometry();
   const vertices: number[] = [];
   const indices: number[] = [];

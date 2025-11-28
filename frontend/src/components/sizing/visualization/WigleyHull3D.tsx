@@ -87,6 +87,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             // Use converted geometry for 3D generation
             // Enable smoothing for smooth 3D rendering - interpolation creates smooth surfaces
             // while preserving family-specific characteristics
+            // Use higher multipliers (4x) for Isometric view to eliminate faceting
             const fromSections = generateShipDHull3D({
               sections: {
                 stations: shipdSections.stations,
@@ -94,6 +95,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
               },
               lppM: lpp,
               smooth: true, // Enable interpolation for smooth 3D rendering
+              stationMultiplier: 4, // Higher resolution for smoother surfaces
+              heightMultiplier: 4, // Higher resolution for smoother surfaces
             });
             if (isGeometryValid(fromSections)) {
               return fromSections;
@@ -116,6 +119,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
               // Use ShipD geometry from backend
               // Enable smoothing for smooth 3D rendering - interpolation creates smooth surfaces
               // while preserving family-specific characteristics
+              // Use higher multipliers (4x) for Isometric view to eliminate faceting
               const fromSections = generateShipDHull3D({
                 sections: {
                   stations: sections.stations,
@@ -123,6 +127,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
                 },
                 lppM: lpp,
                 smooth: true, // Enable interpolation for smooth 3D rendering
+                stationMultiplier: 4, // Higher resolution for smoother surfaces
+                heightMultiplier: 4, // Higher resolution for smoother surfaces
               });
               if (isGeometryValid(fromSections)) {
                 return fromSections;
