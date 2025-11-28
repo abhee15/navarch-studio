@@ -22,26 +22,27 @@ export const SizingRunResults: React.FC = observer(() => {
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    if (runId) {
-      // Check if currentRun is set and matches the runId
-      // If not, load both the run and candidates
-      if (!sizingStore.currentRun || sizingStore.currentRun.id !== runId) {
-        sizingStore.loadRunAndCandidates(runId);
-      } else {
-        // If run is already loaded, just ensure candidates are loaded
-        if (sizingStore.candidates.length === 0) {
-          sizingStore.loadCandidates(runId);
-        }
-        // Safety check: Ensure mission case is loaded if run has missionCaseId
-        if (
-          sizingStore.currentRun.missionCaseId &&
-          sizingStore.selectedMission?.id !== sizingStore.currentRun.missionCaseId
-        ) {
-          sizingStore.selectMission(sizingStore.currentRun.missionCaseId);
-        }
+    if (!runId) return;
+
+    // Check if currentRun is set and matches the runId
+    // If not, load both the run and candidates
+    if (!sizingStore.currentRun || sizingStore.currentRun.id !== runId) {
+      sizingStore.loadRunAndCandidates(runId);
+    } else {
+      // If run is already loaded, just ensure candidates are loaded
+      if (sizingStore.candidates.length === 0) {
+        sizingStore.loadCandidates(runId);
+      }
+      // Safety check: Ensure mission case is loaded if run has missionCaseId
+      if (
+        sizingStore.currentRun.missionCaseId &&
+        sizingStore.selectedMission?.id !== sizingStore.currentRun.missionCaseId
+      ) {
+        sizingStore.selectMission(sizingStore.currentRun.missionCaseId);
       }
     }
-  }, [runId, sizingStore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runId]); // Only depend on runId to avoid re-renders on store updates
 
   const handleHome = () => {
     navigate("/dashboard");
@@ -209,16 +210,21 @@ export const SizingRunResults: React.FC = observer(() => {
           {/* Candidates Grid */}
           {!sizingStore.isLoading && sizingStore.candidates.length > 0 && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-              {sizingStore.candidates.map((candidate, idx) => (
-                <CandidateCard
-                  key={candidate.id}
-                  candidate={candidate}
-                  rank={idx + 1}
-                  onSelect={() => navigate(`/sizing/workspace/${candidate.id}`)}
-                  onCompare={() => sizingStore.toggleCompareCandidate(candidate.id)}
-                  isComparing={sizingStore.compareCandidates.some((c) => c.id === candidate.id)}
-                />
-              ))}
+              {sizingStore.candidates.map((candidate, idx) => {
+                const isComparing = sizingStore.compareCandidates.some(
+                  (c) => c.id === candidate.id
+                );
+                return (
+                  <CandidateCard
+                    key={candidate.id}
+                    candidate={candidate}
+                    rank={idx + 1}
+                    onSelect={() => navigate(`/sizing/workspace/${candidate.id}`)}
+                    onCompare={() => sizingStore.toggleCompareCandidate(candidate.id)}
+                    isComparing={isComparing}
+                  />
+                );
+              })}
             </div>
           )}
 

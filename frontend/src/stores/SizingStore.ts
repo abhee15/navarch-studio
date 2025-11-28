@@ -541,21 +541,22 @@ export class SizingStore {
       // Update in candidates array
       const index = this.candidates.findIndex((c) => c.id === updatedCandidate.id);
       if (index >= 0) {
+        // Replace entire object to trigger MobX reactivity
         this.candidates[index] = updatedCandidate;
       } else {
         console.warn("[SizingStore] Candidate not found in array, adding:", updatedCandidate.id);
         this.candidates.push(updatedCandidate);
       }
 
-      // Update selected candidate if it's the same one (maintain reference if possible)
+      // Update selected candidate if it's the same one
+      // Always replace with new object to ensure MobX detects the change
       if (this.selectedCandidate?.id === updatedCandidate.id) {
-        // If it's the same reference, update properties to maintain reactivity
-        if (this.selectedCandidate === this.candidates[index]) {
-          // Already updated via array update, just ensure reference is maintained
-          this.selectedCandidate = this.candidates[index];
-        } else {
-          this.selectedCandidate = updatedCandidate;
-        }
+        // Replace the entire selectedCandidate object to trigger reactivity
+        this.selectedCandidate = updatedCandidate;
+        console.log(
+          "[SizingStore] Updated selectedCandidate:",
+          `Lpp=${updatedCandidate.lppM}m, Beam=${updatedCandidate.beamM}m, Draft=${updatedCandidate.draftM}m`
+        );
       }
 
       // Update in compare candidates if present

@@ -355,9 +355,143 @@ public class SizingRunService : ISizingRunService
                 }
             }
 
+            // Get base dimensions from ShipD result for vector adjustment
+            // Use the first candidate's dimensions as reference, or mission case defaults
+            decimal baseLpp = solverCandidates.Count > 0 ? solverCandidates[0].LppM : missionCase.CapLoaM ?? 100m;
+            decimal baseBeam = solverCandidates.Count > 0 ? solverCandidates[0].BeamM : missionCase.CapBeamM ?? 20m;
+            decimal baseDraft = solverCandidates.Count > 0 ? solverCandidates[0].DraftM : missionCase.CapDraftM ?? 8m;
+            decimal baseCb = solverCandidates.Count > 0 ? solverCandidates[0].Cb : 0.65m;
+
             for (int i = 0; i < solverCandidates.Count; i++)
             {
                 var sc = solverCandidates[i];
+
+                // CRITICAL FIX: Adjust ShipD vector for each candidate's unique dimensions and coefficients
+                // This ensures each candidate has a properly parameterized ShipD vector
+                decimal[] candidateShipdVector = shipdResult.ParameterVector.ToArray(); // Convert IReadOnlyList to array
+                string? candidateShipdVectorJson = shipdVectorJson;
+
+                // CRITICAL: Calculate unique longitudinal ratios for each candidate based on variant index
+                // This ensures each candidate has a distinct hull shape, not just scaled versions of the same shape
+                // Higher Cb (fuller hull) → longer midship section → lower bow/stern ratios
+                // Lower Cb (finer hull) → shorter midship section → higher bow/stern ratios
+                bool vectorUpdated = false;
+                if (candidateShipdVector.Length == 45)
+                {
+                    // Calculate variant fraction (same logic as solver)
+                    decimal variantFraction = solverCandidates.Count <= 1
+                        ? 0.5m
+                        : (i + 1m) / (solverCandidates.Count + 1m);
+
+                    // Calculate unique longitudinal ratios based on variant fraction
+                    // As Cb increases (variantFraction increases), midship section gets longer
+                    // Typical range: Lb=25-35%, Lm=35-50%, Ls=25-35%
+                    decimal baseBowRatio = 0.30m;   // Base bow ratio
+                    decimal baseSternRatio = 0.30m; // Base stern ratio
+
+                    // Adjust ratios based on Cb: higher Cb → longer midship, shorter bow/stern
+                    // Cb range: typically 0.60-0.72 for container ships
+                    // Map variantFraction (0.167-0.833) to ratio adjustments
+                    decimal cbVariation = (variantFraction - 0.5m) * 0.10m; // ±0.05 variation
+                    decimal midshipAdjustment = cbVariation; // Positive for higher Cb
+                    decimal bowSternAdjustment = -cbVariation * 0.5m; // Negative for higher Cb (half the magnitude)
+
+                    decimal targetBowRatio = Math.Clamp(baseBowRatio + bowSternAdjustment, 0.25m, 0.35m);
+                    decimal targetSternRatio = Math.Clamp(baseSternRatio + bowSternAdjustment, 0.25m, 0.35m);
+                    decimal targetMidshipRatio = 1.0m - targetBowRatio - targetSternRatio;
+
+                    // Always calculate and set unique ratios for each candidate to ensure distinct hull shapes
+                    // This overrides any existing ratios to ensure progression from candidate 1 to N
+                    candidateShipdVector[1] = targetBowRatio;
+                    candidateShipdVector[2] = targetSternRatio;
+                    vectorUpdated = true;
+                    _logger.LogInformation(
+                        "[SIZING_RUN] ✅ Calculated unique longitudinal ratios for candidate {Rank}: Lb={BowRatio:P0}, Lm={MidshipRatio:P0}, Ls={SternRatio:P0} (variantFraction={VariantFraction:F3}, Cb={Cb:F3})",
+                        i + 1, targetBowRatio, targetMidshipRatio, targetSternRatio, variantFraction, sc.Cb);
+
+                    // Apply family-specific defaults (e.g., bit_BB for bulbous bow)
+                    // This ensures ALL candidates get family defaults, including Candidate 1
+                    string? bowFamily = run.BowFamily ?? missionCase.BowFamily;
+                    if (!string.IsNullOrEmpty(bowFamily))
+                    {
+                        var bowFamilyLower = bowFamily.ToLowerInvariant();
+                        if (bowFamilyLower == "bulbous" || bowFamilyLower == "bulbous_bow")
+                        {
+                            if (candidateShipdVector[31] == 0m) // bit_BB
+                            {
+                                candidateShipdVector[31] = 1.0m; // Enable bulbous bow
+                                vectorUpdated = true;
+                                _logger.LogWarning("[SIZING_RUN] ✅ Applied bulbous bow flag (bit_BB=1) for candidate {Rank} (BowFamily={BowFamily})", i + 1, bowFamily);
+                            }
+                        }
+                    }
+
+                    // CRITICAL: Serialize the updated vector immediately after populating defaults
+                    // This ensures the JSON has the correct values even if metadata adjustment fails
+                    if (vectorUpdated)
+                    {
+                        candidateShipdVectorJson = JsonSerializer.Serialize(candidateShipdVector);
+                        _logger.LogWarning(
+                            "[SIZING_RUN] ✅ Serialized ShipD vector with defaults for candidate {Rank}: Vector[1]={Bow}, Vector[2]={Stern}, Vector[31]={BitBB}",
+                            i + 1, candidateShipdVector[1], candidateShipdVector[2], candidateShipdVector[31]);
+                    }
+                }
+
+                if (_shipdAdapter != null && shipdMetadata != null && candidateShipdVector.Length == 45)
+                {
+                    try
+                    {
+
+                        // Adjust for dimension changes (Lpp, Beam, Draft)
+                        if (Math.Abs(sc.LppM - baseLpp) > 0.1m ||
+                            Math.Abs(sc.BeamM - baseBeam) > 0.1m ||
+                            Math.Abs(sc.DraftM - baseDraft) > 0.1m)
+                        {
+                            candidateShipdVector = _shipdAdapter.AdjustVectorForDimensionChange(
+                                candidateShipdVector,
+                                baseLpp, sc.LppM,
+                                baseBeam, sc.BeamM,
+                                baseDraft, sc.DraftM,
+                                shipdMetadata);
+                            _logger.LogDebug(
+                                "[SIZING_RUN] Adjusted ShipD vector for candidate {Rank} dimensions: Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m",
+                                i + 1, sc.LppM, sc.BeamM, sc.DraftM);
+                        }
+
+                        // Adjust for Cb change (affects hull fullness)
+                        if (Math.Abs(sc.Cb - baseCb) > 0.01m)
+                        {
+                            candidateShipdVector = _shipdAdapter.AdjustVectorForCoefficientChange(
+                                candidateShipdVector,
+                                "Cb",
+                                baseCb,
+                                sc.Cb,
+                                shipdMetadata);
+                            _logger.LogDebug(
+                                "[SIZING_RUN] Adjusted ShipD vector for candidate {Rank} Cb change: {OldCb} → {NewCb}",
+                                i + 1, baseCb, sc.Cb);
+                        }
+
+                        // Serialize adjusted vector
+                        candidateShipdVectorJson = JsonSerializer.Serialize(candidateShipdVector);
+                        _logger.LogWarning(
+                            "[SIZING_RUN] ✅ Generated unique ShipD vector for candidate {Rank}: Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m, Cb={Cb}, Vector[1]={Bow}, Vector[2]={Stern}",
+                            i + 1, sc.LppM, sc.BeamM, sc.DraftM, sc.Cb, candidateShipdVector[1], candidateShipdVector[2]);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex,
+                            "[SIZING_RUN] ❌ Failed to adjust ShipD vector for candidate {Rank}. Using base vector. ShipdAdapter={HasAdapter}, ShipdMetadata={HasMetadata}, VectorLength={Length}",
+                            i + 1, _shipdAdapter != null, shipdMetadata != null, candidateShipdVector?.Length ?? 0);
+                        // Continue with base vector if adjustment fails
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "[SIZING_RUN] ⚠️ Skipping ShipD vector adjustment for candidate {Rank}: ShipdAdapter={HasAdapter}, ShipdMetadata={HasMetadata}, VectorLength={Length}",
+                        i + 1, _shipdAdapter != null, shipdMetadata != null, candidateShipdVector?.Length ?? 0);
+                }
 
                 // Generate geometry (OffsetsGrid is primary, ShipD is secondary)
                 string? geometryJson = null;
@@ -380,7 +514,7 @@ public class SizingRunService : ISizingRunService
                         var offsetsGrid = await _hullGeometryGenerator.GenerateOffsetsFromCandidateAsync(
                             sc,
                             vesselType: vesselType,
-                            numStations: 23, // BSRA-compatible
+                            numStations: 60, // Increased for smooth 3D rendering (was 23 for BSRA-compatible)
                             numWaterlines: 13,
                             bowFamily: bowFamily,
                             midshipFamily: midshipFamily,
@@ -432,21 +566,21 @@ public class SizingRunService : ISizingRunService
 
                 // Priority 2: Try ShipD geometry as fallback if OffsetsGrid generation failed
                 // ShipD geometry is stored separately and can be used for 3D visualization
-                if (string.IsNullOrEmpty(geometryJson) && _shipdGeometryService != null && shipdMetadata != null && !string.IsNullOrEmpty(shipdVectorJson))
+                if (string.IsNullOrEmpty(geometryJson) && _shipdGeometryService != null && shipdMetadata != null && candidateShipdVector != null && candidateShipdVector.Length == 45)
                 {
                     try
                     {
-                        var shipdVector = JsonSerializer.Deserialize<decimal[]>(shipdVectorJson);
-                        if (shipdVector != null && shipdVector.Length == 45)
+                        // Use candidate-specific adjusted vector directly
+                        if (candidateShipdVector != null && candidateShipdVector.Length == 45)
                         {
                             // Generate hull sections
                             var sections = await _shipdGeometryService.GenerateSectionsAsync(
-                                shipdVector,
+                                candidateShipdVector,
                                 sc.LppM,
                                 sc.BeamM,
                                 sc.DraftM,
                                 shipdMetadata,
-                                stationCount: 20,
+                                stationCount: 60, // Increased for smooth 3D rendering (was 20)
                                 cancellationToken);
 
                             // Serialize sections to JSON (fallback geometry format)
@@ -519,7 +653,7 @@ public class SizingRunService : ISizingRunService
                     MidshipFamily = run.MidshipFamily,
                     SternFamily = run.SternFamily,
                     FamilyMaskVersion = run.FamilyMaskVersion,
-                    ShipdParametersJson = shipdVectorJson,
+                    ShipdParametersJson = candidateShipdVectorJson, // Use candidate-specific adjusted vector
                     LppM = sc.LppM,
                     LwlM = sc.LwlM,
                     LoaM = sc.LoaM,

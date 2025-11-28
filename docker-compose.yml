@@ -110,6 +110,9 @@ services:
       dockerfile: ./backend/HullSizingService/Dockerfile
     ports:
       - "5004:8080"
+    volumes:
+      - ./backend/HullSizingService:/src/backend/HullSizingService:ro
+      - ./backend/Shared:/src/backend/Shared:ro
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - AutoMigrate=true

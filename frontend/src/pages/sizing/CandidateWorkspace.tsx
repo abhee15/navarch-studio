@@ -51,33 +51,46 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
   useEffect(() => {
     const loadCandidate = async () => {
-      if (candidateId && (!candidate || candidate.id !== candidateId)) {
-        // First try to find in store
-        const found = sizingStore.candidates.find((c) => c.id === candidateId);
-        if (found) {
-          sizingStore.selectCandidate(candidateId);
-        } else {
-          // If not in store, fetch from API
-          try {
-            const fetchedCandidate = await getCandidate(candidateId);
-            // Add to store and select
-            sizingStore.candidates.push(fetchedCandidate);
-            sizingStore.selectCandidate(candidateId);
-          } catch (error) {
-            console.error("Failed to load candidate:", error);
-            toast.error("Failed to load candidate design");
-          }
+      if (!candidateId) return;
+
+      // Check if candidate is already selected and matches
+      if (candidate?.id === candidateId) {
+        // Ensure ShipD metadata is loaded if candidate has ShipD parameters
+        if (candidate.shipdParametersJson) {
+          sizingStore.ensureShipDMetadataLoaded();
         }
+        return;
       }
-      // Ensure ShipD metadata is loaded if candidate has ShipD parameters
-      // This will also trigger parameter extraction in selectCandidate
-      if (candidate?.shipdParametersJson) {
-        sizingStore.ensureShipDMetadataLoaded();
+
+      // First try to find in store
+      const found = sizingStore.candidates.find((c) => c.id === candidateId);
+      if (found) {
+        sizingStore.selectCandidate(candidateId);
+        // Ensure ShipD metadata is loaded
+        if (found.shipdParametersJson) {
+          sizingStore.ensureShipDMetadataLoaded();
+        }
+      } else {
+        // If not in store, fetch from API
+        try {
+          const fetchedCandidate = await getCandidate(candidateId);
+          // Add to store and select
+          sizingStore.candidates.push(fetchedCandidate);
+          sizingStore.selectCandidate(candidateId);
+          // Ensure ShipD metadata is loaded
+          if (fetchedCandidate.shipdParametersJson) {
+            sizingStore.ensureShipDMetadataLoaded();
+          }
+        } catch (error) {
+          console.error("Failed to load candidate:", error);
+          toast.error("Failed to load candidate design");
+        }
       }
     };
 
     loadCandidate();
-  }, [candidateId, candidate, sizingStore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidateId]); // Only depend on candidateId to avoid infinite loops
 
   const handleHome = () => {
     navigate("/dashboard");
@@ -232,6 +245,9 @@ export const CandidateWorkspace: React.FC = observer(() => {
       console.log(
         `[Adjusting] ${parameter} = ${value} for candidate ${candidate.id} (Hybrid mode: fast preview + background solver)`
       );
+      console.log(
+        `[Adjusting] BEFORE: Lpp=${candidate.lppM}m, Beam=${candidate.beamM}m, Draft=${candidate.draftM}m`
+      );
 
       // Call backend API with hybrid fast mode
       // Backend will apply intelligent ShipD vector scaling for fast preview
@@ -242,6 +258,21 @@ export const CandidateWorkspace: React.FC = observer(() => {
         recomputeMode: "fast", // Hybrid mode: fast parametric scaling + background solver
       });
 
+      console.log(
+        `[Adjusting] AFTER API: Lpp=${updatedCandidate.lppM}m, Beam=${updatedCandidate.beamM}m, Draft=${updatedCandidate.draftM}m`
+      );
+      console.log(
+        `[Adjusting] API Response - Parameter: ${parameter}, Value sent: ${value}, Value received: ${
+          parameter === "lppM"
+            ? updatedCandidate.lppM
+            : parameter === "bM"
+              ? updatedCandidate.beamM
+              : parameter === "tM"
+                ? updatedCandidate.draftM
+                : "N/A"
+        }`
+      );
+
       // Update the candidate in the store with fast preview results
       sizingStore.updateCandidate(updatedCandidate);
 
@@ -249,6 +280,9 @@ export const CandidateWorkspace: React.FC = observer(() => {
         "[Adjusted] Fast preview updated. New displacement:",
         updatedCandidate.dispT,
         "t"
+      );
+      console.log(
+        `[Adjusting] AFTER Store Update: Lpp=${sizingStore.selectedCandidate?.lppM}m, Beam=${sizingStore.selectedCandidate?.beamM}m`
       );
       // Note: Background solver will re-run for accurate physics-based results
     } catch (error: unknown) {

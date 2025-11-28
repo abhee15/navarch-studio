@@ -416,33 +416,20 @@ public class CandidateDesignService : ICandidateDesignService
                         }
                     }
 
-                    // Regenerate hull sections with adjusted vector + new dimensions
+                    // NOTE: Geometry regeneration removed to prevent overwriting original solver geometry
+                    // Adjusted geometry should be generated on-the-fly in frontend for workspace view only
+                    // Original solver geometry (candidate.GeometryJson) must be preserved for candidate cards
                     _logger.LogInformation(
-                        "[CANDIDATE_ADJUST] Regenerating ShipD geometry for candidate {Id} with adjusted vector (Parameter='{Parameter}', Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m)",
-                        candidate.Id, dto.Parameter, candidate.LppM, candidate.BM, candidate.TM);
-
-                    var sections = await _shipdGeometryService.GenerateSectionsAsync(
-                        adjustedVector,
-                        candidate.LppM,
-                        candidate.BM,
-                        candidate.TM,
-                        shipdMetadata,
-                        stationCount: 20,
-                        cancellationToken);
-
-                    // Update geometry JSON
-                    candidate.GeometryJson = JsonSerializer.Serialize(sections);
-                    _logger.LogInformation(
-                        "[CANDIDATE_ADJUST] Successfully regenerated ShipD geometry for candidate {Id} after {Parameter} adjustment: Generated {StationCount} stations",
-                        candidate.Id, dto.Parameter, sections.Stations?.Count ?? 0);
+                        "[CANDIDATE_ADJUST] Parameter '{Parameter}' adjusted for candidate {Id} (Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m). Original geometry preserved.",
+                        dto.Parameter, candidate.Id, candidate.LppM, candidate.BM, candidate.TM);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex,
-                    "[CANDIDATE_ADJUST] Failed to regenerate ShipD geometry for candidate {Id} after {Parameter} adjustment. Geometry may be out of sync.",
+                    "[CANDIDATE_ADJUST] Failed to adjust ShipD parameters for candidate {Id} after {Parameter} adjustment. Parameter adjustment may be incomplete.",
                     candidate.Id, dto.Parameter);
-                // Continue without geometry update - don't fail the adjustment
+                // Continue - don't fail the entire adjustment
             }
         }
 

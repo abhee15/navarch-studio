@@ -76,4 +76,3 @@ public class WeightBreakdown
     /// </summary>
     public List<string> Warnings { get; set; } = new();
 }
-

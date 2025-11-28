@@ -986,6 +986,9 @@ function generateStationOffsets(
       const heightRatio = height / draftM;
 
       // CORRECT VERTICAL PROFILE: Narrow at keel, wide at waterline
+      // CRITICAL: Calculate waterline half-breadth first to ensure smooth transition
+      let waterlineHalfBreadth = 0;
+
       if (height <= draftM) {
         // BELOW WATERLINE: Expand from narrow keel to wide waterline
 
@@ -1020,20 +1023,58 @@ function generateStationOffsets(
         }
 
         halfBreadth = Math.max(0, baseHalfBreadth);
+
+        // Store waterline half-breadth for smooth above-waterline transition
+        if (Math.abs(height - draftM) < 0.001) {
+          waterlineHalfBreadth = halfBreadth;
+        }
       } else {
-        // ABOVE WATERLINE: Apply flare (widen)
+        // ABOVE WATERLINE: Apply flare (widen) with smooth transition
         const aboveWLHeight = height - draftM;
+        const freeboard = draftM * 0.35; // 35% freeboard above waterline
+        const aboveWLRatio = Math.min(aboveWLHeight / freeboard, 1.0);
 
-        // Start at waterline beam
-        let baseHalfBreadth = beamM / 2;
+        // CRITICAL: Use actual waterline half-breadth from below-waterline calculation
+        // If not available, calculate it at waterline (height = draftM)
+        if (waterlineHalfBreadth === 0) {
+          // Calculate waterline half-breadth using same logic as below-waterline
+          const keelHalfBreadth = Math.max(0, (beamM / 2) * 0.1);
+          const curvePower = 2.5 - rc * 1.5;
+          const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
+          const deadriseReduction = 0; // At waterline, no deadrise reduction
+          waterlineHalfBreadth =
+            keelHalfBreadth +
+            (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
 
-        // Add flare effect
-        if (beta > 5) {
-          const flareExpansion = Math.tan((beta * Math.PI) / 180) * aboveWLHeight;
-          baseHalfBreadth += flareExpansion * 0.2;
+          // Apply knuckle and convex/concave effects at waterline
+          if (rk > 0.3) {
+            const knuckleHeight = 0.5;
+            const knuckleRange = 0.2;
+            if (Math.abs(1.0 - knuckleHeight) < knuckleRange) {
+              const knuckleFactor = 1 - Math.abs(1.0 - knuckleHeight) / knuckleRange;
+              waterlineHalfBreadth *= 1 + rk * knuckleFactor * 0.15;
+            }
+          }
+          if (Math.abs(kappaBow) > 0.1) {
+            const convexEffect = kappaBow * Math.sin((1.0 * Math.PI) / 2) * 0.1;
+            waterlineHalfBreadth *= 1 + convexEffect;
+          }
         }
 
-        halfBreadth = Math.max(0, baseHalfBreadth);
+        // Start at actual waterline half-breadth (ensures continuity)
+        let baseHalfBreadth = waterlineHalfBreadth;
+
+        // Add flare effect with smooth transition
+        if (beta > 5) {
+          // Use smooth flare curve to avoid abrupt changes
+          const flareExpansion = Math.tan((beta * Math.PI) / 180) * aboveWLHeight;
+          // Apply gradual flare increase (smooth curve, not linear)
+          const flareCurve = Math.pow(aboveWLRatio, 1.5); // Smooth curve
+          baseHalfBreadth += flareExpansion * 0.2 * flareCurve;
+        }
+
+        // Ensure monotonicity: above-waterline should be >= waterline
+        halfBreadth = Math.max(waterlineHalfBreadth, baseHalfBreadth);
       }
     } else if (region === "midship") {
       // Midship section: Check for deep_v_midship (yacht) vs standard midship
@@ -1047,6 +1088,9 @@ function generateStationOffsets(
       const heightRatio = height / draftM;
 
       // CORRECT VERTICAL PROFILE: Midship typically parallel below waterline
+      // CRITICAL: Calculate waterline half-breadth first to ensure smooth transition
+      let waterlineHalfBreadth = 0;
+
       if (height <= draftM) {
         // BELOW WATERLINE
         if (isDeepV) {
@@ -1072,6 +1116,11 @@ function generateStationOffsets(
             (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.2) * expansionRatio;
 
           halfBreadth = Math.max(0, baseHalfBreadth);
+
+          // Store waterline half-breadth for smooth above-waterline transition
+          if (Math.abs(height - draftM) < 0.001) {
+            waterlineHalfBreadth = halfBreadth;
+          }
         } else {
           // STANDARD MIDSHIP: Gentle expansion from keel to waterline
           // Midship has less deadrise, more parallel sides
@@ -1082,14 +1131,37 @@ function generateStationOffsets(
           const baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
 
           halfBreadth = baseHalfBreadth;
+
+          // Store waterline half-breadth for smooth above-waterline transition
+          if (Math.abs(height - draftM) < 0.001) {
+            waterlineHalfBreadth = halfBreadth;
+          }
         }
       } else {
-        // ABOVE WATERLINE
+        // ABOVE WATERLINE: Smooth transition from waterline
         const aboveWLHeight = height - draftM;
         const freeboard = draftM * 0.35; // Match total freeboard (35%)
         const aboveWLRatio = Math.min(aboveWLHeight / freeboard, 1.0);
 
-        let baseHalfBreadth = beamM / 2;
+        // CRITICAL: Use actual waterline half-breadth from below-waterline calculation
+        if (waterlineHalfBreadth === 0) {
+          // Calculate waterline half-breadth using same logic as below-waterline
+          if (isDeepV) {
+            const adrft = denormalized[17];
+            const bdrft = denormalized[18];
+            const keelHalfBreadth = Math.max(0, (beamM / 2) * (0.05 + adrft * 0.05));
+            const curvePower = 1.5 - bdrft * 0.5;
+            const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
+            waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+          } else {
+            const keelHalfBreadth = (beamM / 2) * 0.2;
+            const expansionRatio = Math.pow(1.0, 0.8); // heightRatio = 1.0 at waterline
+            waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+          }
+        }
+
+        // Start at actual waterline half-breadth (ensures continuity)
+        let baseHalfBreadth = waterlineHalfBreadth;
 
         if (isDeepV) {
           // Deep V midship: Use Adrft/Bdrft for sheer effects above waterline
@@ -1143,6 +1215,9 @@ function generateStationOffsets(
       const heightRatio = height / draftM;
 
       // CORRECT VERTICAL PROFILE: Similar to bow but with stern characteristics
+      // CRITICAL: Calculate waterline half-breadth first to ensure smooth transition
+      let waterlineHalfBreadth = 0;
+
       if (height <= draftM) {
         // BELOW WATERLINE: Expand from narrow keel to wide waterline
         const keelHalfBreadth = (beamM / 2) * 0.15; // Stern keel slightly wider than bow
@@ -1179,6 +1254,11 @@ function generateStationOffsets(
           }
 
           halfBreadth = Math.max(0, baseHalfBreadth);
+
+          // Store waterline half-breadth for smooth above-waterline transition
+          if (Math.abs(height - draftM) < 0.001) {
+            waterlineHalfBreadth = halfBreadth;
+          }
         } else {
           // CANOE STERN (yacht): Use Adel_stern, Bdel_stern for rounded stern shape
           // Canoe stern has more rounded, elliptical sections (less V-shaped)
@@ -1209,11 +1289,44 @@ function generateStationOffsets(
           }
 
           halfBreadth = Math.max(0, baseHalfBreadth);
+
+          // Store waterline half-breadth for smooth above-waterline transition
+          if (Math.abs(height - draftM) < 0.001) {
+            waterlineHalfBreadth = halfBreadth;
+          }
         }
       } else {
-        // ABOVE WATERLINE
+        // ABOVE WATERLINE: Smooth transition from waterline
         const aboveWLHeight = height - draftM;
-        let baseHalfBreadth = beamM / 2;
+        const freeboard = draftM * 0.35;
+        const aboveWLRatio = Math.min(aboveWLHeight / freeboard, 1.0);
+
+        // CRITICAL: Use actual waterline half-breadth from below-waterline calculation
+        if (waterlineHalfBreadth === 0) {
+          // Calculate waterline half-breadth using same logic as below-waterline
+          const keelHalfBreadth = (beamM / 2) * 0.15;
+          if (isTransomStern) {
+            const curvePower = 2.5 - rcTrans * 1.5;
+            const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
+            waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+            // Apply transom effect at waterline if in transom region
+            const atrans = denormalized[22];
+            if (stationPos < 0.15 && atrans > 0.5) {
+              const transomWidth = beamM * bcTrans;
+              const transomBlend = (0.15 - stationPos) / 0.15;
+              waterlineHalfBreadth =
+                waterlineHalfBreadth * (1 - transomBlend * atrans) +
+                (transomWidth / 2) * transomBlend * atrans;
+            }
+          } else {
+            const curvePower = 2.0 + rcTrans * 1.0;
+            const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
+            waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+          }
+        }
+
+        // Start at actual waterline half-breadth (ensures continuity)
+        let baseHalfBreadth = waterlineHalfBreadth;
 
         if (isTransomStern) {
           // TRANSOM STERN: Apply rake (aft overhang)
@@ -1330,6 +1443,25 @@ function generateStationOffsets(
     halfBreadth = halfBreadth * longitudinalScale;
 
     offsets[height] = Math.max(0, halfBreadth);
+  }
+
+  // CRITICAL: Ensure offsets are monotonic (non-decreasing with height) to prevent zig-zag patterns
+  // Sort heights and enforce monotonicity
+  const sortedHeights = Object.keys(offsets)
+    .map(Number)
+    .filter((h) => Number.isFinite(h))
+    .sort((a, b) => a - b);
+
+  let lastHalfBreadth = 0;
+  for (const height of sortedHeights) {
+    const currentHalfBreadth = offsets[height];
+    // Ensure each offset is >= previous offset (monotonicity)
+    // Allow small tolerance for numerical precision
+    if (currentHalfBreadth < lastHalfBreadth - 0.001) {
+      offsets[height] = lastHalfBreadth; // Use previous value to maintain monotonicity
+    } else {
+      lastHalfBreadth = currentHalfBreadth;
+    }
   }
 
   // Ensure we have a point at the deck level (draftM) to close the top

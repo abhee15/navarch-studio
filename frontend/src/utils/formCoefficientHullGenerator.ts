@@ -628,20 +628,55 @@ function combineToOffsets(
 
     // Generate initial offsets by blending section shape and waterline
     const initialOffsets: number[] = [];
+    let waterlineOffset = 0; // Track waterline offset for smooth above-waterline transition
+
     for (let j = 0; j < waterlines.length; j++) {
       const z = waterlines[j];
       const zNorm = z / draft;
 
       if (zNorm > 1) {
-        // Above design draft: use waterline constraint
-        initialOffsets.push(Math.min(waterlineHalfBreadth, beam / 2));
+        // Above design draft: smooth transition from waterline
+        // CRITICAL: Use waterline half-breadth from below-waterline calculation for continuity
+        const aboveWLRatio = (zNorm - 1.0) / 0.35; // Normalize to 0-1 for 35% freeboard
+        const aboveWLBlend = Math.min(aboveWLRatio, 1.0);
+
+        // Use stored waterline offset (calculated at zNorm = 1.0)
+        if (waterlineOffset === 0 && initialOffsets.length > 0) {
+          // Find waterline offset (closest to draft)
+          const waterlineIdx = waterlines.findIndex((wl) => Math.abs(wl - draft) < 0.001);
+          if (waterlineIdx >= 0 && waterlineIdx < initialOffsets.length) {
+            waterlineOffset = initialOffsets[waterlineIdx];
+          } else {
+            // Use last offset before above-waterline
+            waterlineOffset = initialOffsets[initialOffsets.length - 1];
+          }
+        }
+
+        // If still no waterline offset, use waterlineHalfBreadth parameter
+        if (waterlineOffset === 0) {
+          waterlineOffset = Math.min(waterlineHalfBreadth, beam / 2);
+        }
+
+        // Smooth transition: maintain waterline value or slightly increase for flare
+        // Use smooth curve to avoid abrupt changes
+        const flareFactor = Math.pow(aboveWLBlend, 1.5); // Smooth curve
+        const aboveWLHalfBreadth = waterlineOffset * (1 + flareFactor * 0.1); // Max 10% increase
+
+        // Ensure monotonicity: above-waterline should be >= waterline
+        initialOffsets.push(Math.max(waterlineOffset, Math.min(aboveWLHalfBreadth, beam / 2)));
       } else {
         // Below design draft: blend section shape and waterline constraint
         const sectionHalfBreadth = sectionShapeProfile[j];
         const blendFactor = zNorm;
         const blendedHalfBreadth =
           sectionHalfBreadth * (1 - blendFactor) + waterlineHalfBreadth * blendFactor;
-        initialOffsets.push(Math.max(0, Math.min(blendedHalfBreadth, beam / 2)));
+        const offset = Math.max(0, Math.min(blendedHalfBreadth, beam / 2));
+        initialOffsets.push(offset);
+
+        // Store waterline offset when we reach design draft
+        if (Math.abs(zNorm - 1.0) < 0.001) {
+          waterlineOffset = offset;
+        }
       }
     }
 
@@ -680,8 +715,21 @@ function combineToOffsets(
           const zNorm = z / draft;
 
           if (zNorm > 1) {
-            // Above design draft: keep waterline constraint
-            refinedOffsets[j] = Math.min(waterlineHalfBreadth, beam / 2);
+            // Above design draft: smooth transition from waterline
+            // CRITICAL: Ensure continuity at waterline boundary
+            const waterlineOffset =
+              refinedOffsets.find((_, idx) => {
+                const wlZ = waterlines[idx];
+                return Math.abs(wlZ - draft) < 0.001;
+              }) || waterlineHalfBreadth;
+
+            const aboveWLRatio = (zNorm - 1.0) / 0.35; // Normalize to 0-1 for 35% freeboard
+            const aboveWLBlend = Math.min(aboveWLRatio, 1.0);
+            const flareFactor = Math.pow(aboveWLBlend, 1.5); // Smooth curve
+            const aboveWLHalfBreadth = waterlineOffset * (1 + flareFactor * 0.1); // Max 10% increase
+
+            // Ensure monotonicity: above-waterline should be >= waterline
+            refinedOffsets[j] = Math.max(waterlineOffset, Math.min(aboveWLHalfBreadth, beam / 2));
           } else if (zNorm >= 0.95) {
             // Near design draft: blend with waterline constraint
             const draftBlend = (zNorm - 0.95) / 0.05;
@@ -700,6 +748,24 @@ function combineToOffsets(
       stationOffsets = refinedOffsets;
     } else {
       stationOffsets = initialOffsets;
+    }
+
+    // CRITICAL: Ensure offsets are monotonic (non-decreasing with height) to prevent zig-zag patterns
+    // Sort waterlines and enforce monotonicity for this station
+    const stationWaterlines = waterlines
+      .map((wl, idx) => ({ wl, idx, offset: stationOffsets[idx] }))
+      .sort((a, b) => a.wl - b.wl);
+
+    let lastHalfBreadth = 0;
+    for (const { idx } of stationWaterlines) {
+      const currentHalfBreadth = stationOffsets[idx];
+      // Ensure each offset is >= previous offset (monotonicity)
+      // Allow small tolerance for numerical precision
+      if (currentHalfBreadth < lastHalfBreadth - 0.001) {
+        stationOffsets[idx] = lastHalfBreadth; // Use previous value to maintain monotonicity
+      } else {
+        lastHalfBreadth = currentHalfBreadth;
+      }
     }
 
     offsets.push(stationOffsets);

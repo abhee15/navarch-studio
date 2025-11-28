@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { observer } from "mobx-react-lite";
 import { Hull3DScene } from "./Hull3DScene";
 import { Hull2DPlan } from "./Hull2DPlan";
 import { Hull2DProfile } from "./Hull2DProfile";
@@ -35,7 +36,7 @@ type ViewportMode = "quad" | "plan" | "profile" | "sections" | "3d";
  * - Synchronized highlighting across views
  * - Responsive (collapses to 1-up on mobile)
  */
-export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidate }) => {
+export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({ candidate }) => {
   const [mode, setMode] = useState<ViewportMode>("quad");
   const [show3DWaterplane] = useState(true);
   const [show3DCenters] = useState(true);
@@ -244,10 +245,21 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative pb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
-          onClick={() => setMode("plan")}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMode("plan");
+          }}
         >
           <span className="text-sm font-semibold text-foreground">Plan View (Top)</span>
-          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+          <button
+            className="text-xs text-primary hover:underline flex items-center gap-1"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMode("plan");
+            }}
+          >
             <Maximize2 className="h-3 w-3" />
             Maximize
           </button>
@@ -261,10 +273,21 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative pb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
-          onClick={() => setMode("profile")}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMode("profile");
+          }}
         >
           <span className="text-sm font-semibold text-foreground">Profile View (Side)</span>
-          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+          <button
+            className="text-xs text-primary hover:underline flex items-center gap-1"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMode("profile");
+            }}
+          >
             <Maximize2 className="h-3 w-3" />
             Maximize
           </button>
@@ -278,10 +301,21 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative mb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
-          onClick={() => setMode("sections")}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMode("sections");
+          }}
         >
           <span className="text-sm font-semibold text-foreground">Sections (Body Plan)</span>
-          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+          <button
+            className="text-xs text-primary hover:underline flex items-center gap-1"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMode("sections");
+            }}
+          >
             <Maximize2 className="h-3 w-3" />
             Maximize
           </button>
@@ -295,10 +329,21 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[560px] relative mb-4">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
-          onClick={() => setMode("3d")}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMode("3d");
+          }}
         >
           <span className="text-sm font-semibold text-foreground">3D Isometric</span>
-          <button className="text-xs text-primary hover:underline flex items-center gap-1">
+          <button
+            className="text-xs text-primary hover:underline flex items-center gap-1"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMode("3d");
+            }}
+          >
             <Maximize2 className="h-3 w-3" />
             Maximize
           </button>
@@ -314,4 +359,4 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = ({ candidat
       </div>
     </div>
   );
-};
+});

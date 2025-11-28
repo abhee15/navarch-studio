@@ -85,15 +85,15 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             const shipdSections = convertOffsetsGridToShipD(normalizedGeometry);
 
             // Use converted geometry for 3D generation
-            // Disable smoothing to preserve family-specific shape characteristics
-            // Smoothing can mask differences between bow/midship/stern families
+            // Enable smoothing for smooth 3D rendering - interpolation creates smooth surfaces
+            // while preserving family-specific characteristics
             const fromSections = generateShipDHull3D({
               sections: {
                 stations: shipdSections.stations,
                 stationPositions: shipdSections.stationPositions || [],
               },
               lppM: lpp,
-              smooth: false, // Disable interpolation to preserve family-specific differences
+              smooth: true, // Enable interpolation for smooth 3D rendering
             });
             if (isGeometryValid(fromSections)) {
               return fromSections;
@@ -114,14 +114,15 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             };
             if (sections && sections.stations && Array.isArray(sections.stations)) {
               // Use ShipD geometry from backend
-              // Disable smoothing to preserve family-specific shape characteristics
+              // Enable smoothing for smooth 3D rendering - interpolation creates smooth surfaces
+              // while preserving family-specific characteristics
               const fromSections = generateShipDHull3D({
                 sections: {
                   stations: sections.stations,
                   stationPositions: sections.stationPositions || [],
                 },
                 lppM: lpp,
-                smooth: false, // Disable interpolation to preserve family-specific differences
+                smooth: true, // Enable interpolation for smooth 3D rendering
               });
               if (isGeometryValid(fromSections)) {
                 return fromSections;

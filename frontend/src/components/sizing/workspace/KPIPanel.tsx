@@ -1,3 +1,4 @@
+import { observer } from "mobx-react-lite";
 import type { CandidateDesign } from "../../../types/sizing";
 import { Check, AlertTriangle, Info } from "lucide-react";
 
@@ -10,7 +11,7 @@ interface KPIPanelProps {
  *
  * Displays critical metrics with visual indicators
  */
-export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
+export const KPIPanel: React.FC<KPIPanelProps> = observer(({ candidate }) => {
   // Parse flags
   let flags: string[] = [];
   try {
@@ -286,4 +287,4 @@ export const KPIPanel: React.FC<KPIPanelProps> = ({ candidate }) => {
       </div>
     </div>
   );
-};
+});

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { observer } from "mobx-react-lite";
 import type { CandidateDesign } from "../../../types/sizing";
 import { Check, AlertTriangle, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "../../ui/button";
@@ -13,7 +14,7 @@ interface CompactHUDProps {
  * Shows only essential KPIs with option to expand for full details
  * Inspired by Hydrostatics HUD design
  */
-export const CompactHUD: React.FC<CompactHUDProps> = ({ candidate }) => {
+export const CompactHUD: React.FC<CompactHUDProps> = observer(({ candidate }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   // Parse flags
@@ -233,4 +234,4 @@ export const CompactHUD: React.FC<CompactHUDProps> = ({ candidate }) => {
       )}
     </div>
   );
-};
+});

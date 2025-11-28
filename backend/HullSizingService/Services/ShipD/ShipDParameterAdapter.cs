@@ -145,11 +145,13 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
                 {
                     if (taxonomyParams.TryGetValue("bowLengthRatio", out var bowObj) && bowObj != null)
                     {
-                        defaultBow = Convert.ToDecimal(bowObj);
+                        defaultBow = ExtractDecimalValue(bowObj);
+                        _logger.LogDebug("[SHIPD_ADAPTER] Extracted taxonomy default bow length ratio: {Ratio}", defaultBow);
                     }
                     if (taxonomyParams.TryGetValue("sternLengthRatio", out var sternObj) && sternObj != null)
                     {
-                        defaultStern = Convert.ToDecimal(sternObj);
+                        defaultStern = ExtractDecimalValue(sternObj);
+                        _logger.LogDebug("[SHIPD_ADAPTER] Extracted taxonomy default stern length ratio: {Ratio}", defaultStern);
                     }
                 }
             }
@@ -157,6 +159,14 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             {
                 _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to parse bow/stern defaults from taxonomy AdditionalParametersJson");
             }
+        }
+        else if (taxonomyEntry == null)
+        {
+            _logger.LogWarning("[SHIPD_ADAPTER] No taxonomy entry found for category '{Category}' and type '{Type}' - cannot extract bow/stern defaults", vesselCategory, vesselType);
+        }
+        else
+        {
+            _logger.LogWarning("[SHIPD_ADAPTER] Taxonomy entry found but AdditionalParametersJson is empty - cannot extract bow/stern defaults");
         }
 
         // Apply taxonomy defaults when available
@@ -193,6 +203,9 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
         // Apply taxonomy defaults for bow/stern length ratios if not provided by user
         // This must happen before ApplyConditionalParameters so user overrides can take precedence
         ShipDAdditionalParameters? additionalParsed = null;
+        bool hasUserBowRatio = false;
+        bool hasUserSternRatio = false;
+
         if (effectiveAdditionalParameters != null && effectiveAdditionalParameters.Count > 0)
         {
             try
@@ -204,8 +217,10 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 };
                 additionalParsed = JsonSerializer.Deserialize<ShipDAdditionalParameters>(json, options);
-                _logger.LogDebug("[SHIPD_ADAPTER] Parsed AdditionalParameters for defaults check. BowLengthRatio: {Bow}, SternLengthRatio: {Stern}",
-                    additionalParsed?.BowLengthRatio, additionalParsed?.SternLengthRatio);
+                hasUserBowRatio = additionalParsed?.BowLengthRatio.HasValue == true;
+                hasUserSternRatio = additionalParsed?.SternLengthRatio.HasValue == true;
+                _logger.LogDebug("[SHIPD_ADAPTER] Parsed AdditionalParameters for defaults check. BowLengthRatio: {Bow}, SternLengthRatio: {Stern}, HasUserBow: {HasBow}, HasUserStern: {HasStern}",
+                    additionalParsed?.BowLengthRatio, additionalParsed?.SternLengthRatio, hasUserBowRatio, hasUserSternRatio);
             }
             catch (Exception ex)
             {
@@ -213,15 +228,88 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             }
         }
 
-        if (defaultBow.HasValue && (additionalParsed == null || !additionalParsed.BowLengthRatio.HasValue))
+        // Apply taxonomy defaults if user hasn't provided values
+        // Check both additionalParsed and vector[1]/vector[2] to ensure we don't override existing values
+        if (defaultBow.HasValue && !hasUserBowRatio && vector[1] == 0m)
         {
             vector[1] = defaultBow.Value;
-            _logger.LogDebug("[SHIPD_ADAPTER] Applied taxonomy default bow length ratio: {Ratio}", defaultBow.Value);
+            _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied taxonomy default bow length ratio: {Ratio} to vector[1]", defaultBow.Value);
         }
-        if (defaultStern.HasValue && (additionalParsed == null || !additionalParsed.SternLengthRatio.HasValue))
+        else if (defaultBow.HasValue && hasUserBowRatio)
+        {
+            _logger.LogDebug("[SHIPD_ADAPTER] Skipped taxonomy default bow length ratio (user provided: {UserValue})", additionalParsed?.BowLengthRatio);
+        }
+        else if (defaultBow.HasValue && vector[1] != 0m)
+        {
+            _logger.LogDebug("[SHIPD_ADAPTER] Skipped taxonomy default bow length ratio (vector[1] already set: {Value})", vector[1]);
+        }
+        else if (!defaultBow.HasValue)
+        {
+            _logger.LogWarning("[SHIPD_ADAPTER] ⚠️ No taxonomy default for bow length ratio available");
+        }
+
+        if (defaultStern.HasValue && !hasUserSternRatio && vector[2] == 0m)
         {
             vector[2] = defaultStern.Value;
-            _logger.LogDebug("[SHIPD_ADAPTER] Applied taxonomy default stern length ratio: {Ratio}", defaultStern.Value);
+            _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied taxonomy default stern length ratio: {Ratio} to vector[2]", defaultStern.Value);
+        }
+        else if (defaultStern.HasValue && hasUserSternRatio)
+        {
+            _logger.LogDebug("[SHIPD_ADAPTER] Skipped taxonomy default stern length ratio (user provided: {UserValue})", additionalParsed?.SternLengthRatio);
+        }
+        else if (defaultStern.HasValue && vector[2] != 0m)
+        {
+            _logger.LogDebug("[SHIPD_ADAPTER] Skipped taxonomy default stern length ratio (vector[2] already set: {Value})", vector[2]);
+        }
+        else if (!defaultStern.HasValue)
+        {
+            _logger.LogWarning("[SHIPD_ADAPTER] ⚠️ No taxonomy default for stern length ratio available");
+        }
+
+        // Apply family-specific defaults from taxonomy (e.g., bit_BB for bulbous_bow, Atrans for transom_stern)
+        if (taxonomyEntry != null && !string.IsNullOrWhiteSpace(taxonomyEntry.AdditionalParametersJson))
+        {
+            try
+            {
+                var taxonomyParams = JsonSerializer.Deserialize<Dictionary<string, object>>(taxonomyEntry.AdditionalParametersJson);
+                if (taxonomyParams != null && taxonomyParams.TryGetValue("familyDefaults", out var familyDefaultsObj))
+                {
+                    Dictionary<string, Dictionary<string, object>>? familyDefaults = null;
+                    if (familyDefaultsObj is JsonElement jsonElement)
+                    {
+                        familyDefaults = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, object>>>(jsonElement.GetRawText());
+                    }
+                    else if (familyDefaultsObj is Dictionary<string, Dictionary<string, object>> dict)
+                    {
+                        familyDefaults = dict;
+                    }
+
+                    if (familyDefaults != null)
+                    {
+                        // Apply bow family defaults
+                        if (!string.IsNullOrEmpty(bowFamily) && familyDefaults.TryGetValue(bowFamily, out var bowDefaults))
+                        {
+                            ApplyFamilyDefaults(vector, bowDefaults, "bow", bowFamily, parameterMetadata, warnings);
+                        }
+
+                        // Apply midship family defaults
+                        if (!string.IsNullOrEmpty(midshipFamily) && familyDefaults.TryGetValue(midshipFamily, out var midDefaults))
+                        {
+                            ApplyFamilyDefaults(vector, midDefaults, "midship", midshipFamily, parameterMetadata, warnings);
+                        }
+
+                        // Apply stern family defaults
+                        if (!string.IsNullOrEmpty(sternFamily) && familyDefaults.TryGetValue(sternFamily, out var sternDefaults))
+                        {
+                            ApplyFamilyDefaults(vector, sternDefaults, "stern", sternFamily, parameterMetadata, warnings);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to apply family-specific defaults from taxonomy");
+            }
         }
 
         // Apply conditional parameters from AdditionalParameters (using effectiveAdditionalParameters)
@@ -456,11 +544,15 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             }
         }
 
-        // Bulb Geometry (Image 3) - only if bulbous_bow selected
-        if (bowFamily == "bulbous_bow")
+        // Bulb Geometry (Image 3) - only if bulbous_bow or bulbous selected
+        // Handle both "bulbous" and "bulbous_bow" family names
+        if (bowFamily == "bulbous_bow" || bowFamily == "bulbous")
         {
-            // Enable bulb
-            vector[31] = 1.0m; // bit_BB
+            // Enable bulb (only if not already set by family defaults)
+            if (vector[31] == 0m)
+            {
+                vector[31] = 1.0m; // bit_BB
+            }
 
             if (additional.BulbLengthRatio.HasValue)
             {
@@ -508,6 +600,110 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             }
 
             _logger.LogDebug("[SHIPD_ADAPTER] Applied bulb geometry for bulbous_bow");
+        }
+    }
+
+    /// <summary>
+    /// Applies family-specific defaults from taxonomy (e.g., bit_BB for bulbous_bow, Atrans for transom_stern).
+    /// </summary>
+    private void ApplyFamilyDefaults(
+        decimal[] vector,
+        Dictionary<string, object> familyDefaults,
+        string region,
+        string familyName,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata,
+        List<string> warnings)
+    {
+        foreach (var kvp in familyDefaults)
+        {
+            try
+            {
+                var paramName = kvp.Key;
+                var paramValue = ExtractDecimalValue(kvp.Value);
+
+                if (!paramValue.HasValue)
+                {
+                    continue;
+                }
+
+                // Map parameter names to ShipD vector indices
+                int? paramIndex = paramName.ToLowerInvariant() switch
+                {
+                    "bit_bb" => 31,      // Bulbous bow flag
+                    "bit_sb" => 32,      // Skeg/stern bulb flag (if exists)
+                    "atrans" => 22,      // Transom area ratio
+                    "beta" => 8,         // Bow flare/rake angle
+                    "beta_trans" => 27,  // Stern rake angle
+                    "rc" => 9,           // Bow curvature
+                    "rc_trans" => 29,    // Stern curvature
+                    "rk" => 10,          // Bow knuckle
+                    "rk_trans" => 30,    // Stern knuckle
+                    "lbb" => 33,         // Bulb length ratio
+                    "hbb" => 34,         // Bulb height ratio
+                    "bbb" => 35,         // Bulb width ratio
+                    "lbbm" => 36,        // Bulb asymmetry
+                    "rbb" => 37,         // Bulb fillet radius
+                    "cdrft" => 19,       // Deadrise angle
+                    _ => null
+                };
+
+                if (paramIndex.HasValue)
+                {
+                    var param = metadata.FirstOrDefault(m => m.ParameterIndex == paramIndex.Value);
+                    if (param != null && param.Min.HasValue && param.Max.HasValue)
+                    {
+                        // Normalize value if needed (some are already 0-1, others are physical units)
+                        decimal normalizedValue;
+                        if (param.Min.Value >= 0m && param.Max.Value <= 1m)
+                        {
+                            // Already normalized (0-1 range)
+                            normalizedValue = Math.Clamp(paramValue.Value, 0m, 1m);
+                        }
+                        else
+                        {
+                            // Physical unit - normalize to 0-1
+                            normalizedValue = NormalizeValue(paramValue.Value, param.Min, param.Max, param.Mean, param.StdDev);
+                        }
+
+                        // Only apply if vector slot is empty (0) to avoid overriding user values
+                        if (vector[paramIndex.Value] == 0m)
+                        {
+                            vector[paramIndex.Value] = normalizedValue;
+                            _logger.LogDebug("[SHIPD_ADAPTER] Applied {Region} family default {ParamName}={Value} (normalized: {Normalized}) to vector[{Index}]",
+                                region, paramName, paramValue.Value, normalizedValue, paramIndex.Value);
+                        }
+                        else
+                        {
+                            _logger.LogDebug("[SHIPD_ADAPTER] Skipped {Region} family default {ParamName} (vector[{Index}] already set: {Value})",
+                                region, paramName, paramIndex.Value, vector[paramIndex.Value]);
+                        }
+                    }
+                    else
+                    {
+                        // No metadata - apply value as-is if it's a ratio (0-1) or boolean (0/1)
+                        if (paramName.ToLowerInvariant().StartsWith("bit_") || paramName.ToLowerInvariant() == "atrans")
+                        {
+                            // Boolean or ratio parameter - use value as-is
+                            if (vector[paramIndex.Value] == 0m)
+                            {
+                                vector[paramIndex.Value] = Math.Clamp(paramValue.Value, 0m, 1m);
+                                _logger.LogDebug("[SHIPD_ADAPTER] Applied {Region} family default {ParamName}={Value} to vector[{Index}] (no metadata)",
+                                    region, paramName, paramValue.Value, paramIndex.Value);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("[SHIPD_ADAPTER] Unknown family default parameter name: {ParamName} for {Region} family {Family}",
+                        paramName, region, familyName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to apply family default {Key} for {Region} family {Family}",
+                    kvp.Key, region, familyName);
+            }
         }
     }
 
@@ -591,6 +787,97 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             {
                 _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to apply parameter {Key} from AdditionalParameters", kvp.Key);
             }
+        }
+    }
+
+    /// <summary>
+    /// Safely extracts a decimal value from a JSON deserialized object (handles JsonElement, numeric types, etc.)
+    /// </summary>
+    private decimal? ExtractDecimalValue(object? value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            // Handle JsonElement (common when deserializing JSON to Dictionary<string, object>)
+            if (value is JsonElement jsonElement)
+            {
+                try
+                {
+                    if (jsonElement.ValueKind == JsonValueKind.Number)
+                    {
+                        return jsonElement.GetDecimal();
+                    }
+                    else if (jsonElement.ValueKind == JsonValueKind.String)
+                    {
+                        var str = jsonElement.GetString();
+                        if (!string.IsNullOrEmpty(str) && decimal.TryParse(str, out var parsed))
+                        {
+                            return parsed;
+                        }
+                    }
+                    else if (jsonElement.ValueKind == JsonValueKind.True)
+                    {
+                        return 1m;
+                    }
+                    else if (jsonElement.ValueKind == JsonValueKind.False)
+                    {
+                        return 0m;
+                    }
+                    // Try to get decimal regardless of ValueKind (handles edge cases)
+                    try
+                    {
+                        return jsonElement.GetDecimal();
+                    }
+                    catch
+                    {
+                        // If GetDecimal() fails, try parsing as string
+                        var str = jsonElement.GetRawText().Trim('"');
+                        if (decimal.TryParse(str, out var parsed))
+                        {
+                            return parsed;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[SHIPD_ADAPTER] Failed to extract decimal from JsonElement with ValueKind={ValueKind}", jsonElement.ValueKind);
+                }
+                return null;
+            }
+
+            // Handle direct numeric types
+            if (value is decimal dec)
+            {
+                return dec;
+            }
+            if (value is double dbl)
+            {
+                return (decimal)dbl;
+            }
+            if (value is float flt)
+            {
+                return (decimal)flt;
+            }
+            if (value is int intVal)
+            {
+                return (decimal)intVal;
+            }
+            if (value is long longVal)
+            {
+                return (decimal)longVal;
+            }
+
+            // Try Convert.ToDecimal as fallback
+            return Convert.ToDecimal(value);
+        }
+        catch (Exception)
+        {
+            // If all conversion attempts fail, return null
+            return null;
         }
     }
 
