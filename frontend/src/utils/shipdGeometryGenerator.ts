@@ -923,7 +923,6 @@ function generateHull3DFromSections(
     for (const height of sortedSternHeights) {
       const v_port = getClosingVertex(sternStation.position, height, "port");
       const v_starboard = getClosingVertex(sternStation.position, height, "starboard");
-      const v_keel = vertexMap.get(`${sternStation.position}-${height}-keel`);
       if (v_port !== undefined && v_starboard !== undefined && v_port !== v_starboard) {
         hasSternWidth = true;
         break;
