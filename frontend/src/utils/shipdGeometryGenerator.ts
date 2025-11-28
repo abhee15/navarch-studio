@@ -1298,8 +1298,6 @@ function generateStationOffsets(
       } else {
         // ABOVE WATERLINE: Smooth transition from waterline
         const aboveWLHeight = height - draftM;
-        const freeboard = draftM * 0.35;
-        const aboveWLRatio = Math.min(aboveWLHeight / freeboard, 1.0);
 
         // CRITICAL: Use actual waterline half-breadth from below-waterline calculation
         if (waterlineHalfBreadth === 0) {
