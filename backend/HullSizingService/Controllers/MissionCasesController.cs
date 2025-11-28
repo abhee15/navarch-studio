@@ -64,8 +64,20 @@ public class MissionCasesController : ControllerBase
         var userId = Guid.TryParse(userIdStr, out var parsedUserId) ? parsedUserId : Guid.NewGuid();
         var tenantId = HttpContext.Items["Claims:TenantId"]?.ToString() ?? "dev-default-tenant";
 
-        var result = await _service.CreateAsync(dto, userId, tenantId, ct);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        try
+        {
+            var result = await _service.CreateAsync(dto, userId, tenantId, ct);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Name already exists or other business rule violation
+            return Conflict(new { error = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
