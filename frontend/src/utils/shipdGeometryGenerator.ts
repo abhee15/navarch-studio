@@ -912,7 +912,24 @@ function generateHull3DFromSections(
     }
     const sortedSternHeights = Array.from(sternHeights).sort((a, b) => a - b);
 
-    // Close stern end (connect all points at stern station)
+    // Close stern end - handle both transom (flat face) and canoe (pointed) stern types
+    // Transom stern: Maintains width at stern tip -> flat closing face (correct)
+    // Canoe/cruiser stern: Tapers to zero width -> converge to point (like bow)
+
+    // Check if stern has width (transom) or converges to point (canoe)
+    // If all heights have separate port/starboard vertices, it's a transom (flat face)
+    // If vertices converge to centerline (half-breadth = 0), it's canoe (pointed)
+    let hasSternWidth = false;
+    for (const height of sortedSternHeights) {
+      const v_port = getClosingVertex(sternStation.position, height, "port");
+      const v_starboard = getClosingVertex(sternStation.position, height, "starboard");
+      const v_keel = vertexMap.get(`${sternStation.position}-${height}-keel`);
+      if (v_port !== undefined && v_starboard !== undefined && v_port !== v_starboard) {
+        hasSternWidth = true;
+        break;
+      }
+    }
+
     for (let h = 0; h < sortedSternHeights.length - 1; h++) {
       const h1 = sortedSternHeights[h];
       const h2 = sortedSternHeights[h + 1];
@@ -921,17 +938,43 @@ function generateHull3DFromSections(
       const v2_port = getClosingVertex(sternStation.position, h2, "port");
       const v1_starboard = getClosingVertex(sternStation.position, h1, "starboard");
       const v2_starboard = getClosingVertex(sternStation.position, h2, "starboard");
+      const v1_keel = vertexMap.get(`${sternStation.position}-${h1}-keel`);
+      const v2_keel = vertexMap.get(`${sternStation.position}-${h2}-keel`);
 
-      // Create triangle closing the stern (port and starboard meet at centerline)
-      if (
-        v1_port !== undefined &&
-        v2_port !== undefined &&
-        v1_starboard !== undefined &&
-        v2_starboard !== undefined
-      ) {
-        // Stern closing face (two triangles forming a quad)
-        indices.push(v1_starboard, v1_port, v2_starboard);
-        indices.push(v2_starboard, v1_port, v2_port);
+      // Check if vertices are at centerline (half-breadth = 0)
+      const isAtCenterline1 = v1_port === v1_starboard || v1_keel !== undefined;
+      const isAtCenterline2 = v2_port === v2_starboard || v2_keel !== undefined;
+
+      if (hasSternWidth && !isAtCenterline1 && !isAtCenterline2) {
+        // TRANSOM STERN: Create flat closing face (port and starboard are separate)
+        if (
+          v1_port !== undefined &&
+          v2_port !== undefined &&
+          v1_starboard !== undefined &&
+          v2_starboard !== undefined
+        ) {
+          // Stern closing face (two triangles forming a quad)
+          indices.push(v1_starboard, v1_port, v2_starboard);
+          indices.push(v2_starboard, v1_port, v2_port);
+        }
+      } else if (!hasSternWidth || isAtCenterline1 || isAtCenterline2) {
+        // CANOE/CRUISER STERN: Handle convergence to point (similar to bow)
+        if (isAtCenterline1 && isAtCenterline2) {
+          // Both heights at centerline - stern tip is a point
+          continue;
+        } else if (isAtCenterline1) {
+          // Lower height at centerline - create triangles converging to point
+          const centerVertex = v1_keel || v1_port || v1_starboard;
+          if (centerVertex !== undefined && v2_port !== undefined && v2_starboard !== undefined) {
+            indices.push(centerVertex, v2_starboard, v2_port);
+          }
+        } else if (isAtCenterline2) {
+          // Upper height at centerline - create triangles converging to point
+          const centerVertex = v2_keel || v2_port || v2_starboard;
+          if (centerVertex !== undefined && v1_port !== undefined && v1_starboard !== undefined) {
+            indices.push(v1_starboard, v1_port, centerVertex);
+          }
+        }
       }
     }
   }
