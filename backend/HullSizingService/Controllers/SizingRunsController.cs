@@ -1,6 +1,7 @@
 using FluentValidation;
 using HullSizingService.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using Shared.DTOs.Sizing;
 
 namespace HullSizingService.Controllers;
@@ -12,15 +13,18 @@ public class SizingRunsController : ControllerBase
     private readonly ISizingRunService _service;
     private readonly IValidator<CreateSizingRunDto> _validator;
     private readonly ILogger<SizingRunsController> _logger;
+    private readonly IHostEnvironment _environment;
 
     public SizingRunsController(
         ISizingRunService service,
         IValidator<CreateSizingRunDto> validator,
-        ILogger<SizingRunsController> logger)
+        ILogger<SizingRunsController> logger,
+        IHostEnvironment environment)
     {
         _service = service;
         _validator = validator;
         _logger = logger;
+        _environment = environment;
     }
 
     [HttpGet("mission-case/{missionCaseId}")]
@@ -73,8 +77,26 @@ public class SizingRunsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error while creating sizing run");
-            return StatusCode(500, new { error = "An unexpected error occurred while processing your request" });
+            _logger.LogError(ex,
+                "Unexpected error while creating sizing run. Exception: {ExceptionType}, Message: {Message}, StackTrace: {StackTrace}",
+                ex.GetType().Name, ex.Message, ex.StackTrace);
+
+            // Include exception details in staging/dev for debugging
+            var errorResponse = new
+            {
+                error = "An unexpected error occurred while processing your request",
+                message = _environment.IsDevelopment() || _environment.IsStaging()
+                    ? ex.Message
+                    : "An unexpected error occurred while processing your request",
+                type = _environment.IsDevelopment() || _environment.IsStaging()
+                    ? ex.GetType().Name
+                    : null,
+                stackTrace = _environment.IsDevelopment()
+                    ? ex.StackTrace
+                    : null
+            };
+
+            return StatusCode(500, errorResponse);
         }
     }
 
