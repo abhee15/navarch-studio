@@ -845,24 +845,50 @@ function generateHull3DFromSections(
     }
     const sortedBowHeights = Array.from(bowHeights).sort((a, b) => a - b);
 
-    // Close bow end (connect all points at bow station)
+    // Close bow end (create pointed tip)
+    // At the bow tip (position = 1.0), the longitudinal taper should make half-breadth = 0
+    // All points should converge at the centerline, creating a sharp pointed bow
+    // If half-breadth > 0, we create a closing face; if = 0, all vertices are at centerline (single point)
     for (let h = 0; h < sortedBowHeights.length - 1; h++) {
       const h1 = sortedBowHeights[h];
       const h2 = sortedBowHeights[h + 1];
 
+      // Try to get vertices (may be at centerline if half-breadth = 0)
+      const v1_keel = vertexMap.get(`${bowStation.position}-${h1}-keel`);
+      const v2_keel = vertexMap.get(`${bowStation.position}-${h2}-keel`);
       const v1_port = getClosingVertex(bowStation.position, h1, "port");
       const v2_port = getClosingVertex(bowStation.position, h2, "port");
       const v1_starboard = getClosingVertex(bowStation.position, h1, "starboard");
       const v2_starboard = getClosingVertex(bowStation.position, h2, "starboard");
 
-      // Create triangle closing the bow (port and starboard meet at centerline)
-      if (
+      // Check if port and starboard are the same (converged at centerline)
+      const isAtCenterline1 = v1_port === v1_starboard || v1_keel !== undefined;
+      const isAtCenterline2 = v2_port === v2_starboard || v2_keel !== undefined;
+
+      if (isAtCenterline1 && isAtCenterline2) {
+        // Both heights are at centerline (half-breadth = 0) - bow tip is a point
+        // No closing face needed, the hull already converges to a point
+        continue;
+      } else if (isAtCenterline1) {
+        // Lower height is at centerline - create triangles from centerline point
+        const centerVertex = v1_keel || v1_port || v1_starboard;
+        if (centerVertex !== undefined && v2_port !== undefined && v2_starboard !== undefined) {
+          indices.push(centerVertex, v2_port, v2_starboard);
+        }
+      } else if (isAtCenterline2) {
+        // Upper height is at centerline - create triangles converging to centerline
+        const centerVertex = v2_keel || v2_port || v2_starboard;
+        if (centerVertex !== undefined && v1_port !== undefined && v1_starboard !== undefined) {
+          indices.push(v1_port, v1_starboard, centerVertex);
+        }
+      } else if (
         v1_port !== undefined &&
         v2_port !== undefined &&
         v1_starboard !== undefined &&
         v2_starboard !== undefined
       ) {
-        // Bow closing face (two triangles forming a quad)
+        // Standard case: port and starboard are separate (half-breadth > 0)
+        // Create quad closing the bow end
         indices.push(v1_port, v1_starboard, v2_port);
         indices.push(v2_port, v1_starboard, v2_starboard);
       }
