@@ -61,34 +61,43 @@ public static class ParentHullScaler
             stationOffsets.Select(hb => hb * scale.Breadth).ToList()
         ).ToList();
 
-        // Ensure forward stations (last 3-4 stations) close properly to form a fine bow
+        // Ensure forward perpendicular station (last station) closes properly to form a fine bow
         // The bow should taper from keel to deck, with keel at zero or very small value
         // This prevents the flared, wing-like appearance at the front
+        // Only apply to the forward region (last 20% of stations, minimum 1, maximum 4)
         if (scaledOffsets.Count > 0 && scaledWaterlines.Count > 0)
         {
             // Get the maximum draft to normalize waterline positions
             var maxDraft = scaledWaterlines[scaledWaterlines.Count - 1];
             if (maxDraft <= 0) maxDraft = 1m; // Safety check
 
-            // Fix the last 4 stations (bow region) - stations 19, 20, 21, 22 for 23-station setup
-            // This ensures the entire bow region tapers properly
-            int numBowStations = Math.Min(4, scaledOffsets.Count);
+            // Only fix forward stations: last 20% of stations, but at least 1 and at most 4
+            // For 23-station setup: 20% = 4.6 → 4 stations (19, 20, 21, 22)
+            // For 3-station setup: 20% = 0.6 → 1 station (just the last one)
+            int numBowStations = Math.Max(1, Math.Min(4, (int)Math.Ceiling(scaledOffsets.Count * 0.2m)));
             int firstBowStationIdx = scaledOffsets.Count - numBowStations;
+
+            // Only apply fix if we have enough stations to distinguish bow from midship
+            // For very small hulls (< 10 stations), only fix the very last station
+            if (scaledOffsets.Count < 10)
+            {
+                numBowStations = 1;
+                firstBowStationIdx = scaledOffsets.Count - 1;
+            }
 
             for (int stIdx = firstBowStationIdx; stIdx < scaledOffsets.Count; stIdx++)
             {
                 var stationOffsets = scaledOffsets[stIdx];
                 if (stationOffsets.Count == 0) continue;
 
-                // Calculate how far forward this station is (0 = aft, 1 = forward)
-                // More forward stations need more aggressive correction
-                decimal forwardness = (decimal)(stIdx - firstBowStationIdx) / numBowStations; // 0 to 1
+                // Calculate how far forward this station is (0 = start of bow region, 1 = forward perpendicular)
+                decimal forwardness = numBowStations > 1 
+                    ? (decimal)(stIdx - firstBowStationIdx) / (numBowStations - 1) 
+                    : 1m; // If only one station, it's fully forward
 
                 // Maximum allowed half-breadth decreases as we go forward
-                // Station 22 (forward perpendicular): max 15% of beam
-                // Station 21: max 25% of beam
-                // Station 20: max 35% of beam
-                // Station 19: max 45% of beam
+                // Forward perpendicular: max 15% of beam
+                // Start of bow region: max 45% of beam
                 var maxStationHalfBreadth = beamTarget * (0.15m + 0.3m * (1m - forwardness));
 
                 // Ensure keel (waterline 0) has zero or very small half-breadth

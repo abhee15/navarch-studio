@@ -729,17 +729,21 @@ public class FormCoefficientHullGenerator : IHullGenerator
             offsets.Add(stationOffsets);
         }
 
-        // Ensure forward stations (last 4 stations) close properly to form a fine bow
+        // Ensure forward stations close properly to form a fine bow
         // The bow should taper from keel to deck, with keel at zero or very small value
         // This prevents the flared, wing-like appearance at the front
+        // Only apply to the forward region (last 20% of stations, minimum 1, maximum 4)
         if (offsets.Count > 0 && waterlines.Count > 0)
         {
             // Get the maximum draft to normalize waterline positions
             var maxDraft = waterlines[waterlines.Count - 1];
             if (maxDraft <= 0) maxDraft = draft; // Use design draft as fallback
 
-            // Fix the last 4 stations (bow region) - stations 19, 20, 21, 22 for 23-station setup
-            int numBowStations = Math.Min(4, offsets.Count);
+            // Only fix forward stations: last 20% of stations, but at least 1 and at most 4
+            // For very small hulls (< 10 stations), only fix the very last station
+            int numBowStations = offsets.Count < 10 
+                ? 1 
+                : Math.Max(1, Math.Min(4, (int)Math.Ceiling(offsets.Count * 0.2m)));
             int firstBowStationIdx = offsets.Count - numBowStations;
 
             for (int stIdx = firstBowStationIdx; stIdx < offsets.Count; stIdx++)
@@ -747,8 +751,10 @@ public class FormCoefficientHullGenerator : IHullGenerator
                 var stationOffsets = offsets[stIdx];
                 if (stationOffsets.Count == 0) continue;
 
-                // Calculate how far forward this station is (0 = aft, 1 = forward)
-                decimal forwardness = (decimal)(stIdx - firstBowStationIdx) / numBowStations;
+                // Calculate how far forward this station is (0 = start of bow region, 1 = forward perpendicular)
+                decimal forwardness = numBowStations > 1 
+                    ? (decimal)(stIdx - firstBowStationIdx) / (numBowStations - 1) 
+                    : 1m; // If only one station, it's fully forward
 
                 // Maximum allowed half-breadth decreases as we go forward
                 // Station 22 (forward perpendicular): max 15% of beam

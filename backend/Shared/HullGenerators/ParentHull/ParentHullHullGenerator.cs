@@ -189,17 +189,22 @@ public class ParentHullHullGenerator : IHullGenerator
         var maxDraft = waterlines[waterlines.Count - 1];
         if (maxDraft <= 0) maxDraft = 1m;
 
-        // Fix the last 4 stations (bow region)
-        int numBowStations = Math.Min(4, result.Count);
+        // Only fix forward stations: last 20% of stations, but at least 1 and at most 4
+        // For very small hulls (< 10 stations), only fix the very last station
+        int numBowStations = result.Count < 10 
+            ? 1 
+            : Math.Max(1, Math.Min(4, (int)Math.Ceiling(result.Count * 0.2m)));
         int firstBowStationIdx = result.Count - numBowStations;
 
         for (int stIdx = firstBowStationIdx; stIdx < result.Count; stIdx++)
-        {
-            var stationOffsets = result[stIdx];
-            if (stationOffsets.Count == 0) continue;
+            {
+                var stationOffsets = result[stIdx];
+                if (stationOffsets.Count == 0) continue;
 
-            // Calculate how far forward this station is (0 = aft, 1 = forward)
-            decimal forwardness = (decimal)(stIdx - firstBowStationIdx) / numBowStations;
+                // Calculate how far forward this station is (0 = start of bow region, 1 = forward perpendicular)
+                decimal forwardness = numBowStations > 1 
+                    ? (decimal)(stIdx - firstBowStationIdx) / (numBowStations - 1) 
+                    : 1m; // If only one station, it's fully forward
 
             // Maximum allowed half-breadth decreases as we go forward
             var maxStationHalfBreadth = beam * (0.15m + 0.3m * (1m - forwardness));
