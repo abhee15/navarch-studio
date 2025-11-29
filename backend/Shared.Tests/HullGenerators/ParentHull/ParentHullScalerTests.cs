@@ -54,15 +54,17 @@ public class ParentHullScalerTests
             }
         };
 
+        decimal lengthTarget = 200m;
+        decimal beamTarget = 30m;
         var scale = new ScaleFactors
         {
-            Length = 200m / 185m,
+            Length = lengthTarget / 185m,
             Breadth = 30m / 28m,
             Draft = 13m / 12.87m
         };
 
         // Act
-        var scaled = ParentHullScaler.ScaleOffsets(parent, scale, 200m);
+        var scaled = ParentHullScaler.ScaleOffsets(parent, scale, lengthTarget, beamTarget);
 
         // Assert - Stations should be scaled to target length
         scaled.Stations[0].Should().BeApproximately(0m, 0.001m); // AP stays at 0
@@ -99,15 +101,17 @@ public class ParentHullScalerTests
             }
         };
 
+        decimal lengthTarget = 200m; // Target length
+        decimal beamTarget = 20m; // Target beam (same as parent)
         var scale = new ScaleFactors
         {
-            Length = 200m / 100m, // Scale to 200m length
+            Length = lengthTarget / 100m, // Scale to 200m length
             Breadth = 1m, // No beam scaling
             Draft = 1m // No draft scaling
         };
 
         // Act
-        var scaled = ParentHullScaler.ScaleOffsets(parent, scale, 200m);
+        var scaled = ParentHullScaler.ScaleOffsets(parent, scale, lengthTarget, beamTarget);
 
         // Assert - Verify station positions are correctly scaled
         // Station 0 (normalized 0/10 = 0) → 0 * 200 = 0m
@@ -141,9 +145,11 @@ public class ParentHullScalerTests
             }
         };
 
+        decimal lengthTarget = 200m;
+        decimal beamTarget = 30m;
         var scale = new ScaleFactors
         {
-            Length = 200m / 185m,
+            Length = lengthTarget / 185m,
             Breadth = 30m / 28m,
             Draft = 13m / 12.87m
         };
@@ -151,7 +157,7 @@ public class ParentHullScalerTests
         // Act & Assert
         // Should handle gracefully or throw - depends on implementation
         // For now, verify it doesn't crash
-        var scaled = ParentHullScaler.ScaleOffsets(parent, scale, 200m);
+        var scaled = ParentHullScaler.ScaleOffsets(parent, scale, lengthTarget, beamTarget);
         scaled.Should().NotBeNull();
     }
 }

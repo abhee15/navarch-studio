@@ -729,6 +729,63 @@ public class FormCoefficientHullGenerator : IHullGenerator
             offsets.Add(stationOffsets);
         }
 
+        // Ensure forward perpendicular station (last station) closes properly
+        // The bow should taper from keel to deck, with keel at zero or very small value
+        // This prevents the flared, wing-like appearance at the front
+        if (offsets.Count > 0 && waterlines.Count > 0)
+        {
+            var forwardStationIdx = offsets.Count - 1;
+            var forwardStationOffsets = offsets[forwardStationIdx];
+
+            if (forwardStationOffsets.Count > 0 && waterlines.Count > 0)
+            {
+                // Get the maximum draft to normalize waterline positions
+                var maxDraft = waterlines[waterlines.Count - 1];
+                if (maxDraft <= 0) maxDraft = draft; // Use design draft as fallback
+
+                // Ensure keel (waterline 0) has zero or very small half-breadth
+                var keelHalfBreadth = forwardStationOffsets[0];
+                var maxKeelHalfBreadth = beam * 0.1m; // 10% of beam is maximum reasonable
+
+                if (keelHalfBreadth > maxKeelHalfBreadth)
+                {
+                    // If keel half-breadth is more than 10% of beam, it's likely incorrect
+                    // Reduce to a small fraction (2% of beam max) to ensure proper bow closure
+                    forwardStationOffsets[0] = Math.Min(keelHalfBreadth, beam * 0.02m);
+                }
+
+                // Ensure the forward station tapers properly from keel to deck
+                // The half-breadth should increase gradually with waterline height
+                // But should never exceed a reasonable maximum for a bow station
+                var maxBowHalfBreadth = beam * 0.3m; // Bow should be much narrower than beam
+
+                for (int wlIdx = 1; wlIdx < forwardStationOffsets.Count && wlIdx < waterlines.Count; wlIdx++)
+                {
+                    var currentHalfBreadth = forwardStationOffsets[wlIdx];
+                    var prevHalfBreadth = forwardStationOffsets[wlIdx - 1];
+                    var waterlineZ = waterlines[wlIdx];
+                    var waterlineNorm = waterlineZ / maxDraft; // Normalize to 0-1
+
+                    // Cap the maximum half-breadth at the bow (should be much less than beam/2)
+                    if (currentHalfBreadth > maxBowHalfBreadth)
+                    {
+                        // Reduce to a reasonable maximum, but allow some increase with height
+                        var maxAllowed = maxBowHalfBreadth * (0.5m + 0.5m * waterlineNorm); // 50-100% of max based on height
+                        forwardStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                    }
+
+                    // Ensure monotonic increase (each waterline should be >= previous)
+                    // But don't force it if it would create an unnatural shape
+                    if (currentHalfBreadth < prevHalfBreadth * 0.8m)
+                    {
+                        // If current is significantly less than previous, increase it slightly
+                        // This ensures smooth tapering from keel to deck
+                        forwardStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.9m);
+                    }
+                }
+            }
+        }
+
         return offsets;
     }
 
