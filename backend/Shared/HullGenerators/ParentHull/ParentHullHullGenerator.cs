@@ -88,6 +88,14 @@ public class ParentHullHullGenerator : IHullGenerator
 
             _logger?.LogDebug("Offsets faired using cubic splines");
 
+            // Step 3.5: Re-apply bow closure fix after LCB adjustment and fairing
+            // The LCB adjustment and fairing can alter the forward stations, so we need to ensure
+            // the bow still closes properly after these operations
+            fairedOffsets = EnsureBowClosure(
+                fairedOffsets,
+                scaledHull.Waterlines,
+                dims.Beam);
+
             // Step 4: Validate against targets
             var computedCoeffs = ComputeFormCoefficients(
                 scaledHull.Stations,
@@ -160,6 +168,72 @@ public class ParentHullHullGenerator : IHullGenerator
         {
             var stationOffsets = faired.Select(wlOffsets => wlOffsets[stIdx]).ToList();
             result.Add(stationOffsets);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Ensure bow closure after LCB adjustment and fairing
+    /// Re-applies bow closure fix to prevent flared appearance
+    /// </summary>
+    private List<List<decimal>> EnsureBowClosure(
+        List<List<decimal>> offsets,
+        List<decimal> waterlines,
+        decimal beam)
+    {
+        if (offsets.Count == 0 || waterlines.Count == 0)
+            return offsets;
+
+        var result = new List<List<decimal>>(offsets);
+        var maxDraft = waterlines[waterlines.Count - 1];
+        if (maxDraft <= 0) maxDraft = 1m;
+
+        // Fix the last 4 stations (bow region)
+        int numBowStations = Math.Min(4, result.Count);
+        int firstBowStationIdx = result.Count - numBowStations;
+
+        for (int stIdx = firstBowStationIdx; stIdx < result.Count; stIdx++)
+        {
+            var stationOffsets = result[stIdx];
+            if (stationOffsets.Count == 0) continue;
+
+            // Calculate how far forward this station is (0 = aft, 1 = forward)
+            decimal forwardness = (decimal)(stIdx - firstBowStationIdx) / numBowStations;
+
+            // Maximum allowed half-breadth decreases as we go forward
+            var maxStationHalfBreadth = beam * (0.15m + 0.3m * (1m - forwardness));
+
+            // Ensure keel has zero or very small half-breadth
+            var keelHalfBreadth = stationOffsets[0];
+            var maxKeelHalfBreadth = beam * (0.02m + 0.03m * (1m - forwardness));
+
+            if (keelHalfBreadth > maxKeelHalfBreadth)
+            {
+                stationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
+            }
+
+            // Ensure the station tapers properly from keel to deck
+            for (int wlIdx = 1; wlIdx < stationOffsets.Count && wlIdx < waterlines.Count; wlIdx++)
+            {
+                var currentHalfBreadth = stationOffsets[wlIdx];
+                var prevHalfBreadth = stationOffsets[wlIdx - 1];
+                var waterlineZ = waterlines[wlIdx];
+                var waterlineNorm = waterlineZ / maxDraft;
+
+                // Cap the maximum half-breadth
+                if (currentHalfBreadth > maxStationHalfBreadth)
+                {
+                    var maxAllowed = maxStationHalfBreadth * (0.3m + 0.7m * waterlineNorm);
+                    stationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                }
+
+                // Ensure smooth tapering
+                if (currentHalfBreadth < prevHalfBreadth * 0.85m)
+                {
+                    stationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.9m);
+                }
+            }
         }
 
         return result;
