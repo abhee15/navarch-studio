@@ -741,8 +741,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
 
             // Only fix forward stations: last 20% of stations, but at least 1 and at most 4
             // For very small hulls (< 10 stations), only fix the very last station
-            int numBowStations = offsets.Count < 10 
-                ? 1 
+            int numBowStations = offsets.Count < 10
+                ? 1
                 : Math.Max(1, Math.Min(4, (int)Math.Ceiling(offsets.Count * 0.2m)));
             int firstBowStationIdx = offsets.Count - numBowStations;
 
@@ -752,8 +752,8 @@ public class FormCoefficientHullGenerator : IHullGenerator
                 if (stationOffsets.Count == 0) continue;
 
                 // Calculate how far forward this station is (0 = start of bow region, 1 = forward perpendicular)
-                decimal forwardness = numBowStations > 1 
-                    ? (decimal)(stIdx - firstBowStationIdx) / (numBowStations - 1) 
+                decimal forwardness = numBowStations > 1
+                    ? (decimal)(stIdx - firstBowStationIdx) / (numBowStations - 1)
                     : 1m; // If only one station, it's fully forward
 
                 // Maximum allowed half-breadth decreases as we go forward

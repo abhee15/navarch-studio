@@ -91,8 +91,8 @@ public static class ParentHullScaler
                 if (stationOffsets.Count == 0) continue;
 
                 // Calculate how far forward this station is (0 = start of bow region, 1 = forward perpendicular)
-                decimal forwardness = numBowStations > 1 
-                    ? (decimal)(stIdx - firstBowStationIdx) / (numBowStations - 1) 
+                decimal forwardness = numBowStations > 1
+                    ? (decimal)(stIdx - firstBowStationIdx) / (numBowStations - 1)
                     : 1m; // If only one station, it's fully forward
 
                 // Maximum allowed half-breadth decreases as we go forward
