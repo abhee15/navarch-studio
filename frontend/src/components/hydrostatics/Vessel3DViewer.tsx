@@ -58,16 +58,16 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
   const vertices: number[] = [];
   const indices: number[] = [];
 
-  let { stations, waterlines, offsets } = offsetsGrid;
+  const { stations: originalStations, waterlines, offsets: originalOffsets } = offsetsGrid;
 
-  if (stations.length === 0 || waterlines.length === 0 || offsets.length === 0) {
+  if (originalStations.length === 0 || waterlines.length === 0 || originalOffsets.length === 0) {
     return geometry; // Return empty geometry
   }
 
   // Defensive: validate inputs are finite numbers and arrays are consistent
   const allFinite = (arr: number[]) => arr.every((v) => Number.isFinite(v));
   if (
-    !allFinite(stations as unknown as number[]) ||
+    !allFinite(originalStations as unknown as number[]) ||
     !allFinite(waterlines as unknown as number[])
   ) {
     console.warn("[HullMesh] Invalid stations/waterlines (non-finite values). Skipping mesh.");
@@ -76,19 +76,22 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
 
   // Verify stations are sorted (required for correct mesh generation)
   // If not sorted, sort them and reorder offsets accordingly
-  const sortedStations = [...stations].sort((a, b) => a - b);
-  const stationsAreSorted = stations.every((val, idx) => val === sortedStations[idx]);
+  const sortedStations = [...originalStations].sort((a, b) => a - b);
+  const stationsAreSorted = originalStations.every((val, idx) => val === sortedStations[idx]);
+
+  let stations = originalStations;
+  let offsets = originalOffsets;
 
   if (!stationsAreSorted) {
     console.warn("[HullMesh] Stations are not sorted, sorting now and reordering offsets.");
     // Create index map for reordering
-    const stationIndices = stations.map((val, idx) => ({ val, idx }));
+    const stationIndices = originalStations.map((val, idx) => ({ val, idx }));
     stationIndices.sort((a, b) => a.val - b.val);
     const newIndices = stationIndices.map((item) => item.idx);
 
     // Reorder stations and offsets
     stations = sortedStations;
-    offsets = newIndices.map((oldIdx) => offsets[oldIdx]);
+    offsets = newIndices.map((oldIdx) => originalOffsets[oldIdx]);
   }
   const expectedWaterlineCount = waterlines.length;
   if (!offsets.every((row) => Array.isArray(row) && row.length === expectedWaterlineCount)) {
