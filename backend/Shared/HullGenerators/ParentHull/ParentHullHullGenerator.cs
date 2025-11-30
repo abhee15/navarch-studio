@@ -251,32 +251,53 @@ public class ParentHullHullGenerator : IHullGenerator
 
     /// <summary>
     /// Ensure stern closure after LCB adjustment and fairing
-    /// Only applies if stern has unreasonably large offsets (scaling artifact)
+    /// POST-PROCESSING ONLY: This does NOT change offset generation, only corrects scaling artifacts
+    /// Checks if stern is wider than adjacent station (indicates scaling artifact)
     /// </summary>
     private List<List<decimal>> EnsureSternClosure(
         List<List<decimal>> offsets,
         List<decimal> waterlines,
         decimal beam)
     {
-        if (offsets.Count == 0 || waterlines.Count == 0)
+        if (offsets.Count < 2 || waterlines.Count == 0)
             return offsets;
 
         var result = new List<List<decimal>>(offsets);
         var maxDraft = waterlines[waterlines.Count - 1];
         if (maxDraft <= 0) maxDraft = 1m;
 
-        // Fix the first station (aft perpendicular) only if it has unreasonably large offsets
+        // Fix the first station (aft perpendicular) if it's wider than adjacent station
         var aftStationOffsets = result[0];
-        if (aftStationOffsets.Count > 0)
-        {
-            // Check if stern has unreasonably large half-breadths (more than 50% of beam)
-            var maxSternHalfBreadth = aftStationOffsets.Max();
-            var reasonableSternMax = beam * 0.5m; // Stern can be up to 50% of beam (transom)
+        var adjacentStationOffsets = result[1]; // Station 1 (next forward)
 
-            // Only apply fix if stern is unreasonably wide
-            if (maxSternHalfBreadth > reasonableSternMax)
+        if (aftStationOffsets.Count > 0 && adjacentStationOffsets.Count > 0)
+        {
+            // Check if stern is significantly wider than adjacent station at any waterline
+            bool sternNeedsFix = false;
+            for (int wlIdx = 0; wlIdx < Math.Min(aftStationOffsets.Count, adjacentStationOffsets.Count); wlIdx++)
             {
-                var maxAllowedSternHalfBreadth = reasonableSternMax;
+                // If stern is more than 20% wider than adjacent station, it's likely a scaling artifact
+                if (aftStationOffsets[wlIdx] > adjacentStationOffsets[wlIdx] * 1.2m)
+                {
+                    sternNeedsFix = true;
+                    break;
+                }
+            }
+
+            // Also check absolute threshold as fallback (more than 40% of beam is definitely wrong)
+            var maxSternHalfBreadth = aftStationOffsets.Max();
+            if (maxSternHalfBreadth > beam * 0.4m)
+            {
+                sternNeedsFix = true;
+            }
+
+            // Only apply fix if stern is wider than it should be
+            if (sternNeedsFix)
+            {
+                // Cap stern to be no wider than adjacent station + 10% (slight taper is OK)
+                var maxAllowedSternHalfBreadth = adjacentStationOffsets.Max() * 1.1m;
+                // But also cap at absolute maximum (40% of beam)
+                maxAllowedSternHalfBreadth = Math.Min(maxAllowedSternHalfBreadth, beam * 0.4m);
 
                 // Ensure keel has zero or very small half-breadth
                 var keelHalfBreadth = aftStationOffsets[0];
@@ -287,22 +308,29 @@ public class ParentHullHullGenerator : IHullGenerator
                     aftStationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
                 }
 
-                // Ensure the stern tapers properly from keel to deck, but allow wider transom
+                // Ensure the stern tapers properly from keel to deck
                 for (int wlIdx = 1; wlIdx < aftStationOffsets.Count && wlIdx < waterlines.Count; wlIdx++)
                 {
                     var currentHalfBreadth = aftStationOffsets[wlIdx];
                     var prevHalfBreadth = aftStationOffsets[wlIdx - 1];
+                    var adjacentHalfBreadth = wlIdx < adjacentStationOffsets.Count
+                        ? adjacentStationOffsets[wlIdx]
+                        : adjacentStationOffsets[adjacentStationOffsets.Count - 1];
                     var waterlineZ = waterlines[wlIdx];
                     var waterlineNorm = waterlineZ / maxDraft;
 
-                    // Cap only if unreasonably large, allow wider transom at deck
-                    if (currentHalfBreadth > maxAllowedSternHalfBreadth)
+                    // Cap stern to be no wider than adjacent station + small margin
+                    var maxAllowedForThisWaterline = Math.Min(
+                        adjacentHalfBreadth * 1.1m, // 10% wider than adjacent
+                        maxAllowedSternHalfBreadth * (0.3m + 0.7m * waterlineNorm) // Allow some increase with height
+                    );
+
+                    if (currentHalfBreadth > maxAllowedForThisWaterline)
                     {
-                        var maxAllowed = maxAllowedSternHalfBreadth * (0.4m + 0.6m * waterlineNorm);
-                        aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                        aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowedForThisWaterline);
                     }
 
-                    // Ensure smooth tapering (less aggressive than bow)
+                    // Ensure smooth tapering
                     if (currentHalfBreadth < prevHalfBreadth * 0.8m)
                     {
                         aftStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.85m);
