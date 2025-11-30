@@ -798,6 +798,54 @@ public class FormCoefficientHullGenerator : IHullGenerator
             }
         }
 
+        // Ensure aft perpendicular station (first station, index 0) closes properly to form a fine stern
+        // The stern should also taper from keel to deck, similar to the bow
+        // This prevents flared, shovel-like appearance at the aft
+        if (offsets.Count > 0 && waterlines.Count > 0)
+        {
+            var maxDraft = waterlines[waterlines.Count - 1];
+            if (maxDraft <= 0) maxDraft = draft;
+
+            // Fix the first station (aft perpendicular)
+            var aftStationOffsets = offsets[0];
+            if (aftStationOffsets.Count > 0)
+            {
+                // Maximum allowed half-breadth at stern should be similar to bow (15-30% of beam)
+                var maxSternHalfBreadth = beam * 0.25m; // Stern can be slightly wider than bow
+
+                // Ensure keel (waterline 0) has zero or very small half-breadth
+                var keelHalfBreadth = aftStationOffsets[0];
+                var maxKeelHalfBreadth = beam * 0.02m; // Max 2% of beam at keel
+
+                if (keelHalfBreadth > maxKeelHalfBreadth)
+                {
+                    aftStationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
+                }
+
+                // Ensure the stern tapers properly from keel to deck
+                for (int wlIdx = 1; wlIdx < aftStationOffsets.Count && wlIdx < waterlines.Count; wlIdx++)
+                {
+                    var currentHalfBreadth = aftStationOffsets[wlIdx];
+                    var prevHalfBreadth = aftStationOffsets[wlIdx - 1];
+                    var waterlineZ = waterlines[wlIdx];
+                    var waterlineNorm = waterlineZ / maxDraft;
+
+                    // Cap the maximum half-breadth at the stern
+                    if (currentHalfBreadth > maxSternHalfBreadth)
+                    {
+                        var maxAllowed = maxSternHalfBreadth * (0.3m + 0.7m * waterlineNorm);
+                        aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                    }
+
+                    // Ensure smooth tapering
+                    if (currentHalfBreadth < prevHalfBreadth * 0.85m)
+                    {
+                        aftStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.9m);
+                    }
+                }
+            }
+        }
+
         return offsets;
     }
 

@@ -88,10 +88,15 @@ public class ParentHullHullGenerator : IHullGenerator
 
             _logger?.LogDebug("Offsets faired using cubic splines");
 
-            // Step 3.5: Re-apply bow closure fix after LCB adjustment and fairing
-            // The LCB adjustment and fairing can alter the forward stations, so we need to ensure
-            // the bow still closes properly after these operations
+            // Step 3.5: Re-apply bow and stern closure fixes after LCB adjustment and fairing
+            // The LCB adjustment and fairing can alter the forward and aft stations, so we need to ensure
+            // both ends still close properly after these operations
             fairedOffsets = EnsureBowClosure(
+                fairedOffsets,
+                scaledHull.Waterlines,
+                dims.Beam);
+
+            fairedOffsets = EnsureSternClosure(
                 fairedOffsets,
                 scaledHull.Waterlines,
                 dims.Beam);
@@ -237,6 +242,63 @@ public class ParentHullHullGenerator : IHullGenerator
                 if (currentHalfBreadth < prevHalfBreadth * 0.85m)
                 {
                     stationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.9m);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Ensure stern closure after LCB adjustment and fairing
+    /// Similar to bow closure, ensures stern tapers properly
+    /// </summary>
+    private List<List<decimal>> EnsureSternClosure(
+        List<List<decimal>> offsets,
+        List<decimal> waterlines,
+        decimal beam)
+    {
+        if (offsets.Count == 0 || waterlines.Count == 0)
+            return offsets;
+
+        var result = new List<List<decimal>>(offsets);
+        var maxDraft = waterlines[waterlines.Count - 1];
+        if (maxDraft <= 0) maxDraft = 1m;
+
+        // Fix the first station (aft perpendicular)
+        var aftStationOffsets = result[0];
+        if (aftStationOffsets.Count > 0)
+        {
+            var maxSternHalfBreadth = beam * 0.25m; // Stern can be slightly wider than bow
+
+            // Ensure keel has zero or very small half-breadth
+            var keelHalfBreadth = aftStationOffsets[0];
+            var maxKeelHalfBreadth = beam * 0.02m;
+
+            if (keelHalfBreadth > maxKeelHalfBreadth)
+            {
+                aftStationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
+            }
+
+            // Ensure the stern tapers properly from keel to deck
+            for (int wlIdx = 1; wlIdx < aftStationOffsets.Count && wlIdx < waterlines.Count; wlIdx++)
+            {
+                var currentHalfBreadth = aftStationOffsets[wlIdx];
+                var prevHalfBreadth = aftStationOffsets[wlIdx - 1];
+                var waterlineZ = waterlines[wlIdx];
+                var waterlineNorm = waterlineZ / maxDraft;
+
+                // Cap the maximum half-breadth
+                if (currentHalfBreadth > maxSternHalfBreadth)
+                {
+                    var maxAllowed = maxSternHalfBreadth * (0.3m + 0.7m * waterlineNorm);
+                    aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                }
+
+                // Ensure smooth tapering
+                if (currentHalfBreadth < prevHalfBreadth * 0.85m)
+                {
+                    aftStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.9m);
                 }
             }
         }
