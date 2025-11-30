@@ -880,6 +880,52 @@ public class FormCoefficientHullGenerator : IHullGenerator
             }
         }
 
+        // Phase 3: Apply cubic spline fairing to stern region for smooth continuity
+        // Fair stern stations (0-2) to ensure smooth transitions without sharp breaks
+        if (offsets.Count >= 3 && waterlines.Count >= 2)
+        {
+            // Fair each stern station (0, 1, 2) to remove any remaining abrupt changes
+            for (int stIdx = 0; stIdx < Math.Min(3, offsets.Count); stIdx++)
+            {
+                var stationOffsets = offsets[stIdx];
+                if (stationOffsets.Count == waterlines.Count)
+                {
+                    // Fair the section profile to ensure smooth curve
+                    var fairedSection = CubicSplineFairing.FairSection(waterlines, stationOffsets);
+
+                    // Ensure non-negative and smooth transition
+                    for (int wlIdx = 0; wlIdx < fairedSection.Count; wlIdx++)
+                    {
+                        fairedSection[wlIdx] = Math.Max(0m, fairedSection[wlIdx]);
+                    }
+
+                    offsets[stIdx] = fairedSection;
+                }
+            }
+
+            // Ensure smooth transition from stern station 0 to station 1
+            // The transition should be continuous without sharp breaks
+            if (offsets.Count >= 2)
+            {
+                var sternStation = offsets[0];
+                var nextStation = offsets[1];
+
+                for (int wlIdx = 0; wlIdx < Math.Min(sternStation.Count, nextStation.Count); wlIdx++)
+                {
+                    // Ensure stern station doesn't have abrupt jumps relative to next station
+                    // Allow gradual transition (stern can be slightly narrower, but not dramatically different)
+                    var maxAllowedJump = nextStation[wlIdx] * 0.3m; // Max 30% difference
+                    var currentDiff = Math.Abs(sternStation[wlIdx] - nextStation[wlIdx]);
+
+                    if (currentDiff > maxAllowedJump && sternStation[wlIdx] > nextStation[wlIdx])
+                    {
+                        // Smooth the transition by limiting the difference
+                        sternStation[wlIdx] = nextStation[wlIdx] + maxAllowedJump;
+                    }
+                }
+            }
+        }
+
         return offsets;
     }
 
@@ -1029,30 +1075,50 @@ public class FormCoefficientHullGenerator : IHullGenerator
 
     /// <summary>
     /// Fair offsets using cubic spline fairing (for BSRA standard layout)
+    /// Applies fairing to both waterlines (longitudinal) and sections (vertical) for smooth geometry
     /// </summary>
     private List<List<decimal>> FairOffsets(
         List<decimal> stations,
         List<decimal> waterlines,
         List<List<decimal>> offsets)
     {
-        var faired = new List<List<decimal>>();
+        // Step 1: Fair each waterline (longitudinal fairing)
+        var waterlineFaired = new List<List<decimal>>();
 
-        // Fair each waterline
         for (int wlIdx = 0; wlIdx < waterlines.Count; wlIdx++)
         {
             var halfBreadths = offsets.Select(st => st[wlIdx]).ToList();
             var fairedHalfBreadths = CubicSplineFairing.FairWaterline(
                 stations, halfBreadths, waterlines[wlIdx]);
 
-            faired.Add(fairedHalfBreadths);
+            waterlineFaired.Add(fairedHalfBreadths);
         }
 
-        // Transpose back to [station][waterline] format
+        // Transpose back to [station][waterline] format after waterline fairing
+        var waterlineFairedOffsets = new List<List<decimal>>();
+        for (int stIdx = 0; stIdx < stations.Count; stIdx++)
+        {
+            var stationOffsets = waterlineFaired.Select(wlOffsets => wlOffsets[stIdx]).ToList();
+            waterlineFairedOffsets.Add(stationOffsets);
+        }
+
+        // Step 2: Fair each section (vertical fairing)
+        // This removes abrupt changes in section curves
         var result = new List<List<decimal>>();
         for (int stIdx = 0; stIdx < stations.Count; stIdx++)
         {
-            var stationOffsets = faired.Select(wlOffsets => wlOffsets[stIdx]).ToList();
-            result.Add(stationOffsets);
+            var stationOffsets = waterlineFairedOffsets[stIdx];
+
+            // Fair the section profile (half-breadths vs waterline heights)
+            var fairedSection = CubicSplineFairing.FairSection(waterlines, stationOffsets);
+
+            // Ensure non-negative values (fairing can produce negative values)
+            for (int wlIdx = 0; wlIdx < fairedSection.Count; wlIdx++)
+            {
+                fairedSection[wlIdx] = Math.Max(0m, fairedSection[wlIdx]);
+            }
+
+            result.Add(fairedSection);
         }
 
         return result;
@@ -1105,6 +1171,45 @@ public class FormCoefficientHullGenerator : IHullGenerator
         }
 
         return y[^1];
+    }
+
+    /// <summary>
+    /// Interpolate a curve at intermediate points using cubic spline for smooth curves
+    /// Used for generating smooth buttocks and waterlines without discretization artifacts
+    /// </summary>
+    private List<decimal> InterpolateCurveSmooth(
+        List<decimal> x,
+        List<decimal> y,
+        List<decimal> targetX,
+        decimal? startSlope = null,
+        decimal? endSlope = null)
+    {
+        if (x.Count != y.Count || x.Count < 2)
+            throw new ArgumentException("x and y must have the same length and at least 2 points");
+
+        if (x.Count == 2)
+        {
+            // Fallback to linear interpolation for 2 points
+            return targetX.Select(tx => Interpolate(x, y, tx)).ToList();
+        }
+
+        // Estimate end slopes if not provided
+        decimal dx0 = startSlope ?? (x.Count > 1 ? (y[1] - y[0]) / (x[1] - x[0]) : 0m);
+        decimal dxn = endSlope ?? (x.Count > 1
+            ? (y[x.Count - 1] - y[x.Count - 2]) / (x[x.Count - 1] - x[x.Count - 2])
+            : 0m);
+
+        // Fit cubic spline
+        var coefficients = CubicSplineFairing.Fit(x, y, dx0, dxn);
+
+        // Evaluate at target points
+        var result = new List<decimal>();
+        foreach (var tx in targetX)
+        {
+            result.Add(CubicSplineFairing.Evaluate(coefficients, tx));
+        }
+
+        return result;
     }
 
     private void ValidateInputs(

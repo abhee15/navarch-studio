@@ -492,8 +492,8 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
       // Convert to format expected by spline utility (x = x, y = y)
       const splinePoints = validPoints.map(([x, y]) => ({ x, y }));
 
-      // Interpolate for smoothness (80 points for good balance)
-      const interpolated = generateSmoothCurve(splinePoints, 80);
+      // Interpolate for smoothness (120 points for improved smoothness without discretization artifacts)
+      const interpolated = generateSmoothCurve(splinePoints, 120);
 
       // Convert back and generate SVG path
       return interpolated

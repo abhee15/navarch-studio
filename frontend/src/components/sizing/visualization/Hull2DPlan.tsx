@@ -433,8 +433,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Convert to format expected by spline utility (x = x, y = y)
       const splinePoints = validPoints.map(([x, y]) => ({ x, y }));
 
-      // Interpolate for smoothness (80 points for good balance)
-      const interpolated = generateSmoothCurve(splinePoints, 80);
+      // Interpolate for smoothness (120 points for improved smoothness without discretization artifacts)
+      const interpolated = generateSmoothCurve(splinePoints, 120);
 
       // Starboard side: points from stern to bow (x from -lpp/2 to +lpp/2, y >= 0)
       const starboardPoints = interpolated.map((p) => toSVG(p.x, p.y));
