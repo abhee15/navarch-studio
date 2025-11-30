@@ -119,6 +119,12 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             });
         }
 
+        // POST-PROCESSING: Ensure proper bow and stern closure
+        // This corrects any artifacts in the generated geometry to ensure smooth, realistic hull shapes
+        // Similar to ParentHullScaler corrections, but adapted for ShipD's dictionary-based offsets
+        // CRITICAL: Pass shipdVector and denormalized to respect user-selected bow/stern families
+        EnsureBowAndSternClosure(stations, beamM, draftM, shipdVector, denormalized);
+
         return Task.FromResult(new HullSectionsDto
         {
             Stations = stations,
@@ -805,6 +811,267 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         }
 
         return offsets;
+    }
+
+    /// <summary>
+    /// Ensures proper bow and stern closure by correcting any artifacts in generated geometry
+    /// This is a post-processing step that does NOT change offset generation, only corrects scaling artifacts
+    /// CRITICAL: Respects user-selected bow/stern families (bulbous, wave piercing, transom, cruiser, canoe)
+    /// </summary>
+    private void EnsureBowAndSternClosure(
+        List<HullStationDto> stations,
+        decimal beamM,
+        decimal draftM,
+        decimal[] shipdVector,
+        Dictionary<int, decimal> denormalized)
+    {
+        if (stations == null || stations.Count < 2)
+        {
+            return; // Need at least 2 stations for closure correction
+        }
+
+        // Ensure bow closure (last station, position closest to 1.0)
+        // CRITICAL: Respect user-selected bow family (bulbous, wave piercing, standard)
+        var bowStation = stations
+            .Select((s, idx) => new { Station = s, Index = idx, Position = s.Position })
+            .OrderByDescending(x => x.Position)
+            .FirstOrDefault();
+
+        if (bowStation != null && bowStation.Position > 0.95m) // Bow station (near position 1.0)
+        {
+            var bowOffsets = bowStation.Station.Offsets;
+            if (bowOffsets != null && bowOffsets.Count > 0)
+            {
+                // Detect bow family from parameters to adjust closure logic
+                var hasBulb = shipdVector[31] > 0.5m; // bit_BB
+                var beta = denormalized.ContainsKey(8) ? denormalized[8] : 0m; // Flare angle
+
+                // Find adjacent station (second-to-last)
+                var adjacentStation = stations
+                    .Select((s, idx) => new { Station = s, Index = idx, Position = s.Position })
+                    .Where(x => x.Position < bowStation.Position)
+                    .OrderByDescending(x => x.Position)
+                    .FirstOrDefault();
+
+                if (adjacentStation != null && adjacentStation.Station.Offsets != null)
+                {
+                    var adjacentOffsets = adjacentStation.Station.Offsets;
+                    var maxBowHalfBreadth = bowOffsets.Values.Max();
+                    var maxAdjacentHalfBreadth = adjacentOffsets.Values.Max();
+
+                    // Only apply fix if bow is significantly wider than adjacent (scaling artifact)
+                    // Bulbous bows may have wider bulb, so be more lenient
+                    var threshold = hasBulb ? 1.3m : 1.2m; // 30% for bulbous, 20% for others
+                    if (maxBowHalfBreadth > maxAdjacentHalfBreadth * threshold || maxBowHalfBreadth > beamM * 0.45m)
+                    {
+                        // Cap bow half-breadth progressively from keel to deck
+                        var sortedHeights = bowOffsets.Keys.OrderBy(h => h).ToList();
+                        var maxHeight = sortedHeights.Count > 0 ? sortedHeights[sortedHeights.Count - 1] : draftM;
+                        if (maxHeight <= 0) maxHeight = draftM;
+
+                        // Adaptive: cap based on hull size and bow family
+                        int numBowStations = Math.Max(1, Math.Min(4, (int)Math.Ceiling(stations.Count * 0.2m)));
+                        if (stations.Count < 10)
+                        {
+                            numBowStations = 1; // Only fix the very last station for small hulls
+                        }
+
+                        var forwardness = 1.0m; // Last station is fully forward
+
+                        // Adjust caps based on bow family
+                        // Bulbous bow: More lenient (bulb can be wider)
+                        // Wave piercing: More lenient (high flare can be wider)
+                        // Standard: Stricter
+                        decimal maxStationHalfBreadth;
+                        decimal maxKeelHalfBreadth;
+                        if (hasBulb)
+                        {
+                            maxStationHalfBreadth = beamM * (0.20m + 0.25m * (1m - forwardness)); // More lenient for bulb
+                            maxKeelHalfBreadth = beamM * (0.03m + 0.04m * (1m - forwardness)); // More lenient
+                        }
+                        else if (beta > 20m)
+                        {
+                            maxStationHalfBreadth = beamM * (0.18m + 0.27m * (1m - forwardness)); // More lenient for wave piercing
+                            maxKeelHalfBreadth = beamM * (0.025m + 0.035m * (1m - forwardness));
+                        }
+                        else
+                        {
+                            maxStationHalfBreadth = beamM * (0.15m + 0.3m * (1m - forwardness)); // Standard
+                            maxKeelHalfBreadth = beamM * (0.02m + 0.03m * (1m - forwardness));
+                        }
+
+                        // Fix keel (height = 0)
+                        if (bowOffsets.ContainsKey(0m) && bowOffsets[0m] > maxKeelHalfBreadth)
+                        {
+                            bowOffsets[0m] = Math.Min(bowOffsets[0m], maxKeelHalfBreadth);
+                        }
+
+                        // Fix other heights
+                        for (int i = 1; i < sortedHeights.Count; i++)
+                        {
+                            var height = sortedHeights[i];
+                            var prevHeight = sortedHeights[i - 1];
+                            var currentHalfBreadth = bowOffsets[height];
+                            var prevHalfBreadth = bowOffsets[prevHeight];
+                            var heightNorm = maxHeight > 0 ? height / maxHeight : 0m;
+
+                            // Cap maximum half-breadth
+                            if (currentHalfBreadth > maxStationHalfBreadth)
+                            {
+                                var maxAllowed = maxStationHalfBreadth * (0.3m + 0.7m * heightNorm);
+                                bowOffsets[height] = Math.Min(currentHalfBreadth, maxAllowed);
+                            }
+
+                            // Ensure smooth tapering (less aggressive for bulbous/wave piercing)
+                            var taperThreshold = hasBulb || beta > 20m ? 0.8m : 0.85m; // More lenient for special bows
+                            if (currentHalfBreadth < prevHalfBreadth * taperThreshold)
+                            {
+                                var taperFactor = hasBulb || beta > 20m ? 0.85m : 0.9m; // More lenient
+                                bowOffsets[height] = Math.Max(bowOffsets[height], prevHalfBreadth * taperFactor);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Ensure stern closure (first station, position closest to 0.0)
+        // CRITICAL: Respect user-selected stern family (transom, cruiser, canoe)
+        var sternStation = stations
+            .Select((s, idx) => new { Station = s, Index = idx, Position = s.Position })
+            .OrderBy(x => x.Position)
+            .FirstOrDefault();
+
+        if (sternStation != null && sternStation.Position < 0.05m) // Stern station (near position 0.0)
+        {
+            var sternOffsets = sternStation.Station.Offsets;
+            if (sternOffsets != null && sternOffsets.Count > 0)
+            {
+                // Detect stern family from parameters to adjust closure logic
+                var atransNorm = shipdVector[22]; // Transom area coefficient (normalized 0-1)
+                var isTransomStern = atransNorm > 0.5m; // Transom when > 0.5, cruiser/canoe when <= 0.5
+                var bcTransNorm = shipdVector[28]; // Transom width ratio (normalized 0-1)
+
+                // Find adjacent station (second station)
+                var adjacentStation = stations
+                    .Select((s, idx) => new { Station = s, Index = idx, Position = s.Position })
+                    .Where(x => x.Position > sternStation.Position)
+                    .OrderBy(x => x.Position)
+                    .FirstOrDefault();
+
+                if (adjacentStation != null && adjacentStation.Station.Offsets != null)
+                {
+                    var adjacentOffsets = adjacentStation.Station.Offsets;
+                    var maxSternHalfBreadth = sternOffsets.Values.Max();
+                    var maxAdjacentHalfBreadth = adjacentOffsets.Values.Max();
+
+                    // TRANSOM STERN: Can be wide at deck (up to 70-100% of beam based on bcTransNorm)
+                    // Only apply fix if stern is unreasonably wide (more than transom width + margin)
+                    if (isTransomStern)
+                    {
+                        // Transom width is typically 70-100% of beam (bcTransNorm controls this)
+                        var transomWidthRatio = 0.7m + bcTransNorm * 0.3m; // 0.7 to 1.0
+                        var maxTransomHalfBreadth = (beamM / 2m) * transomWidthRatio;
+
+                        // Only fix if stern is significantly wider than allowed transom width
+                        // Allow 10% margin for smooth transition
+                        if (maxSternHalfBreadth > maxTransomHalfBreadth * 1.1m || maxSternHalfBreadth > beamM * 0.55m)
+                        {
+                            var sortedHeights = sternOffsets.Keys.OrderBy(h => h).ToList();
+                            var maxHeight = sortedHeights.Count > 0 ? sortedHeights[sortedHeights.Count - 1] : draftM;
+                            if (maxHeight <= 0) maxHeight = draftM;
+
+                            // Ensure keel (height = 0) has zero or very small half-breadth
+                            if (sternOffsets.ContainsKey(0m))
+                            {
+                                var keelHalfBreadth = sternOffsets[0m];
+                                var maxKeelHalfBreadth = beamM * 0.05m; // Max 5% of beam at keel
+                                if (keelHalfBreadth > maxKeelHalfBreadth)
+                                {
+                                    sternOffsets[0m] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
+                                }
+                            }
+
+                            // Cap transom stern: wider at deck, narrower at keel
+                            for (int i = 1; i < sortedHeights.Count; i++)
+                            {
+                                var height = sortedHeights[i];
+                                var prevHeight = sortedHeights[i - 1];
+                                var currentHalfBreadth = sternOffsets[height];
+                                var prevHalfBreadth = sternOffsets[prevHeight];
+                                var heightNorm = maxHeight > 0 ? height / maxHeight : 0m;
+
+                                // Allow transom to be wider at deck (up to transom width)
+                                var maxAllowedForHeight = maxTransomHalfBreadth * (0.3m + 0.7m * heightNorm);
+                                if (currentHalfBreadth > maxAllowedForHeight)
+                                {
+                                    sternOffsets[height] = Math.Min(currentHalfBreadth, maxAllowedForHeight);
+                                }
+
+                                // Ensure smooth tapering (less aggressive for transom)
+                                if (currentHalfBreadth < prevHalfBreadth * 0.75m)
+                                {
+                                    sternOffsets[height] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.8m);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // CRUISER/CANOE STERN: Should taper smoothly to tip
+                        // Only apply fix if stern is significantly wider than adjacent (scaling artifact)
+                        if (maxSternHalfBreadth > maxAdjacentHalfBreadth * 1.2m)
+                        {
+                            // Cap stern half-breadth relative to adjacent station, allowing slight taper
+                            var maxAllowedSternHalfBreadth = maxAdjacentHalfBreadth * 1.1m; // Allow 10% wider than adjacent
+                            if (maxAllowedSternHalfBreadth > beamM * 0.4m) // Absolute fallback cap
+                            {
+                                maxAllowedSternHalfBreadth = beamM * 0.4m;
+                            }
+
+                            var sortedHeights = sternOffsets.Keys.OrderBy(h => h).ToList();
+                            var maxHeight = sortedHeights.Count > 0 ? sortedHeights[sortedHeights.Count - 1] : draftM;
+                            if (maxHeight <= 0) maxHeight = draftM;
+
+                            // Ensure keel (height = 0) has zero or very small half-breadth
+                            if (sternOffsets.ContainsKey(0m))
+                            {
+                                var keelHalfBreadth = sternOffsets[0m];
+                                var maxKeelHalfBreadth = beamM * 0.05m; // Max 5% of beam at keel
+                                if (keelHalfBreadth > maxKeelHalfBreadth)
+                                {
+                                    sternOffsets[0m] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
+                                }
+                            }
+
+                            // Ensure the stern tapers properly from keel to deck (cruiser/canoe should taper)
+                            for (int i = 1; i < sortedHeights.Count; i++)
+                            {
+                                var height = sortedHeights[i];
+                                var prevHeight = sortedHeights[i - 1];
+                                var currentHalfBreadth = sternOffsets[height];
+                                var prevHalfBreadth = sternOffsets[prevHeight];
+                                var heightNorm = maxHeight > 0 ? height / maxHeight : 0m;
+
+                                // Cap only if unreasonably large (cruiser/canoe should taper, not be wide)
+                                if (currentHalfBreadth > maxAllowedSternHalfBreadth)
+                                {
+                                    // Cruiser/canoe sterns taper more than transom (allow less width at deck)
+                                    var maxAllowed = maxAllowedSternHalfBreadth * (0.3m + 0.5m * heightNorm); // Less width at deck
+                                    sternOffsets[height] = Math.Min(currentHalfBreadth, maxAllowed);
+                                }
+
+                                // Ensure smooth tapering (more aggressive for cruiser/canoe)
+                                if (currentHalfBreadth < prevHalfBreadth * 0.8m)
+                                {
+                                    sternOffsets[height] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.85m);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>

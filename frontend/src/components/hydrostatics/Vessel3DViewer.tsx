@@ -58,7 +58,7 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
   const vertices: number[] = [];
   const indices: number[] = [];
 
-  const { stations, waterlines, offsets } = offsetsGrid;
+  let { stations, waterlines, offsets } = offsetsGrid;
 
   if (stations.length === 0 || waterlines.length === 0 || offsets.length === 0) {
     return geometry; // Return empty geometry
@@ -72,6 +72,23 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
   ) {
     console.warn("[HullMesh] Invalid stations/waterlines (non-finite values). Skipping mesh.");
     return geometry;
+  }
+
+  // Verify stations are sorted (required for correct mesh generation)
+  // If not sorted, sort them and reorder offsets accordingly
+  const sortedStations = [...stations].sort((a, b) => a - b);
+  const stationsAreSorted = stations.every((val, idx) => val === sortedStations[idx]);
+
+  if (!stationsAreSorted) {
+    console.warn("[HullMesh] Stations are not sorted, sorting now and reordering offsets.");
+    // Create index map for reordering
+    const stationIndices = stations.map((val, idx) => ({ val, idx }));
+    stationIndices.sort((a, b) => a.val - b.val);
+    const newIndices = stationIndices.map((item) => item.idx);
+
+    // Reorder stations and offsets
+    stations = sortedStations;
+    offsets = newIndices.map((oldIdx) => offsets[oldIdx]);
   }
   const expectedWaterlineCount = waterlines.length;
   if (!offsets.every((row) => Array.isArray(row) && row.length === expectedWaterlineCount)) {
@@ -151,6 +168,68 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
       indices.push(a, b, c);
       indices.push(b, d, c);
     }
+  }
+
+  // Add closing faces at bow tip (last station, forward perpendicular)
+  // Close bow end to centerline (pointed tip)
+  const lastStationIdx = stations.length - 1;
+  for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+    const aPort = wlIdx * stations.length + lastStationIdx;
+    const bPort = (wlIdx + 1) * stations.length + lastStationIdx;
+    const aStarboard = portStartIndex + aPort;
+    const bStarboard = portStartIndex + bPort;
+
+    // Get half-breadths at this waterline
+    const hb1 = offsets[lastStationIdx]?.[wlIdx] ?? 0;
+    const hb2 = offsets[lastStationIdx]?.[wlIdx + 1] ?? 0;
+
+    // Create closing face connecting port and starboard sides
+    // If half-breadth is very small, vertices are already near centerline, but we still need to close the face
+    if (hb1 > 0.0001 || hb2 > 0.0001) {
+      // Create closing quad (two triangles) from port to starboard
+      // Triangle 1: aPort -> bPort -> aStarboard
+      indices.push(aPort, bPort, aStarboard);
+      // Triangle 2: bPort -> bStarboard -> aStarboard
+      indices.push(bPort, bStarboard, aStarboard);
+    }
+    // If both are at centerline (hb1 ≈ 0 and hb2 ≈ 0), vertices are already converged, no closing face needed
+  }
+
+  // Add closing faces at stern tip (first station, aft perpendicular)
+  // Handle both transom sterns (flat face) and canoe sterns (pointed tip)
+  const firstStationIdx = 0;
+
+  // Check if stern has width (transom) or tapers to point (canoe)
+  // If max half-breadth at stern is > 5% of beam, it's likely a transom
+  const maxSternHalfBreadth = Math.max(
+    ...(offsets[firstStationIdx] ?? []).map((hb) => Number(hb) || 0)
+  );
+  const isTransomStern = maxSternHalfBreadth > 0.05; // 5% of beam threshold
+
+  for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+    const aPort = wlIdx * stations.length + firstStationIdx;
+    const bPort = (wlIdx + 1) * stations.length + firstStationIdx;
+    const aStarboard = portStartIndex + aPort;
+    const bStarboard = portStartIndex + bPort;
+
+    const hb1 = offsets[firstStationIdx]?.[wlIdx] ?? 0;
+    const hb2 = offsets[firstStationIdx]?.[wlIdx + 1] ?? 0;
+
+    if (isTransomStern && (hb1 > 0.0001 || hb2 > 0.0001)) {
+      // TRANSOM STERN: Create flat closing face (port and starboard are separate)
+      // Stern closing face (two triangles forming a quad)
+      // Triangle 1: aStarboard -> aPort -> bStarboard
+      indices.push(aStarboard, aPort, bStarboard);
+      // Triangle 2: bStarboard -> aPort -> bPort
+      indices.push(bStarboard, aPort, bPort);
+    } else if (!isTransomStern && (hb1 > 0.0001 || hb2 > 0.0001)) {
+      // CANOE/CRUISER STERN: Close to centerline (pointed tip, similar to bow)
+      // Triangle 1: aPort -> bPort -> aStarboard
+      indices.push(aPort, bPort, aStarboard);
+      // Triangle 2: bPort -> bStarboard -> aStarboard
+      indices.push(bPort, bStarboard, aStarboard);
+    }
+    // If both are at centerline, no closing face needed (already converged)
   }
 
   geometry.setIndex(indices);

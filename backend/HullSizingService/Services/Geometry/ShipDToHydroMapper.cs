@@ -127,7 +127,7 @@ public class ShipDToHydroMapper : IShipDToHydroMapper
 
     private static decimal LookupHalfBreadth(HullStationDto station, decimal height)
     {
-        // Check main offsets first
+        // Check main offsets first (exact match)
         if (station.Offsets.TryGetValue(height, out var value))
         {
             return value;
@@ -145,13 +145,42 @@ public class ShipDToHydroMapper : IShipDToHydroMapper
             return skegValue;
         }
 
-        // Check bulb offsets
+        // Check bulb offsets (exact match)
         if (station.BulbOffsets != null && station.BulbOffsets.TryGetValue(height, out var bulbValue))
         {
             return bulbValue;
         }
 
-        // Heights may have rounding differences - attempt fuzzy lookup across all dictionaries
+        // CRITICAL FIX: Use linear interpolation instead of fuzzy lookup
+        // This ensures accurate offset values at waterlines, especially critical for bow/stern taper
+        // Try interpolation in main offsets first
+        var mainInterpolated = InterpolateHalfBreadth(station.Offsets, height);
+        if (mainInterpolated.HasValue)
+        {
+            return mainInterpolated.Value;
+        }
+
+        // Try interpolation in bulb offsets
+        if (station.BulbOffsets != null)
+        {
+            var bulbInterpolated = InterpolateHalfBreadth(station.BulbOffsets, height);
+            if (bulbInterpolated.HasValue)
+            {
+                return bulbInterpolated.Value;
+            }
+        }
+
+        // Try interpolation in skeg offsets
+        if (station.SkegOffsets != null)
+        {
+            var skegInterpolated = InterpolateHalfBreadth(station.SkegOffsets, height);
+            if (skegInterpolated.HasValue)
+            {
+                return skegInterpolated.Value;
+            }
+        }
+
+        // Fallback: Heights may have rounding differences - attempt fuzzy lookup across all dictionaries
         var candidates = station.Offsets.AsEnumerable();
         if (station.BulbOffsets != null)
         {
@@ -172,5 +201,68 @@ public class ShipDToHydroMapper : IShipDToHydroMapper
         }
 
         return 0m;
+    }
+
+    /// <summary>
+    /// Interpolates half-breadth at a given height using linear interpolation between adjacent heights
+    /// </summary>
+    private static decimal? InterpolateHalfBreadth(Dictionary<decimal, decimal> offsets, decimal height)
+    {
+        if (offsets == null || offsets.Count == 0)
+        {
+            return null;
+        }
+
+        // Get sorted heights
+        var sortedHeights = offsets.Keys.OrderBy(h => h).ToList();
+
+        if (sortedHeights.Count < 2)
+        {
+            // Not enough points for interpolation
+            return null;
+        }
+
+        // Check if height is below minimum or above maximum
+        if (height <= sortedHeights[0])
+        {
+            // Below minimum - return first value (or 0 if negative)
+            return height < 0 ? 0m : offsets[sortedHeights[0]];
+        }
+
+        if (height >= sortedHeights[sortedHeights.Count - 1])
+        {
+            // Above maximum - return last value
+            return offsets[sortedHeights[sortedHeights.Count - 1]];
+        }
+
+        // Find surrounding heights for interpolation
+        for (int i = 0; i < sortedHeights.Count - 1; i++)
+        {
+            var lowerHeight = sortedHeights[i];
+            var upperHeight = sortedHeights[i + 1];
+
+            if (lowerHeight <= height && height <= upperHeight)
+            {
+                var lowerValue = offsets[lowerHeight];
+                var upperValue = offsets[upperHeight];
+
+                // Linear interpolation: value = lower + t * (upper - lower)
+                // where t = (height - lowerHeight) / (upperHeight - lowerHeight)
+                var heightRange = upperHeight - lowerHeight;
+                if (heightRange > 0.000001m) // Avoid division by zero
+                {
+                    var t = (height - lowerHeight) / heightRange;
+                    return lowerValue + t * (upperValue - lowerValue);
+                }
+                else
+                {
+                    // Heights are too close - return average
+                    return (lowerValue + upperValue) / 2m;
+                }
+            }
+        }
+
+        // Should not reach here, but return null if no match found
+        return null;
     }
 }
