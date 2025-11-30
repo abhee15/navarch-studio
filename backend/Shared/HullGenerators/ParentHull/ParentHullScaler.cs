@@ -136,48 +136,58 @@ public static class ParentHullScaler
         }
 
         // Ensure aft perpendicular station (first station, index 0) closes properly to form a fine stern
-        // The stern should also taper from keel to deck, similar to the bow
-        // This prevents flared, shovel-like appearance at the aft
+        // Only apply if the stern has unreasonably large half-breadths (likely a scaling artifact)
+        // Many vessel types have wider sterns (transoms), so be conservative with this fix
         if (scaledOffsets.Count > 0 && scaledWaterlines.Count > 0)
         {
             var maxDraft = scaledWaterlines[scaledWaterlines.Count - 1];
             if (maxDraft <= 0) maxDraft = 1m;
 
-            // Fix the first station (aft perpendicular) - similar logic to bow
+            // Fix the first station (aft perpendicular) only if it has unreasonably large offsets
             var aftStationOffsets = scaledOffsets[0];
             if (aftStationOffsets.Count > 0)
             {
-                // Maximum allowed half-breadth at stern should be similar to bow (15-30% of beam)
-                var maxSternHalfBreadth = beamTarget * 0.25m; // Stern can be slightly wider than bow
+                // Check if stern has unreasonably large half-breadths (more than 50% of beam)
+                // This indicates a scaling artifact that needs correction
+                var maxSternHalfBreadth = aftStationOffsets.Max();
+                var reasonableSternMax = beamTarget * 0.5m; // Stern can be up to 50% of beam (transom)
 
-                // Ensure keel (waterline 0) has zero or very small half-breadth
-                var keelHalfBreadth = aftStationOffsets[0];
-                var maxKeelHalfBreadth = beamTarget * 0.02m; // Max 2% of beam at keel
-
-                if (keelHalfBreadth > maxKeelHalfBreadth)
+                // Only apply fix if stern is unreasonably wide
+                if (maxSternHalfBreadth > reasonableSternMax)
                 {
-                    aftStationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
-                }
+                    // Cap at reasonable maximum (50% of beam for transom stern)
+                    var maxAllowedSternHalfBreadth = reasonableSternMax;
 
-                // Ensure the stern tapers properly from keel to deck
-                for (int wlIdx = 1; wlIdx < aftStationOffsets.Count && wlIdx < scaledWaterlines.Count; wlIdx++)
-                {
-                    var currentHalfBreadth = aftStationOffsets[wlIdx];
-                    var prevHalfBreadth = aftStationOffsets[wlIdx - 1];
-                    var waterlineZ = scaledWaterlines[wlIdx];
-                    var waterlineNorm = waterlineZ / maxDraft;
+                    // Ensure keel (waterline 0) has zero or very small half-breadth
+                    var keelHalfBreadth = aftStationOffsets[0];
+                    var maxKeelHalfBreadth = beamTarget * 0.05m; // Max 5% of beam at keel (more lenient than bow)
 
-                    // Cap the maximum half-breadth at the stern
-                    if (currentHalfBreadth > maxSternHalfBreadth)
+                    if (keelHalfBreadth > maxKeelHalfBreadth)
                     {
-                        var maxAllowed = maxSternHalfBreadth * (0.3m + 0.7m * waterlineNorm);
-                        aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                        aftStationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
                     }
 
-                    // Ensure smooth tapering
-                    if (currentHalfBreadth < prevHalfBreadth * 0.85m)
+                    // Ensure the stern tapers properly from keel to deck, but allow wider transom
+                    for (int wlIdx = 1; wlIdx < aftStationOffsets.Count && wlIdx < scaledWaterlines.Count; wlIdx++)
                     {
-                        aftStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.9m);
+                        var currentHalfBreadth = aftStationOffsets[wlIdx];
+                        var prevHalfBreadth = aftStationOffsets[wlIdx - 1];
+                        var waterlineZ = scaledWaterlines[wlIdx];
+                        var waterlineNorm = waterlineZ / maxDraft;
+
+                        // Cap only if unreasonably large, allow wider transom at deck
+                        if (currentHalfBreadth > maxAllowedSternHalfBreadth)
+                        {
+                            // Allow transom to be wider at deck (up to 50% of beam)
+                            var maxAllowed = maxAllowedSternHalfBreadth * (0.4m + 0.6m * waterlineNorm);
+                            aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                        }
+
+                        // Ensure smooth tapering (less aggressive than bow)
+                        if (currentHalfBreadth < prevHalfBreadth * 0.8m)
+                        {
+                            aftStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.85m);
+                        }
                     }
                 }
             }

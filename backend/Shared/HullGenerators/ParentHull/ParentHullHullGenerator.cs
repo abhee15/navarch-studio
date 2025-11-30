@@ -251,7 +251,7 @@ public class ParentHullHullGenerator : IHullGenerator
 
     /// <summary>
     /// Ensure stern closure after LCB adjustment and fairing
-    /// Similar to bow closure, ensures stern tapers properly
+    /// Only applies if stern has unreasonably large offsets (scaling artifact)
     /// </summary>
     private List<List<decimal>> EnsureSternClosure(
         List<List<decimal>> offsets,
@@ -265,40 +265,48 @@ public class ParentHullHullGenerator : IHullGenerator
         var maxDraft = waterlines[waterlines.Count - 1];
         if (maxDraft <= 0) maxDraft = 1m;
 
-        // Fix the first station (aft perpendicular)
+        // Fix the first station (aft perpendicular) only if it has unreasonably large offsets
         var aftStationOffsets = result[0];
         if (aftStationOffsets.Count > 0)
         {
-            var maxSternHalfBreadth = beam * 0.25m; // Stern can be slightly wider than bow
+            // Check if stern has unreasonably large half-breadths (more than 50% of beam)
+            var maxSternHalfBreadth = aftStationOffsets.Max();
+            var reasonableSternMax = beam * 0.5m; // Stern can be up to 50% of beam (transom)
 
-            // Ensure keel has zero or very small half-breadth
-            var keelHalfBreadth = aftStationOffsets[0];
-            var maxKeelHalfBreadth = beam * 0.02m;
-
-            if (keelHalfBreadth > maxKeelHalfBreadth)
+            // Only apply fix if stern is unreasonably wide
+            if (maxSternHalfBreadth > reasonableSternMax)
             {
-                aftStationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
-            }
+                var maxAllowedSternHalfBreadth = reasonableSternMax;
 
-            // Ensure the stern tapers properly from keel to deck
-            for (int wlIdx = 1; wlIdx < aftStationOffsets.Count && wlIdx < waterlines.Count; wlIdx++)
-            {
-                var currentHalfBreadth = aftStationOffsets[wlIdx];
-                var prevHalfBreadth = aftStationOffsets[wlIdx - 1];
-                var waterlineZ = waterlines[wlIdx];
-                var waterlineNorm = waterlineZ / maxDraft;
+                // Ensure keel has zero or very small half-breadth
+                var keelHalfBreadth = aftStationOffsets[0];
+                var maxKeelHalfBreadth = beam * 0.05m; // Max 5% of beam at keel
 
-                // Cap the maximum half-breadth
-                if (currentHalfBreadth > maxSternHalfBreadth)
+                if (keelHalfBreadth > maxKeelHalfBreadth)
                 {
-                    var maxAllowed = maxSternHalfBreadth * (0.3m + 0.7m * waterlineNorm);
-                    aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                    aftStationOffsets[0] = Math.Min(keelHalfBreadth, maxKeelHalfBreadth);
                 }
 
-                // Ensure smooth tapering
-                if (currentHalfBreadth < prevHalfBreadth * 0.85m)
+                // Ensure the stern tapers properly from keel to deck, but allow wider transom
+                for (int wlIdx = 1; wlIdx < aftStationOffsets.Count && wlIdx < waterlines.Count; wlIdx++)
                 {
-                    aftStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.9m);
+                    var currentHalfBreadth = aftStationOffsets[wlIdx];
+                    var prevHalfBreadth = aftStationOffsets[wlIdx - 1];
+                    var waterlineZ = waterlines[wlIdx];
+                    var waterlineNorm = waterlineZ / maxDraft;
+
+                    // Cap only if unreasonably large, allow wider transom at deck
+                    if (currentHalfBreadth > maxAllowedSternHalfBreadth)
+                    {
+                        var maxAllowed = maxAllowedSternHalfBreadth * (0.4m + 0.6m * waterlineNorm);
+                        aftStationOffsets[wlIdx] = Math.Min(currentHalfBreadth, maxAllowed);
+                    }
+
+                    // Ensure smooth tapering (less aggressive than bow)
+                    if (currentHalfBreadth < prevHalfBreadth * 0.8m)
+                    {
+                        aftStationOffsets[wlIdx] = Math.Max(currentHalfBreadth, prevHalfBreadth * 0.85m);
+                    }
                 }
             }
         }
