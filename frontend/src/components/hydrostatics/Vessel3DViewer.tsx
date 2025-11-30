@@ -204,29 +204,37 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
     const hb2 = offsets[lastStationIdx]?.[wlIdx + 1] ?? 0;
 
     if (centerA !== undefined && centerB !== undefined) {
-      if (hb1 > 0.001 && hb2 > 0.001) {
-        // Both have width - create triangles converging to centerline
-        // Connect port and starboard to their respective centerline vertices
-        indices.push(aPort, centerA, aStarboard);
-        indices.push(bPort, centerB, bStarboard);
-        // Connect between waterlines
-        indices.push(aPort, bPort, centerB);
-        indices.push(aPort, centerB, centerA);
-        indices.push(aStarboard, centerA, centerB);
-        indices.push(aStarboard, centerB, bStarboard);
-      } else if (hb1 > 0.001) {
-        // Only lower has width - converge to centerline
-        indices.push(aPort, centerA, aStarboard);
-        if (hb2 > 0.0001) {
+      // Always create closing faces if there's any width at all
+      // This ensures proper closure even if half-breadth is small
+      if (hb1 > 0 || hb2 > 0) {
+        // Create triangles converging to centerline
+        // For each waterline, connect port and starboard to centerline vertex
+        if (hb1 > 0) {
+          // Connect lower waterline to centerline (counter-clockwise for front face)
+          indices.push(aPort, aStarboard, centerA);
+        }
+        if (hb2 > 0) {
+          // Connect upper waterline to centerline
+          indices.push(bPort, bStarboard, centerB);
+        }
+        // Connect between waterlines to form smooth surface
+        if (hb1 > 0 && hb2 > 0) {
+          // Quad between waterlines: aPort -> bPort -> centerB -> centerA
           indices.push(aPort, bPort, centerB);
+          indices.push(aPort, centerB, centerA);
+          // Quad on starboard: aStarboard -> centerA -> centerB -> bStarboard
           indices.push(aStarboard, centerA, centerB);
           indices.push(aStarboard, centerB, bStarboard);
+        } else if (hb1 > 0) {
+          // Only lower has width - connect to upper centerline
+          indices.push(aPort, bPort, centerB);
+          indices.push(aStarboard, centerA, centerB);
+        } else if (hb2 > 0) {
+          // Only upper has width - connect to lower centerline
+          indices.push(aPort, bPort, centerB);
+          indices.push(aStarboard, centerA, centerB);
         }
-      } else if (hb2 > 0.001) {
-        // Only upper has width - converge to centerline
-        indices.push(bPort, centerB, bStarboard);
       }
-      // If both are at centerline (hb1 ≈ 0 and hb2 ≈ 0), no closing face needed
     }
   }
 
@@ -288,29 +296,35 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
       const hb2 = offsets[firstStationIdx]?.[wlIdx + 1] ?? 0;
 
       if (centerA !== undefined && centerB !== undefined) {
-        if (hb1 > 0.001 && hb2 > 0.001) {
-          // Both have width - create triangles converging to centerline
-          // Connect port and starboard to their respective centerline vertices
-          indices.push(aPort, centerA, aStarboard);
-          indices.push(bPort, centerB, bStarboard);
-          // Connect between waterlines
-          indices.push(aPort, bPort, centerB);
-          indices.push(aPort, centerB, centerA);
-          indices.push(aStarboard, centerA, centerB);
-          indices.push(aStarboard, centerB, bStarboard);
-        } else if (hb1 > 0.001) {
-          // Only lower has width - converge to centerline
-          indices.push(aPort, centerA, aStarboard);
-          if (hb2 > 0.0001) {
+        // Always create closing faces if there's any width at all
+        if (hb1 > 0 || hb2 > 0) {
+          // Create triangles converging to centerline
+          if (hb1 > 0) {
+            // Connect lower waterline to centerline (counter-clockwise for front face)
+            indices.push(aPort, aStarboard, centerA);
+          }
+          if (hb2 > 0) {
+            // Connect upper waterline to centerline
+            indices.push(bPort, bStarboard, centerB);
+          }
+          // Connect between waterlines to form smooth surface
+          if (hb1 > 0 && hb2 > 0) {
+            // Quad between waterlines: aPort -> bPort -> centerB -> centerA
             indices.push(aPort, bPort, centerB);
+            indices.push(aPort, centerB, centerA);
+            // Quad on starboard: aStarboard -> centerA -> centerB -> bStarboard
             indices.push(aStarboard, centerA, centerB);
             indices.push(aStarboard, centerB, bStarboard);
+          } else if (hb1 > 0) {
+            // Only lower has width - connect to upper centerline
+            indices.push(aPort, bPort, centerB);
+            indices.push(aStarboard, centerA, centerB);
+          } else if (hb2 > 0) {
+            // Only upper has width - connect to lower centerline
+            indices.push(aPort, bPort, centerB);
+            indices.push(aStarboard, centerA, centerB);
           }
-        } else if (hb2 > 0.001) {
-          // Only upper has width - converge to centerline
-          indices.push(bPort, centerB, bStarboard);
         }
-        // If both are at centerline, no closing face needed
       }
     }
   }
@@ -365,7 +379,7 @@ function HullMesh({
         roughness={0.6}
         side={THREE.DoubleSide}
         wireframe={wireframe}
-        flatShading={!wireframe}
+        flatShading={false}
       />
     </mesh>
   );
