@@ -27,6 +27,12 @@ import {
 } from "lucide-react";
 import type { HydroResult, OffsetsGrid } from "../../types/hydrostatics";
 import { geometryApi } from "../../services/hydrostaticsApi";
+import {
+  generateControlPointGridFromOffsets,
+  generateEvaluationPoints,
+  evaluateSurface,
+  type NurbsQuality,
+} from "../../utils/nurbsSurface";
 
 interface Vessel3DViewerProps {
   lpp: number; // Length between perpendiculars
@@ -50,10 +56,14 @@ export interface Vessel3DViewerRef {
 }
 
 /**
- * Generate hull geometry from actual offsets or parametric formula
+ * Generate hull geometry from actual offsets using NURBS surface evaluation
+ * Creates smooth C² continuous surfaces instead of faceted linear interpolation
  * Three.js coordinate system: X = transverse (starboard/port), Y = vertical (up/down), Z = longitudinal (forward/back)
  */
-function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.BufferGeometry {
+function generateHullGeometryFromOffsets(
+  offsetsGrid: OffsetsGrid,
+  quality: NurbsQuality = "medium"
+): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -108,23 +118,297 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
     }
   }
 
-  // Generate vertices from actual offsets
-  // Three.js: X = transverse (half-breadth), Y = vertical (waterline Z), Z = longitudinal (station X)
-  for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
-    const waterlineZ = waterlines[wlIdx]; // Vertical position (Y in Three.js)
-    if (!Number.isFinite(waterlineZ)) {
-      continue;
+  // Normalize stations and waterlines to [0, 1] range for NURBS evaluation
+  const stationMin = Math.min(...stations);
+  const stationMax = Math.max(...stations);
+  const stationRange = stationMax - stationMin || 1;
+  const normalizedStations = stations.map((s) => (s - stationMin) / stationRange);
+
+  const waterlineMin = Math.min(...waterlines);
+  const waterlineMax = Math.max(...waterlines);
+  const waterlineRange = waterlineMax - waterlineMin || 1;
+  const normalizedWaterlines = waterlines.map((w) => (w - waterlineMin) / waterlineRange);
+
+  // Generate control point grid from offset points
+  // For NURBS, we need to estimate beam and draft from the offsets
+  const maxHalfBreadth = Math.max(...offsets.flat().map((hb) => Number(hb) || 0));
+  const estimatedBeam = maxHalfBreadth * 2;
+  const estimatedDraft = waterlineMax - waterlineMin || 1;
+  const estimatedLpp = stationMax - stationMin || 1;
+
+  try {
+    const controlPointGrid = generateControlPointGridFromOffsets(
+      normalizedStations,
+      normalizedWaterlines,
+      offsets,
+      estimatedLpp,
+      estimatedBeam,
+      estimatedDraft
+    );
+
+    // Check if we have enough points for NURBS (need at least 4 for cubic)
+    const useNurbs =
+      controlPointGrid.numStations >= 4 && controlPointGrid.numControlPointsPerStation >= 4;
+
+    if (!useNurbs) {
+      console.warn(
+        "[HullMesh] Too few points for NURBS (need at least 4 stations and 4 waterlines), falling back to linear interpolation"
+      );
+      // Fall back to linear interpolation for small datasets
+      return generateHullGeometryFromOffsetsLinear(offsetsGrid);
     }
 
-    for (let stIdx = 0; stIdx < stations.length; stIdx++) {
-      const stationX = stations[stIdx]; // Longitudinal position (Z in Three.js)
-      if (!Number.isFinite(stationX)) {
-        continue;
-      }
-      const hbRaw = offsets[stIdx]?.[wlIdx];
-      const halfBreadth = Number.isFinite(hbRaw) ? Math.max(0, hbRaw as number) : 0; // Transverse position (X)
+    // Generate high-resolution evaluation points for smooth surface
+    const { uPoints, vPoints } = generateEvaluationPoints(
+      normalizedStations,
+      normalizedWaterlines,
+      quality
+    );
 
-      // Port side (negative X)
+    // Evaluate NURBS surface at high resolution
+    // Three.js: X = transverse (half-breadth), Y = vertical (waterline Z), Z = longitudinal (station X)
+    for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
+      const v = vPoints[vIdx];
+      const waterlineZ = waterlineMin + v * waterlineRange; // Denormalize for Three.js Y coordinate
+
+      for (let uIdx = 0; uIdx < uPoints.length; uIdx++) {
+        const u = uPoints[uIdx];
+        const stationX = stationMin + u * stationRange; // Denormalize for Three.js Z coordinate
+
+        // Evaluate NURBS surface at (u, v)
+        const [, normalizedY] = evaluateSurface(controlPointGrid, u, v);
+
+        // Extract half-breadth (y coordinate from NURBS, which is normalized)
+        // Scale from normalized [0, 1] to physical units
+        const halfBreadth = normalizedY * (estimatedBeam / 2);
+
+        // Port side (negative X)
+        vertices.push(-halfBreadth, waterlineZ, stationX);
+      }
+    }
+
+    // Generate indices for triangles using high-resolution grid
+    const numUPoints = uPoints.length;
+    for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
+      for (let uIdx = 0; uIdx < uPoints.length - 1; uIdx++) {
+        const a = vIdx * numUPoints + uIdx;
+        const b = a + 1;
+        const c = a + numUPoints;
+        const d = c + 1;
+
+        // Two triangles per quad (port side)
+        indices.push(a, c, b);
+        indices.push(b, c, d);
+      }
+    }
+    // Mirror to starboard side
+    const portVertexCount = vertices.length / 3;
+    const portStartIndex = portVertexCount;
+
+    for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
+      for (let uIdx = 0; uIdx < uPoints.length; uIdx++) {
+        const idx = vIdx * numUPoints + uIdx;
+        const baseIdx = idx * 3;
+        const x = vertices[baseIdx];
+        const y = vertices[baseIdx + 1];
+        const z = vertices[baseIdx + 2];
+
+        // Starboard side (positive X, mirrored)
+        vertices.push(-x, y, z);
+      }
+    }
+
+    // Generate indices for starboard side
+    for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
+      for (let uIdx = 0; uIdx < uPoints.length - 1; uIdx++) {
+        const a = portStartIndex + vIdx * numUPoints + uIdx;
+        const b = a + 1;
+        const c = a + numUPoints;
+        const d = c + 1;
+
+        indices.push(a, b, c);
+        indices.push(b, d, c);
+      }
+    }
+
+    // Add closing faces at bow tip (last station, forward perpendicular)
+    const lastUIdx = uPoints.length - 1;
+    const bowStationX = stationMin + uPoints[lastUIdx] * stationRange;
+
+    // Create centerline vertices at bow tip for each waterline
+    const bowCenterlineVertices: number[] = [];
+    for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
+      const waterlineZ = waterlineMin + vPoints[vIdx] * waterlineRange;
+      const centerlineVertexIdx = vertices.length / 3;
+      vertices.push(0, waterlineZ, bowStationX);
+      bowCenterlineVertices.push(centerlineVertexIdx);
+    }
+
+    // Create closing faces by connecting port/starboard vertices to centerline vertices
+    for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
+      const aPort = vIdx * numUPoints + lastUIdx;
+      const bPort = (vIdx + 1) * numUPoints + lastUIdx;
+      const aStarboard = portStartIndex + aPort;
+      const bStarboard = portStartIndex + bPort;
+      const centerA = bowCenterlineVertices[vIdx];
+      const centerB = bowCenterlineVertices[vIdx + 1];
+
+      // Evaluate half-breadths at bow
+      const v1 = vPoints[vIdx];
+      const v2 = vPoints[vIdx + 1];
+      const u = uPoints[lastUIdx];
+      const [, y1] = evaluateSurface(controlPointGrid, u, v1);
+      const [, y2] = evaluateSurface(controlPointGrid, u, v2);
+      const hb1 = y1 * (estimatedBeam / 2);
+      const hb2 = y2 * (estimatedBeam / 2);
+
+      if (centerA !== undefined && centerB !== undefined && (hb1 > 0 || hb2 > 0)) {
+        if (hb1 > 0) {
+          indices.push(aPort, aStarboard, centerA);
+        }
+        if (hb2 > 0) {
+          indices.push(bPort, bStarboard, centerB);
+        }
+        if (hb1 > 0 && hb2 > 0) {
+          indices.push(aPort, bPort, centerB);
+          indices.push(aPort, centerB, centerA);
+          indices.push(aStarboard, centerA, centerB);
+          indices.push(aStarboard, centerB, bStarboard);
+        }
+      }
+    }
+
+    // Add closing faces at stern tip (first station, aft perpendicular)
+    const firstUIdx = 0;
+    const sternStationX = stationMin + uPoints[firstUIdx] * stationRange;
+
+    // Check if stern has width (transom) or tapers to point (canoe)
+    const u = uPoints[firstUIdx];
+    const maxSternHalfBreadth = Math.max(
+      ...vPoints.map((v) => {
+        const [, y] = evaluateSurface(controlPointGrid, u, v);
+        return y * (estimatedBeam / 2);
+      })
+    );
+    const isTransomStern = maxSternHalfBreadth > 0.05; // 5% of beam threshold
+
+    if (isTransomStern) {
+      // TRANSOM STERN: Create flat closing face
+      for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
+        const aPort = vIdx * numUPoints + firstUIdx;
+        const bPort = (vIdx + 1) * numUPoints + firstUIdx;
+        const aStarboard = portStartIndex + aPort;
+        const bStarboard = portStartIndex + bPort;
+
+        const v1 = vPoints[vIdx];
+        const v2 = vPoints[vIdx + 1];
+        const [, y1] = evaluateSurface(controlPointGrid, u, v1);
+        const [, y2] = evaluateSurface(controlPointGrid, u, v2);
+        const hb1 = y1 * (estimatedBeam / 2);
+        const hb2 = y2 * (estimatedBeam / 2);
+
+        if (hb1 > 0.0001 || hb2 > 0.0001) {
+          indices.push(aStarboard, aPort, bStarboard);
+          indices.push(bStarboard, aPort, bPort);
+        }
+      }
+    } else {
+      // CANOE/CRUISER STERN: Close to centerline (pointed tip)
+      const sternCenterlineVertices: number[] = [];
+      for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
+        const waterlineZ = waterlineMin + vPoints[vIdx] * waterlineRange;
+        const centerlineVertexIdx = vertices.length / 3;
+        vertices.push(0, waterlineZ, sternStationX);
+        sternCenterlineVertices.push(centerlineVertexIdx);
+      }
+
+      for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
+        const aPort = vIdx * numUPoints + firstUIdx;
+        const bPort = (vIdx + 1) * numUPoints + firstUIdx;
+        const aStarboard = portStartIndex + aPort;
+        const bStarboard = portStartIndex + bPort;
+        const centerA = sternCenterlineVertices[vIdx];
+        const centerB = sternCenterlineVertices[vIdx + 1];
+
+        const v1 = vPoints[vIdx];
+        const v2 = vPoints[vIdx + 1];
+        const [, y1] = evaluateSurface(controlPointGrid, u, v1);
+        const [, y2] = evaluateSurface(controlPointGrid, u, v2);
+        const hb1 = y1 * (estimatedBeam / 2);
+        const hb2 = y2 * (estimatedBeam / 2);
+
+        if (centerA !== undefined && centerB !== undefined && (hb1 > 0 || hb2 > 0)) {
+          if (hb1 > 0) {
+            indices.push(aPort, aStarboard, centerA);
+          }
+          if (hb2 > 0) {
+            indices.push(bPort, bStarboard, centerB);
+          }
+          if (hb1 > 0 && hb2 > 0) {
+            indices.push(aPort, bPort, centerB);
+            indices.push(aPort, centerB, centerA);
+            indices.push(aStarboard, centerA, centerB);
+            indices.push(aStarboard, centerB, bStarboard);
+          }
+        }
+      }
+    }
+
+    geometry.setIndex(indices);
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+    geometry.computeBoundingBox();
+
+    return geometry;
+  } catch (error) {
+    console.warn(
+      "[HullMesh] NURBS evaluation failed, falling back to linear interpolation:",
+      error
+    );
+    return generateHullGeometryFromOffsetsLinear(offsetsGrid);
+  }
+}
+
+/**
+ * Linear interpolation fallback for small datasets or when NURBS fails
+ */
+function generateHullGeometryFromOffsetsLinear(offsetsGrid: OffsetsGrid): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+  const vertices: number[] = [];
+  const indices: number[] = [];
+
+  const { stations: originalStations, waterlines, offsets: originalOffsets } = offsetsGrid;
+
+  if (originalStations.length === 0 || waterlines.length === 0 || originalOffsets.length === 0) {
+    return geometry;
+  }
+
+  // Sort stations if needed
+  const sortedStations = [...originalStations].sort((a, b) => a - b);
+  const stationsAreSorted = originalStations.every((val, idx) => val === sortedStations[idx]);
+
+  let stations = originalStations;
+  let offsets = originalOffsets;
+
+  if (!stationsAreSorted) {
+    const stationIndices = originalStations.map((val, idx) => ({ val, idx }));
+    stationIndices.sort((a, b) => a.val - b.val);
+    const newIndices = stationIndices.map((item) => item.idx);
+    stations = sortedStations;
+    offsets = newIndices.map((oldIdx) => originalOffsets[oldIdx]);
+  }
+
+  // Generate vertices from offsets (linear interpolation)
+  for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
+    const waterlineZ = waterlines[wlIdx];
+    if (!Number.isFinite(waterlineZ)) continue;
+
+    for (let stIdx = 0; stIdx < stations.length; stIdx++) {
+      const stationX = stations[stIdx];
+      if (!Number.isFinite(stationX)) continue;
+      const hbRaw = offsets[stIdx]?.[wlIdx];
+      const halfBreadth = Number.isFinite(hbRaw) ? Math.max(0, hbRaw as number) : 0;
+
       vertices.push(-halfBreadth, waterlineZ, stationX);
     }
   }
@@ -137,7 +421,6 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
       const c = a + stations.length;
       const d = c + 1;
 
-      // Two triangles per quad (port side)
       indices.push(a, c, b);
       indices.push(b, c, d);
     }
@@ -155,7 +438,6 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
       const y = vertices[baseIdx + 1];
       const z = vertices[baseIdx + 2];
 
-      // Starboard side (positive X, mirrored)
       vertices.push(-x, y, z);
     }
   }
@@ -358,18 +640,20 @@ function generateHullGeometryFromOffsets(offsetsGrid: OffsetsGrid): THREE.Buffer
 function HullMesh({
   wireframe,
   offsetsGrid,
+  quality = "medium",
 }: {
   wireframe: boolean;
   offsetsGrid?: OffsetsGrid | null;
+  quality?: NurbsQuality;
 }) {
   const geometry = useMemo(() => {
     if (offsetsGrid && offsetsGrid.stations.length > 0 && offsetsGrid.waterlines.length > 0) {
-      console.log("[HullMesh] Using actual offsets for geometry generation");
-      return generateHullGeometryFromOffsets(offsetsGrid);
+      console.log("[HullMesh] Using actual offsets for geometry generation with NURBS");
+      return generateHullGeometryFromOffsets(offsetsGrid, quality);
     }
     console.warn("[HullMesh] No offsets available; skipping mesh (no parametric fallback)");
     return new THREE.BufferGeometry();
-  }, [offsetsGrid]);
+  }, [offsetsGrid, quality]);
 
   return (
     <mesh geometry={geometry} castShadow receiveShadow>
