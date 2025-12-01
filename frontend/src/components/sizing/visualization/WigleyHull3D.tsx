@@ -94,6 +94,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
                 stationPositions: shipdSections.stationPositions || [],
               },
               lppM: lpp,
+              draftM: draft, // Pass draft to ensure waterplane alignment
               smooth: true, // Enable interpolation for smooth 3D rendering
               stationMultiplier: 4, // Higher resolution for smoother surfaces
               heightMultiplier: 4, // Higher resolution for smoother surfaces
@@ -126,6 +127,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
                   stationPositions: sections.stationPositions || [],
                 },
                 lppM: lpp,
+                draftM: draft, // Pass draft to ensure waterplane alignment
                 smooth: true, // Enable interpolation for smooth 3D rendering
                 stationMultiplier: 4, // Higher resolution for smoother surfaces
                 heightMultiplier: 4, // Higher resolution for smoother surfaces
@@ -239,8 +241,12 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
       const lpp = candidate.lppM;
       const beam = candidate.beamM;
 
-      const geometry = new THREE.PlaneGeometry(lpp, beam);
-      geometry.rotateX(-Math.PI / 2); // Rotate to horizontal
+      // PlaneGeometry(width, height) creates plane in XY plane
+      // After rotateX(-PI/2), it becomes horizontal (XZ plane)
+      // Hull coordinate system: X=transverse (beam), Y=vertical (height), Z=longitudinal (lpp)
+      // So waterplane should be: width (X) = beam, height (Y→Z after rotation) = lpp
+      const geometry = new THREE.PlaneGeometry(beam, lpp);
+      geometry.rotateX(-Math.PI / 2); // Rotate to horizontal (XZ plane)
       return geometry;
     }, [candidate.lppM, candidate.beamM, showWaterplane]);
 
