@@ -601,6 +601,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         x: [Math.min(...portPoints.map(([x]) => x)), Math.max(...portPoints.map(([x]) => x))],
         y: [Math.min(...portPoints.map(([, y]) => y)), Math.max(...portPoints.map(([, y]) => y))],
         viewportBounds: { width: svgWidth, height: svgHeight },
+        starboardLastPoint: starboardPoints[starboardPoints.length - 1],
+        portFirstPoint: portPoints[0],
       };
       console.log("[Hull2DPlan] Port side SVG coordinate ranges:", portSVGRange);
 
@@ -614,6 +616,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         );
       }
 
+      // Ensure port path connects properly to starboard path at bow centerline
+      // The last starboard point should be at bow centerline, and first port point should also be at bow centerline
       const portPath = portPoints
         .map(([x, y]) => {
           // Validate coordinates before formatting
@@ -622,6 +626,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             return "";
           }
           // Use 'L' (line to) for all points - the first 'L' connects to the last starboard point
+          // This should be at the bow centerline
           return `L ${x.toFixed(2)},${y.toFixed(2)}`;
         })
         .filter((segment) => segment !== "")
@@ -630,6 +635,15 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Close the path by connecting back to stern centerline
       // Path structure: M (move to stern centerline) → L (starboard side) → L (port side) → Z (close)
       // The 'Z' command closes the path by drawing a line from the last point back to the first (M) point
+      // CRITICAL: Ensure both paths exist and are non-empty before combining
+      if (!starboardPath || !portPath) {
+        console.error("[Hull2DPlan] Missing path segments:", {
+          hasStarboard: !!starboardPath,
+          hasPort: !!portPath,
+          starboardLength: starboardPath?.length ?? 0,
+          portLength: portPath?.length ?? 0,
+        });
+      }
       const closedPath = starboardPath && portPath ? `${starboardPath} ${portPath} Z` : "";
 
       // Verify path closure: first and last points should be at stern centerline
