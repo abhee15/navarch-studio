@@ -20,7 +20,6 @@ import {
 import {
   generateControlPointGridFromOffsets,
   diagnoseHullSection,
-  type ControlPointGrid,
 } from "../../../utils/nurbsSurface";
 
 interface Hull2DProfileProps {

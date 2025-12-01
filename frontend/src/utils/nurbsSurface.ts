@@ -470,7 +470,6 @@ export function evaluateCurveDerivativeU(
   const spanV = findKnotSpan(numControlPointsPerStation - 1, degreeV, v, knotsV);
 
   // Evaluate basis functions and derivatives
-  const basisU = evaluateBasisFunctions(spanU, u, degreeU, knotsU);
   const derivU = evaluateBasisFunctionDerivatives(spanU, u, degreeU, knotsU);
   const basisV = evaluateBasisFunctions(spanV, v, degreeV, knotsV);
 
@@ -545,7 +544,6 @@ export function evaluateCurveDerivativeV(
 
   // Evaluate basis functions and derivatives
   const basisU = evaluateBasisFunctions(spanU, u, degreeU, knotsU);
-  const basisV = evaluateBasisFunctions(spanV, v, degreeV, knotsV);
   const derivV = evaluateBasisFunctionDerivatives(spanV, v, degreeV, knotsV);
 
   // Compute derivative using tensor product
@@ -620,7 +618,6 @@ export function evaluateCurveSecondDerivativeV(
 
   // Evaluate basis functions and second derivatives
   const basisU = evaluateBasisFunctions(spanU, u, degreeU, knotsU);
-  const basisV = evaluateBasisFunctions(spanV, v, degreeV, knotsV);
   const secondDerivV = evaluateBasisFunctionSecondDerivatives(spanV, v, degreeV, knotsV);
 
   // Compute second derivative using tensor product
