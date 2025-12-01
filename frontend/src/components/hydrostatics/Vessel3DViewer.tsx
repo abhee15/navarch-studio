@@ -225,7 +225,8 @@ function generateHullGeometryFromOffsets(
       let waterlineZ: number;
       if (isOriginalV) {
         const originalVIdx = normalizedWaterlines.findIndex((nv) => Math.abs(nv - v) < 1e-10);
-        waterlineZ = originalVIdx >= 0 ? waterlines[originalVIdx] : waterlineMin + v * waterlineRange;
+        waterlineZ =
+          originalVIdx >= 0 ? waterlines[originalVIdx] : waterlineMin + v * waterlineRange;
       } else {
         waterlineZ = waterlineMin + v * waterlineRange;
       }
