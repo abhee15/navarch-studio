@@ -1093,8 +1093,14 @@ function generateStationOffsets(
     if (region === "bow") {
       // Bow section: use Beta (flare), Cdrft (deadrise), Rc (curvature), Rk (knuckle), Kappa_bow (convex/concave)
       const beta = denormalized[8]; // Flare angle (degrees)
-      const rc = denormalized[9]; // Curvature coefficient (0-1)
-      const rk = denormalized[10]; // Knuckle coefficient (0-1)
+      // PHASE 2: Enforce R_c (curvature) parameter: 0.2-0.4 normalized for smooth bilge radius
+      // Fix: Increase from 0.000 to 0.2-0.4 to ensure bow sections have smooth, continuous curves
+      const rcNorm = shipdVector[9] ?? 0; // Curvature coefficient (normalized 0-1)
+      const rc = rcNorm <= 0 ? 0.3 : Math.max(0.2, Math.min(0.4, rcNorm)); // Default 0.3 if zero/negative
+      // PHASE 2: Enforce R_k (knuckle) parameter: 0.1-0.3 normalized for deck edge transition
+      // Fix: Set to moderate positive value (0.1-0.3) to introduce gentle radius and ensure continuity
+      const rkNorm = shipdVector[10] ?? 0; // Knuckle coefficient (normalized 0-1)
+      const rk = rkNorm <= 0 ? 0.2 : Math.max(0.1, Math.min(0.3, rkNorm)); // Default 0.2 if zero/negative
       const kappaBow = denormalized[14]; // Curvature type (-1 to 1, concave to convex)
       const cdrft = denormalized[19]; // Deadrise angle (degrees)
 
@@ -1121,14 +1127,15 @@ function generateStationOffsets(
           keelHalfBreadth +
           (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
 
-        // 4. Apply knuckle effect (hard chine)
-        if (rk > 0.3) {
-          const knuckleHeight = 0.5; // Knuckle at mid-height
-          const knuckleRange = 0.2;
-          if (Math.abs(heightRatio - knuckleHeight) < knuckleRange) {
-            const knuckleFactor = 1 - Math.abs(heightRatio - knuckleHeight) / knuckleRange;
-            baseHalfBreadth *= 1 + rk * knuckleFactor * 0.15;
-          }
+        // 4. Apply knuckle effect with proper R_k radius (0.1-0.3)
+        // R_k now always has a valid value (enforced above), so always apply
+        const knuckleHeight = 0.5; // Knuckle at mid-height
+        const knuckleRange = 0.2;
+        if (Math.abs(heightRatio - knuckleHeight) < knuckleRange) {
+          const knuckleFactor = 1 - Math.abs(heightRatio - knuckleHeight) / knuckleRange;
+          // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
+          const knuckleEffect = (rk - 0.1) / 0.2; // Normalize 0.1-0.3 to 0-1
+          baseHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.15;
         }
 
         // 5. Apply convex/concave control
@@ -1162,13 +1169,14 @@ function generateStationOffsets(
             (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
 
           // Apply knuckle and convex/concave effects at waterline
-          if (rk > 0.3) {
-            const knuckleHeight = 0.5;
-            const knuckleRange = 0.2;
-            if (Math.abs(1.0 - knuckleHeight) < knuckleRange) {
-              const knuckleFactor = 1 - Math.abs(1.0 - knuckleHeight) / knuckleRange;
-              waterlineHalfBreadth *= 1 + rk * knuckleFactor * 0.15;
-            }
+          // R_k now always has a valid value (enforced above), so always apply
+          const knuckleHeight = 0.5;
+          const knuckleRange = 0.2;
+          if (Math.abs(1.0 - knuckleHeight) < knuckleRange) {
+            const knuckleFactor = 1 - Math.abs(1.0 - knuckleHeight) / knuckleRange;
+            // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
+            const knuckleEffect = (rk - 0.1) / 0.2; // Normalize 0.1-0.3 to 0-1
+            waterlineHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.15;
           }
           if (Math.abs(kappaBow) > 0.1) {
             const convexEffect = kappaBow * Math.sin((1.0 * Math.PI) / 2) * 0.1;
@@ -1322,8 +1330,14 @@ function generateStationOffsets(
       const kappaStern = denormalized[24]; // Curvature type (-1 to 1, concave to convex)
       const betaTrans = denormalized[27]; // Stern rake angle
       const bcTrans = denormalized[28]; // Transom width ratio
-      const rcTrans = denormalized[29]; // Stern curvature coefficient
-      const rkTrans = denormalized[30]; // Stern knuckle coefficient
+      // PHASE 2: Enforce R_c (curvature) for stern: 0.2-0.4 normalized
+      // Fix: Increase from 0.000 to 0.2-0.4 to round the transition from side to transom face
+      const rcTransNorm = shipdVector[29] ?? 0; // Stern curvature coefficient (normalized 0-1)
+      const rcTrans = rcTransNorm <= 0 ? 0.3 : Math.max(0.2, Math.min(0.4, rcTransNorm)); // Default 0.3 if zero/negative
+      // PHASE 2: Enforce R_k (knuckle) for stern: 0.0-0.2 normalized
+      // Fix: Set to 0.0 or slightly positive to define sheer line knuckle smoothly
+      const rkTransNorm = shipdVector[30] ?? 0; // Stern knuckle coefficient (normalized 0-1)
+      const rkTrans = rkTransNorm <= 0 ? 0.1 : Math.max(0.0, Math.min(0.2, rkTransNorm)); // Default 0.1 if zero/negative
       const adelStern = denormalized[25]; // Canoe stern sheer coefficient A
       const bdelStern = denormalized[26]; // Canoe stern sheer coefficient B
 
@@ -1356,10 +1370,13 @@ function generateStationOffsets(
               (transomWidth / 2) * transomBlend * atrans;
           }
 
-          // Stern knuckle
-          if (rkTrans > 0.3 && heightRatio > 0.3 && heightRatio < 0.6) {
+          // PHASE 2: Apply stern knuckle with proper R_k radius (0.0-0.2)
+          // R_k now always has a valid value, so always apply if in range
+          if (heightRatio > 0.3 && heightRatio < 0.6) {
             const knuckleFactor = 1 - Math.abs(heightRatio - 0.45) / 0.15;
-            baseHalfBreadth *= 1 + rkTrans * knuckleFactor * 0.12;
+            // Scale knuckle effect by R_k value (0.0-0.2 range, normalized to 0-1)
+            const knuckleEffect = (rkTrans - 0.0) / 0.2; // Normalize 0.0-0.2 to 0-1
+            baseHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.12;
           }
 
           // Apply convex/concave control
