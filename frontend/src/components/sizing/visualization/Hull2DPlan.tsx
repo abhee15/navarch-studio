@@ -336,6 +336,64 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       waterlineCount,
     ]);
 
+    // Calculate actual geometry bounds from waterline points
+    // This accounts for hull extensions beyond Lpp (bulbous bow, stern appendages)
+    const geometryBounds = useMemo(() => {
+      const lpp = candidate.lppM ?? 100;
+      const beam = candidate.beamM ?? 20;
+
+      if (waterlines.length === 0) {
+        // Fallback to Lpp-based bounds if no waterlines
+        return {
+          minX: -lpp / 2,
+          maxX: lpp / 2,
+          maxHalfBreadth: beam / 2,
+          extentX: lpp,
+          fullBeam: beam,
+          centerX: 0,
+        };
+      }
+
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let maxHalfBreadth = 0;
+
+      waterlines.forEach((wl) => {
+        wl.points.forEach(([x, y]) => {
+          if (Number.isFinite(x) && Number.isFinite(y)) {
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            maxHalfBreadth = Math.max(maxHalfBreadth, Math.abs(y));
+          }
+        });
+      });
+
+      // Use calculated bounds if valid, otherwise fallback to Lpp
+      const bounds = {
+        minX: Number.isFinite(minX) ? minX : -lpp / 2,
+        maxX: Number.isFinite(maxX) ? maxX : lpp / 2,
+        maxHalfBreadth: Number.isFinite(maxHalfBreadth) ? maxHalfBreadth : beam / 2,
+        extentX: Number.isFinite(minX) && Number.isFinite(maxX) ? maxX - minX : lpp,
+        fullBeam: Number.isFinite(maxHalfBreadth) ? maxHalfBreadth * 2 : beam,
+        centerX:
+          Number.isFinite(minX) && Number.isFinite(maxX)
+            ? (minX + maxX) / 2
+            : 0,
+      };
+
+      console.log("[Hull2DPlan] Geometry bounds calculated:", {
+        minX: bounds.minX,
+        maxX: bounds.maxX,
+        extentX: bounds.extentX,
+        lpp,
+        loa: candidate.loaM,
+        maxHalfBreadth: bounds.maxHalfBreadth,
+        fullBeam: bounds.fullBeam,
+      });
+
+      return bounds;
+    }, [waterlines, candidate.lppM, candidate.beamM, candidate.loaM]);
+
     // Generate stations - use ShipD geometry if available
     const stations = useMemo(() => {
       const lpp = candidate.lppM;
@@ -398,9 +456,27 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       );
     }
 
-    const scaleX = (svgWidth - 2 * padding) / lpp;
-    const scaleY = (svgHeight - 2 * padding) / beam;
+    // Use LOA if available, otherwise use geometry bounds extent, fallback to Lpp
+    // This ensures bulbous bow and stern appendages are visible
+    const actualLength =
+      candidate.loaM ?? geometryBounds.extentX ?? lpp;
+    const actualBeam = geometryBounds.fullBeam ?? beam;
+
+    const scaleX = (svgWidth - 2 * padding) / actualLength;
+    const scaleY = (svgHeight - 2 * padding) / actualBeam;
     const scale = Math.min(scaleX, scaleY);
+
+    console.log("[Hull2DPlan] Scaling calculation:", {
+      lpp,
+      loa: candidate.loaM,
+      geometryExtent: geometryBounds.extentX,
+      actualLength,
+      beam,
+      actualBeam,
+      scaleX,
+      scaleY,
+      scale,
+    });
 
     // Validate scale to prevent NaN
     if (!Number.isFinite(scale) || scale <= 0) {
@@ -412,8 +488,12 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       );
     }
 
+    // Center viewport on actual geometry center (not assumed Lpp/2)
+    // This ensures the hull is properly centered even when LOA > Lpp
+    const geometryCenterX = geometryBounds.centerX;
+
     const toSVG = (x: number, y: number): [number, number] => [
-      svgWidth / 2 + x * scale,
+      svgWidth / 2 + (x - geometryCenterX) * scale,
       svgHeight / 2 - y * scale,
     ];
 
