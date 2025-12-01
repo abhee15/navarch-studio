@@ -459,15 +459,17 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // Bow section: use Beta (flare), Cdrft (deadrise), Rc, Rk, Kappa_bow
                 var beta = denormalized[8]; // Flare angle (degrees)
 
-                // PHASE 2: Enforce R_c (curvature) parameter: 0.3-0.5 normalized for smooth bilge radius
+                // PHASE 2: Enforce R_c (curvature) parameter: 0.2-0.4 normalized for smooth bilge radius
                 // R_c defines smooth radius connecting flat bottom to vertical side
-                var rcRaw = denormalized[9]; // Curvature coefficient
-                var rc = rcRaw <= 0m ? 0.4m : Math.Clamp(rcRaw, 0.3m, 0.5m); // Default 0.4 if zero/negative
+                // Fix: Increase from 0.000 to 0.2-0.4 to ensure bow sections have smooth, continuous curves
+                var rcNorm = shipdVector[9]; // Curvature coefficient (normalized 0-1)
+                var rc = rcNorm <= 0m ? 0.3m : Math.Clamp(rcNorm, 0.2m, 0.4m); // Default 0.3 if zero/negative
 
-                // PHASE 2: Enforce R_k (knuckle) parameter: 0.2-0.4 normalized for deck edge transition
+                // PHASE 2: Enforce R_k (knuckle) parameter: 0.1-0.3 normalized for deck edge transition
                 // R_k defines smooth connection between vertical side and deck/sheer line
-                var rkRaw = denormalized[10]; // Knuckle coefficient
-                var rk = rkRaw <= 0m ? 0.3m : Math.Clamp(rkRaw, 0.2m, 0.4m); // Default 0.3 if zero/negative
+                // Fix: Set to moderate positive value (0.1-0.3) to introduce gentle radius and ensure continuity
+                var rkNorm = shipdVector[10]; // Knuckle coefficient (normalized 0-1)
+                var rk = rkNorm <= 0m ? 0.2m : Math.Clamp(rkNorm, 0.1m, 0.3m); // Default 0.2 if zero/negative
 
                 var kappaBow = denormalized[14]; // Curvature type (-1 to 1)
                 var cdrft = denormalized[19]; // Deadrise angle (degrees)
@@ -490,15 +492,15 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     var baseHalfBreadth = keelHalfBreadth +
                         (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
 
-                    // PHASE 2: Apply knuckle effect with proper R_k radius (0.2-0.4)
+                    // PHASE 2: Apply knuckle effect with proper R_k radius (0.1-0.3)
                     // R_k now always has a valid value (enforced above), so always apply
                     var knuckleHeight = 0.5m; // Knuckle at mid-height
                     var knuckleRange = 0.2m;
                     if (Math.Abs(heightRatio - knuckleHeight) < knuckleRange)
                     {
                         var knuckleFactor = 1m - Math.Abs(heightRatio - knuckleHeight) / knuckleRange;
-                        // Scale knuckle effect by R_k value (0.2-0.4 range)
-                        var knuckleEffect = (rk - 0.2m) / 0.2m; // Normalize to 0-1
+                        // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
+                        var knuckleEffect = (rk - 0.1m) / 0.2m; // Normalize 0.1-0.3 to 0-1
                         baseHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.15m;
                     }
 
@@ -533,12 +535,20 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // Deep V midship uses: Adrft (17), Bdrft (18), Cdrft (19)
                 // Standard midship uses: bit_EP_S (20), bit_EP_T (21)
 
-                // PHASE 3: Implement deadrise (Cdrft) parameter
+                // PARAMETER UPDATE: Deadrise (Cdrft) - Ensure 5°-8° for standard midship
                 // Deadrise reduces GM and improves roll period by lifting keel slightly
-                // Target: 5°-8° for standard midship (was 0.0%)
+                // Problem: Flat bottom (0.011 deg ≈ 0.0%) causes poor roll characteristics
+                // Solution: Increase to 5°-8° to introduce V-shape and reduce initial stability
                 var cdrftRaw = denormalized[19]; // Deadrise angle (degrees)
-                var cdrft = cdrftRaw <= 0m ? 6.5m : Math.Clamp(cdrftRaw, 5m, 8m); // Default 6.5° if zero/negative
+                var cdrft = cdrftRaw <= 0.1m ? 6.5m : Math.Clamp(cdrftRaw, 5m, 8m); // Default 6.5° if ≤0.1° (was 0.011°)
                 var isDeepV = cdrft > 20m; // Deep V midship typically has higher deadrise
+
+                // PARAMETER UPDATE: Curvature (Rc) Midship - Add smooth bilge radius
+                // Problem: Hard bilge corner (Rc=0.000) causes poor flow and contributes to stiffness
+                // Solution: Increase to 0.3-0.5 to create smooth radius at bilge, improving flow
+                // Use bow curvature parameter (Rc, index 9) for midship bilge curvature
+                var rcRaw = denormalized[9]; // Curvature coefficient (reuse bow Rc for midship)
+                var rcMidship = rcRaw <= 0m ? 0.4m : Math.Clamp(rcRaw, 0.3m, 0.5m); // Default 0.4 if zero/negative
 
                 var heightRatio = height / draftM;
 
@@ -571,7 +581,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     }
                     else
                     {
-                        // PHASE 3: STANDARD MIDSHIP with deadrise (5°-8°)
+                        // STANDARD MIDSHIP with deadrise (5°-8°) and curvature (Rc 0.3-0.5)
                         // Apply deadrise to lift keel slightly, reducing waterplane area near center
                         // This reduces GM and improves roll period (softer, more comfortable)
                         var deadriseReduction = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
@@ -580,9 +590,23 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                         // Deadrise creates a slight V, so keel is narrower than without deadrise
                         var keelHalfBreadth = Math.Max(0m, (beamM / 2m) * (0.15m - cdrft / 100m)); // 10-15% of beam, modulated by deadrise
 
-                        // Expansion curve with deadrise effect
-                        // Deadrise creates a more V-shaped section (narrower at keel, wider at waterline)
-                        var expansionRatio = (decimal)Math.Pow((double)heightRatio, 0.8);
+                        // PARAMETER UPDATE: Apply curvature (Rc) for smooth bilge radius
+                        // Higher Rc = smoother transition (fuller), Lower Rc = sharper (finer)
+                        // Rc 0.3-0.5 creates smooth radius at bilge, improving flow
+                        var curvePower = 2.5m - rcMidship * 1.5m; // Range: 1.0 (full/smooth) to 2.5 (fine/sharp)
+                        var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
+
+                        // Apply bilge curvature effect - smooth transition at mid-height (bilge region)
+                        var bilgeHeight = 0.3m; // Bilge typically at ~30% of draft
+                        var bilgeRange = 0.2m; // Smooth transition range
+                        if (Math.Abs(heightRatio - bilgeHeight) < bilgeRange)
+                        {
+                            var bilgeFactor = 1m - Math.Abs(heightRatio - bilgeHeight) / bilgeRange;
+                            // Higher Rc (0.3-0.5) creates smoother, more rounded bilge
+                            var curvatureEffect = (rcMidship - 0.3m) / 0.2m; // Normalize 0.3-0.5 to 0-1
+                            expansionRatio *= 1m + curvatureEffect * bilgeFactor * 0.1m; // Smooth out bilge transition
+                        }
+
                         var baseHalfBreadth = keelHalfBreadth +
                             (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
 
@@ -652,13 +676,15 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 var betaTrans = denormalized[27];
                 var bcTrans = denormalized[28];
 
-                // PHASE 2: Enforce R_c (curvature) for stern: 0.3-0.5 normalized
-                var rcTransRaw = denormalized[29];
-                var rcTrans = rcTransRaw <= 0m ? 0.4m : Math.Clamp(rcTransRaw, 0.3m, 0.5m);
+                // PHASE 2: Enforce R_c (curvature) for stern: 0.2-0.4 normalized
+                // Fix: Increase from 0.000 to 0.2-0.4 to round the transition from side to transom face
+                var rcTransNorm = shipdVector[29]; // Stern curvature coefficient (normalized 0-1)
+                var rcTrans = rcTransNorm <= 0m ? 0.3m : Math.Clamp(rcTransNorm, 0.2m, 0.4m); // Default 0.3 if zero/negative
 
-                // PHASE 2: Enforce R_k (knuckle) for stern: 0.2-0.4 normalized
-                var rkTransRaw = denormalized[30];
-                var rkTrans = rkTransRaw <= 0m ? 0.3m : Math.Clamp(rkTransRaw, 0.2m, 0.4m);
+                // PHASE 2: Enforce R_k (knuckle) for stern: 0.0-0.2 normalized
+                // Fix: Set to 0.0 or slightly positive to define sheer line knuckle smoothly
+                var rkTransNorm = shipdVector[30]; // Stern knuckle coefficient (normalized 0-1)
+                var rkTrans = rkTransNorm <= 0m ? 0.1m : Math.Clamp(rkTransNorm, 0.0m, 0.2m); // Default 0.1 if zero/negative
                 var adelStern = denormalized[25]; // Canoe stern sheer coefficient A
                 var bdelStern = denormalized[26]; // Canoe stern sheer coefficient B
 
@@ -689,13 +715,13 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                                 (transomWidth / 2m) * transomBlend * atrans;
                         }
 
-                        // PHASE 2: Apply stern knuckle with proper R_k radius (0.2-0.4)
+                        // PHASE 2: Apply stern knuckle with proper R_k radius (0.0-0.2)
                         // R_k now always has a valid value, so always apply if in range
                         if (heightRatio > 0.3m && heightRatio < 0.6m)
                         {
                             var knuckleFactor = 1m - Math.Abs(heightRatio - 0.45m) / 0.15m;
-                            // Scale knuckle effect by R_k value (0.2-0.4 range)
-                            var knuckleEffect = (rkTrans - 0.2m) / 0.2m; // Normalize to 0-1
+                            // Scale knuckle effect by R_k value (0.0-0.2 range, normalized to 0-1)
+                            var knuckleEffect = (rkTrans - 0.0m) / 0.2m; // Normalize 0.0-0.2 to 0-1
                             baseHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.12m;
                         }
 
@@ -890,18 +916,31 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             // Apply longitudinal scaling to half-breadth
             halfBreadth = halfBreadth * longitudinalScale;
 
-            // PHASE 3: Adjust waterplane coefficient (C_WP) from 0.800 to 0.750-0.780
-            // Fine hull form at waterlines in bow/stern regions to reduce C_WP
-            // This improves hydrodynamic performance by reducing wave-making resistance
+            // PARAMETER UPDATE: Waterline fining to reduce CWP from 0.800 to 0.75-0.78
+            // Problem: CWP=0.800 is too high (WL parameter 0.050), contributing to excessive initial stability
+            // Solution: Fine (narrow) the waterlines in the Plan View to reduce waterplane area
+            // Target: reduce CWP from 0.800 to 0.75-0.78 (3-6% reduction in waterplane area)
             if (height >= draftM * 0.9m && height <= draftM * 1.1m) // Near waterline (90-110% of draft)
             {
-                if (region == "bow" || region == "stern")
-                {
-                    // Fine the hull at waterline: reduce half-breadth by 5-10% in bow/stern
-                    // This reduces waterplane area, lowering C_WP from 0.800 to 0.750-0.780
-                    var finingFactor = 0.92m; // Reduce by 8% (adjusts C_WP from ~0.800 to ~0.736)
-                    halfBreadth *= finingFactor;
-                }
+                // Apply fining to all regions (bow, midship, stern) to reduce overall CWP
+                // Use WL parameter (index 6) to control fining intensity
+                // Lower WL value = more fining (narrower waterlines)
+                var wlParam = shipdVector[6]; // WL - Waterline length ratio (normalized 0-1)
+
+                // Base fining factor: 4% reduction (target CWP reduction from 0.800 to 0.77)
+                // Adjust based on WL parameter: if WL is low (0.050), apply more fining
+                var baseFiningFactor = 0.96m; // 4% reduction
+                // Map WL (0.05-0.8 range) to fining adjustment
+                // Lower WL = more fining needed to reduce CWP
+                var wlNormalized = Math.Clamp((wlParam - 0.05m) / 0.75m, 0m, 1m); // Normalize WL to 0-1
+                var wlAdjustment = (0.5m - wlNormalized) * 0.04m; // ±2% adjustment based on WL
+                var finingFactor = baseFiningFactor + wlAdjustment; // Range: 0.94-0.98 (3-6% reduction)
+
+                // Apply fining with smooth transition near waterline
+                var heightRatio = height / draftM;
+                var waterlineProximity = 1m - Math.Abs(heightRatio - 1.0m) / 0.1m; // 1.0 at waterline, 0.0 at ±10%
+                var effectiveFining = 1m - (1m - finingFactor) * waterlineProximity;
+                halfBreadth *= effectiveFining;
             }
 
             offsets[height] = Math.Max(0m, halfBreadth);
