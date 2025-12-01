@@ -12,7 +12,7 @@ namespace HullSizingService.Services.Geometry;
 /// Adjusts Control Point positions to meet target hydrostatic properties (CB, CP, LCB)
 /// Uses Differential Evolution algorithm for gradient-free global optimization
 /// </summary>
-public class HullOptimizationService
+public class HullOptimizationService : IHullOptimizationService
 {
     private readonly ILogger<HullOptimizationService> _logger;
     private readonly IHydrostaticsCalculator _hydrostaticsCalculator;
@@ -53,9 +53,99 @@ public class HullOptimizationService
     }
 
     /// <summary>
-    /// Optimizes Control Point Grid to meet hydrostatic targets
+    /// Optimizes Control Point Grid to meet hydrostatic targets (async wrapper)
     /// </summary>
-    public OptimizationResult Optimize(
+    public async Task<OptimizationResult> OptimizeAsync(
+        decimal targetCb,
+        decimal targetCp,
+        decimal targetLcbPercent,
+        decimal lppM,
+        decimal beamM,
+        decimal draftM,
+        NurbsSurfaceGenerator.ControlPointGrid? initialGuess = null,
+        OptimizationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Create targets
+        var targets = new OptimizationTargets
+        {
+            CbTarget = targetCb,
+            CpTarget = targetCp,
+            LcbTargetPercent = targetLcbPercent,
+            LppM = lppM,
+            BeamM = beamM,
+            DraftM = draftM
+        };
+
+        // Generate initial guess if not provided
+        var initialControlPoints = initialGuess ?? ControlPointGridGenerator.GenerateInitialGuess(
+            lppM, beamM, draftM, targetCb, targetCp, targetLcbPercent);
+
+        // Run optimization (synchronous for now, but wrapped in Task for async interface)
+        return await Task.Run(() => Optimize(initialControlPoints, targets, options), cancellationToken);
+    }
+
+    /// <summary>
+    /// Generates hull sections from optimized Control Point Grid
+    /// </summary>
+    public async Task<HullSectionsDto> GenerateSectionsFromOptimizedGridAsync(
+        NurbsSurfaceGenerator.ControlPointGrid controlPoints,
+        decimal lppM,
+        decimal beamM,
+        decimal draftM,
+        int numStations = 21,
+        int numWaterlines = 13,
+        CancellationToken cancellationToken = default)
+    {
+        // Generate station and waterline positions
+        var stations = new List<decimal>();
+        for (int i = 0; i < numStations; i++)
+        {
+            stations.Add((decimal)i / (numStations - 1));
+        }
+
+        var waterlines = new List<decimal>();
+        for (int j = 0; j < numWaterlines; j++)
+        {
+            waterlines.Add((decimal)j / (numWaterlines - 1));
+        }
+
+        // Generate offsets from NURBS surface
+        var offsets = NurbsSurfaceGenerator.GenerateOffsetsFromSurface(
+            controlPoints, stations, waterlines, lppM, beamM, draftM);
+
+        // Convert to HullSectionsDto format
+        var hullStations = new List<HullStationDto>();
+        for (int i = 0; i < stations.Count; i++)
+        {
+            var stationOffsets = new Dictionary<decimal, decimal>();
+            for (int j = 0; j < waterlines.Count; j++)
+            {
+                var height = waterlines[j] * draftM;
+                var halfBreadth = offsets.GetValueOrDefault((i, j), 0m);
+                stationOffsets[height] = halfBreadth;
+            }
+
+            hullStations.Add(new HullStationDto
+            {
+                Position = stations[i],
+                Offsets = stationOffsets,
+                HasBulb = false,
+                HasSkeg = false
+            });
+        }
+
+        return await Task.FromResult(new HullSectionsDto
+        {
+            Stations = hullStations,
+            StationPositions = stations
+        });
+    }
+
+    /// <summary>
+    /// Optimizes Control Point Grid to meet hydrostatic targets (synchronous core method)
+    /// </summary>
+    private OptimizationResult Optimize(
         NurbsSurfaceGenerator.ControlPointGrid initialControlPoints,
         OptimizationTargets targets,
         OptimizationOptions? options = null)
