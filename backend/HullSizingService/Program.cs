@@ -154,6 +154,12 @@ try
     builder.Services.AddScoped<IShipDToHydroMapper, ShipDToHydroMapper>();
     Log.Information("ShipD parameterization, geometry, and Hydro mapper services registered");
 
+    // NURBS Optimization Services
+    builder.Services.AddScoped<HullSizingService.Services.Integration.IIntegrationEngine, HullSizingService.Services.Integration.SimpleIntegrationEngine>();
+    builder.Services.AddScoped<HullSizingService.Services.Geometry.IHydrostaticsCalculator, HullSizingService.Services.Geometry.NurbsHydrostaticsCalculator>();
+    builder.Services.AddScoped<HullSizingService.Services.Geometry.HullOptimizationService>();
+    Log.Information("NURBS optimization services registered (Gauss Quadrature integration, inverse design optimization)");
+
     // Hull Geometry Generator Service (form-coefficient-based)
     builder.Services.AddScoped<IHullGeometryGeneratorService, HullGeometryGeneratorService>();
     Log.Information("Hull geometry generator service registered (form-coefficient-based parametric generation)");
