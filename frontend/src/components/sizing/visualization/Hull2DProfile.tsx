@@ -17,6 +17,11 @@ import {
   generateFormCoefficientHull,
   type HullDimensions,
 } from "../../../utils/formCoefficientHullGenerator";
+import {
+  generateControlPointGridFromOffsets,
+  diagnoseHullSection,
+  type ControlPointGrid,
+} from "../../../utils/nurbsSurface";
 
 interface Hull2DProfileProps {
   candidate: CandidateDesign;
@@ -218,6 +223,94 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
               },
               20
             );
+
+            // NURBS C² Continuity Diagnostic (development mode)
+            // Analyze midship section for curvature smoothness
+            if (process.env.NODE_ENV === "development" && sections.stations.length >= 4) {
+              try {
+                // Convert sections to control point grid for NURBS analysis
+                const stationPositions = sections.stations.map((s) => s.position);
+                const allHeights = new Set<number>();
+                for (const station of sections.stations) {
+                  for (const height of Object.keys(station.offsets).map(Number)) {
+                    if (Number.isFinite(height)) {
+                      allHeights.add(height);
+                    }
+                  }
+                }
+                const waterlines = Array.from(allHeights).sort((a, b) => a - b);
+
+                if (waterlines.length > 0 && stationPositions.length > 0) {
+                  // Create offsets grid
+                  const offsets: number[][] = [];
+                  for (let sIdx = 0; sIdx < stationPositions.length; sIdx++) {
+                    const station = sections.stations[sIdx];
+                    const stationOffsets: number[] = [];
+                    for (let wIdx = 0; wIdx < waterlines.length; wIdx++) {
+                      const height = waterlines[wIdx];
+                      const halfBreadth = station.offsets[height] ?? 0;
+                      stationOffsets.push(Math.max(0, halfBreadth));
+                    }
+                    offsets.push(stationOffsets);
+                  }
+
+                  // Normalize stations and waterlines to [0, 1] range
+                  const stationMin = Math.min(...stationPositions);
+                  const stationMax = Math.max(...stationPositions);
+                  const stationRange = stationMax - stationMin || 1;
+                  const normalizedStations = stationPositions.map(
+                    (s) => (s - stationMin) / stationRange
+                  );
+
+                  const waterlineMin = Math.min(...waterlines);
+                  const waterlineMax = Math.max(...waterlines);
+                  const waterlineRange = waterlineMax - waterlineMin || 1;
+                  const normalizedWaterlines = waterlines.map(
+                    (w) => (w - waterlineMin) / waterlineRange
+                  );
+
+                  // Generate control point grid
+                  const controlPointGrid = generateControlPointGridFromOffsets(
+                    normalizedStations,
+                    normalizedWaterlines,
+                    offsets,
+                    lpp,
+                    beam,
+                    draft
+                  );
+
+                  // Analyze midship section (approximately middle station)
+                  const midshipIndex = Math.floor(controlPointGrid.numStations / 2);
+                  const diagnostic = diagnoseHullSection(controlPointGrid, midshipIndex, 100);
+
+                  // Log diagnostic results
+                  console.group("[Hull2DProfile] NURBS C² Continuity Diagnostic - Midship Section");
+                  console.log("Station Index:", diagnostic.stationIndex);
+                  console.log("C² Continuity:", {
+                    isContinuous: diagnostic.c2Continuity.isContinuous,
+                    discontinuities: diagnostic.c2Continuity.discontinuities.length,
+                    maxDiscontinuity: diagnostic.c2Continuity.maxDiscontinuity,
+                  });
+                  console.log("Curvature Statistics:", {
+                    min: diagnostic.curvatureStats.min.toFixed(4),
+                    max: diagnostic.curvatureStats.max.toFixed(4),
+                    mean: diagnostic.curvatureStats.mean.toFixed(4),
+                    stdDev: diagnostic.curvatureStats.stdDev.toFixed(4),
+                    oscillatoryRegions: diagnostic.curvatureStats.oscillatoryRegions.length,
+                  });
+                  console.log("Recommendations:", diagnostic.recommendations);
+                  if (diagnostic.c2Continuity.discontinuities.length > 0) {
+                    console.warn(
+                      "C² Discontinuities detected:",
+                      diagnostic.c2Continuity.discontinuities
+                    );
+                  }
+                  console.groupEnd();
+                }
+              } catch (error) {
+                console.warn("[Hull2DProfile] NURBS diagnostic failed:", error);
+              }
+            }
 
             const buttockOffsets = Array.from(
               { length: buttockCount + 1 },
