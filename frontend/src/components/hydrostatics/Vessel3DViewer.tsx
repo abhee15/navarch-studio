@@ -31,6 +31,7 @@ import {
   generateControlPointGridFromOffsets,
   generateEvaluationPoints,
   evaluateSurface,
+  getResolutionMultiplier,
   type NurbsQuality,
 } from "../../utils/nurbsSurface";
 
@@ -56,8 +57,9 @@ export interface Vessel3DViewerRef {
 }
 
 /**
- * Generate hull geometry from actual offsets using NURBS surface evaluation
- * Creates smooth C² continuous surfaces instead of faceted linear interpolation
+ * Generate hull geometry from actual offsets using hybrid NURBS approach
+ * CRITICAL: Preserves original offset points exactly, then adds smooth interpolation between them
+ * This ensures waterplane slicing, grid alignment, and bow/stern shapes are preserved
  * Three.js coordinate system: X = transverse (starboard/port), Y = vertical (up/down), Z = longitudinal (forward/back)
  */
 function generateHullGeometryFromOffsets(
@@ -158,39 +160,119 @@ function generateHullGeometryFromOffsets(
       return generateHullGeometryFromOffsetsLinear(offsetsGrid);
     }
 
-    // Generate high-resolution evaluation points for smooth surface
-    const { uPoints, vPoints } = generateEvaluationPoints(
-      normalizedStations,
-      normalizedWaterlines,
-      quality
-    );
+    // HYBRID APPROACH: First, add vertices at ORIGINAL offset points (preserves exact geometry)
+    // Then add intermediate points between original points for smoothness
+    const resolutionMultiplier = getResolutionMultiplier(quality);
 
-    // Evaluate NURBS surface at high resolution
+    // Build evaluation point sets: original points + intermediate points
+    const uEvaluationPoints: number[] = [];
+    const vEvaluationPoints: number[] = [];
+
+    // Add original station positions (normalized for NURBS evaluation)
+    for (let i = 0; i < normalizedStations.length; i++) {
+      uEvaluationPoints.push(normalizedStations[i]);
+      // Add intermediate points between this and next station
+      if (i < normalizedStations.length - 1) {
+        const uStart = normalizedStations[i];
+        const uEnd = normalizedStations[i + 1];
+        for (let j = 1; j < resolutionMultiplier; j++) {
+          const t = j / resolutionMultiplier;
+          uEvaluationPoints.push(uStart + t * (uEnd - uStart));
+        }
+      }
+    }
+
+    // Add original waterline positions (normalized for NURBS evaluation)
+    for (let i = 0; i < normalizedWaterlines.length; i++) {
+      vEvaluationPoints.push(normalizedWaterlines[i]);
+      // Add intermediate points between this and next waterline
+      if (i < normalizedWaterlines.length - 1) {
+        const vStart = normalizedWaterlines[i];
+        const vEnd = normalizedWaterlines[i + 1];
+        for (let j = 1; j < resolutionMultiplier; j++) {
+          const t = j / resolutionMultiplier;
+          vEvaluationPoints.push(vStart + t * (vEnd - vStart));
+        }
+      }
+    }
+
+    // Sort evaluation points to ensure proper ordering
+    uEvaluationPoints.sort((a, b) => a - b);
+    vEvaluationPoints.sort((a, b) => a - b);
+
+    // Track which evaluation points correspond to original offset positions
+    const originalUIndices = new Set<number>();
+    const originalVIndices = new Set<number>();
+    for (let i = 0; i < normalizedStations.length; i++) {
+      const u = normalizedStations[i];
+      const idx = uEvaluationPoints.findIndex((up) => Math.abs(up - u) < 1e-10);
+      if (idx >= 0) originalUIndices.add(idx);
+    }
+    for (let i = 0; i < normalizedWaterlines.length; i++) {
+      const v = normalizedWaterlines[i];
+      const idx = vEvaluationPoints.findIndex((vp) => Math.abs(vp - v) < 1e-10);
+      if (idx >= 0) originalVIndices.add(idx);
+    }
+
+    // Evaluate NURBS surface at all evaluation points
+    // CRITICAL: Use exact original offset values at original points, NURBS interpolation for intermediate points
     // Three.js: X = transverse (half-breadth), Y = vertical (waterline Z), Z = longitudinal (station X)
-    for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
-      const v = vPoints[vIdx];
-      const waterlineZ = waterlineMin + v * waterlineRange; // Denormalize for Three.js Y coordinate
+    for (let vIdx = 0; vIdx < vEvaluationPoints.length; vIdx++) {
+      const v = vEvaluationPoints[vIdx];
+      const isOriginalV = originalVIndices.has(vIdx);
 
-      for (let uIdx = 0; uIdx < uPoints.length; uIdx++) {
-        const u = uPoints[uIdx];
-        const stationX = stationMin + u * stationRange; // Denormalize for Three.js Z coordinate
+      // For original waterline positions, use exact waterline value
+      // For intermediate positions, denormalize from NURBS evaluation
+      let waterlineZ: number;
+      if (isOriginalV) {
+        const originalVIdx = normalizedWaterlines.findIndex((nv) => Math.abs(nv - v) < 1e-10);
+        waterlineZ = originalVIdx >= 0 ? waterlines[originalVIdx] : waterlineMin + v * waterlineRange;
+      } else {
+        waterlineZ = waterlineMin + v * waterlineRange;
+      }
 
-        // Evaluate NURBS surface at (u, v)
-        const [, normalizedY] = evaluateSurface(controlPointGrid, u, v);
+      for (let uIdx = 0; uIdx < uEvaluationPoints.length; uIdx++) {
+        const u = uEvaluationPoints[uIdx];
+        const isOriginalU = originalUIndices.has(uIdx);
 
-        // Extract half-breadth (y coordinate from NURBS, which is normalized)
-        // Scale from normalized [0, 1] to physical units
-        const halfBreadth = normalizedY * (estimatedBeam / 2);
+        // For original station positions, use exact station value
+        let stationX: number;
+        if (isOriginalU) {
+          const originalUIdx = normalizedStations.findIndex((nu) => Math.abs(nu - u) < 1e-10);
+          stationX = originalUIdx >= 0 ? stations[originalUIdx] : stationMin + u * stationRange;
+        } else {
+          stationX = stationMin + u * stationRange;
+        }
+
+        // For original offset points (both u and v are original), use exact offset value
+        // For interpolated points, evaluate NURBS surface
+        let halfBreadth: number;
+        if (isOriginalU && isOriginalV) {
+          const originalUIdx = normalizedStations.findIndex((nu) => Math.abs(nu - u) < 1e-10);
+          const originalVIdx = normalizedWaterlines.findIndex((nv) => Math.abs(nv - v) < 1e-10);
+          if (originalUIdx >= 0 && originalVIdx >= 0) {
+            // Use exact original offset value
+            halfBreadth = Number(offsets[originalUIdx]?.[originalVIdx] ?? 0);
+          } else {
+            // Fallback to NURBS evaluation
+            const [, normalizedY] = evaluateSurface(controlPointGrid, u, v);
+            halfBreadth = normalizedY * (estimatedBeam / 2);
+          }
+        } else {
+          // Interpolated point: evaluate NURBS surface
+          const [, normalizedY] = evaluateSurface(controlPointGrid, u, v);
+          halfBreadth = normalizedY * (estimatedBeam / 2);
+        }
 
         // Port side (negative X)
         vertices.push(-halfBreadth, waterlineZ, stationX);
       }
     }
 
-    // Generate indices for triangles using high-resolution grid
-    const numUPoints = uPoints.length;
-    for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
-      for (let uIdx = 0; uIdx < uPoints.length - 1; uIdx++) {
+    // Generate indices for triangles using evaluation grid
+    const numUPoints = uEvaluationPoints.length;
+    for (let vIdx = 0; vIdx < vEvaluationPoints.length - 1; vIdx++) {
+      for (let uIdx = 0; uIdx < uEvaluationPoints.length - 1; uIdx++) {
         const a = vIdx * numUPoints + uIdx;
         const b = a + 1;
         const c = a + numUPoints;
@@ -205,8 +287,8 @@ function generateHullGeometryFromOffsets(
     const portVertexCount = vertices.length / 3;
     const portStartIndex = portVertexCount;
 
-    for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
-      for (let uIdx = 0; uIdx < uPoints.length; uIdx++) {
+    for (let vIdx = 0; vIdx < vEvaluationPoints.length; vIdx++) {
+      for (let uIdx = 0; uIdx < uEvaluationPoints.length; uIdx++) {
         const idx = vIdx * numUPoints + uIdx;
         const baseIdx = idx * 3;
         const x = vertices[baseIdx];
@@ -219,8 +301,8 @@ function generateHullGeometryFromOffsets(
     }
 
     // Generate indices for starboard side
-    for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
-      for (let uIdx = 0; uIdx < uPoints.length - 1; uIdx++) {
+    for (let vIdx = 0; vIdx < vEvaluationPoints.length - 1; vIdx++) {
+      for (let uIdx = 0; uIdx < uEvaluationPoints.length - 1; uIdx++) {
         const a = portStartIndex + vIdx * numUPoints + uIdx;
         const b = a + 1;
         const c = a + numUPoints;
@@ -231,111 +313,48 @@ function generateHullGeometryFromOffsets(
       }
     }
 
-    // Add closing faces at bow tip (last station, forward perpendicular)
-    const lastUIdx = uPoints.length - 1;
-    const bowStationX = stationMin + uPoints[lastUIdx] * stationRange;
+    // CRITICAL: Use ORIGINAL offset values for bow closing faces
+    // Don't evaluate NURBS at bow - use actual data to preserve shape characteristics
+    const lastStationIdx = stations.length - 1;
+    const bowStationX = stations[lastStationIdx];
 
-    // Create centerline vertices at bow tip for each waterline
+    // Create centerline vertices at bow tip for each ORIGINAL waterline
     const bowCenterlineVertices: number[] = [];
-    for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
-      const waterlineZ = waterlineMin + vPoints[vIdx] * waterlineRange;
+    for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
+      const waterlineZ = waterlines[wlIdx];
+      if (!Number.isFinite(waterlineZ)) continue;
       const centerlineVertexIdx = vertices.length / 3;
       vertices.push(0, waterlineZ, bowStationX);
       bowCenterlineVertices.push(centerlineVertexIdx);
     }
 
-    // Create closing faces by connecting port/starboard vertices to centerline vertices
-    for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
-      const aPort = vIdx * numUPoints + lastUIdx;
-      const bPort = (vIdx + 1) * numUPoints + lastUIdx;
-      const aStarboard = portStartIndex + aPort;
-      const bStarboard = portStartIndex + bPort;
-      const centerA = bowCenterlineVertices[vIdx];
-      const centerB = bowCenterlineVertices[vIdx + 1];
+    // Create closing faces using ORIGINAL offset values at bow
+    for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+      // Find vertex indices for bow station at these waterlines
+      const v1Idx = vEvaluationPoints.findIndex((v) => {
+        const normalizedV = (waterlines[wlIdx] - waterlineMin) / waterlineRange;
+        return Math.abs(v - normalizedV) < 1e-10;
+      });
+      const v2Idx = vEvaluationPoints.findIndex((v) => {
+        const normalizedV = (waterlines[wlIdx + 1] - waterlineMin) / waterlineRange;
+        return Math.abs(v - normalizedV) < 1e-10;
+      });
+      const uBowIdx = uEvaluationPoints.findIndex((u) => {
+        const normalizedU = (bowStationX - stationMin) / stationRange;
+        return Math.abs(u - normalizedU) < 1e-10;
+      });
 
-      // Evaluate half-breadths at bow
-      const v1 = vPoints[vIdx];
-      const v2 = vPoints[vIdx + 1];
-      const u = uPoints[lastUIdx];
-      const [, y1] = evaluateSurface(controlPointGrid, u, v1);
-      const [, y2] = evaluateSurface(controlPointGrid, u, v2);
-      const hb1 = y1 * (estimatedBeam / 2);
-      const hb2 = y2 * (estimatedBeam / 2);
-
-      if (centerA !== undefined && centerB !== undefined && (hb1 > 0 || hb2 > 0)) {
-        if (hb1 > 0) {
-          indices.push(aPort, aStarboard, centerA);
-        }
-        if (hb2 > 0) {
-          indices.push(bPort, bStarboard, centerB);
-        }
-        if (hb1 > 0 && hb2 > 0) {
-          indices.push(aPort, bPort, centerB);
-          indices.push(aPort, centerB, centerA);
-          indices.push(aStarboard, centerA, centerB);
-          indices.push(aStarboard, centerB, bStarboard);
-        }
-      }
-    }
-
-    // Add closing faces at stern tip (first station, aft perpendicular)
-    const firstUIdx = 0;
-    const sternStationX = stationMin + uPoints[firstUIdx] * stationRange;
-
-    // Check if stern has width (transom) or tapers to point (canoe)
-    const u = uPoints[firstUIdx];
-    const maxSternHalfBreadth = Math.max(
-      ...vPoints.map((v) => {
-        const [, y] = evaluateSurface(controlPointGrid, u, v);
-        return y * (estimatedBeam / 2);
-      })
-    );
-    const isTransomStern = maxSternHalfBreadth > 0.05; // 5% of beam threshold
-
-    if (isTransomStern) {
-      // TRANSOM STERN: Create flat closing face
-      for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
-        const aPort = vIdx * numUPoints + firstUIdx;
-        const bPort = (vIdx + 1) * numUPoints + firstUIdx;
+      if (v1Idx >= 0 && v2Idx >= 0 && uBowIdx >= 0) {
+        const aPort = v1Idx * numUPoints + uBowIdx;
+        const bPort = v2Idx * numUPoints + uBowIdx;
         const aStarboard = portStartIndex + aPort;
         const bStarboard = portStartIndex + bPort;
+        const centerA = bowCenterlineVertices[wlIdx];
+        const centerB = bowCenterlineVertices[wlIdx + 1];
 
-        const v1 = vPoints[vIdx];
-        const v2 = vPoints[vIdx + 1];
-        const [, y1] = evaluateSurface(controlPointGrid, u, v1);
-        const [, y2] = evaluateSurface(controlPointGrid, u, v2);
-        const hb1 = y1 * (estimatedBeam / 2);
-        const hb2 = y2 * (estimatedBeam / 2);
-
-        if (hb1 > 0.0001 || hb2 > 0.0001) {
-          indices.push(aStarboard, aPort, bStarboard);
-          indices.push(bStarboard, aPort, bPort);
-        }
-      }
-    } else {
-      // CANOE/CRUISER STERN: Close to centerline (pointed tip)
-      const sternCenterlineVertices: number[] = [];
-      for (let vIdx = 0; vIdx < vPoints.length; vIdx++) {
-        const waterlineZ = waterlineMin + vPoints[vIdx] * waterlineRange;
-        const centerlineVertexIdx = vertices.length / 3;
-        vertices.push(0, waterlineZ, sternStationX);
-        sternCenterlineVertices.push(centerlineVertexIdx);
-      }
-
-      for (let vIdx = 0; vIdx < vPoints.length - 1; vIdx++) {
-        const aPort = vIdx * numUPoints + firstUIdx;
-        const bPort = (vIdx + 1) * numUPoints + firstUIdx;
-        const aStarboard = portStartIndex + aPort;
-        const bStarboard = portStartIndex + bPort;
-        const centerA = sternCenterlineVertices[vIdx];
-        const centerB = sternCenterlineVertices[vIdx + 1];
-
-        const v1 = vPoints[vIdx];
-        const v2 = vPoints[vIdx + 1];
-        const [, y1] = evaluateSurface(controlPointGrid, u, v1);
-        const [, y2] = evaluateSurface(controlPointGrid, u, v2);
-        const hb1 = y1 * (estimatedBeam / 2);
-        const hb2 = y2 * (estimatedBeam / 2);
+        // Use ORIGINAL offset values
+        const hb1 = Number(offsets[lastStationIdx]?.[wlIdx] ?? 0);
+        const hb2 = Number(offsets[lastStationIdx]?.[wlIdx + 1] ?? 0);
 
         if (centerA !== undefined && centerB !== undefined && (hb1 > 0 || hb2 > 0)) {
           if (hb1 > 0) {
@@ -349,6 +368,104 @@ function generateHullGeometryFromOffsets(
             indices.push(aPort, centerB, centerA);
             indices.push(aStarboard, centerA, centerB);
             indices.push(aStarboard, centerB, bStarboard);
+          }
+        }
+      }
+    }
+
+    // CRITICAL: Use ORIGINAL offset values for stern closing faces
+    // Detect transom vs canoe from ORIGINAL offsets, not NURBS-evaluated values
+    const firstStationIdx = 0;
+    const sternStationX = stations[firstStationIdx];
+
+    // Check if stern has width (transom) or tapers to point (canoe) using ORIGINAL offsets
+    const maxSternHalfBreadth = Math.max(
+      ...(offsets[firstStationIdx] ?? []).map((hb) => Number(hb) || 0)
+    );
+    const isTransomStern = maxSternHalfBreadth > 0.05 * estimatedBeam; // 5% of beam threshold
+
+    if (isTransomStern) {
+      // TRANSOM STERN: Create flat closing face using ORIGINAL offset values
+      for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+        const v1Idx = vEvaluationPoints.findIndex((v) => {
+          const normalizedV = (waterlines[wlIdx] - waterlineMin) / waterlineRange;
+          return Math.abs(v - normalizedV) < 1e-10;
+        });
+        const v2Idx = vEvaluationPoints.findIndex((v) => {
+          const normalizedV = (waterlines[wlIdx + 1] - waterlineMin) / waterlineRange;
+          return Math.abs(v - normalizedV) < 1e-10;
+        });
+        const uSternIdx = uEvaluationPoints.findIndex((u) => {
+          const normalizedU = (sternStationX - stationMin) / stationRange;
+          return Math.abs(u - normalizedU) < 1e-10;
+        });
+
+        if (v1Idx >= 0 && v2Idx >= 0 && uSternIdx >= 0) {
+          const aPort = v1Idx * numUPoints + uSternIdx;
+          const bPort = v2Idx * numUPoints + uSternIdx;
+          const aStarboard = portStartIndex + aPort;
+          const bStarboard = portStartIndex + bPort;
+
+          // Use ORIGINAL offset values
+          const hb1 = Number(offsets[firstStationIdx]?.[wlIdx] ?? 0);
+          const hb2 = Number(offsets[firstStationIdx]?.[wlIdx + 1] ?? 0);
+
+          if (hb1 > 0.0001 || hb2 > 0.0001) {
+            indices.push(aStarboard, aPort, bStarboard);
+            indices.push(bStarboard, aPort, bPort);
+          }
+        }
+      }
+    } else {
+      // CANOE/CRUISER STERN: Close to centerline using ORIGINAL offset values
+      const sternCenterlineVertices: number[] = [];
+      for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
+        const waterlineZ = waterlines[wlIdx];
+        if (!Number.isFinite(waterlineZ)) continue;
+        const centerlineVertexIdx = vertices.length / 3;
+        vertices.push(0, waterlineZ, sternStationX);
+        sternCenterlineVertices.push(centerlineVertexIdx);
+      }
+
+      for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
+        const v1Idx = vEvaluationPoints.findIndex((v) => {
+          const normalizedV = (waterlines[wlIdx] - waterlineMin) / waterlineRange;
+          return Math.abs(v - normalizedV) < 1e-10;
+        });
+        const v2Idx = vEvaluationPoints.findIndex((v) => {
+          const normalizedV = (waterlines[wlIdx + 1] - waterlineMin) / waterlineRange;
+          return Math.abs(v - normalizedV) < 1e-10;
+        });
+        const uSternIdx = uEvaluationPoints.findIndex((u) => {
+          const normalizedU = (sternStationX - stationMin) / stationRange;
+          return Math.abs(u - normalizedU) < 1e-10;
+        });
+
+        if (v1Idx >= 0 && v2Idx >= 0 && uSternIdx >= 0) {
+          const aPort = v1Idx * numUPoints + uSternIdx;
+          const bPort = v2Idx * numUPoints + uSternIdx;
+          const aStarboard = portStartIndex + aPort;
+          const bStarboard = portStartIndex + bPort;
+          const centerA = sternCenterlineVertices[wlIdx];
+          const centerB = sternCenterlineVertices[wlIdx + 1];
+
+          // Use ORIGINAL offset values
+          const hb1 = Number(offsets[firstStationIdx]?.[wlIdx] ?? 0);
+          const hb2 = Number(offsets[firstStationIdx]?.[wlIdx + 1] ?? 0);
+
+          if (centerA !== undefined && centerB !== undefined && (hb1 > 0 || hb2 > 0)) {
+            if (hb1 > 0) {
+              indices.push(aPort, aStarboard, centerA);
+            }
+            if (hb2 > 0) {
+              indices.push(bPort, bStarboard, centerB);
+            }
+            if (hb1 > 0 && hb2 > 0) {
+              indices.push(aPort, bPort, centerB);
+              indices.push(aPort, centerB, centerA);
+              indices.push(aStarboard, centerA, centerB);
+              indices.push(aStarboard, centerB, bStarboard);
+            }
           }
         }
       }
