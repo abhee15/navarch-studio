@@ -599,6 +599,10 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
                 }
             }
 
+            // Ensure bulb dimensions are set to sensible defaults if they're too small
+            // This ensures effective bulb geometry when bulb is enabled
+            EnsureSensibleBulbDimensions(vector, metadata);
+
             _logger.LogDebug("[SHIPD_ADAPTER] Applied bulb geometry for bulbous_bow");
         }
     }
@@ -1166,5 +1170,100 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             parameterIndex, adjusted[parameterIndex]);
 
         return adjusted;
+    }
+
+    /// <summary>
+    /// Ensures bulb dimensions (Lbb, Hbb, Bbb) are set to sensible defaults when bulb is enabled.
+    /// This prevents the issue where bulb is enabled but dimensions are zero or minimal, resulting in no effective bulb geometry.
+    /// </summary>
+    /// <param name="vector">ShipD parameter vector</param>
+    /// <param name="metadata">Parameter metadata</param>
+    private void EnsureSensibleBulbDimensions(
+        decimal[] vector,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        // Only apply if bulb is enabled
+        if (vector[31] <= 0.5m) // bit_BB
+        {
+            return;
+        }
+
+        const decimal minLbbThreshold = 0.01m; // 1% of Lpp (very small, should be at least 15%)
+        const decimal minHbbThreshold = 0.05m; // 5% of draft (very small, should be at least 20%)
+        const decimal minBbbThreshold = 0.05m; // 5% of beam (very small, should be at least 20%)
+
+        // Sensible defaults based on recommendations:
+        // - Lbb: 15% of Lpp (normalized: 0.15)
+        // - Hbb: 20% of draft (normalized: 0.2)
+        // - Bbb: 25% of beam (normalized: 0.25)
+        const decimal defaultLbb = 0.15m; // 15% of Lpp
+        const decimal defaultHbb = 0.2m;  // 20% of draft
+        const decimal defaultBbb = 0.25m; // 25% of beam
+
+        bool updated = false;
+
+        // Check and set Lbb (Bulb length ratio, index 33)
+        if (vector[33] < minLbbThreshold)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 33);
+            if (param != null)
+            {
+                var oldValue = vector[33];
+                var clampedValue = Math.Clamp(defaultLbb, param.Min ?? 0m, param.Max ?? 0.2m);
+                if (oldValue != clampedValue)
+                {
+                    vector[33] = clampedValue;
+                    updated = true;
+                    _logger.LogInformation(
+                        "[SHIPD_ADAPTER] Set Lbb to sensible default: {Value} (was {OldValue}, recommended: 15% of Lpp)",
+                        clampedValue, oldValue);
+                }
+            }
+        }
+
+        // Check and set Hbb (Bulb height ratio, index 34)
+        if (vector[34] < minHbbThreshold)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 34);
+            if (param != null)
+            {
+                var oldValue = vector[34];
+                var clampedValue = Math.Clamp(defaultHbb, param.Min ?? 0m, param.Max ?? 1m);
+                if (oldValue != clampedValue)
+                {
+                    vector[34] = clampedValue;
+                    updated = true;
+                    _logger.LogInformation(
+                        "[SHIPD_ADAPTER] Set Hbb to sensible default: {Value} (was {OldValue}, recommended: 20% of draft)",
+                        clampedValue, oldValue);
+                }
+            }
+        }
+
+        // Check and set Bbb (Bulb width ratio, index 35)
+        if (vector[35] < minBbbThreshold)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 35);
+            if (param != null)
+            {
+                var oldValue = vector[35];
+                var clampedValue = Math.Clamp(defaultBbb, param.Min ?? 0m, param.Max ?? 1m);
+                if (oldValue != clampedValue)
+                {
+                    vector[35] = clampedValue;
+                    updated = true;
+                    _logger.LogInformation(
+                        "[SHIPD_ADAPTER] Set Bbb to sensible default: {Value} (was {OldValue}, recommended: 25% of beam)",
+                        clampedValue, oldValue);
+                }
+            }
+        }
+
+        if (updated)
+        {
+            _logger.LogWarning(
+                "[SHIPD_ADAPTER] ✅ Applied sensible bulb dimension defaults: Lbb={Lbb}, Hbb={Hbb}, Bbb={Bbb}",
+                vector[33], vector[34], vector[35]);
+        }
     }
 }

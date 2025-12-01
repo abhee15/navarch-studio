@@ -426,6 +426,13 @@ public class SizingRunService : ISizingRunService
                         }
                     }
 
+                    // Ensure bulb dimensions are sensible if bulb is enabled
+                    // This prevents the issue where bulb is enabled but dimensions are zero or minimal
+                    if (candidateShipdVector[31] > 0.5m && shipdMetadata != null) // bit_BB
+                    {
+                        EnsureSensibleBulbDimensions(candidateShipdVector, shipdMetadata, i + 1, ref vectorUpdated);
+                    }
+
                     // CRITICAL: Serialize the updated vector immediately after populating defaults
                     // This ensures the JSON has the correct values even if metadata adjustment fails
                     if (vectorUpdated)
@@ -1044,5 +1051,105 @@ public class SizingRunService : ISizingRunService
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Ensures bulb dimensions (Lbb, Hbb, Bbb) are set to sensible defaults when bulb is enabled.
+    /// This prevents the issue where bulb is enabled but dimensions are zero or minimal, resulting in no effective bulb geometry.
+    /// </summary>
+    /// <param name="vector">ShipD parameter vector</param>
+    /// <param name="metadata">Parameter metadata</param>
+    /// <param name="candidateRank">Candidate rank (for logging)</param>
+    /// <param name="vectorUpdated">Reference flag to track if vector was updated</param>
+    private void EnsureSensibleBulbDimensions(
+        decimal[] vector,
+        IReadOnlyList<Shared.DTOs.ShipD.ShipDParameterMetadataDto> metadata,
+        int candidateRank,
+        ref bool vectorUpdated)
+    {
+        // Only apply if bulb is enabled
+        if (vector[31] <= 0.5m) // bit_BB
+        {
+            return;
+        }
+
+        const decimal minLbbThreshold = 0.01m; // 1% of Lpp (very small, should be at least 15%)
+        const decimal minHbbThreshold = 0.05m; // 5% of draft (very small, should be at least 20%)
+        const decimal minBbbThreshold = 0.05m; // 5% of beam (very small, should be at least 20%)
+
+        // Sensible defaults based on recommendations:
+        // - Lbb: 15% of Lpp (normalized: 0.15)
+        // - Hbb: 20% of draft (normalized: 0.2)
+        // - Bbb: 25% of beam (normalized: 0.25)
+        const decimal defaultLbb = 0.15m; // 15% of Lpp
+        const decimal defaultHbb = 0.2m;  // 20% of draft
+        const decimal defaultBbb = 0.25m; // 25% of beam
+
+        bool updated = false;
+
+        // Check and set Lbb (Bulb length ratio, index 33)
+        if (vector[33] < minLbbThreshold)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 33);
+            if (param != null)
+            {
+                var oldValue = vector[33];
+                var clampedValue = Math.Clamp(defaultLbb, param.Min ?? 0m, param.Max ?? 0.2m);
+                if (oldValue != clampedValue)
+                {
+                    vector[33] = clampedValue;
+                    updated = true;
+                    _logger.LogInformation(
+                        "[SIZING_RUN] Set Lbb to sensible default for candidate {Rank}: {Value} (was {OldValue}, recommended: 15% of Lpp)",
+                        candidateRank, clampedValue, oldValue);
+                }
+            }
+        }
+
+        // Check and set Hbb (Bulb height ratio, index 34)
+        if (vector[34] < minHbbThreshold)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 34);
+            if (param != null)
+            {
+                var oldValue = vector[34];
+                var clampedValue = Math.Clamp(defaultHbb, param.Min ?? 0m, param.Max ?? 1m);
+                if (oldValue != clampedValue)
+                {
+                    vector[34] = clampedValue;
+                    updated = true;
+                    _logger.LogInformation(
+                        "[SIZING_RUN] Set Hbb to sensible default for candidate {Rank}: {Value} (was {OldValue}, recommended: 20% of draft)",
+                        candidateRank, clampedValue, oldValue);
+                }
+            }
+        }
+
+        // Check and set Bbb (Bulb width ratio, index 35)
+        if (vector[35] < minBbbThreshold)
+        {
+            var param = metadata.FirstOrDefault(m => m.ParameterIndex == 35);
+            if (param != null)
+            {
+                var oldValue = vector[35];
+                var clampedValue = Math.Clamp(defaultBbb, param.Min ?? 0m, param.Max ?? 1m);
+                if (oldValue != clampedValue)
+                {
+                    vector[35] = clampedValue;
+                    updated = true;
+                    _logger.LogInformation(
+                        "[SIZING_RUN] Set Bbb to sensible default for candidate {Rank}: {Value} (was {OldValue}, recommended: 25% of beam)",
+                        candidateRank, clampedValue, oldValue);
+                }
+            }
+        }
+
+        if (updated)
+        {
+            vectorUpdated = true;
+            _logger.LogWarning(
+                "[SIZING_RUN] ✅ Applied sensible bulb dimension defaults for candidate {Rank}: Lbb={Lbb}, Hbb={Hbb}, Bbb={Bbb}",
+                candidateRank, vector[33], vector[34], vector[35]);
+        }
     }
 }
