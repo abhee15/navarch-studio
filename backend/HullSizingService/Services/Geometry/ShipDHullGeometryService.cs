@@ -62,6 +62,10 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 currentDisplacementEst / 1000m, targetDisplacementT, draftM, adjustedDraft);
         }
 
+        // CRITICAL: Enforce sensible curvature parameters before geometry generation
+        // This prevents unfair hulls caused by zero or extreme curvature values
+        EnsureSensibleCurvatureParameters(shipdVector, metadata);
+
         // Denormalize key parameters
         var denormalized = DenormalizeParameters(shipdVector, metadata);
 
@@ -463,15 +467,24 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // R_c defines smooth radius connecting flat bottom to vertical side
                 // Fix: Increase from 0.000 to 0.2-0.4 to ensure bow sections have smooth, continuous curves
                 var rcNorm = shipdVector[9]; // Curvature coefficient (normalized 0-1)
-                var rc = rcNorm <= 0m ? 0.3m : Math.Clamp(rcNorm, 0.2m, 0.4m); // Default 0.3 if zero/negative
+                // Enforce minimum threshold: values < 0.05 are too small and create hard chines
+                var rc = rcNorm < 0.05m ? 0.3m : Math.Clamp(rcNorm, 0.2m, 0.4m); // Default 0.3 if too small
 
                 // PHASE 2: Enforce R_k (knuckle) parameter: 0.1-0.3 normalized for deck edge transition
                 // R_k defines smooth connection between vertical side and deck/sheer line
                 // Fix: Set to moderate positive value (0.1-0.3) to introduce gentle radius and ensure continuity
                 var rkNorm = shipdVector[10]; // Knuckle coefficient (normalized 0-1)
-                var rk = rkNorm <= 0m ? 0.2m : Math.Clamp(rkNorm, 0.1m, 0.3m); // Default 0.2 if zero/negative
+                // Enforce minimum threshold: values < 0.05 or negative/extreme negative create sharp transitions
+                var rk = (rkNorm < 0.05m || rkNorm < -0.5m) ? 0.2m : Math.Clamp(rkNorm, 0.1m, 0.3m); // Default 0.2 if too small/extreme
 
+                // Enforce Kappa_bow: should be around 0.4-0.6 for smooth sections (not 0.000)
+                var kappaBowNorm = shipdVector[14];
                 var kappaBow = denormalized[14]; // Curvature type (-1 to 1)
+                // If normalized value is too close to zero, adjust denormalized to neutral (0.0 = 0.5 normalized)
+                if (Math.Abs(kappaBowNorm) < 0.1m)
+                {
+                    kappaBow = 0.0m; // Neutral curvature (0.5 normalized)
+                }
                 var cdrft = denormalized[19]; // Deadrise angle (degrees)
 
                 var heightRatio = height / draftM;
@@ -672,19 +685,28 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 var atransNorm = shipdVector[22]; // Transom area coefficient (normalized 0-1)
                 var isTransomStern = atransNorm > 0.5m; // Transom when > 0.5, canoe when <= 0.5
 
+                // Enforce Kappa_stern: should be around 0.4-0.6 for smooth sections (not 0.000)
+                var kappaSternNorm = shipdVector[24];
                 var kappaStern = denormalized[24]; // Curvature type
+                // If normalized value is too close to zero, adjust denormalized to neutral (0.0 = 0.5 normalized)
+                if (Math.Abs(kappaSternNorm) < 0.1m)
+                {
+                    kappaStern = 0.0m; // Neutral curvature (0.5 normalized)
+                }
                 var betaTrans = denormalized[27];
                 var bcTrans = denormalized[28];
 
                 // PHASE 2: Enforce R_c (curvature) for stern: 0.2-0.4 normalized
                 // Fix: Increase from 0.000 to 0.2-0.4 to round the transition from side to transom face
                 var rcTransNorm = shipdVector[29]; // Stern curvature coefficient (normalized 0-1)
-                var rcTrans = rcTransNorm <= 0m ? 0.3m : Math.Clamp(rcTransNorm, 0.2m, 0.4m); // Default 0.3 if zero/negative
+                // Enforce minimum threshold: values < 0.05 are too small and create hard chines
+                var rcTrans = rcTransNorm < 0.05m ? 0.3m : Math.Clamp(rcTransNorm, 0.2m, 0.4m); // Default 0.3 if too small
 
                 // PHASE 2: Enforce R_k (knuckle) for stern: 0.0-0.2 normalized
                 // Fix: Set to 0.0 or slightly positive to define sheer line knuckle smoothly
                 var rkTransNorm = shipdVector[30]; // Stern knuckle coefficient (normalized 0-1)
-                var rkTrans = rkTransNorm <= 0m ? 0.1m : Math.Clamp(rkTransNorm, 0.0m, 0.2m); // Default 0.1 if zero/negative
+                // Enforce minimum threshold: values < 0.02 or negative/extreme negative create sharp transitions
+                var rkTrans = (rkTransNorm < 0.02m || rkTransNorm < -0.5m) ? 0.1m : Math.Clamp(rkTransNorm, 0.0m, 0.2m); // Default 0.1 if too small/extreme
                 var adelStern = denormalized[25]; // Canoe stern sheer coefficient A
                 var bdelStern = denormalized[26]; // Canoe stern sheer coefficient B
 
@@ -1443,5 +1465,136 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         }
 
         return offsets;
+    }
+
+    /// <summary>
+    /// Ensures curvature parameters (Rc, Rk, Kappa) are set to sensible defaults to prevent unfair hulls.
+    /// This fixes the issue where zero or extreme curvature values cause zig-zag patterns in waterlines
+    /// and jagged buttocks, resulting in C² discontinuity.
+    /// </summary>
+    /// <param name="shipdVector">ShipD parameter vector (will be modified in place)</param>
+    /// <param name="metadata">Parameter metadata</param>
+    private void EnsureSensibleCurvatureParameters(
+        decimal[] shipdVector,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        bool updated = false;
+
+        // Rc (index 9) - Bow curvature coefficient: should be 0.2-0.4 for smooth bilge radius
+        // Problem: Zero values (0.000) create hard chines and unfair geometry
+        var rcParam = metadata.FirstOrDefault(m => m.ParameterIndex == 9);
+        if (rcParam != null)
+        {
+            var rcNorm = shipdVector[9];
+            // Check if value is too small (< 0.05) or negative, indicating hard chine
+            if (rcNorm < 0.05m || rcNorm <= 0m)
+            {
+                var oldValue = rcNorm;
+                // Default to 0.3 (middle of 0.2-0.4 range) for smooth curvature
+                shipdVector[9] = Math.Clamp(0.3m, rcParam.Min ?? 0m, rcParam.Max ?? 1m);
+                updated = true;
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Enforced Rc (bow curvature): {OldValue} -> {NewValue} (recommended: 0.2-0.4 for smooth bilge)",
+                    oldValue, shipdVector[9]);
+            }
+        }
+
+        // Rk (index 10) - Bow knuckle coefficient: should be 0.1-0.3 for smooth deck edge transition
+        // Problem: Zero or extreme negative values (-0.999, -1.000) create sharp transitions
+        var rkParam = metadata.FirstOrDefault(m => m.ParameterIndex == 10);
+        if (rkParam != null)
+        {
+            var rkNorm = shipdVector[10];
+            // Check if value is too small (< 0.05), negative, or extreme negative (< -0.5)
+            if (rkNorm < 0.05m || rkNorm <= 0m || rkNorm < -0.5m)
+            {
+                var oldValue = rkNorm;
+                // Default to 0.2 (middle of 0.1-0.3 range) for smooth knuckle
+                shipdVector[10] = Math.Clamp(0.2m, rkParam.Min ?? -1m, rkParam.Max ?? 1m);
+                updated = true;
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Enforced Rk (bow knuckle): {OldValue} -> {NewValue} (recommended: 0.1-0.3 for smooth transition)",
+                    oldValue, shipdVector[10]);
+            }
+        }
+
+        // Kappa_bow (index 14) - Bow sectional curvature: should be 0.4-0.6 for neutral/smooth sections
+        // Problem: Zero values (0.000) disable curvature control, leading to unfair geometry
+        var kappaBowParam = metadata.FirstOrDefault(m => m.ParameterIndex == 14);
+        if (kappaBowParam != null)
+        {
+            var kappaBowNorm = shipdVector[14];
+            // Check if value is too close to zero (< 0.1) or exactly zero
+            // Kappa should be around 0.5 (neutral) for smooth sections
+            if (Math.Abs(kappaBowNorm) < 0.1m || kappaBowNorm == 0m)
+            {
+                var oldValue = kappaBowNorm;
+                // Default to 0.5 (neutral) for smooth sectional curvature
+                shipdVector[14] = Math.Clamp(0.5m, kappaBowParam.Min ?? 0m, kappaBowParam.Max ?? 1m);
+                updated = true;
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Enforced Kappa_bow (bow sectional curvature): {OldValue} -> {NewValue} (recommended: 0.4-0.6 for smooth sections)",
+                    oldValue, shipdVector[14]);
+            }
+        }
+
+        // Rc_trans (index 29) - Stern curvature coefficient: should be 0.2-0.4 for smooth stern transition
+        var rcTransParam = metadata.FirstOrDefault(m => m.ParameterIndex == 29);
+        if (rcTransParam != null)
+        {
+            var rcTransNorm = shipdVector[29];
+            if (rcTransNorm < 0.05m || rcTransNorm <= 0m)
+            {
+                var oldValue = rcTransNorm;
+                shipdVector[29] = Math.Clamp(0.3m, rcTransParam.Min ?? 0m, rcTransParam.Max ?? 1m);
+                updated = true;
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Enforced Rc_trans (stern curvature): {OldValue} -> {NewValue} (recommended: 0.2-0.4 for smooth transition)",
+                    oldValue, shipdVector[29]);
+            }
+        }
+
+        // Rk_trans (index 30) - Stern knuckle coefficient: should be 0.0-0.2 for smooth stern sheer
+        var rkTransParam = metadata.FirstOrDefault(m => m.ParameterIndex == 30);
+        if (rkTransParam != null)
+        {
+            var rkTransNorm = shipdVector[30];
+            // Check if value is too small (< 0.02), negative, or extreme negative
+            if (rkTransNorm < 0.02m || rkTransNorm <= 0m || rkTransNorm < -0.5m)
+            {
+                var oldValue = rkTransNorm;
+                // Default to 0.1 (middle of 0.0-0.2 range) for smooth knuckle
+                shipdVector[30] = Math.Clamp(0.1m, rkTransParam.Min ?? -1m, rkTransParam.Max ?? 1m);
+                updated = true;
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Enforced Rk_trans (stern knuckle): {OldValue} -> {NewValue} (recommended: 0.0-0.2 for smooth transition)",
+                    oldValue, shipdVector[30]);
+            }
+        }
+
+        // Kappa_stern (index 24) - Stern sectional curvature: should be 0.4-0.6 for neutral/smooth sections
+        var kappaSternParam = metadata.FirstOrDefault(m => m.ParameterIndex == 24);
+        if (kappaSternParam != null)
+        {
+            var kappaSternNorm = shipdVector[24];
+            if (Math.Abs(kappaSternNorm) < 0.1m || kappaSternNorm == 0m)
+            {
+                var oldValue = kappaSternNorm;
+                // Default to 0.5 (neutral) for smooth sectional curvature
+                shipdVector[24] = Math.Clamp(0.5m, kappaSternParam.Min ?? 0m, kappaSternParam.Max ?? 1m);
+                updated = true;
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Enforced Kappa_stern (stern sectional curvature): {OldValue} -> {NewValue} (recommended: 0.4-0.6 for smooth sections)",
+                    oldValue, shipdVector[24]);
+            }
+        }
+
+        if (updated)
+        {
+            _logger.LogWarning(
+                "[SHIPD_GEOMETRY] ✅ Applied sensible curvature parameter defaults to prevent unfair hull geometry. " +
+                "Rc={Rc}, Rk={Rk}, Kappa_bow={KappaBow}, Rc_trans={RcTrans}, Rk_trans={RkTrans}, Kappa_stern={KappaStern}",
+                shipdVector[9], shipdVector[10], shipdVector[14], shipdVector[29], shipdVector[30], shipdVector[24]);
+        }
     }
 }
