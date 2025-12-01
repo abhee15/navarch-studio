@@ -517,13 +517,20 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     const geometryCenterX = geometryBounds.centerX;
 
     // Coordinate transformation for Plan View (top-down projection)
-    // X: longitudinal (stern to bow) → SVG X (left to right)
-    // Y: half-breadth (centerline to starboard) → SVG Y (top to bottom)
-    //   - Starboard (positive y) → below centerline in SVG
-    //   - Port (negative y) → above centerline in SVG
+    // In Plan View, we're looking DOWN at the hull:
+    // - X: longitudinal (stern to bow) → SVG X (left to right)
+    // - Y: half-breadth (centerline to starboard) → SVG Y (top to bottom)
+    //   - Starboard (positive y) → below centerline in SVG (lower on screen)
+    //   - Port (negative y) → above centerline in SVG (higher on screen)
+    // Note: In SVG, Y increases downward, so "above" means smaller Y values
     const toSVG = (x: number, y: number): [number, number] => {
+      // X coordinate: longitudinal position (stern to bow)
       const svgX = svgWidth / 2 + (x - geometryCenterX) * scale;
-      const svgY = svgHeight / 2 - y * scale; // Negative y puts port above centerline
+
+      // Y coordinate: half-breadth (transverse position)
+      // Starboard (positive y) → below centerline (larger SVG Y)
+      // Port (negative y) → above centerline (smaller SVG Y)
+      const svgY = svgHeight / 2 - y * scale;
 
       // Validate coordinates are within reasonable bounds
       if (!Number.isFinite(svgX) || !Number.isFinite(svgY)) {
@@ -941,19 +948,22 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                       }}
                     >
                       {/* Closed waterline path (naval architecture standard) */}
-                      <path
-                        d={paths.closed}
-                        fill="none"
-                        stroke={isHovered ? hoverColor : baseColor}
-                        strokeWidth={strokeWidth}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        filter={wl.isDesignWaterline ? "url(#dropShadow)" : undefined}
-                        style={{
-                          transition: "all 0.3s ease",
-                          cursor: "pointer",
-                        }}
-                      />
+                      {/* Render closed path - includes both starboard and port sides */}
+                      {paths.closed && (
+                        <path
+                          d={paths.closed}
+                          fill="none"
+                          stroke={isHovered ? hoverColor : baseColor}
+                          strokeWidth={strokeWidth}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          filter={wl.isDesignWaterline ? "url(#dropShadow)" : undefined}
+                          style={{
+                            transition: "all 0.3s ease",
+                            cursor: "pointer",
+                          }}
+                        />
+                      )}
 
                       {/* Label with background */}
                       {(idx % 2 === 0 || isHovered) && (
