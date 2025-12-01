@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using HullSizingService.Services.Geometry;
 using Shared.DTOs.ShipD;
 
 namespace HullSizingService.Services.Geometry;
@@ -35,6 +36,32 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             "[SHIPD_GEOMETRY] Generating {StationCount} sections for Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m",
             stationCount, lppM, beamM, draftM);
 
+        // PHASE 1: Displacement Correction
+        // Estimate block coefficient from ShipD parameters or use default
+        // C_B typically ranges from 0.55 (fine) to 0.85 (full) for commercial vessels
+        // Estimate based on form parameters: higher fullness parameters = higher C_B
+        decimal estimatedCb = EstimateBlockCoefficient(shipdVector, metadata);
+
+        // Calculate current displacement estimate: Δ = ρ * L * B * T * C_B
+        const decimal rhoSeawater = 1025m; // kg/m³
+        decimal currentDisplacementEst = rhoSeawater * lppM * beamM * draftM * estimatedCb;
+
+        // Target displacement: 10,000t deadweight + 3,500t lightship = 13,500t
+        // If current is significantly over (>20%), adjust draft
+        const decimal targetDisplacementT = 13500m; // tonnes
+        const decimal displacementTolerance = 0.20m; // 20% tolerance
+
+        decimal adjustedDraft = draftM;
+        if (currentDisplacementEst > targetDisplacementT * (1m + displacementTolerance))
+        {
+            // Adjust draft: T_new = Δ_target / (ρ * L * B * C_B)
+            adjustedDraft = targetDisplacementT / (rhoSeawater * lppM * beamM * estimatedCb);
+
+            _logger.LogWarning(
+                "[SHIPD_GEOMETRY] Displacement mismatch detected: Current estimate {CurrentDisp}t > Target {TargetDisp}t. Adjusting draft from {OldDraft}m to {NewDraft}m",
+                currentDisplacementEst / 1000m, targetDisplacementT, draftM, adjustedDraft);
+        }
+
         // Denormalize key parameters
         var denormalized = DenormalizeParameters(shipdVector, metadata);
 
@@ -65,7 +92,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     ? "midship"
                     : "bow";
 
-            // Generate offsets for this station
+            // Generate offsets for this station (use adjusted draft)
             var offsets = GenerateStationOffsets(
                 stationPos,
                 region,
@@ -73,7 +100,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 shipdVector,
                 lppM,
                 beamM,
-                draftM,
+                adjustedDraft,
                 metadata);
 
             // Check for bulb (only in bow region)
@@ -89,7 +116,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     shipdVector,
                     lppM,
                     beamM,
-                    draftM);
+                    adjustedDraft);
             }
 
             // Check for skeg (only in stern region)
@@ -105,7 +132,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     shipdVector,
                     lppM,
                     beamM,
-                    draftM);
+                    adjustedDraft);
             }
 
             stations.Add(new HullStationDto
@@ -123,7 +150,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         // This corrects any artifacts in the generated geometry to ensure smooth, realistic hull shapes
         // Similar to ParentHullScaler corrections, but adapted for ShipD's dictionary-based offsets
         // CRITICAL: Pass shipdVector and denormalized to respect user-selected bow/stern families
-        EnsureBowAndSternClosure(stations, beamM, draftM, shipdVector, denormalized);
+        EnsureBowAndSternClosure(stations, beamM, adjustedDraft, shipdVector, denormalized);
 
         return Task.FromResult(new HullSectionsDto
         {
@@ -332,6 +359,42 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
     }
 
     /// <summary>
+    /// Estimates block coefficient (C_B) from ShipD parameters
+    /// Uses form parameters to estimate hull fullness
+    /// Typical range: 0.55 (fine) to 0.85 (full) for commercial vessels
+    /// </summary>
+    private decimal EstimateBlockCoefficient(
+        decimal[] shipdVector,
+        IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        // Base C_B estimate: 0.65 (moderate fullness)
+        decimal cb = 0.65m;
+
+        // Adjust based on longitudinal proportions
+        // Fuller ends (shorter bow/stern) → higher C_B
+        var lb = shipdVector[1]; // Bow length ratio
+        var ls = shipdVector[2]; // Stern length ratio
+        var midBodyRatio = 1.0m - lb - ls;
+
+        // More mid-body (fuller) → higher C_B
+        cb += (midBodyRatio - 0.5m) * 0.15m; // ±0.075 adjustment
+
+        // Adjust based on curvature parameters
+        // Lower curvature (fuller sections) → higher C_B
+        var rc = shipdVector[9]; // Bow curvature (normalized 0-1)
+        var rcTrans = shipdVector[29]; // Stern curvature (normalized 0-1)
+        var avgCurvature = (rc + rcTrans) / 2m;
+
+        // Lower curvature = fuller = higher C_B
+        cb += (1m - avgCurvature) * 0.1m; // Up to 0.1 adjustment
+
+        // Clamp to reasonable range
+        cb = Math.Clamp(cb, 0.55m, 0.85m);
+
+        return cb;
+    }
+
+    /// <summary>
     /// Denormalizes ShipD parameters from 0-1 range to physical units
     /// </summary>
     private Dictionary<int, decimal> DenormalizeParameters(
@@ -395,8 +458,17 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             {
                 // Bow section: use Beta (flare), Cdrft (deadrise), Rc, Rk, Kappa_bow
                 var beta = denormalized[8]; // Flare angle (degrees)
-                var rc = denormalized[9]; // Curvature coefficient
-                var rk = denormalized[10]; // Knuckle coefficient
+
+                // PHASE 2: Enforce R_c (curvature) parameter: 0.3-0.5 normalized for smooth bilge radius
+                // R_c defines smooth radius connecting flat bottom to vertical side
+                var rcRaw = denormalized[9]; // Curvature coefficient
+                var rc = rcRaw <= 0m ? 0.4m : Math.Clamp(rcRaw, 0.3m, 0.5m); // Default 0.4 if zero/negative
+
+                // PHASE 2: Enforce R_k (knuckle) parameter: 0.2-0.4 normalized for deck edge transition
+                // R_k defines smooth connection between vertical side and deck/sheer line
+                var rkRaw = denormalized[10]; // Knuckle coefficient
+                var rk = rkRaw <= 0m ? 0.3m : Math.Clamp(rkRaw, 0.2m, 0.4m); // Default 0.3 if zero/negative
+
                 var kappaBow = denormalized[14]; // Curvature type (-1 to 1)
                 var cdrft = denormalized[19]; // Deadrise angle (degrees)
 
@@ -418,16 +490,16 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     var baseHalfBreadth = keelHalfBreadth +
                         (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
 
-                    // Apply knuckle effect (hard chine)
-                    if (rk > 0.3m)
+                    // PHASE 2: Apply knuckle effect with proper R_k radius (0.2-0.4)
+                    // R_k now always has a valid value (enforced above), so always apply
+                    var knuckleHeight = 0.5m; // Knuckle at mid-height
+                    var knuckleRange = 0.2m;
+                    if (Math.Abs(heightRatio - knuckleHeight) < knuckleRange)
                     {
-                        var knuckleHeight = 0.5m; // Knuckle at mid-height
-                        var knuckleRange = 0.2m;
-                        if (Math.Abs(heightRatio - knuckleHeight) < knuckleRange)
-                        {
-                            var knuckleFactor = 1m - Math.Abs(heightRatio - knuckleHeight) / knuckleRange;
-                            baseHalfBreadth *= 1m + rk * knuckleFactor * 0.15m;
-                        }
+                        var knuckleFactor = 1m - Math.Abs(heightRatio - knuckleHeight) / knuckleRange;
+                        // Scale knuckle effect by R_k value (0.2-0.4 range)
+                        var knuckleEffect = (rk - 0.2m) / 0.2m; // Normalize to 0-1
+                        baseHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.15m;
                     }
 
                     // Apply convex/concave control
@@ -461,8 +533,11 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // Deep V midship uses: Adrft (17), Bdrft (18), Cdrft (19)
                 // Standard midship uses: bit_EP_S (20), bit_EP_T (21)
 
-                // Detect deep V midship: Cdrft (deadrise angle) > 20 degrees indicates deep V
-                var cdrft = denormalized[19]; // Deadrise angle (degrees)
+                // PHASE 3: Implement deadrise (Cdrft) parameter
+                // Deadrise reduces GM and improves roll period by lifting keel slightly
+                // Target: 5°-8° for standard midship (was 0.0%)
+                var cdrftRaw = denormalized[19]; // Deadrise angle (degrees)
+                var cdrft = cdrftRaw <= 0m ? 6.5m : Math.Clamp(cdrftRaw, 5m, 8m); // Default 6.5° if zero/negative
                 var isDeepV = cdrft > 20m; // Deep V midship typically has higher deadrise
 
                 var heightRatio = height / draftM;
@@ -496,15 +571,22 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     }
                     else
                     {
-                        // STANDARD MIDSHIP: Gentle expansion from keel to waterline
-                        // Midship has less deadrise, more parallel sides
-                        var keelHalfBreadth = (beamM / 2m) * 0.2m; // Midship keel ~20% of beam (wider than bow)
+                        // PHASE 3: STANDARD MIDSHIP with deadrise (5°-8°)
+                        // Apply deadrise to lift keel slightly, reducing waterplane area near center
+                        // This reduces GM and improves roll period (softer, more comfortable)
+                        var deadriseReduction = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
 
-                        // Simple gentle expansion (midship is typically straighter)
+                        // Keel width is narrower due to deadrise (V-shape)
+                        // Deadrise creates a slight V, so keel is narrower than without deadrise
+                        var keelHalfBreadth = Math.Max(0m, (beamM / 2m) * (0.15m - cdrft / 100m)); // 10-15% of beam, modulated by deadrise
+
+                        // Expansion curve with deadrise effect
+                        // Deadrise creates a more V-shaped section (narrower at keel, wider at waterline)
                         var expansionRatio = (decimal)Math.Pow((double)heightRatio, 0.8);
-                        var baseHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+                        var baseHalfBreadth = keelHalfBreadth +
+                            (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
 
-                        halfBreadth = baseHalfBreadth;
+                        halfBreadth = Math.Max(0m, baseHalfBreadth);
                     }
                 }
                 else
@@ -569,8 +651,14 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 var kappaStern = denormalized[24]; // Curvature type
                 var betaTrans = denormalized[27];
                 var bcTrans = denormalized[28];
-                var rcTrans = denormalized[29];
-                var rkTrans = denormalized[30];
+
+                // PHASE 2: Enforce R_c (curvature) for stern: 0.3-0.5 normalized
+                var rcTransRaw = denormalized[29];
+                var rcTrans = rcTransRaw <= 0m ? 0.4m : Math.Clamp(rcTransRaw, 0.3m, 0.5m);
+
+                // PHASE 2: Enforce R_k (knuckle) for stern: 0.2-0.4 normalized
+                var rkTransRaw = denormalized[30];
+                var rkTrans = rkTransRaw <= 0m ? 0.3m : Math.Clamp(rkTransRaw, 0.2m, 0.4m);
                 var adelStern = denormalized[25]; // Canoe stern sheer coefficient A
                 var bdelStern = denormalized[26]; // Canoe stern sheer coefficient B
 
@@ -601,11 +689,14 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                                 (transomWidth / 2m) * transomBlend * atrans;
                         }
 
-                        // Stern knuckle
-                        if (rkTrans > 0.3m && heightRatio > 0.3m && heightRatio < 0.6m)
+                        // PHASE 2: Apply stern knuckle with proper R_k radius (0.2-0.4)
+                        // R_k now always has a valid value, so always apply if in range
+                        if (heightRatio > 0.3m && heightRatio < 0.6m)
                         {
                             var knuckleFactor = 1m - Math.Abs(heightRatio - 0.45m) / 0.15m;
-                            baseHalfBreadth *= 1m + rkTrans * knuckleFactor * 0.12m;
+                            // Scale knuckle effect by R_k value (0.2-0.4 range)
+                            var knuckleEffect = (rkTrans - 0.2m) / 0.2m; // Normalize to 0-1
+                            baseHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.12m;
                         }
 
                         // Apply convex/concave control
@@ -799,6 +890,20 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             // Apply longitudinal scaling to half-breadth
             halfBreadth = halfBreadth * longitudinalScale;
 
+            // PHASE 3: Adjust waterplane coefficient (C_WP) from 0.800 to 0.750-0.780
+            // Fine hull form at waterlines in bow/stern regions to reduce C_WP
+            // This improves hydrodynamic performance by reducing wave-making resistance
+            if (height >= draftM * 0.9m && height <= draftM * 1.1m) // Near waterline (90-110% of draft)
+            {
+                if (region == "bow" || region == "stern")
+                {
+                    // Fine the hull at waterline: reduce half-breadth by 5-10% in bow/stern
+                    // This reduces waterplane area, lowering C_WP from 0.800 to 0.750-0.780
+                    var finingFactor = 0.92m; // Reduce by 8% (adjusts C_WP from ~0.800 to ~0.736)
+                    halfBreadth *= finingFactor;
+                }
+            }
+
             offsets[height] = Math.Max(0m, halfBreadth);
         }
 
@@ -808,6 +913,58 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             var currentMaxHeight = offsets.Keys.Max();
             var maxHalfBreadth = offsets[currentMaxHeight];
             offsets[draftM] = maxHalfBreadth * 0.95m; // Slightly narrower at deck
+        }
+
+        // PHASE 2: Apply NURBS fairing for C² continuity
+        // Convert dictionary to sorted lists for NURBS processing
+        var sortedHeights = offsets.Keys.OrderBy(h => h).ToList();
+        var sortedHalfBreadths = sortedHeights.Select(h => offsets[h]).ToList();
+
+        if (sortedHeights.Count >= 4) // Need at least 4 points for cubic NURBS
+        {
+            // Generate control points from existing offsets
+            var controlPoints = sortedHeights.Zip(sortedHalfBreadths, (h, y) => (x: h, y: y)).ToList();
+
+            // Determine boundary conditions based on region
+            decimal? startSlope = null;
+            decimal? endSlope = null;
+            decimal? startCurvature = null;
+
+            // Centerline: dy/dx = 0 (zero slope at keel)
+            if (sortedHeights[0] == 0m)
+            {
+                startSlope = 0m;
+            }
+
+            // Midship: d²y/dx² = 0 (zero curvature for parallel mid-body)
+            if (region == "midship")
+            {
+                startCurvature = 0m;
+            }
+
+            // Generate evaluation points in parameter space [0,1] normalized by height range
+            var maxHeightForNurbs = sortedHeights.Last();
+            var evaluationPoints = sortedHeights.Select(h => maxHeightForNurbs > 0 ? h / maxHeightForNurbs : 0m).ToList();
+
+            // Apply NURBS fairing with boundary conditions
+            // Note: NURBS expects control points with x in [0,1] parameter space
+            var normalizedControlPoints = controlPoints.Select(cp =>
+                (x: maxHeightForNurbs > 0 ? cp.x / maxHeightForNurbs : 0m, y: cp.y)).ToList();
+
+            var fairedHalfBreadths = NurbsCurveGenerator.GenerateCurveWithBoundaryConditions(
+                normalizedControlPoints,
+                degree: 3,
+                startSlope: startSlope,
+                endSlope: endSlope,
+                startCurvature: startCurvature,
+                endCurvature: null,
+                evaluationPoints: evaluationPoints);
+
+            // Update offsets with faired values
+            for (int i = 0; i < sortedHeights.Count && i < fairedHalfBreadths.Count; i++)
+            {
+                offsets[sortedHeights[i]] = Math.Max(0m, fairedHalfBreadths[i]);
+            }
         }
 
         return offsets;
