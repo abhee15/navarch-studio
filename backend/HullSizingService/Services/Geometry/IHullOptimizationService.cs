@@ -50,4 +50,3 @@ public interface IHullOptimizationService
         int numWaterlines = 13,
         CancellationToken cancellationToken = default);
 }
-
