@@ -800,7 +800,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             </text>
 
             {/* Centerline */}
-            {showCenterline && visibility.centerline && (
+            {showCenterline && visibility.centerline && Number.isFinite(lpp) && lpp > 0 && (
               <line
                 x1={toSVG(-lpp / 2, 0)[0]}
                 y1={toSVG(-lpp / 2, 0)[1]}
@@ -815,66 +815,73 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
             )}
 
             {/* Perpendiculars */}
-            {showStations && visibility.perpendiculars && (
-              <>
-                <line
-                  x1={toSVG(-lpp / 2, -beam / 2)[0]}
-                  y1={toSVG(-lpp / 2, -beam / 2)[1]}
-                  x2={toSVG(-lpp / 2, beam / 2)[0]}
-                  y2={toSVG(-lpp / 2, beam / 2)[1]}
-                  stroke="#ef4444"
-                  strokeWidth="2.5"
-                  filter="url(#dropShadow)"
-                  opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
-                  style={{ transition: "all 0.3s ease" }}
-                />
-                <text
-                  x={toSVG(-lpp / 2, -beam / 2 - 5)[0]}
-                  y={toSVG(-lpp / 2, -beam / 2 - 5)[1]}
-                  textAnchor="middle"
-                  className="fill-red-600 font-bold"
-                  style={{ fontSize: "12px" }}
-                >
-                  AP
-                </text>
+            {showStations &&
+              visibility.perpendiculars &&
+              Number.isFinite(lpp) &&
+              Number.isFinite(beam) &&
+              lpp > 0 &&
+              beam > 0 && (
+                <>
+                  <line
+                    x1={toSVG(-lpp / 2, -beam / 2)[0]}
+                    y1={toSVG(-lpp / 2, -beam / 2)[1]}
+                    x2={toSVG(-lpp / 2, beam / 2)[0]}
+                    y2={toSVG(-lpp / 2, beam / 2)[1]}
+                    stroke="#ef4444"
+                    strokeWidth="2.5"
+                    filter="url(#dropShadow)"
+                    opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
+                    style={{ transition: "all 0.3s ease" }}
+                  />
+                  <text
+                    x={toSVG(-lpp / 2, -beam / 2 - 5)[0]}
+                    y={toSVG(-lpp / 2, -beam / 2 - 5)[1]}
+                    textAnchor="middle"
+                    className="fill-red-600 font-bold"
+                    style={{ fontSize: "12px" }}
+                  >
+                    AP
+                  </text>
 
-                <line
-                  x1={toSVG(lpp / 2, -beam / 2)[0]}
-                  y1={toSVG(lpp / 2, -beam / 2)[1]}
-                  x2={toSVG(lpp / 2, beam / 2)[0]}
-                  y2={toSVG(lpp / 2, beam / 2)[1]}
-                  stroke="#10b981"
-                  strokeWidth="2.5"
-                  filter="url(#dropShadow)"
-                  opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
-                  style={{ transition: "all 0.3s ease" }}
-                />
-                <text
-                  x={toSVG(lpp / 2, -beam / 2 - 5)[0]}
-                  y={toSVG(lpp / 2, -beam / 2 - 5)[1]}
-                  textAnchor="middle"
-                  className="fill-green-600 font-bold"
-                  style={{ fontSize: "12px" }}
-                >
-                  FP
-                </text>
+                  <line
+                    x1={toSVG(lpp / 2, -beam / 2)[0]}
+                    y1={toSVG(lpp / 2, -beam / 2)[1]}
+                    x2={toSVG(lpp / 2, beam / 2)[0]}
+                    y2={toSVG(lpp / 2, beam / 2)[1]}
+                    stroke="#10b981"
+                    strokeWidth="2.5"
+                    filter="url(#dropShadow)"
+                    opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
+                    style={{ transition: "all 0.3s ease" }}
+                  />
+                  <text
+                    x={toSVG(lpp / 2, -beam / 2 - 5)[0]}
+                    y={toSVG(lpp / 2, -beam / 2 - 5)[1]}
+                    textAnchor="middle"
+                    className="fill-green-600 font-bold"
+                    style={{ fontSize: "12px" }}
+                  >
+                    FP
+                  </text>
 
-                <line
-                  x1={toSVG(0, -beam / 2)[0]}
-                  y1={toSVG(0, -beam / 2)[1]}
-                  x2={toSVG(0, beam / 2)[0]}
-                  y2={toSVG(0, beam / 2)[1]}
-                  stroke="#f59e0b"
-                  strokeWidth="1.5"
-                  strokeDasharray="8,4"
-                  opacity="0.8"
-                />
-              </>
-            )}
+                  <line
+                    x1={toSVG(0, -beam / 2)[0]}
+                    y1={toSVG(0, -beam / 2)[1]}
+                    x2={toSVG(0, beam / 2)[0]}
+                    y2={toSVG(0, beam / 2)[1]}
+                    stroke="#f59e0b"
+                    strokeWidth="1.5"
+                    strokeDasharray="8,4"
+                    opacity="0.8"
+                  />
+                </>
+              )}
 
             {/* Station markers with hover effects */}
             {showStations &&
               visibility.stations &&
+              Number.isFinite(beam) &&
+              beam > 0 &&
               stations.map((station) => {
                 const [sx] = toSVG(station.x, 0);
                 const isHovered = hoveredStation === station.number;

@@ -82,6 +82,8 @@ export function generateShipDHull3D(
 ): THREE.BufferGeometry {
   // If sections are provided (from backend), use them directly
   if ("sections" in params) {
+    const draftM =
+      "draftM" in params && typeof params.draftM === "number" ? params.draftM : undefined;
     return generateHull3DFromSections(
       params.sections,
       params.lppM,
@@ -89,7 +91,8 @@ export function generateShipDHull3D(
       params.stationMultiplier,
       params.heightMultiplier,
       params.useNurbs ?? true,
-      params.nurbsQuality ?? "medium"
+      params.nurbsQuality ?? "medium",
+      draftM // Pass draftM if available to ensure waterplane alignment
     );
   }
 
@@ -531,7 +534,8 @@ function interpolateSections(
 function generateHull3DFromSectionsNurbs(
   sections: ShipDHullSections,
   lppM: number,
-  quality: NurbsQuality = "medium"
+  quality: NurbsQuality = "medium",
+  draftM?: number // Optional draft to ensure vertices exist at waterplane position
 ): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
   const vertices: number[] = [];
@@ -580,6 +584,56 @@ function generateHull3DFromSectionsNurbs(
   const waterlineMax = Math.max(...waterlines);
   const waterlineRange = waterlineMax - waterlineMin || 1;
   const normalizedWaterlines = waterlines.map((w) => (w - waterlineMin) / waterlineRange);
+
+  // CRITICAL: Ensure draft position is included if provided and not already in waterlines
+  // This ensures waterplane intersects correctly with hull
+  if (draftM !== undefined && !waterlines.some((w) => Math.abs(w - draftM) < 0.001)) {
+    // Add draft to waterlines if it's not already there
+    waterlines.push(draftM);
+    waterlines.sort((a, b) => a - b);
+
+    // Recalculate normalized waterlines
+    const newWaterlineMin = Math.min(...waterlines);
+    const newWaterlineMax = Math.max(...waterlines);
+    const newWaterlineRange = newWaterlineMax - newWaterlineMin || 1;
+    normalizedWaterlines.length = 0;
+    normalizedWaterlines.push(...waterlines.map((w) => (w - newWaterlineMin) / newWaterlineRange));
+
+    // Add offsets for draft position by interpolating from adjacent waterlines
+    const draftIdx = waterlines.indexOf(draftM);
+    for (let sIdx = 0; sIdx < offsets.length; sIdx++) {
+      // Find adjacent waterlines for interpolation
+      const lowerIdx = draftIdx > 0 ? draftIdx - 1 : 0;
+      const upperIdx = draftIdx < waterlines.length - 1 ? draftIdx + 1 : waterlines.length - 1;
+      const lowerHeight = waterlines[lowerIdx];
+      const upperHeight = waterlines[upperIdx];
+      const lowerHb = offsets[sIdx]?.[lowerIdx] ?? 0;
+      const upperHb = offsets[sIdx]?.[upperIdx] ?? 0;
+
+      // Linear interpolation for draft position
+      let draftHb = 0;
+      if (Math.abs(upperHeight - lowerHeight) > 0.001) {
+        const t = (draftM - lowerHeight) / (upperHeight - lowerHeight);
+        draftHb = lowerHb + t * (upperHb - lowerHb);
+      } else {
+        draftHb = lowerHb;
+      }
+
+      // Insert draft offset at correct position
+      offsets[sIdx].splice(draftIdx, 0, Math.max(0, draftHb));
+    }
+
+    // Update ranges
+    const updatedWaterlineMin = Math.min(...waterlines);
+    const updatedWaterlineMax = Math.max(...waterlines);
+    const updatedWaterlineRange = updatedWaterlineMax - updatedWaterlineMin || 1;
+    // Re-normalize (already done above, but update range variables)
+    Object.assign({
+      waterlineMin: updatedWaterlineMin,
+      waterlineMax: updatedWaterlineMax,
+      waterlineRange: updatedWaterlineRange,
+    });
+  }
 
   // Estimate beam and draft from offsets
   const maxHalfBreadth = Math.max(...offsets.flat().map((hb) => hb || 0));
@@ -633,6 +687,19 @@ function generateHull3DFromSectionsNurbs(
     }
   }
 
+  // CRITICAL: Ensure draft position is included in evaluation points if provided
+  // This ensures waterplane intersects correctly with hull
+  if (draftM !== undefined) {
+    const draftNormalized = (draftM - waterlineMin) / waterlineRange;
+    // Check if draft is already in evaluation points (within tolerance)
+    const draftExists = vEvaluationPoints.some((v) => Math.abs(v - draftNormalized) < 1e-6);
+    if (!draftExists && draftNormalized >= 0 && draftNormalized <= 1) {
+      // Insert draft at correct sorted position
+      vEvaluationPoints.push(draftNormalized);
+      vEvaluationPoints.sort((a, b) => a - b);
+    }
+  }
+
   // Sort evaluation points to ensure proper ordering
   uEvaluationPoints.sort((a, b) => a - b);
   vEvaluationPoints.sort((a, b) => a - b);
@@ -660,13 +727,23 @@ function generateHull3DFromSectionsNurbs(
     const isOriginalV = originalVIndices.has(vIdx);
 
     // For original waterline positions, use exact waterline value
-    // For intermediate positions, denormalize from NURBS evaluation
+    // For intermediate positions (including draft if not in original waterlines), denormalize from NURBS evaluation
     let height: number;
     if (isOriginalV) {
       const originalVIdx = normalizedWaterlines.findIndex((nv) => Math.abs(nv - v) < 1e-10);
       height = originalVIdx >= 0 ? waterlines[originalVIdx] : waterlineMin + v * waterlineRange;
     } else {
-      height = waterlineMin + v * waterlineRange;
+      // Check if this is the draft position
+      if (draftM !== undefined) {
+        const draftNormalized = (draftM - waterlineMin) / waterlineRange;
+        if (Math.abs(v - draftNormalized) < 1e-6) {
+          height = draftM; // Use exact draft value
+        } else {
+          height = waterlineMin + v * waterlineRange;
+        }
+      } else {
+        height = waterlineMin + v * waterlineRange;
+      }
     }
 
     for (let uIdx = 0; uIdx < uEvaluationPoints.length; uIdx++) {
@@ -932,7 +1009,8 @@ function generateHull3DFromSections(
   stationMultiplier: number = 3,
   heightMultiplier: number = 3,
   useNurbs: boolean = true,
-  nurbsQuality: NurbsQuality = "medium"
+  nurbsQuality: NurbsQuality = "medium",
+  draftM?: number // Optional draft to ensure vertices exist at waterplane position
 ): THREE.BufferGeometry {
   // CRITICAL: Sort stations by position to ensure correct ordering (aft to forward: 0 to 1)
   // This prevents helical twist in 3D view if stations are not in correct order
@@ -944,7 +1022,7 @@ function generateHull3DFromSections(
   // Try NURBS surface evaluation for smooth rendering if requested and enabled
   if (smooth && useNurbs && sortedSections.stations.length >= 4) {
     try {
-      return generateHull3DFromSectionsNurbs(sortedSections, lppM, nurbsQuality);
+      return generateHull3DFromSectionsNurbs(sortedSections, lppM, nurbsQuality, draftM);
     } catch (error) {
       console.warn(
         "[ShipDGeometry] NURBS evaluation failed, falling back to spline interpolation:",
