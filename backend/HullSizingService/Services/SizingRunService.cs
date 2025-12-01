@@ -27,6 +27,7 @@ public class SizingRunService : ISizingRunService
     private readonly IDataServiceClient? _dataServiceClient;
     private readonly IHullGeometryGeneratorService? _hullGeometryGenerator;
     private readonly Engineering.IWeightEstimationService _weightService;
+    private readonly Geometry.IHullOptimizationService? _hullOptimizationService;
 
     // JSON serializer options with camelCase naming (matches API response format)
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -66,7 +67,8 @@ public class SizingRunService : ISizingRunService
         DataDriven.DataDrivenParametricSolver? parametricSolver = null,
         IShipDHullGeometryService? shipdGeometryService = null,
         IDataServiceClient? dataServiceClient = null,
-        IHullGeometryGeneratorService? hullGeometryGenerator = null)
+        IHullGeometryGeneratorService? hullGeometryGenerator = null,
+        Geometry.IHullOptimizationService? hullOptimizationService = null)
     {
         _context = context;
         _firstPrinciplesSolver = firstPrinciplesSolver;
@@ -80,6 +82,7 @@ public class SizingRunService : ISizingRunService
         _shipdGeometryService = shipdGeometryService;
         _dataServiceClient = dataServiceClient;
         _hullGeometryGenerator = hullGeometryGenerator;
+        _hullOptimizationService = hullOptimizationService;
     }
 
     public async Task<List<SizingRunDto>> GetByMissionCaseIdAsync(Guid missionCaseId, string tenantId, CancellationToken cancellationToken = default)
@@ -568,6 +571,76 @@ public class SizingRunService : ISizingRunService
                         geometryStatus = GeometryGenerationStatus.FormCoefficientFailed;
                         geometryError = $"Form-coefficient generation failed: {ex.Message}";
                         _logger.LogWarning(ex, "[SIZING_RUN] Failed to generate OffsetsGrid for candidate {Rank}. Will try ShipD as fallback.", i + 1);
+                    }
+                }
+
+                // Optional: Apply NURBS optimization to refine geometry to match target CB/CP/LCB
+                // This is enabled via feature flag or options
+                var enableOptimization = _configuration.GetValue<bool>("FeatureFlags:NurbsOptimization", false) ||
+                                       effectiveDto.Options?.AdditionalParameters?.ContainsKey("enableOptimization") == true;
+
+                if (enableOptimization && _hullOptimizationService != null)
+                {
+                    try
+                    {
+                        _logger.LogInformation(
+                            "[SIZING_RUN] Applying NURBS optimization to candidate {Rank} to refine CB={Cb}, CP={Cp}, LCB={Lcb}%",
+                            i + 1, sc.Cb, sc.Cp, sc.LcbPctLpp ?? 0m);
+
+                        var optimizationOptions = new Geometry.HullOptimizationService.OptimizationOptions
+                        {
+                            PopulationSize = 15, // Smaller for faster optimization
+                            MaxIterations = 50,  // Fewer iterations for initial integration
+                            Tolerance = 0.005m,  // 0.5% tolerance
+                            LogInterval = 10
+                        };
+
+                        var optimizationResult = await _hullOptimizationService.OptimizeAsync(
+                            targetCb: sc.Cb,
+                            targetCp: sc.Cp,
+                            targetLcbPercent: sc.LcbPctLpp ?? 0m,
+                            lppM: sc.LppM,
+                            beamM: sc.BeamM,
+                            draftM: sc.DraftM,
+                            initialGuess: null,
+                            options: optimizationOptions,
+                            cancellationToken: cancellationToken);
+
+                        if (optimizationResult.Converged || optimizationResult.FinalError < 0.01m)
+                        {
+                            // Generate optimized geometry
+                            var optimizedSections = await _hullOptimizationService.GenerateSectionsFromOptimizedGridAsync(
+                                optimizationResult.OptimalControlPoints,
+                                sc.LppM,
+                                sc.BeamM,
+                                sc.DraftM,
+                                numStations: 60,
+                                numWaterlines: 13,
+                                cancellationToken);
+
+                            // Use optimized geometry
+                            geometryJson = JsonSerializer.Serialize(optimizedSections, JsonOptions);
+                            geometryStatus = GeometryGenerationStatus.Success;
+                            geometryError = null;
+
+                            _logger.LogInformation(
+                                "[SIZING_RUN] ✅ NURBS optimization completed for candidate {Rank}: Final CB={Cb}, CP={Cp}, LCB={Lcb}% (Error={Error})",
+                                i + 1, optimizationResult.FinalCb, optimizationResult.FinalCp,
+                                optimizationResult.FinalLcbPercent, optimizationResult.FinalError);
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "[SIZING_RUN] ⚠️ NURBS optimization did not converge for candidate {Rank} (Error={Error}). Using original geometry.",
+                                i + 1, optimizationResult.FinalError);
+                        }
+                    }
+                    catch (Exception optEx)
+                    {
+                        _logger.LogWarning(optEx,
+                            "[SIZING_RUN] NURBS optimization failed for candidate {Rank}. Using original geometry.",
+                            i + 1);
+                        // Continue with original geometry if optimization fails
                     }
                 }
 
