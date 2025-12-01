@@ -375,10 +375,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         maxHalfBreadth: Number.isFinite(maxHalfBreadth) ? maxHalfBreadth : beam / 2,
         extentX: Number.isFinite(minX) && Number.isFinite(maxX) ? maxX - minX : lpp,
         fullBeam: Number.isFinite(maxHalfBreadth) ? maxHalfBreadth * 2 : beam,
-        centerX:
-          Number.isFinite(minX) && Number.isFinite(maxX)
-            ? (minX + maxX) / 2
-            : 0,
+        centerX: Number.isFinite(minX) && Number.isFinite(maxX) ? (minX + maxX) / 2 : 0,
       };
 
       console.log("[Hull2DPlan] Geometry bounds calculated:", {
@@ -458,8 +455,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
     // Use LOA if available, otherwise use geometry bounds extent, fallback to Lpp
     // This ensures bulbous bow and stern appendages are visible
-    const actualLength =
-      candidate.loaM ?? geometryBounds.extentX ?? lpp;
+    const actualLength = candidate.loaM ?? geometryBounds.extentX ?? lpp;
     const actualBeam = geometryBounds.fullBeam ?? beam;
 
     const scaleX = (svgWidth - 2 * padding) / actualLength;
