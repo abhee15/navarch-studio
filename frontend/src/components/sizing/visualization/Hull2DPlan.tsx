@@ -520,9 +520,10 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     // In Plan View, we're looking DOWN at the hull:
     // - X: longitudinal (stern to bow) → SVG X (left to right)
     // - Y: half-breadth (centerline to starboard) → SVG Y (top to bottom)
-    //   - Starboard (positive y) → below centerline in SVG (lower on screen)
-    //   - Port (negative y) → above centerline in SVG (higher on screen)
+    //   - Starboard (positive y) → below centerline in SVG (larger SVG Y)
+    //   - Port (negative y) → above centerline in SVG (smaller SVG Y)
     // Note: In SVG, Y increases downward, so "above" means smaller Y values
+    // CRITICAL: This orientation shows stern at left, bow at right, centerline horizontal
     const toSVG = (x: number, y: number): [number, number] => {
       // X coordinate: longitudinal position (stern to bow)
       const svgX = svgWidth / 2 + (x - geometryCenterX) * scale;
@@ -530,7 +531,8 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Y coordinate: half-breadth (transverse position)
       // Starboard (positive y) → below centerline (larger SVG Y)
       // Port (negative y) → above centerline (smaller SVG Y)
-      const svgY = svgHeight / 2 - y * scale;
+      // Use + instead of - so that positive y (starboard) goes down (larger SVG Y)
+      const svgY = svgHeight / 2 + y * scale;
 
       // Validate coordinates are within reasonable bounds
       if (!Number.isFinite(svgX) || !Number.isFinite(svgY)) {
