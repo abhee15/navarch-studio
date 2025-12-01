@@ -459,11 +459,36 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     // Use LOA if available, otherwise use geometry bounds extent, fallback to Lpp
     // This ensures bulbous bow and stern appendages are visible
     const actualLength = candidate.loaM ?? geometryBounds.extentX ?? lpp;
+    // CRITICAL: Use fullBeam (port + starboard) to ensure both sides are visible
+    // fullBeam is already calculated as maxHalfBreadth * 2, so it accounts for both sides
     const actualBeam = geometryBounds.fullBeam ?? beam;
+
+    // Verify actualBeam accounts for both port and starboard
+    if (geometryBounds.maxHalfBreadth && geometryBounds.fullBeam) {
+      const expectedFullBeam = geometryBounds.maxHalfBreadth * 2;
+      if (Math.abs(geometryBounds.fullBeam - expectedFullBeam) > 0.01) {
+        console.warn("[Hull2DPlan] fullBeam calculation mismatch:", {
+          fullBeam: geometryBounds.fullBeam,
+          expected: expectedFullBeam,
+        });
+      }
+    }
 
     const scaleX = (svgWidth - 2 * padding) / actualLength;
     const scaleY = (svgHeight - 2 * padding) / actualBeam;
     const scale = Math.min(scaleX, scaleY);
+
+    // Verify scale accounts for full beam (both port and starboard)
+    console.log("[Hull2DPlan] Viewport scaling verification:", {
+      actualBeam,
+      maxHalfBreadth: geometryBounds.maxHalfBreadth,
+      scaleY,
+      svgHeight,
+      padding,
+      beamRange: actualBeam * scale,
+      viewportHeight: svgHeight - 2 * padding,
+      bothSidesVisible: actualBeam * scale <= svgHeight - 2 * padding,
+    });
 
     console.log("[Hull2DPlan] Scaling calculation:", {
       lpp,
@@ -491,10 +516,22 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     // This ensures the hull is properly centered even when LOA > Lpp
     const geometryCenterX = geometryBounds.centerX;
 
-    const toSVG = (x: number, y: number): [number, number] => [
-      svgWidth / 2 + (x - geometryCenterX) * scale,
-      svgHeight / 2 - y * scale,
-    ];
+    // Coordinate transformation for Plan View (top-down projection)
+    // X: longitudinal (stern to bow) → SVG X (left to right)
+    // Y: half-breadth (centerline to starboard) → SVG Y (top to bottom)
+    //   - Starboard (positive y) → below centerline in SVG
+    //   - Port (negative y) → above centerline in SVG
+    const toSVG = (x: number, y: number): [number, number] => {
+      const svgX = svgWidth / 2 + (x - geometryCenterX) * scale;
+      const svgY = svgHeight / 2 - y * scale; // Negative y puts port above centerline
+
+      // Validate coordinates are within reasonable bounds
+      if (!Number.isFinite(svgX) || !Number.isFinite(svgY)) {
+        console.warn("[Hull2DPlan] Invalid SVG coordinate transformation:", { x, y, svgX, svgY });
+      }
+
+      return [svgX, svgY];
+    };
 
     const waterlinePath = (points: [number, number][]) => {
       // Naval architecture Plan View: waterlines should be closed curves
@@ -507,6 +544,21 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
         console.warn("[Hull2DPlan] No valid points for waterline path");
         return { starboard: "", port: "", closed: "" };
       }
+
+      // Debug: Log coordinate ranges
+      const xRange = [
+        Math.min(...validPoints.map(([x]) => x)),
+        Math.max(...validPoints.map(([x]) => x)),
+      ];
+      const yRange = [
+        Math.min(...validPoints.map(([, y]) => y)),
+        Math.max(...validPoints.map(([, y]) => y)),
+      ];
+      console.log("[Hull2DPlan] Waterline coordinate ranges:", {
+        xRange,
+        yRange,
+        pointCount: validPoints.length,
+      });
 
       // Use spline interpolation for smooth curves
       // Convert to format expected by spline utility (x = x, y = y)
@@ -533,21 +585,78 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
       // Port side: reverse the points and negate y to create closed loop
       // We reverse so the path goes: bow centerline → port side → stern centerline
+      // CRITICAL: Negate y to mirror across centerline (port is negative y in world coords)
+      // This ensures port side appears above centerline in SVG (since y is negative, -y is positive, but we subtract in toSVG)
       const portPoints = [...interpolated].reverse().map((p) => toSVG(p.x, -p.y));
+
+      // Debug: Log port side coordinate ranges
+      const portSVGRange = {
+        x: [Math.min(...portPoints.map(([x]) => x)), Math.max(...portPoints.map(([x]) => x))],
+        y: [Math.min(...portPoints.map(([, y]) => y)), Math.max(...portPoints.map(([, y]) => y))],
+        viewportBounds: { width: svgWidth, height: svgHeight },
+      };
+      console.log("[Hull2DPlan] Port side SVG coordinate ranges:", portSVGRange);
+
+      // Verify port side points are within viewport (with some tolerance)
+      const portPointsInViewport = portPoints.filter(
+        ([x, y]) => x >= -100 && x <= svgWidth + 100 && y >= -100 && y <= svgHeight + 100
+      );
+      if (portPointsInViewport.length < portPoints.length) {
+        console.warn(
+          `[Hull2DPlan] ${portPoints.length - portPointsInViewport.length} port side points outside viewport`
+        );
+      }
+
       const portPath = portPoints
-        .map(([x, y], i) => {
+        .map(([x, y]) => {
           // Validate coordinates before formatting
           if (!Number.isFinite(x) || !Number.isFinite(y)) {
-            console.warn("[Hull2DPlan] Invalid SVG coordinate:", { x, y });
+            console.warn("[Hull2DPlan] Invalid SVG coordinate (port):", { x, y });
             return "";
           }
-          return `${i === 0 ? "L" : "L"} ${x.toFixed(2)},${y.toFixed(2)}`;
+          // Use 'L' (line to) for all points - the first 'L' connects to the last starboard point
+          return `L ${x.toFixed(2)},${y.toFixed(2)}`;
         })
         .filter((segment) => segment !== "")
         .join(" ");
 
       // Close the path by connecting back to stern centerline
+      // Path structure: M (move to stern centerline) → L (starboard side) → L (port side) → Z (close)
+      // The 'Z' command closes the path by drawing a line from the last point back to the first (M) point
       const closedPath = starboardPath && portPath ? `${starboardPath} ${portPath} Z` : "";
+
+      // Verify path closure: first and last points should be at stern centerline
+      if (starboardPoints.length > 0 && portPoints.length > 0) {
+        const firstPoint = starboardPoints[0];
+        const lastPoint = portPoints[portPoints.length - 1];
+        const centerlineY = svgHeight / 2;
+        const tolerance = 5; // 5 pixels tolerance for centerline closure
+
+        const firstAtCenterline = Math.abs(firstPoint[1] - centerlineY) < tolerance;
+        const lastAtCenterline = Math.abs(lastPoint[1] - centerlineY) < tolerance;
+
+        if (!firstAtCenterline || !lastAtCenterline) {
+          console.warn("[Hull2DPlan] Path may not close properly at centerline:", {
+            firstPoint,
+            lastPoint,
+            centerlineY,
+            firstAtCenterline,
+            lastAtCenterline,
+          });
+        }
+      }
+
+      // Debug: Log path segment counts
+      console.log("[Hull2DPlan] Path generation:", {
+        starboardPoints: starboardPoints.length,
+        portPoints: portPoints.length,
+        starboardPathLength: starboardPath.length,
+        portPathLength: portPath.length,
+        closedPathLength: closedPath.length,
+        hasStarboard: starboardPath.length > 0,
+        hasPort: portPath.length > 0,
+        hasClosed: closedPath.length > 0,
+      });
 
       return { starboard: starboardPath, port: portPath, closed: closedPath };
     };
