@@ -29,7 +29,6 @@ import type { HydroResult, OffsetsGrid } from "../../types/hydrostatics";
 import { geometryApi } from "../../services/hydrostaticsApi";
 import {
   generateControlPointGridFromOffsets,
-  generateEvaluationPoints,
   evaluateSurface,
   getResolutionMultiplier,
   type NurbsQuality,
