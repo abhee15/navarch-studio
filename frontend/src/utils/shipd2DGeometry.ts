@@ -7,6 +7,7 @@
 
 import type { ShipDHullSections } from "./shipdGeometryGenerator";
 import type { OffsetsGrid } from "./geometryFormatConverter";
+import { createCubicSpline, evaluateSpline, type Point2D } from "./splineInterpolation";
 
 /**
  * Extract waterlines from ShipD sections for Plan View
@@ -49,7 +50,7 @@ export function extractWaterlinesFromShipD(
   });
 
   for (const height of waterlineHeights) {
-    const points: Array<[number, number]> = [];
+    let points: Array<[number, number]> = [];
 
     // Sort stations by position (aft to forward: 0 = stern/AP, 1 = bow/FP)
     const sortedStations = [...sections.stations].sort((a, b) => a.position - b.position);
@@ -137,9 +138,20 @@ export function extractWaterlinesFromShipD(
       // This matches the 3D coordinate system where hull is centered at origin
       const x = (station.position - 0.5) * lppM;
 
-      // Only add point if both coordinates are valid (finite numbers)
-      if (Number.isFinite(x) && Number.isFinite(halfBreadth) && halfBreadth >= 0) {
+      // Validate station offset before adding point
+      // Check for NaN, Infinity, and ensure non-negative
+      if (
+        Number.isFinite(x) &&
+        Number.isFinite(halfBreadth) &&
+        halfBreadth >= 0 &&
+        !Number.isNaN(halfBreadth)
+      ) {
         points.push([x, halfBreadth]);
+      } else {
+        console.warn(
+          `[extractWaterlinesFromShipD] Invalid offset at station ${station.position}, height ${height}:`,
+          { x, halfBreadth }
+        );
       }
     }
 
@@ -151,6 +163,65 @@ export function extractWaterlinesFromShipD(
 
       // Sort points by longitudinal position (x) to ensure proper ordering
       points.sort((a, b) => a[0] - b[0]);
+
+      // Apply cubic spline interpolation to smooth the waterline
+      // This ensures C² continuity and eliminates jagged edges from sparse stations
+      if (points.length >= 3) {
+        // Need at least 3 points for cubic spline
+        // Convert to Point2D format for spline interpolation
+        const splinePoints: Point2D[] = points.map(([x, y]) => ({ x, y }));
+
+        // Validate points for monotonicity (x should be strictly increasing)
+        // Remove duplicate x values (keep first occurrence)
+        const uniquePoints: Point2D[] = [];
+        const seenX = new Set<number>();
+        for (const p of splinePoints) {
+          const roundedX = Math.round(p.x * 1000) / 1000; // Round to 1mm
+          if (!seenX.has(roundedX)) {
+            seenX.add(roundedX);
+            uniquePoints.push(p);
+          }
+        }
+
+        if (uniquePoints.length >= 3) {
+          // Create cubic spline through station points
+          const splineSegments = createCubicSpline(uniquePoints);
+
+          // Evaluate spline at higher resolution for smooth curve
+          // Use 4-5 points per station spacing for smooth interpolation
+          const minX = uniquePoints[0].x;
+          const maxX = uniquePoints[uniquePoints.length - 1].x;
+          const interpPointsPerStation = 5; // 5 points per station gives very smooth curves
+          const numInterpPoints = Math.max(
+            uniquePoints.length * interpPointsPerStation,
+            80 // Minimum 80 points for smooth curves
+          );
+
+          const smoothedPoints: Array<[number, number]> = [];
+          const step = (maxX - minX) / (numInterpPoints - 1);
+
+          for (let i = 0; i < numInterpPoints; i++) {
+            const x = minX + i * step;
+            const y = Math.max(0, evaluateSpline(splineSegments, x)); // Ensure non-negative
+            if (Number.isFinite(x) && Number.isFinite(y) && !Number.isNaN(y)) {
+              smoothedPoints.push([x, y]);
+            }
+          }
+
+          // Replace original points with smoothed points
+          points = smoothedPoints;
+        } else if (uniquePoints.length === 2) {
+          // Fallback to linear interpolation for 2 points
+          console.debug(
+            `[extractWaterlinesFromShipD] Only 2 unique points, using linear interpolation for waterline at height ${height}`
+          );
+        }
+      } else if (points.length === 2) {
+        // Keep linear interpolation for 2 points
+        console.debug(
+          `[extractWaterlinesFromShipD] Only 2 points, using linear interpolation for waterline at height ${height}`
+        );
+      }
 
       // Ensure we have centerline points at bow and stern for proper closure
       // Stern centerline: x = -lpp/2, y = 0

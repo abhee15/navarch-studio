@@ -213,6 +213,9 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               hasMetadata: sizingStore.shipdParameters.length > 0,
             });
 
+            // Use higher station density for Plan View to ensure smooth waterlines
+            // 40-60 stations for typical vessels (120m) gives ~2-3m spacing, sufficient for smooth curves
+            const planViewStationCount = Math.max(40, Math.ceil(lppM / 3)); // ~3m spacing minimum
             const sections = generateShipDSections(
               {
                 shipdVector,
@@ -222,7 +225,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                 metadata: sizingStore.shipdParameters,
                 resolution: 1.0,
               },
-              20
+              planViewStationCount
             );
 
             // Heights should be from 0 (keel) to draft (waterline)
@@ -509,8 +512,10 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Convert to format expected by spline utility (x = x, y = y)
       const splinePoints = validPoints.map(([x, y]) => ({ x, y }));
 
-      // Interpolate for smoothness (120 points for improved smoothness without discretization artifacts)
-      const interpolated = generateSmoothCurve(splinePoints, 120);
+      // Interpolate for smoothness with higher resolution
+      // Use 200-300 points for very smooth curves, especially important after cubic spline smoothing
+      const numInterpPoints = Math.max(200, Math.ceil(validPoints.length * 10));
+      const interpolated = generateSmoothCurve(splinePoints, numInterpPoints);
 
       // Starboard side: points from stern to bow (x from -lpp/2 to +lpp/2, y >= 0)
       const starboardPoints = interpolated.map((p) => toSVG(p.x, p.y));
