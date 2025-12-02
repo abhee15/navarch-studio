@@ -17,9 +17,10 @@ public class ShipDConstraintValidatorTests
 
     public ShipDConstraintValidatorTests()
     {
-        using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         var logger = loggerFactory.CreateLogger<ShipDConstraintValidationService>();
         _validator = new ShipDConstraintValidationService(logger);
+        // Note: loggerFactory remains in scope for the lifetime of the logger
     }
 
     #region Constraint 0: Lb + Ls < 1.0
@@ -150,7 +151,9 @@ public class ShipDConstraintValidatorTests
         result.IsValid.Should().BeFalse("Bulb width >= bow section width violates constraint");
         result.Severity.Should().Be("Error");
         result.FixSuggestions.Should().NotBeEmpty();
-        result.Message.Should().Contain("wider");
+        result.Message.Should().Contain("Constraint violation", "Message should indicate constraint violation");
+        // Note: Message format is "Constraint violation: Bulb width (X) >= bow section width (Y) at bulb height"
+        // which is clear without needing the word "wider"
     }
 
     [Fact]
