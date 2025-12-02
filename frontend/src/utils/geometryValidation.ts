@@ -89,7 +89,6 @@ export function validateOffsetsGrid(
 
   // Check for invalid values in waterlines
   const invalidWaterlines: number[] = [];
-  const sortedWaterlines = [...grid.waterlines].sort((a, b) => a - b);
   grid.waterlines.forEach((waterline, idx) => {
     if (!Number.isFinite(waterline)) {
       invalidWaterlines.push(idx);
