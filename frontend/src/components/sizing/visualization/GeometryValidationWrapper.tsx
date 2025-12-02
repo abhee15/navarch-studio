@@ -7,12 +7,18 @@
 
 import React from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
-import { validateOffsetsGrid, type GeometryValidationResult } from "../../../utils/geometryValidation";
+import {
+  validateOffsetsGrid,
+  type GeometryValidationResult,
+} from "../../../utils/geometryValidation";
 import type { OffsetsGrid } from "../../../utils/geometryFormatConverter";
 
 interface GeometryValidationWrapperProps {
   geometryJson: string | null | undefined;
-  children: (validatedGeometry: OffsetsGrid | null, validation: GeometryValidationResult) => React.ReactNode;
+  children: (
+    validatedGeometry: OffsetsGrid | null,
+    validation: GeometryValidationResult
+  ) => React.ReactNode;
   showWarnings?: boolean;
   fallbackMessage?: string;
 }
@@ -75,7 +81,9 @@ export const GeometryValidationWrapper: React.FC<GeometryValidationWrapperProps>
     } catch (error) {
       setValidation({
         isValid: false,
-        errors: [`Failed to parse geometry JSON: ${error instanceof Error ? error.message : String(error)}`],
+        errors: [
+          `Failed to parse geometry JSON: ${error instanceof Error ? error.message : String(error)}`,
+        ],
         warnings: [],
       });
       setValidatedGeometry(null);
@@ -109,7 +117,9 @@ export const GeometryValidationWrapper: React.FC<GeometryValidationWrapperProps>
           <div className="p-6">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-              <h3 className="text-red-800 dark:text-red-200 font-bold">Geometry Validation Failed</h3>
+              <h3 className="text-red-800 dark:text-red-200 font-bold">
+                Geometry Validation Failed
+              </h3>
             </div>
             <div className="space-y-1 mb-3">
               {validation.errors.map((error, idx) => (
@@ -120,7 +130,9 @@ export const GeometryValidationWrapper: React.FC<GeometryValidationWrapperProps>
             </div>
             {validation.warnings.length > 0 && showWarnings && (
               <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-800">
-                <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-2">Warnings:</p>
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-2">
+                  Warnings:
+                </p>
                 <div className="space-y-1">
                   {validation.warnings.slice(0, 3).map((warning, idx) => (
                     <p key={idx} className="text-xs text-red-600 dark:text-red-400">
@@ -169,9 +181,7 @@ export const GeometryValidationWrapper: React.FC<GeometryValidationWrapperProps>
           </div>
         </div>
         {/* Render visualization with validated geometry */}
-        <div className="flex-1 min-h-0">
-          {children(validatedGeometry, validation)}
-        </div>
+        <div className="flex-1 min-h-0">{children(validatedGeometry, validation)}</div>
       </div>
     );
   }
@@ -179,4 +189,3 @@ export const GeometryValidationWrapper: React.FC<GeometryValidationWrapperProps>
   // Render normally if valid
   return <>{children(validatedGeometry, validation)}</>;
 };
-

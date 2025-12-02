@@ -44,7 +44,9 @@ export function validateOffsetsGrid(
   }
 
   if (grid.stations.length < 3) {
-    warnings.push(`Only ${grid.stations.length} stations found (minimum 3 recommended for accurate visualization)`);
+    warnings.push(
+      `Only ${grid.stations.length} stations found (minimum 3 recommended for accurate visualization)`
+    );
   }
 
   // Validate waterlines array
@@ -100,16 +102,18 @@ export function validateOffsetsGrid(
   });
 
   // Check if waterlines are sorted (not strictly required but recommended)
-  const isWaterlinesSorted = grid.waterlines.every((wl, idx) =>
-    idx === 0 || wl >= grid.waterlines[idx - 1]
+  const isWaterlinesSorted = grid.waterlines.every(
+    (wl, idx) => idx === 0 || wl >= grid.waterlines[idx - 1]
   );
   if (!isWaterlinesSorted) {
-    warnings.push("Waterlines are not sorted in ascending order (may affect visualization quality)");
+    warnings.push(
+      "Waterlines are not sorted in ascending order (may affect visualization quality)"
+    );
   }
 
   // Check if stations are sorted
-  const isStationsSorted = grid.stations.every((st, idx) =>
-    idx === 0 || st >= grid.stations[idx - 1]
+  const isStationsSorted = grid.stations.every(
+    (st, idx) => idx === 0 || st >= grid.stations[idx - 1]
   );
   if (!isStationsSorted) {
     warnings.push("Stations are not sorted in ascending order (may cause rendering issues)");
@@ -144,7 +148,9 @@ export function validateOffsetsGrid(
         if (offset < 0) {
           negativeOffsetCount++;
           if (negativeOffsetCount <= 5) {
-            warnings.push(`Station ${stIdx}, Waterline ${wlIdx} has negative half-breadth: ${offset}m`);
+            warnings.push(
+              `Station ${stIdx}, Waterline ${wlIdx} has negative half-breadth: ${offset}m`
+            );
           }
         }
 
@@ -254,9 +260,7 @@ export function validateOffsetsGrid(
     return { isValid: false, errors, warnings };
   }
 
-  const maxHalfBreadth = Math.max(
-    ...sanitized.offsets.flatMap((stationOffsets) => stationOffsets)
-  );
+  const maxHalfBreadth = Math.max(...sanitized.offsets.flatMap((stationOffsets) => stationOffsets));
 
   if (maxHalfBreadth === 0) {
     errors.push("Maximum half-breadth is zero");
@@ -266,15 +270,21 @@ export function validateOffsetsGrid(
   // Warn about extreme aspect ratios
   const aspectRatio = stationRange / (2 * maxHalfBreadth);
   if (aspectRatio > 20) {
-    warnings.push(`Extreme length-to-beam ratio: ${aspectRatio.toFixed(1)}:1 (typical range: 4-8:1)`);
+    warnings.push(
+      `Extreme length-to-beam ratio: ${aspectRatio.toFixed(1)}:1 (typical range: 4-8:1)`
+    );
   }
   if (aspectRatio < 2) {
-    warnings.push(`Very low length-to-beam ratio: ${aspectRatio.toFixed(1)}:1 (typical range: 4-8:1)`);
+    warnings.push(
+      `Very low length-to-beam ratio: ${aspectRatio.toFixed(1)}:1 (typical range: 4-8:1)`
+    );
   }
 
   const draftRatio = waterlineRange / (2 * maxHalfBreadth);
   if (draftRatio > 1.5) {
-    warnings.push(`High draft-to-beam ratio: ${draftRatio.toFixed(2)}:1 (typical range: 0.3-0.8:1)`);
+    warnings.push(
+      `High draft-to-beam ratio: ${draftRatio.toFixed(2)}:1 (typical range: 0.3-0.8:1)`
+    );
   }
 
   return {
@@ -292,4 +302,3 @@ export function isValidOffsetsGrid(grid: OffsetsGrid | null | undefined): boolea
   const result = validateOffsetsGrid(grid);
   return result.isValid;
 }
-

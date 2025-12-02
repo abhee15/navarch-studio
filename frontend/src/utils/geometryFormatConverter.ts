@@ -302,7 +302,9 @@ export function normalizeGeometry(geometryJson: string): OffsetsGrid | null {
     }
 
     if (!normalizedGrid) {
-      console.debug("[geometryFormatConverter] normalizeGeometry: format is unknown, returning null");
+      console.debug(
+        "[geometryFormatConverter] normalizeGeometry: format is unknown, returning null"
+      );
       return null;
     }
 

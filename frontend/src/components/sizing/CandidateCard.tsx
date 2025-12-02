@@ -39,10 +39,10 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
     const validationStatus = validationResults?.allValid
       ? "valid"
       : hasValidationErrors
-      ? "error"
-      : hasValidationWarnings
-      ? "warning"
-      : null;
+        ? "error"
+        : hasValidationWarnings
+          ? "warning"
+          : null;
 
     // Check if geometry generation failed
     const geometryGenerationFailed =
@@ -122,15 +122,15 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
                     validationStatus === "error"
                       ? "bg-destructive/10 text-destructive border border-destructive/20"
                       : validationStatus === "warning"
-                      ? "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20"
-                      : "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
+                        ? "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20"
+                        : "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
                   }`}
                   title={
                     validationStatus === "error"
                       ? `${validationResults.errorCount} validation error(s)`
                       : validationStatus === "warning"
-                      ? `${validationResults.warningCount} validation warning(s)`
-                      : "All validations passed"
+                        ? `${validationResults.warningCount} validation warning(s)`
+                        : "All validations passed"
                   }
                 >
                   {validationStatus === "error" || validationStatus === "warning" ? (
@@ -141,8 +141,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
                   {validationStatus === "error"
                     ? `${validationResults.errorCount} Error${validationResults.errorCount > 1 ? "s" : ""}`
                     : validationStatus === "warning"
-                    ? `${validationResults.warningCount} Warning${validationResults.warningCount > 1 ? "s" : ""}`
-                    : "Valid"}
+                      ? `${validationResults.warningCount} Warning${validationResults.warningCount > 1 ? "s" : ""}`
+                      : "Valid"}
                 </div>
               )}
               {/* Geometry Generation Failure Badge */}
@@ -353,9 +353,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
                 />
                 <div className="flex-1 min-w-0">
                   <h4 className="text-xs font-semibold text-foreground mb-1.5">
-                    {hasValidationErrors
-                      ? "Validation Issues"
-                      : "Validation Warnings"}
+                    {hasValidationErrors ? "Validation Issues" : "Validation Warnings"}
                   </h4>
                   <div className="space-y-1 text-xs">
                     {/* Show Alexander Limit status */}
@@ -367,15 +365,15 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
                             validationResults.alexanderLimitValidation.violatesLimit
                               ? "text-destructive"
                               : validationResults.alexanderLimitValidation.severity === "Warning"
-                              ? "text-yellow-600 dark:text-yellow-400"
-                              : "text-green-600 dark:text-green-400"
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-green-600 dark:text-green-400"
                           }`}
                         >
                           {validationResults.alexanderLimitValidation.violatesLimit
                             ? "Exceeded"
                             : validationResults.alexanderLimitValidation.severity === "Warning"
-                            ? "Near Limit"
-                            : "OK"}
+                              ? "Near Limit"
+                              : "OK"}
                         </span>
                       </div>
                     )}
