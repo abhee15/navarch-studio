@@ -54,13 +54,13 @@ public static class ValidationTestCases
         /// <summary>Expected Waterplane Coefficient (from prefinal_1: finalized CW = 0.87)</summary>
         public const decimal ExpectedCwp = 0.87m;
         public const decimal ExpectedCwpTolerance = 0.02m; // ±0.02
-        
+
         /// <summary>Expected Depth (from prefinal_1: finalized DEPTH = 16.40 m)</summary>
         public const decimal ExpectedDepthM = 16.40m;
-        
+
         /// <summary>Expected Freeboard (from prefinal_1: FINAL FREEBOARD = 3.55 m)</summary>
         public const decimal ExpectedFreeboardM = 3.55m;
-        
+
         /// <summary>Expected Wetted Surface Area (from prefinal_1: 8437.85 + 2% = 8606.61 m²)</summary>
         public const decimal ExpectedWettedSurfaceM2 = 8606.61m;
 
@@ -305,4 +305,3 @@ public static class ValidationTestCases
         };
     }
 }
-

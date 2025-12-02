@@ -128,7 +128,7 @@ public class CalibrationCaseIntegrationTests : IDisposable
             ServiceSpeedKn = 14.0m, // 14 knots service speed from prefinal_1
             SeaMarginPct = 15.0m,
             CapLoaM = 185.0m, // LBP constraint from prefinal_1
-            CapBeamM = 28.0m, // Breadth from prefinal_1  
+            CapBeamM = 28.0m, // Breadth from prefinal_1
             CapDraftM = 12.87m, // Draft from prefinal_1
             BowFamily = "bulbous_bow",
             MidshipFamily = "full_midship",

@@ -547,37 +547,57 @@ public class FormCoefficientHullGenerator : IHullGenerator
         decimal adjustedCm = cm + cmAdjustment;
         adjustedCm = Math.Clamp(adjustedCm, 0.7m, 1.0m); // Keep within reasonable bounds
 
-        // Calculate p and q from adjusted Cm
-        // For U-sections (high Cm: 0.98-1.0): p ≈ 1.5-2.0, q ≈ 0.4-0.6
-        // For V-sections (low Cm: 0.85-0.90): p ≈ 0.8-1.2, q ≈ 1.5-2.5
-        decimal p = 1m + 4m * (1m - adjustedCm);
-        decimal q = 0.5m + 3m * (adjustedCm - 0.85m);
+        decimal p, q;
 
-        // Apply beta adjustment (affects section shape: higher beta = more V-shaped)
-        // Beta adjustment affects p: higher beta → lower p (more V-shaped)
-        if (betaAdjustment != 0m)
+        // For very high Cm (>= 0.97), use special rectangular section parameterization
+        // This is critical for achieving truly rectangular sections in full-form vessels
+        // Reference: prefinal_1.DOC Cm=0.99 requires almost perfectly rectangular sections
+        if (adjustedCm >= 0.97m)
         {
-            // Convert beta adjustment (degrees) to p adjustment
-            // Higher beta (more V-shaped) → lower p
-            decimal pAdjustment = -betaAdjustment / 10m; // Scale: 10 degrees ≈ 0.1 p change
-            p += pAdjustment;
+            // Rectangular section: very high p (nearly vertical sides), very low q (nearly flat bottom)
+            // p controls side steepness: higher p = more vertical
+            // q controls bottom flatness: lower q = flatter
+            p = 5m + 20m * (adjustedCm - 0.97m); // p=5 at Cm=0.97, p=25 at Cm=1.0
+            q = 0.4m - 1.0m * (adjustedCm - 0.97m); // q=0.4 at Cm=0.97, q=0.1 at Cm=1.0 (very flat)
+
+            // For full_midship with Cm >= 0.97, enhance rectangularity further
+            if (midshipFamily != null && midshipFamily.ToLowerInvariant() == "full_midship")
+            {
+                p += 5m; // Even more vertical sides
+                q = Math.Max(0.05m, q - 0.1m); // Even flatter bottom
+            }
+        }
+        else
+        {
+            // Normal Cm range: use existing logic
+            // For U-sections (high Cm: 0.90-0.97): p ≈ 1.5-5.0, q ≈ 0.4-1.0
+            // For V-sections (low Cm: 0.85-0.90): p ≈ 0.8-1.5, q ≈ 1.5-2.5
+            p = 1m + 4m * (1m - adjustedCm);
+            q = 0.5m + 3m * (adjustedCm - 0.85m);
+
+            // Apply beta adjustment (affects section shape: higher beta = more V-shaped)
+            // Beta adjustment affects p: higher beta → lower p (more V-shaped)
+            if (betaAdjustment != 0m)
+            {
+                // Convert beta adjustment (degrees) to p adjustment
+                // Higher beta (more V-shaped) → lower p
+                decimal pAdjustment = -betaAdjustment / 10m; // Scale: 10 degrees ≈ 0.1 p change
+                p += pAdjustment;
+            }
+
+            // Add Cb correction: higher Cb tends to have fuller sections
+            // p_adjusted = p * (1 + 0.2 * (Cb - 0.75))
+            decimal cbCorrection = 1m + 0.2m * (cb - 0.75m);
+
+            // Apply vessel type multiplier (affects section fullness)
+            decimal vesselTypeMultiplier = GetVesselTypeMultiplier(vesselType);
+            cbCorrection *= vesselTypeMultiplier;
+            p *= cbCorrection;
         }
 
-        // Clamp to reasonable ranges
-        p = Math.Clamp(p, 0.5m, 3.0m);
-        q = Math.Clamp(q, 0.3m, 4.0m);
-
-        // Add Cb correction: higher Cb tends to have fuller sections
-        // p_adjusted = p * (1 + 0.2 * (Cb - 0.75))
-        decimal cbCorrection = 1m + 0.2m * (cb - 0.75m);
-
-        // Apply vessel type multiplier (affects section fullness)
-        decimal vesselTypeMultiplier = GetVesselTypeMultiplier(vesselType);
-        cbCorrection *= vesselTypeMultiplier;
-        p *= cbCorrection;
-
-        // Re-clamp after Cb correction
-        p = Math.Clamp(p, 0.5m, 3.0m);
+        // Clamp to reasonable ranges (wider range for rectangular sections)
+        p = Math.Clamp(p, 0.5m, 30.0m); // Increased max from 3.0 to 30.0 for rectangular sections
+        q = Math.Clamp(q, 0.05m, 4.0m); // Decreased min from 0.3 to 0.05 for flat bottoms
 
         var sectionShapes = new List<decimal>();
 
