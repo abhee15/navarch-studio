@@ -514,7 +514,20 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
 
     // Center viewport on actual geometry center (not assumed Lpp/2)
     // This ensures the hull is properly centered even when LOA > Lpp
-    const geometryCenterX = geometryBounds.centerX;
+    const geometryCenterX = Number.isFinite(geometryBounds.centerX) ? geometryBounds.centerX : 0;
+
+    // Validate geometryCenterX to prevent NaN
+    if (!Number.isFinite(geometryCenterX)) {
+      console.warn("[Hull2DPlan] Invalid geometryCenterX calculated:", {
+        centerX: geometryBounds.centerX,
+        geometryBounds,
+      });
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500">
+          Unable to calculate geometry center
+        </div>
+      );
+    }
 
     // Coordinate transformation for Plan View (top-down projection)
     // In Plan View, we're looking DOWN at the hull:
@@ -525,6 +538,22 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
     // Note: In SVG, Y increases downward, so "above" means smaller Y values
     // CRITICAL: This orientation shows stern at left, bow at right, centerline horizontal
     const toSVG = (x: number, y: number): [number, number] => {
+      // Validate inputs first - check for NaN, Infinity, and -Infinity
+      if (
+        !Number.isFinite(x) ||
+        !Number.isFinite(y) ||
+        !Number.isFinite(scale) ||
+        !Number.isFinite(geometryCenterX) ||
+        Math.abs(x) === Infinity ||
+        Math.abs(y) === Infinity ||
+        Math.abs(scale) === Infinity ||
+        Math.abs(geometryCenterX) === Infinity
+      ) {
+        console.warn("[Hull2DPlan] Invalid input to toSVG:", { x, y, scale, geometryCenterX });
+        // Return center of viewport as safe fallback
+        return [svgWidth / 2, svgHeight / 2];
+      }
+
       // X coordinate: longitudinal position (stern to bow)
       const svgX = svgWidth / 2 + (x - geometryCenterX) * scale;
 
@@ -534,9 +563,23 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
       // Use + instead of - so that positive y (starboard) goes down (larger SVG Y)
       const svgY = svgHeight / 2 + y * scale;
 
-      // Validate coordinates are within reasonable bounds
-      if (!Number.isFinite(svgX) || !Number.isFinite(svgY)) {
-        console.warn("[Hull2DPlan] Invalid SVG coordinate transformation:", { x, y, svgX, svgY });
+      // Validate output coordinates and return safe fallback if invalid
+      if (
+        !Number.isFinite(svgX) ||
+        !Number.isFinite(svgY) ||
+        Math.abs(svgX) === Infinity ||
+        Math.abs(svgY) === Infinity
+      ) {
+        console.warn("[Hull2DPlan] Invalid SVG coordinate transformation:", {
+          x,
+          y,
+          svgX,
+          svgY,
+          scale,
+          geometryCenterX,
+        });
+        // Return center of viewport as safe fallback
+        return [svgWidth / 2, svgHeight / 2];
       }
 
       return [svgX, svgY];
@@ -884,65 +927,89 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
               visibility.stations &&
               Number.isFinite(beam) &&
               beam > 0 &&
-              stations.map((station) => {
-                const [sx] = toSVG(station.x, 0);
-                const isHovered = hoveredStation === station.number;
-                const dimmed = hoveredLegendItem && hoveredLegendItem !== "stations";
+              stations
+                .filter((station) => Number.isFinite(station.x))
+                .map((station) => {
+                  const [sx] = toSVG(station.x, 0);
+                  const isHovered = hoveredStation === station.number;
+                  const dimmed = hoveredLegendItem && hoveredLegendItem !== "stations";
 
-                return (
-                  <g
-                    key={station.number}
-                    onMouseEnter={() => setHoveredStation(station.number)}
-                    onMouseLeave={() => setHoveredStation(null)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <line
-                      x1={toSVG(station.x, -beam / 2)[0]}
-                      y1={toSVG(station.x, -beam / 2)[1]}
-                      x2={toSVG(station.x, beam / 2)[0]}
-                      y2={toSVG(station.x, beam / 2)[1]}
-                      stroke={isHovered ? "#3b82f6" : "#d1d5db"}
-                      strokeWidth={isHovered ? "1.5" : "0.5"}
-                      strokeDasharray="2,2"
-                      opacity={dimmed ? 0.3 : 1}
-                      style={{ transition: "all 0.3s ease" }}
-                    />
-                    <text
-                      x={sx}
-                      y={toSVG(station.x, beam / 2 + 3)[1]}
-                      textAnchor="middle"
-                      className={isHovered ? "fill-blue-600 font-semibold" : "fill-gray-400"}
-                      style={{ fontSize: isHovered ? "11px" : "10px", transition: "all 0.2s ease" }}
+                  // Validate coordinates before rendering
+                  if (!Number.isFinite(sx)) {
+                    return null;
+                  }
+
+                  const [x1, y1] = toSVG(station.x, -beam / 2);
+                  const [x2, y2] = toSVG(station.x, beam / 2);
+                  const [, labelY] = toSVG(station.x, beam / 2 + 3);
+
+                  if (
+                    !Number.isFinite(x1) ||
+                    !Number.isFinite(y1) ||
+                    !Number.isFinite(x2) ||
+                    !Number.isFinite(y2) ||
+                    !Number.isFinite(labelY)
+                  ) {
+                    return null;
+                  }
+
+                  return (
+                    <g
+                      key={station.number}
+                      onMouseEnter={() => setHoveredStation(station.number)}
+                      onMouseLeave={() => setHoveredStation(null)}
+                      style={{ cursor: "pointer" }}
                     >
-                      {station.number}
-                    </text>
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke={isHovered ? "#3b82f6" : "#d1d5db"}
+                        strokeWidth={isHovered ? "1.5" : "0.5"}
+                        strokeDasharray="2,2"
+                        opacity={dimmed ? 0.3 : 1}
+                        style={{ transition: "all 0.3s ease" }}
+                      />
+                      <text
+                        x={sx}
+                        y={labelY}
+                        textAnchor="middle"
+                        className={isHovered ? "fill-blue-600 font-semibold" : "fill-gray-400"}
+                        style={{
+                          fontSize: isHovered ? "11px" : "10px",
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        {station.number}
+                      </text>
 
-                    {/* Tooltip on hover */}
-                    {isHovered && (
-                      <g>
-                        <rect
-                          x={sx - 30}
-                          y={toSVG(station.x, beam / 2 + 3)[1] + 5}
-                          width="60"
-                          height="18"
-                          rx="3"
-                          fill="#1f2937"
-                          opacity="0.9"
-                        />
-                        <text
-                          x={sx}
-                          y={toSVG(station.x, beam / 2 + 3)[1] + 17}
-                          textAnchor="middle"
-                          fill="#ffffff"
-                          style={{ fontSize: "9px" }}
-                        >
-                          x = {station.x.toFixed(1)}m
-                        </text>
-                      </g>
-                    )}
-                  </g>
-                );
-              })}
+                      {/* Tooltip on hover */}
+                      {isHovered && (
+                        <g>
+                          <rect
+                            x={sx - 30}
+                            y={labelY + 5}
+                            width="60"
+                            height="18"
+                            rx="3"
+                            fill="#1f2937"
+                            opacity="0.9"
+                          />
+                          <text
+                            x={sx}
+                            y={labelY + 17}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            style={{ fontSize: "9px" }}
+                          >
+                            x = {station.x.toFixed(1)}m
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  );
+                })}
 
             {/* Waterlines with gradient strokes and animations */}
             {showWaterlines &&
@@ -989,98 +1056,170 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                       )}
 
                       {/* Label with background */}
-                      {(idx % 2 === 0 || isHovered) && (
-                        <g>
-                          <rect
-                            x={toSVG(lpp / 2 + 6, wl.points[wl.points.length - 1][1])[0]}
-                            y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1] - 10}
-                            width="55"
-                            height="14"
-                            rx="2"
-                            fill={isHovered ? "#3b82f6" : "#ffffff"}
-                            opacity={isHovered ? 0.95 : 0.85}
-                            stroke={baseColor}
-                            strokeWidth="0.5"
-                          />
-                          <text
-                            x={toSVG(lpp / 2 + 33, 0)[0]}
-                            y={toSVG(lpp / 2, wl.points[wl.points.length - 1][1])[1] - 1}
-                            className={isHovered ? "fill-white font-semibold" : "fill-blue-600"}
-                            style={{ fontSize: "9px" }}
-                          >
-                            WL{idx} {wl.depth.toFixed(1)}m
-                          </text>
-                        </g>
-                      )}
+                      {(idx % 2 === 0 || isHovered) &&
+                        Number.isFinite(lpp) &&
+                        lpp > 0 &&
+                        wl.points.length > 0 &&
+                        Number.isFinite(wl.points[wl.points.length - 1][1]) && (
+                          <g>
+                            {(() => {
+                              const lastPoint = wl.points[wl.points.length - 1];
+                              const [rectX, rectY] = toSVG(lpp / 2 + 6, lastPoint[1]);
+                              const [textX, textY] = toSVG(lpp / 2 + 33, 0);
+                              const [labelY] = toSVG(lpp / 2, lastPoint[1]);
+
+                              // Only render if all coordinates are valid
+                              if (
+                                !Number.isFinite(rectX) ||
+                                !Number.isFinite(rectY) ||
+                                !Number.isFinite(textX) ||
+                                !Number.isFinite(textY) ||
+                                !Number.isFinite(labelY)
+                              ) {
+                                return null;
+                              }
+
+                              return (
+                                <>
+                                  <rect
+                                    x={rectX}
+                                    y={rectY - 10}
+                                    width="55"
+                                    height="14"
+                                    rx="2"
+                                    fill={isHovered ? "#3b82f6" : "#ffffff"}
+                                    opacity={isHovered ? 0.95 : 0.85}
+                                    stroke={baseColor}
+                                    strokeWidth="0.5"
+                                  />
+                                  <text
+                                    x={textX}
+                                    y={labelY - 1}
+                                    className={
+                                      isHovered ? "fill-white font-semibold" : "fill-blue-600"
+                                    }
+                                    style={{ fontSize: "9px" }}
+                                  >
+                                    WL{idx} {wl.depth.toFixed(1)}m
+                                  </text>
+                                </>
+                              );
+                            })()}
+                          </g>
+                        )}
                     </g>
                   );
                 }
               )}
 
             {/* Dimensions */}
-            {showDimensionsState && (
-              <>
-                <line
-                  x1={toSVG(-lpp / 2, -beam / 2 - 8)[0]}
-                  y1={toSVG(-lpp / 2, -beam / 2 - 8)[1]}
-                  x2={toSVG(lpp / 2, -beam / 2 - 8)[0]}
-                  y2={toSVG(lpp / 2, -beam / 2 - 8)[1]}
-                  stroke="#374151"
-                  strokeWidth="1.2"
-                  markerStart="url(#arrowhead-left)"
-                  markerEnd="url(#arrowhead-right)"
-                />
-                <rect
-                  x={svgWidth / 2 - 45}
-                  y={toSVG(0, -beam / 2 - 8)[1] - 20}
-                  width="90"
-                  height="16"
-                  rx="3"
-                  fill="#ffffff"
-                  stroke="#3b82f6"
-                  strokeWidth="1"
-                />
-                <text
-                  x={svgWidth / 2}
-                  y={toSVG(0, -beam / 2 - 8)[1] - 9}
-                  textAnchor="middle"
-                  className="fill-gray-900 font-bold"
-                  style={{ fontSize: "11px" }}
-                >
-                  Lpp = {lpp.toFixed(2)} m
-                </text>
+            {showDimensionsState &&
+              Number.isFinite(lpp) &&
+              lpp > 0 &&
+              Number.isFinite(beam) &&
+              beam > 0 && (
+                <>
+                  {(() => {
+                    const [x1, y1] = toSVG(-lpp / 2, -beam / 2 - 8);
+                    const [x2, y2] = toSVG(lpp / 2, -beam / 2 - 8);
+                    const [, dimY] = toSVG(0, -beam / 2 - 8);
 
-                <line
-                  x1={toSVG(-lpp / 2 - 8, -beam / 2)[0]}
-                  y1={toSVG(-lpp / 2 - 8, -beam / 2)[1]}
-                  x2={toSVG(-lpp / 2 - 8, beam / 2)[0]}
-                  y2={toSVG(-lpp / 2 - 8, beam / 2)[1]}
-                  stroke="#374151"
-                  strokeWidth="1.2"
-                  markerStart="url(#arrowhead-left)"
-                  markerEnd="url(#arrowhead-right)"
-                />
-                <rect
-                  x={toSVG(-lpp / 2 - 8, 0)[0] - 60}
-                  y={svgHeight / 2 - 10}
-                  width="80"
-                  height="16"
-                  rx="3"
-                  fill="#ffffff"
-                  stroke="#3b82f6"
-                  strokeWidth="1"
-                />
-                <text
-                  x={toSVG(-lpp / 2 - 8, 0)[0] - 20}
-                  y={svgHeight / 2 + 1}
-                  textAnchor="middle"
-                  className="fill-gray-900 font-bold"
-                  style={{ fontSize: "11px" }}
-                >
-                  B = {beam.toFixed(2)} m
-                </text>
-              </>
-            )}
+                    // Only render if all coordinates are valid
+                    if (
+                      !Number.isFinite(x1) ||
+                      !Number.isFinite(y1) ||
+                      !Number.isFinite(x2) ||
+                      !Number.isFinite(y2) ||
+                      !Number.isFinite(dimY)
+                    ) {
+                      return null;
+                    }
+
+                    return (
+                      <>
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke="#374151"
+                          strokeWidth="1.2"
+                          markerStart="url(#arrowhead-left)"
+                          markerEnd="url(#arrowhead-right)"
+                        />
+                        <rect
+                          x={svgWidth / 2 - 45}
+                          y={dimY - 20}
+                          width="90"
+                          height="16"
+                          rx="3"
+                          fill="#ffffff"
+                          stroke="#3b82f6"
+                          strokeWidth="1"
+                        />
+                        <text
+                          x={svgWidth / 2}
+                          y={dimY - 9}
+                          textAnchor="middle"
+                          className="fill-gray-900 font-bold"
+                          style={{ fontSize: "11px" }}
+                        >
+                          Lpp = {lpp.toFixed(2)} m
+                        </text>
+                        {(() => {
+                          const [beamX1, beamY1] = toSVG(-lpp / 2 - 8, -beam / 2);
+                          const [beamX2, beamY2] = toSVG(-lpp / 2 - 8, beam / 2);
+                          const [beamLabelX] = toSVG(-lpp / 2 - 8, 0);
+
+                          if (
+                            !Number.isFinite(beamX1) ||
+                            !Number.isFinite(beamY1) ||
+                            !Number.isFinite(beamX2) ||
+                            !Number.isFinite(beamY2) ||
+                            !Number.isFinite(beamLabelX)
+                          ) {
+                            return null;
+                          }
+
+                          return (
+                            <>
+                              <line
+                                x1={beamX1}
+                                y1={beamY1}
+                                x2={beamX2}
+                                y2={beamY2}
+                                stroke="#374151"
+                                strokeWidth="1.2"
+                                markerStart="url(#arrowhead-left)"
+                                markerEnd="url(#arrowhead-right)"
+                              />
+                              <rect
+                                x={beamLabelX - 60}
+                                y={svgHeight / 2 - 10}
+                                width="80"
+                                height="16"
+                                rx="3"
+                                fill="#ffffff"
+                                stroke="#3b82f6"
+                                strokeWidth="1"
+                              />
+                              <text
+                                x={beamLabelX - 20}
+                                y={svgHeight / 2 + 1}
+                                textAnchor="middle"
+                                className="fill-gray-900 font-bold"
+                                style={{ fontSize: "11px" }}
+                              >
+                                B = {beam.toFixed(2)} m
+                              </text>
+                            </>
+                          );
+                        })()}
+                      </>
+                    );
+                  })()}
+                </>
+              )}
 
             {/* LCB marker with glow effect */}
             {candidate.lcbPctLpp && visibility.lcb && (
