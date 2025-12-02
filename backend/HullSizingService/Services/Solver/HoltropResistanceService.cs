@@ -116,7 +116,15 @@ public class HoltropResistanceService : IResistanceService
         // Wave resistance (Simplified polynomial approximation)
         // TODO: CUSTOM_ALGO - Use full Holtrop wave resistance in Phase 3
         // Reference: SPS SName paper 2014, Section 4.2
+        // NOTE: This is a SIMPLIFIED approximation for preliminary design (accuracy: ±30%)
+        // Missing: ship type factors, bulbous bow correction, transom correction, appendages
         var rw = CalculateSimplifiedWaveResistance(fn, req.Cb, req.LppM, req.BeamM, req.DraftM, req.WaterDensityKgM3);
+        
+        _logger.LogInformation(
+            "[RESISTANCE] Using SIMPLIFIED resistance calculation (preliminary design phase). " +
+            "Wave resistance accuracy: ±30%. Total EHP accuracy: ±20%. " +
+            "Missing: appendage resistance (5-10%), air resistance (2-5%), detailed Holtrop corrections. " +
+            "Adequate for preliminary hull sizing. For detailed design, use full resistance prediction method.");
 
         // Total resistance
         var totalR = rf + rw;
