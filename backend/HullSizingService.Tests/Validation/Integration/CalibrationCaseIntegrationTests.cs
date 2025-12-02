@@ -3,6 +3,7 @@ using HullSizingService.Data;
 using HullSizingService.Services;
 using HullSizingService.Services.Solver;
 using HullSizingService.Services.Validation;
+using HullSizingService.Tests.Helpers;
 using HullSizingService.Tests.TestData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -204,9 +205,13 @@ public class CalibrationCaseIntegrationTests : IDisposable
         alexanderResult.ViolatesLimit.Should().BeFalse(
             $"Design should not violate Alexander Limit. Fn={candidate.Fn:F3}, Cb={candidate.Cb:F3}");
 
+        // Convert SolverCandidate to CandidateDesign for validation
+        // (ValidateAgainstExpectedRanges expects CandidateDesign entity, not SolverCandidate)
+        var candidateDesign = TestHelpers.MapSolverCandidateToCandidateDesign(candidate, Guid.NewGuid());
+
         // Validate against expected ranges
         var validationResult = _validationService.ValidateAgainstExpectedRanges(
-            candidate,
+            candidateDesign,
             "product_carrier",
             new ValidationToleranceConfig
             {
