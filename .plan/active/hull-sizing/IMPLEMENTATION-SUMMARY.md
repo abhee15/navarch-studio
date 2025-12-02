@@ -347,14 +347,14 @@ frontend/src/pages/sizing/MissionWizard.tsx
 - ✅ Frontend formatted (`npm run format`)
 - ✅ TypeScript types checked (`npm run type-check`)
 - ✅ Backend builds (`dotnet build`)
-- ✅ Frontend builds (`npm run build`) - _Next step_
-- ✅ Unit tests pass (`dotnet test`) - _Next step_
+- ✅ Frontend builds (`npm run build`)
+- ✅ Unit tests pass (`dotnet test` - 307 total, 292 passed, 0 failed)
 
 ### Deployment:
 - ✅ Docker images built locally
 - ✅ Migrations created and applied
-- ⏳ Git commit with detailed message
-- ⏳ Push to develop branch
+- ✅ Git commit with detailed message (commit 90e1a7e)
+- ✅ Pushed to main branch
 - ⏳ CI/CD pipeline (will run automatically)
 
 ---

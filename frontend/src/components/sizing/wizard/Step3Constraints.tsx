@@ -4,13 +4,14 @@ import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import { FormField } from "../../ui/form-field";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 import {
   validateField,
   isStep3Valid,
   type ValidationErrors,
   type TouchedFields,
 } from "../../../utils/wizardValidation";
+import { isConstraintApplicable, getConstraintTooltip } from "../../../utils/vesselConstraintRules";
 
 interface Step3Props {
   formData: Partial<CreateMissionCaseDto>;
@@ -23,11 +24,11 @@ interface Step3Props {
 }
 
 const CANAL_PRESETS = [
-  { name: "None", loa: null, beam: null, draft: null, airdraft: null },
-  { name: "Panamax", loa: 294.1, beam: 32.3, draft: 12.0, airdraft: 57.91 },
-  { name: "Neo-Panamax", loa: 366.0, beam: 49.0, draft: 15.2, airdraft: 57.91 },
-  { name: "Suezmax", loa: null, beam: 50.0, draft: 20.1, airdraft: 68.0 },
-  { name: "Malaccamax", loa: 400.0, beam: 59.0, draft: 20.5, airdraft: null },
+  { key: "none", name: "None", loa: null, beam: null, draft: null, airdraft: null },
+  { key: "panamax", name: "Panamax", loa: 294.1, beam: 32.3, draft: 12.0, airdraft: 57.91 },
+  { key: "neopanamax", name: "Neo-Panamax", loa: 366.0, beam: 49.0, draft: 15.2, airdraft: 57.91 },
+  { key: "suezmax", name: "Suezmax", loa: null, beam: 50.0, draft: 20.1, airdraft: 68.0 },
+  { key: "malaccamax", name: "Malaccamax", loa: 400.0, beam: 59.0, draft: 20.5, airdraft: null },
 ];
 
 export const Step3Constraints: React.FC<Step3Props> = ({
@@ -99,18 +100,48 @@ export const Step3Constraints: React.FC<Step3Props> = ({
       <div className="space-y-2">
         <Label>Canal/Lock Presets</Label>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {CANAL_PRESETS.map((preset) => (
-            <button
-              key={preset.name}
-              type="button"
-              onClick={() => applyPreset(preset)}
-              className="rounded-md border border-input px-3 py-2 text-sm hover:bg-accent/10"
-            >
-              {preset.name}
-            </button>
-          ))}
+          {CANAL_PRESETS.map((preset) => {
+            const applicability = isConstraintApplicable(
+              preset.key,
+              formData.missionCategory,
+              formData.missionType
+            );
+            const isApplicable = preset.key === "none" || applicability.applicable;
+            const tooltip = getConstraintTooltip(preset.key, isApplicable, applicability.reason);
+
+            return (
+              <div key={preset.name} className="relative group">
+                <button
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  disabled={!isApplicable}
+                  className={`w-full rounded-md border px-3 py-2 text-sm transition-colors ${
+                    isApplicable
+                      ? "border-input hover:bg-accent/10 cursor-pointer"
+                      : "border-muted bg-muted/30 text-muted-foreground cursor-not-allowed opacity-60"
+                  }`}
+                  title={tooltip}
+                >
+                  {preset.name}
+                  {!isApplicable && <Info className="inline-block ml-1 h-3 w-3" />}
+                </button>
+                {!isApplicable && tooltip && (
+                  <div className="hidden group-hover:block absolute z-10 w-64 p-2 mt-1 text-xs bg-popover border border-border rounded-md shadow-lg">
+                    <p className="text-muted-foreground whitespace-pre-line">{tooltip}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <p className="text-xs text-muted-foreground">Quick apply standard canal/lock constraints</p>
+        <p className="text-xs text-muted-foreground">
+          Quick apply standard canal/lock constraints
+          {formData.missionType && (
+            <span className="ml-2 text-blue-600 dark:text-blue-400">
+              • Filtered for {formData.missionType}
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

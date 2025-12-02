@@ -40,7 +40,9 @@ export const Step4Options: React.FC<Step4Props> = ({
     }
   })();
 
-  const [maxCandidates, setMaxCandidates] = useState(externalMaxCandidates ?? savedOptions.maxCandidates ?? 5);
+  const [maxCandidates, setMaxCandidates] = useState(
+    externalMaxCandidates ?? savedOptions.maxCandidates ?? 5
+  );
   const [minFn, setMinFn] = useState(savedOptions.minFn ?? 0.15);
   const [maxFn, setMaxFn] = useState(savedOptions.maxFn ?? 0.35);
 
