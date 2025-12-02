@@ -1032,7 +1032,7 @@ export const Hull2DPlan = forwardRef<SVGSVGElement, Hull2DPlanProps>(
                       onMouseEnter={() => setHoveredWaterline(idx)}
                       onMouseLeave={() => setHoveredWaterline(null)}
                       style={{
-                        opacity: dimmed ? 0.3 : 0,
+                        opacity: dimmed ? 0.3 : 1,
                         animation: `fadeIn 0.4s ease-in forwards ${idx * 0.08}s`,
                         transition: "opacity 0.3s ease",
                       }}
