@@ -124,6 +124,8 @@ export const MissionWizard: React.FC = observer(() => {
     return "first_principles";
   });
 
+  const [solverMaxCandidates, setSolverMaxCandidates] = useState<number>(5);
+
   useEffect(() => {
     sizingStore.ensureShipDMetadataLoaded();
   }, [sizingStore]);
@@ -383,7 +385,7 @@ export const MissionWizard: React.FC = observer(() => {
         missionCaseId,
         mode: solverMode,
         options: {
-          maxCandidates: 5,
+          maxCandidates: solverMaxCandidates,
           additionalParameters: additionalParameters,
         },
         vesselCategory: formData.missionCategory,
@@ -491,6 +493,8 @@ export const MissionWizard: React.FC = observer(() => {
             updateFormData={updateFormData}
             solverMode={solverMode}
             setSolverMode={setSolverMode}
+            solverMaxCandidates={solverMaxCandidates}
+            setSolverMaxCandidates={setSolverMaxCandidates}
             onNext={nextStep}
             onPrevious={previousStep}
             onSubmit={handleSubmit}

@@ -158,7 +158,8 @@ try
     builder.Services.AddScoped<HullSizingService.Services.Validation.IDesignValidationService, HullSizingService.Services.Validation.DesignValidationService>();
     builder.Services.AddScoped<HullSizingService.Services.Validation.IShipDConstraintValidationService, HullSizingService.Services.Validation.ShipDConstraintValidationService>();
     builder.Services.AddScoped<HullSizingService.Services.Validation.IGeometryJsonValidationService, HullSizingService.Services.Validation.GeometryJsonValidationService>();
-    Log.Information("Design validation services registered (expected ranges, Alexander Limit, resistance trends, constraints, geometry JSON validation)");
+    builder.Services.AddScoped<HullSizingService.Services.Validation.IConstraintFeasibilityValidator, HullSizingService.Services.Validation.ConstraintFeasibilityValidator>();
+    Log.Information("Design validation services registered (expected ranges, Alexander Limit, resistance trends, constraints, geometry JSON validation, pre-flight feasibility)");
 
     // NURBS Optimization Services
     builder.Services.AddScoped<HullSizingService.Services.Integration.IIntegrationEngine, HullSizingService.Services.Integration.SimpleIntegrationEngine>();

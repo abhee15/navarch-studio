@@ -87,17 +87,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -188,17 +269,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -289,17 +451,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -391,17 +634,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -492,17 +816,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -594,17 +999,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -695,17 +1181,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -797,17 +1364,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -899,17 +1547,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -1000,17 +1729,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -1101,17 +1911,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -1202,17 +2093,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -1304,17 +2276,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -1405,17 +2458,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }
@@ -1505,17 +2639,98 @@
       },
       "familyDefaults": {
         "bulbous_bow": {
-          "bit_BB": 1
+          "bit_BB": 1,
+          "Lbb": 0.04,
+          "Hbb": 0.8,
+          "Bbb": 0.6,
+          "Lbbm": 0.5,
+          "Rbb": 0.15,
+          "Beta": 15,
+          "Rc": 0.3,
+          "Rk": 0.2
         },
         "wave_piercing": {
           "bit_BB": 0,
-          "Beta": 5
+          "Beta": 20,
+          "Rc": 0.25,
+          "Rk": 0.3
+        },
+        "fine_entry": {
+          "bit_BB": 0,
+          "Beta": 10,
+          "Rc": 0.4,
+          "Rk": 0.1
+        },
+        "straight_raked": {
+          "bit_BB": 0,
+          "Beta": 5,
+          "Rc": 0.3,
+          "Rk": 0.15
+        },
+        "axe_bow": {
+          "bit_BB": 0,
+          "Beta": 25,
+          "Rk": 0.4,
+          "Rc": 0.2
         },
         "transom_stern": {
-          "Atrans": 0.5
+          "Atrans": 0.7,
+          "Beta_trans": 10,
+          "Bc_trans": 0.85,
+          "Rc_trans": 0.3,
+          "Rk_trans": 0.15,
+          "Kappa_stern": 0.5
+        },
+        "cruiser_stern": {
+          "Atrans": 0.2,
+          "Adel_stern": 0.4,
+          "Bdel_stern": 0.3,
+          "Rc_trans": 0.4,
+          "Kappa_stern": 0.6
+        },
+        "canoe_stern": {
+          "Atrans": 0.1,
+          "Adel_stern": 0.6,
+          "Bdel_stern": 0.5,
+          "Rc_trans": 0.5,
+          "Kappa_stern": 0.5
         },
         "twin_skeg": {
-          "bit_SB": 1
+          "bit_SB": 1,
+          "Atrans": 0.6,
+          "SK_z": 0.3,
+          "Lsb": 0.15,
+          "Hsb": 0.4,
+          "Bsb": 0.3,
+          "Lsbm": 0.5,
+          "Rsb": 0.2
+        },
+        "skeg_stern": {
+          "bit_SB": 1,
+          "Atrans": 0.5,
+          "SK_z": 0.2,
+          "Lsb": 0.12,
+          "HSBOA": 0.5,
+          "Bsb": 0.25,
+          "Rsb": 0.15
+        },
+        "fine_midship": {
+          "bit_EP_T": 1,
+          "Rc": 0.4
+        },
+        "full_midship": {
+          "bit_EP_T": 0,
+          "Rc": 0.3,
+          "Cdrft": 6.5
+        },
+        "deep_v_midship": {
+          "Cdrft": 25,
+          "Adrft": 0.4,
+          "Bdrft": 0.3
+        },
+        "barge_midship": {
+          "bit_EP_S": 1,
+          "Rc": 0.2
         }
       }
     }

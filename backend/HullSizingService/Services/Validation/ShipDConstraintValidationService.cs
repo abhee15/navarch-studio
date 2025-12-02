@@ -127,7 +127,7 @@ public class ShipDConstraintValidationService : IShipDConstraintValidationServic
 
         var message = isValid
             ? $"Bulb dimensions valid: BulbWidth={bulbWidthRatio:F3}, BowSectionWidth={bowSectionWidthAtBulb:F3}"
-            : $"Constraint violation: Bulb width ({bulbWidthRatio:F3}) >= bow section width ({bowSectionWidthAtBulb:F3}) at bulb height";
+            : $"Constraint violation: Bulb is wider ({bulbWidthRatio:F3}) than bow section ({bowSectionWidthAtBulb:F3}) at bulb height";
 
         var fixSuggestions = new List<string>();
         if (!isValid)

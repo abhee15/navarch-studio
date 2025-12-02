@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { CreateMissionCaseDto } from "../../../types/sizing";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
@@ -10,6 +10,8 @@ interface Step4Props {
   updateFormData: (data: Partial<CreateMissionCaseDto>) => void;
   solverMode?: "first_principles" | "data_driven_real" | "data_driven_ml";
   setSolverMode?: (mode: "first_principles" | "data_driven_real" | "data_driven_ml") => void;
+  solverMaxCandidates?: number;
+  setSolverMaxCandidates?: (count: number) => void;
   onNext: () => void;
   onPrevious: () => void;
   onSubmit: () => void;
@@ -22,20 +24,47 @@ export const Step4Options: React.FC<Step4Props> = ({
   formData,
   solverMode = "first_principles",
   setSolverMode = () => {},
+  solverMaxCandidates: externalMaxCandidates,
+  setSolverMaxCandidates: setExternalMaxCandidates,
   onPrevious,
   onSubmit,
   isGenerating,
 }) => {
-  const [maxCandidates, setMaxCandidates] = useState(5);
-  const [minFn, setMinFn] = useState(0.15);
-  const [maxFn, setMaxFn] = useState(0.35);
+  // Load saved solver options from localStorage on mount
+  const savedOptions = (() => {
+    try {
+      const saved = localStorage.getItem("sizing.solverOptions");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const [maxCandidates, setMaxCandidates] = useState(externalMaxCandidates ?? savedOptions.maxCandidates ?? 5);
+  const [minFn, setMinFn] = useState(savedOptions.minFn ?? 0.15);
+  const [maxFn, setMaxFn] = useState(savedOptions.maxFn ?? 0.35);
 
   // Locks (dimensional ratios to keep fixed)
-  const [keepFn, setKeepFn] = useState(false);
-  const [keepLOverB, setKeepLOverB] = useState(false);
-  const [keepBOverT, setKeepBOverT] = useState(false);
-  const [keepDOverT, setKeepDOverT] = useState(false);
-  const [keepCbBand, setKeepCbBand] = useState(false);
+  const [keepFn, setKeepFn] = useState(savedOptions.keepFn ?? false);
+  const [keepLOverB, setKeepLOverB] = useState(savedOptions.keepLOverB ?? false);
+  const [keepBOverT, setKeepBOverT] = useState(savedOptions.keepBOverT ?? false);
+  const [keepDOverT, setKeepDOverT] = useState(savedOptions.keepDOverT ?? false);
+  const [keepCbBand, setKeepCbBand] = useState(savedOptions.keepCbBand ?? false);
+
+  // Save solver options to localStorage whenever they change
+  useEffect(() => {
+    const options = {
+      maxCandidates,
+      minFn,
+      maxFn,
+      keepFn,
+      keepLOverB,
+      keepBOverT,
+      keepDOverT,
+      keepCbBand,
+    };
+    localStorage.setItem("sizing.solverOptions", JSON.stringify(options));
+  }, [maxCandidates, minFn, maxFn, keepFn, keepLOverB, keepBOverT, keepDOverT, keepCbBand]);
 
   return (
     <div className="space-y-6">
@@ -281,7 +310,11 @@ export const Step4Options: React.FC<Step4Props> = ({
               min="1"
               max="10"
               value={maxCandidates}
-              onChange={(e) => setMaxCandidates(parseInt(e.target.value))}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                setMaxCandidates(value);
+                setExternalMaxCandidates?.(value);
+              }}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Number of hull designs (1-10)

@@ -1,5 +1,6 @@
 using System.Linq;
 using HullSizingService.Data;
+using HullSizingService.Services.Validation;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models.Sizing;
 
@@ -16,6 +17,7 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
     private readonly IResistanceService _resistanceService;
     private readonly IStabilityScreenService _stabilityService;
     private readonly IWaterPropertiesService _waterService;
+    private readonly IConstraintFeasibilityValidator? _feasibilityValidator;
     private readonly SizingDbContext _context;
     private readonly ILogger<FirstPrinciplesSolver> _logger;
 
@@ -29,13 +31,15 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         IStabilityScreenService stabilityService,
         IWaterPropertiesService waterService,
         SizingDbContext context,
-        ILogger<FirstPrinciplesSolver> logger)
+        ILogger<FirstPrinciplesSolver> logger,
+        IConstraintFeasibilityValidator? feasibilityValidator = null)
     {
         _familyService = familyService;
         _closureService = closureService;
         _resistanceService = resistanceService;
         _stabilityService = stabilityService;
         _waterService = waterService;
+        _feasibilityValidator = feasibilityValidator;
         _context = context;
         _logger = logger;
     }
@@ -54,6 +58,29 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
 
         _logger.LogInformation("[SOLVER] Starting first-principles solve for mission {MissionId}, cargo={Cargo}, speed={Speed}kn",
             mission.Id, mission.CargoValue, mission.ServiceSpeedKn);
+
+        // Step 0: Pre-flight constraint feasibility check
+        if (_feasibilityValidator != null && (mission.CapLoaM.HasValue || mission.CapBeamM.HasValue || mission.CapDraftM.HasValue))
+        {
+            var feasibilityResult = await _feasibilityValidator.CheckAsync(mission, cancellationToken);
+
+            if (!feasibilityResult.IsFeasible)
+            {
+                _logger.LogWarning("[SOLVER] ⚠️ Pre-flight check FAILED for mission {MissionId}. Errors: {Errors}",
+                    mission.Id, string.Join("; ", feasibilityResult.Errors));
+
+                diagnostics.FailureReasons.AddRange(feasibilityResult.Errors);
+
+                // Return empty results with helpful error messages
+                return (new List<SolverCandidate>(), diagnostics);
+            }
+
+            if (feasibilityResult.Warnings.Count > 0)
+            {
+                _logger.LogInformation("[SOLVER] ℹ️ Pre-flight check passed with warnings for mission {MissionId}. Warnings: {Warnings}",
+                    mission.Id, string.Join("; ", feasibilityResult.Warnings));
+            }
+        }
 
         // Step 1: Convert payload to target displacement
         var targetDisplacementT = await EstimateTargetDisplacementAsync(mission);
@@ -152,6 +179,18 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         {
             _logger.LogWarning("[SOLVER] {NullCount} of {TotalCount} candidates failed to generate (displacement closure failed)",
                 nullCount, allCandidates.Length);
+
+            // Smart diagnostics: Detect failure patterns to help user understand why
+            if (nullCount >= 3 && allCandidates.Length >= 3)
+            {
+                // Check if failures are concentrated in high/low Cb range
+                // This helps diagnose "constraints too tight" vs "physics impossible"
+                _logger.LogWarning(
+                    "[SOLVER] ⚠️ SMART DIAGNOSTIC: {FailurePercent:F0}% of variants failed. Possible causes: constraints too restrictive (check beam/draft), insufficient displacement for cargo, or extreme Froude number range.",
+                    (decimal)nullCount / allCandidates.Length * 100m);
+
+                diagnostics.FailureReasons.Add($"high_failure_rate_{nullCount}_of_{allCandidates.Length}");
+            }
         }
 
         var candidates = allCandidates
