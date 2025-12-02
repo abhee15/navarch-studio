@@ -249,6 +249,7 @@ function sanitizeOffsetsGrid(offsetsGrid: OffsetsGrid): OffsetsGrid {
  * Normalizes geometry JSON to OffsetsGrid format
  * Handles both ShipD and OffsetsGrid formats
  * Sanitizes NaN, null, undefined values to 0
+ * Validates geometry quality and provides warnings
  */
 export function normalizeGeometry(geometryJson: string): OffsetsGrid | null {
   if (!geometryJson) {
@@ -275,6 +276,8 @@ export function normalizeGeometry(geometryJson: string): OffsetsGrid | null {
       hasCamelCase: !!(parsed.stations || parsed.waterlines || parsed.offsets),
     });
 
+    let normalizedGrid: OffsetsGrid | null = null;
+
     if (format === "offsetsgrid") {
       // Already in OffsetsGrid format, validate and return
       // Handle both camelCase and PascalCase property names
@@ -289,17 +292,21 @@ export function normalizeGeometry(geometryJson: string): OffsetsGrid | null {
           offsets,
         };
         // Sanitize to handle NaN, null, undefined values
-        return sanitizeOffsetsGrid(normalized);
+        normalizedGrid = sanitizeOffsetsGrid(normalized);
       }
     } else if (format === "shipd") {
       // Convert from ShipD to OffsetsGrid
       const converted = convertShipDToOffsetsGrid(parsed as ShipDGeometry);
       // Sanitize to handle NaN, null, undefined values
-      return sanitizeOffsetsGrid(converted);
+      normalizedGrid = sanitizeOffsetsGrid(converted);
     }
 
-    console.debug("[geometryFormatConverter] normalizeGeometry: format is unknown, returning null");
-    return null;
+    if (!normalizedGrid) {
+      console.debug("[geometryFormatConverter] normalizeGeometry: format is unknown, returning null");
+      return null;
+    }
+
+    return normalizedGrid;
   } catch (error) {
     console.error("[geometryFormatConverter] Failed to normalize geometry:", error);
     return null;

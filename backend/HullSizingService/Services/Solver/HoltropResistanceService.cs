@@ -22,15 +22,61 @@ public class HoltropResistanceService : IResistanceService
         // Convert speed from knots to m/s
         var speedMs = req.SpeedKn * 0.5144m;
 
+        // Input validation
+        if (req.LwlM <= 0)
+        {
+            throw new ArgumentException($"Invalid LwlM: {req.LwlM} (must be positive)");
+        }
+        if (req.SpeedKn < 0)
+        {
+            throw new ArgumentException($"Invalid SpeedKn: {req.SpeedKn} (must be non-negative)");
+        }
+        if (req.KinematicViscosityM2S <= 0)
+        {
+            throw new ArgumentException($"Invalid KinematicViscosityM2S: {req.KinematicViscosityM2S} (must be positive)");
+        }
+
         // Froude number: Fn = V / sqrt(g * Lwl)
         var fn = speedMs / (decimal)Math.Sqrt((double)(G * req.LwlM));
+
+        // Validate Froude number is reasonable (typical range: 0.1-0.5 for most vessels)
+        if (fn < 0 || fn > 1.0m)
+        {
+            _logger.LogWarning(
+                "[RESISTANCE] Unusual Froude Number {Fn:F3} for Lwl={Lwl}m, Speed={Speed}kn. Typical range: 0.1-0.5",
+                fn, req.LwlM, req.SpeedKn);
+        }
 
         // Reynolds number: Rn = V * Lwl / ν
         var rn = speedMs * req.LwlM / req.KinematicViscosityM2S;
 
+        // Validate Reynolds number is reasonable
+        if (rn < 1e5m || rn > 1e10m)
+        {
+            _logger.LogWarning(
+                "[RESISTANCE] Unusual Reynolds Number {Rn:E2} for Lwl={Lwl}m, Speed={Speed}kn, ν={Nu}. Typical range: 10^6 - 10^9",
+                rn, req.LwlM, req.SpeedKn, req.KinematicViscosityM2S);
+        }
+
         // ITTC-57 friction coefficient: Cf = 0.075 / (log₁₀(Rn) - 2)²
         var logRn = (decimal)Math.Log10((double)rn);
-        var cf = 0.075m / (decimal)Math.Pow((double)(logRn - 2), 2);
+
+        // Validate logRn is in reasonable range (prevents division by zero or invalid results)
+        if (logRn <= 2.0m || logRn > 12.0m)
+        {
+            _logger.LogError(
+                "[RESISTANCE] Invalid log₁₀(Rn)={LogRn:F2} for Rn={Rn:E2}. This indicates invalid Reynolds number calculation.",
+                logRn, rn);
+            throw new InvalidOperationException($"Invalid Reynolds number calculation: log₁₀(Rn)={logRn:F2} (expected > 2.0)");
+        }
+
+        var denominator = logRn - 2.0m;
+        if (denominator <= 0)
+        {
+            throw new InvalidOperationException($"Invalid ITTC-57 calculation: log₁₀(Rn)-2={denominator:F2} (must be positive)");
+        }
+
+        var cf = 0.075m / (decimal)Math.Pow((double)denominator, 2);
 
         // Form factor (1+k₁) - Simplified estimate based on L/B and B/T
         // TODO: CUSTOM_ALGO - Use full Holtrop formula in Phase 3
@@ -41,7 +87,28 @@ public class HoltropResistanceService : IResistanceService
 
         // Wetted surface (Simplified Holtrop formula)
         var s = req.LwlM * (2 * req.DraftM + req.BeamM) * (decimal)Math.Sqrt((double)req.Cm) * (0.453m + 0.4425m * req.Cb - 0.2862m * req.Cm - 0.003467m * bOverT + 0.3696m * req.Cwp);
-        if (s < 0) s = req.LwlM * req.BeamM * 2.5m; // Fallback to simple box approximation
+
+        // Validate wetted surface calculation
+        if (s <= 0)
+        {
+            // Fallback to simple box approximation (conservative estimate)
+            s = req.LwlM * req.BeamM * 2.5m;
+            _logger.LogWarning(
+                "[RESISTANCE] Wetted surface calculation returned invalid value ({S:F2}m²). Using fallback box approximation: {Fallback:F2}m². " +
+                "Parameters: Lwl={Lwl}m, B={Beam}m, T={Draft}m, Cb={Cb:F3}, Cm={Cm:F3}, Cwp={Cwp:F3}",
+                s, s, req.LwlM, req.BeamM, req.DraftM, req.Cb, req.Cm, req.Cwp);
+        }
+
+        // Additional validation: wetted surface should be reasonable
+        var minExpectedS = req.LwlM * req.BeamM * 1.5m; // Minimum reasonable (just bottom + sides)
+        var maxExpectedS = req.LwlM * req.BeamM * 5.0m; // Maximum reasonable (very full form)
+        if (s < minExpectedS || s > maxExpectedS)
+        {
+            _logger.LogWarning(
+                "[RESISTANCE] Wetted surface {S:F2}m² is outside expected range [{Min:F2}, {Max:F2}]m². " +
+                "This may indicate invalid hull form parameters.",
+                s, minExpectedS, maxExpectedS);
+        }
 
         // Frictional resistance: Rf = 0.5 * ρ * V² * S * Cf * (1+k₁)
         var rf = 0.5m * req.WaterDensityKgM3 * speedMs * speedMs * s * cf * formFactor / 1000m; // Convert to kN
@@ -106,20 +173,17 @@ public class HoltropResistanceService : IResistanceService
             return 0.8m * lpp * beam * fnFactor * cbFactor;
         }
     }
+
+    /// <summary>
+    /// Helper to check if a decimal is finite and non-zero
+    /// </summary>
+    private static bool IsFiniteNonZero(decimal value)
+    {
+        // Decimal doesn't have IsNormal, so we check for zero, infinity, and NaN differently
+        if (value == 0) return false;
+
+        // Check for invalid values (decimal doesn't support Infinity or NaN in the same way as double)
+        // If the value is a valid non-zero decimal, it's finite
+        return true;
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

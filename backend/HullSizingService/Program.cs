@@ -154,6 +154,12 @@ try
     builder.Services.AddScoped<IShipDToHydroMapper, ShipDToHydroMapper>();
     Log.Information("ShipD parameterization, geometry, and Hydro mapper services registered");
 
+    // Design Validation Services
+    builder.Services.AddScoped<HullSizingService.Services.Validation.IDesignValidationService, HullSizingService.Services.Validation.DesignValidationService>();
+    builder.Services.AddScoped<HullSizingService.Services.Validation.IShipDConstraintValidationService, HullSizingService.Services.Validation.ShipDConstraintValidationService>();
+    builder.Services.AddScoped<HullSizingService.Services.Validation.IGeometryJsonValidationService, HullSizingService.Services.Validation.GeometryJsonValidationService>();
+    Log.Information("Design validation services registered (expected ranges, Alexander Limit, resistance trends, constraints, geometry JSON validation)");
+
     // NURBS Optimization Services
     builder.Services.AddScoped<HullSizingService.Services.Integration.IIntegrationEngine, HullSizingService.Services.Integration.SimpleIntegrationEngine>();
     builder.Services.AddScoped<HullSizingService.Services.Geometry.IHydrostaticsCalculator, HullSizingService.Services.Geometry.NurbsHydrostaticsCalculator>();

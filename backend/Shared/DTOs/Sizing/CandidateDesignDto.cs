@@ -114,6 +114,13 @@ public record CandidateDesignDto
     public string? ReferenceVesselName { get; init; }
     public decimal? SimilarityScore { get; init; }
     public string? SolverMode { get; init; }
+
+    // Validation Results
+    /// <summary>
+    /// Validation results (JSON serialized AggregateValidationResult)
+    /// Contains warnings, errors, and validation status for design validation checks.
+    /// </summary>
+    public string? ValidationResultsJson { get; init; }
 }
 
 /// <summary>

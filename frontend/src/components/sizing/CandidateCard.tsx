@@ -24,6 +24,26 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
 
     const hasWarnings = flags.some((f) => f.includes("constrained") || f.includes("exceeded"));
 
+    // Parse validation results
+    const validationResults = useMemo(() => {
+      if (!candidate.validationResultsJson) return null;
+      try {
+        return JSON.parse(candidate.validationResultsJson);
+      } catch {
+        return null;
+      }
+    }, [candidate.validationResultsJson]);
+
+    const hasValidationErrors = validationResults?.errorCount > 0;
+    const hasValidationWarnings = validationResults?.warningCount > 0;
+    const validationStatus = validationResults?.allValid
+      ? "valid"
+      : hasValidationErrors
+      ? "error"
+      : hasValidationWarnings
+      ? "warning"
+      : null;
+
     // Check if geometry generation failed
     const geometryGenerationFailed =
       candidate.geometryGenerationStatus === "BothFailed" ||
@@ -95,6 +115,36 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
 
             {/* Warning Badges */}
             <div className="flex items-center gap-2">
+              {/* Validation Status Badge */}
+              {validationStatus && (
+                <div
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    validationStatus === "error"
+                      ? "bg-destructive/10 text-destructive border border-destructive/20"
+                      : validationStatus === "warning"
+                      ? "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-500/20"
+                      : "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
+                  }`}
+                  title={
+                    validationStatus === "error"
+                      ? `${validationResults.errorCount} validation error(s)`
+                      : validationStatus === "warning"
+                      ? `${validationResults.warningCount} validation warning(s)`
+                      : "All validations passed"
+                  }
+                >
+                  {validationStatus === "error" || validationStatus === "warning" ? (
+                    <AlertTriangle className="h-3 w-3" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  {validationStatus === "error"
+                    ? `${validationResults.errorCount} Error${validationResults.errorCount > 1 ? "s" : ""}`
+                    : validationStatus === "warning"
+                    ? `${validationResults.warningCount} Warning${validationResults.warningCount > 1 ? "s" : ""}`
+                    : "Valid"}
+                </div>
+              )}
               {/* Geometry Generation Failure Badge */}
               {geometryGenerationFailed && (
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
@@ -280,6 +330,82 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
                     <span className="font-semibold text-blue-900 dark:text-blue-200">Present</span>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Validation Results Panel */}
+          {validationResults && (hasValidationErrors || hasValidationWarnings) && (
+            <div
+              className={`rounded-lg p-3 border ${
+                hasValidationErrors
+                  ? "bg-destructive/5 border-destructive/20"
+                  : "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
+              }`}
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle
+                  className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                    hasValidationErrors
+                      ? "text-destructive"
+                      : "text-yellow-600 dark:text-yellow-400"
+                  }`}
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-semibold text-foreground mb-1.5">
+                    {hasValidationErrors
+                      ? "Validation Issues"
+                      : "Validation Warnings"}
+                  </h4>
+                  <div className="space-y-1 text-xs">
+                    {/* Show Alexander Limit status */}
+                    {validationResults.alexanderLimitValidation && (
+                      <div className="flex items-start justify-between">
+                        <span className="text-muted-foreground">Alexander Limit:</span>
+                        <span
+                          className={`font-medium ${
+                            validationResults.alexanderLimitValidation.violatesLimit
+                              ? "text-destructive"
+                              : validationResults.alexanderLimitValidation.severity === "Warning"
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : "text-green-600 dark:text-green-400"
+                          }`}
+                        >
+                          {validationResults.alexanderLimitValidation.violatesLimit
+                            ? "Exceeded"
+                            : validationResults.alexanderLimitValidation.severity === "Warning"
+                            ? "Near Limit"
+                            : "OK"}
+                        </span>
+                      </div>
+                    )}
+                    {/* Show resistance trend */}
+                    {validationResults.resistanceTrendValidation && (
+                      <div className="flex items-start justify-between">
+                        <span className="text-muted-foreground">Resistance Trend:</span>
+                        <span
+                          className={`font-medium ${
+                            validationResults.resistanceTrendValidation.severity === "Warning"
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : "text-foreground"
+                          }`}
+                        >
+                          {validationResults.resistanceTrendValidation.trendCategory}
+                        </span>
+                      </div>
+                    )}
+                    {/* Show summary counts */}
+                    {(hasValidationErrors || hasValidationWarnings) && (
+                      <div className="pt-1 mt-1 border-t border-border/50">
+                        <span className="text-muted-foreground text-[10px]">
+                          {hasValidationErrors && `${validationResults.errorCount} error(s)`}
+                          {hasValidationErrors && hasValidationWarnings && " • "}
+                          {hasValidationWarnings && `${validationResults.warningCount} warning(s)`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -32,3 +32,6 @@ if ($vector[1] -gt 0 -and $vector[2] -gt 0) {
 else {
     Write-Host "`n❌ FAILED: Taxonomy defaults are NOT being applied" -ForegroundColor Red
 }
+
+
+

@@ -276,10 +276,39 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
             var cp = family.CpMin.HasValue && family.CpMax.HasValue
                 ? (family.CpMin.Value + family.CpMax.Value) / 2.0m
                 : closure.Cb * 1.02m; // Cp ≈ Cb * 1.02
+
+            // Validate Cp is valid (should be > 0 and typically < 1.0 for most vessels)
+            if (cp <= 0 || cp > 1.5m)
+            {
+                _logger.LogWarning(
+                    "[SOLVER] Invalid Cp={Cp:F4} calculated for family '{Family}'. Clamping to reasonable bounds.",
+                    cp, family.Family);
+                cp = Math.Clamp(cp, 0.4m, 1.0m); // Typical range for commercial vessels
+            }
+
             var cwp = family.CwpMin.HasValue && family.CwpMax.HasValue
                 ? (family.CwpMin.Value + family.CwpMax.Value) / 2.0m
                 : 0.85m; // Default waterplane coefficient
-            var cm = closure.Cb / cp; // Midship coefficient
+
+            // Validate Cwp
+            if (cwp <= 0 || cwp > 1.0m)
+            {
+                _logger.LogWarning(
+                    "[SOLVER] Invalid Cwp={Cwp:F4} calculated for family '{Family}'. Using default 0.85.",
+                    cwp, family.Family);
+                cwp = 0.85m;
+            }
+
+            // Calculate Cm with division-by-zero protection
+            var cm = cp > 0 ? closure.Cb / cp : closure.Cb; // Midship coefficient (fallback if Cp invalid)
+
+            // Validate Cm is in reasonable range (typically 0.9-1.0)
+            if (cm < 0.8m || cm > 1.1m)
+            {
+                _logger.LogWarning(
+                    "[SOLVER] Unusual Cm={Cm:F4} calculated for family '{Family}'. Expected range: 0.9-1.0. This may indicate invalid Cp or Cb.",
+                    cm, family.Family);
+            }
 
             // Step 5: Stability screening
             var stabilityRequest = new StabilityRequest(
@@ -383,7 +412,31 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
                 break;
 
             case "volume":
-                var density = mission.CargoDensityTPerM3 ?? 0.5m; // Default to 0.5 t/m³
+                // Default density: 0.5 t/m³ is typical for light cargo, but should be validated
+                var density = mission.CargoDensityTPerM3 ?? 0.5m;
+
+                // Validate density is reasonable (typical range: 0.1-2.5 t/m³ for most cargo)
+                if (density < 0.1m || density > 2.5m)
+                {
+                    _logger.LogWarning(
+                        "[SOLVER] Cargo density {Density:F2} t/m³ is outside typical range [0.1, 2.5] t/m³. " +
+                        "This may lead to inaccurate displacement estimates.",
+                        density);
+
+                    // Clamp to reasonable bounds
+                    density = Math.Clamp(density, 0.1m, 2.5m);
+                    _logger.LogInformation("[SOLVER] Clamped cargo density to {Density:F2} t/m³", density);
+                }
+
+                // Warn if using default density
+                if (!mission.CargoDensityTPerM3.HasValue)
+                {
+                    _logger.LogInformation(
+                        "[SOLVER] Using default cargo density {Density:F2} t/m³ for volume-based cargo. " +
+                        "Consider specifying CargoDensityTPerM3 for more accurate results.",
+                        density);
+                }
+
                 var volume = mission.CargoVolumeM3 ?? mission.CargoValue ?? 0;
                 payloadT = volume * density;
                 break;
@@ -399,20 +452,38 @@ public class FirstPrinciplesSolver : IFirstPrinciplesSolver
         // Estimate total displacement from DWT
         // DWT ≈ payload + stores + fuel
         // Δ ≈ DWT / (DWT/Δ ratio)
-        // Typical DWT/Δ ratios:
+        // Typical DWT/Δ ratios (from prefinal_1 and industry standards):
         // - Container: 0.70
+        // - Product Carrier: 0.78 (from prefinal_1 document)
         // - Tanker: 0.85
         // - Bulker: 0.80
         // - General cargo: 0.65
         // - Fishing: 0.50
 
+        // DWT/Displacement ratios are critical for accurate sizing
+        // These values are based on typical vessel statistics but should be validated
         var dwtToDispRatio = mission.MissionType.ToLower() switch
         {
-            "commercial" when mission.CargoBasis == "teu" => 0.70m, // Container
-            "commercial" when payloadT > 100000 => 0.85m, // Tanker (large cargo)
-            "commercial" => 0.75m, // General commercial
-            _ => 0.65m // Default
+            "commercial" when mission.CargoBasis == "teu" => 0.70m, // Container (typical: 0.65-0.75)
+            "product_carrier" => 0.78m, // Product Carrier (from prefinal_1: finalized DWT/Δ = 0.78)
+            "tanker" => 0.85m, // Tanker (typical: 0.80-0.87)
+            "commercial" when payloadT > 100000 => 0.85m, // Large bulk/tanker (typical: 0.80-0.87)
+            "commercial" => 0.75m, // General commercial (typical: 0.70-0.80)
+            _ => 0.65m // Default conservative value (typical: 0.60-0.70)
         };
+
+        // Log the ratio used for traceability
+        _logger.LogDebug(
+            "[SOLVER] Using DWT/Δ ratio {Ratio:F2} for mission type '{Type}', cargo basis '{Basis}', payload {Payload:F0}t",
+            dwtToDispRatio, mission.MissionType, mission.CargoBasis, payloadT);
+
+        // Validate ratio is in reasonable range
+        if (dwtToDispRatio < 0.40m || dwtToDispRatio > 0.90m)
+        {
+            _logger.LogWarning(
+                "[SOLVER] DWT/Δ ratio {Ratio:F2} is outside typical range [0.40, 0.90]. This may indicate incorrect mission type classification.",
+                dwtToDispRatio);
+        }
 
         var dwt = payloadT * 1.15m; // Add 15% for stores, fuel, provisions
         var targetDisplacement = dwt / dwtToDispRatio;

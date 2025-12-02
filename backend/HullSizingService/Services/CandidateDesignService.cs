@@ -717,7 +717,10 @@ public class CandidateDesignService : ICandidateDesignService
             ReferenceVesselId = entity.ReferenceVesselId,
             ReferenceVesselName = entity.ReferenceVesselName,
             SimilarityScore = entity.SimilarityScore,
-            SolverMode = entity.SolverMode
+            SolverMode = entity.SolverMode,
+
+            // Validation Results
+            ValidationResultsJson = entity.ValidationResultsJson
         };
     }
 

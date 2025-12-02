@@ -241,6 +241,14 @@ public class CandidateDesign
     /// </summary>
     public string? WeightBreakdownJson { get; set; }
 
+    // Validation Results
+
+    /// <summary>
+    /// Validation results (JSON serialized AggregateValidationResult)
+    /// Contains warnings, errors, and validation status for design validation checks.
+    /// </summary>
+    public string? ValidationResultsJson { get; set; }
+
     // Navigation Properties
 
     /// <summary>

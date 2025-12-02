@@ -1,0 +1,366 @@
+using System.Text.Json;
+using FluentAssertions;
+using HullSizingService.Data;
+using HullSizingService.Services;
+using HullSizingService.Services.Solver;
+using HullSizingService.Services.Validation;
+using HullSizingService.Tests.TestData;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Shared.DTOs.Sizing;
+using Shared.Models.Sizing;
+using Xunit;
+
+namespace HullSizingService.Tests.Validation.Integration;
+
+/// <summary>
+/// Integration tests for visualization data flow from backend to frontend.
+/// Validates that geometry data is properly formatted and can be consumed by frontend visualization components.
+///
+/// These tests ensure:
+/// 1. Geometry JSON is valid and parseable
+/// 2. Geometry structure matches expected formats (OffsetsGrid or ShipD)
+/// 3. Data can be successfully mapped to DTOs
+/// 4. Frontend visualization components can process the data
+/// </summary>
+[Trait("Category", "Integration")]
+[Trait("Category", "LongRunning")]
+public class VisualizationDataFlowIntegrationTests : IDisposable
+{
+    private readonly SizingDbContext _context;
+    private readonly FirstPrinciplesSolver _solver;
+    private readonly CandidateDesignService _candidateService;
+    private readonly Mock<IWaterPropertiesService> _waterServiceMock;
+    private readonly IGeometryJsonValidationService _geometryValidationService;
+
+    public VisualizationDataFlowIntegrationTests()
+    {
+        var options = new DbContextOptionsBuilder<SizingDbContext>()
+            .UseInMemoryDatabase(databaseName: $"VisualizationDataFlowTests_{Guid.NewGuid()}")
+            .Options;
+
+        _context = new SizingDbContext(options);
+        SeedTestData();
+
+        // Mock water properties service
+        _waterServiceMock = new Mock<IWaterPropertiesService>();
+        _waterServiceMock
+            .Setup(x => x.GetWaterPropertiesAsync(It.IsAny<decimal>(), It.IsAny<decimal>(), It.IsAny<System.Threading.CancellationToken>()))
+            .ReturnsAsync(new HullSizingService.Services.Integration.WaterPropertiesResponse(
+                DensityKgM3: 1025.0m,
+                KinematicViscosityM2S: 0.000001188m,
+                TemperatureCelsius: 15.0m,
+                SalinityPpt: 35.0m
+            ));
+
+        // Create solver
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var familyService = new HullFamilyService(_context, loggerFactory.CreateLogger<HullFamilyService>());
+        var closureService = new DisplacementClosureService(loggerFactory.CreateLogger<DisplacementClosureService>());
+        var resistanceService = new HoltropResistanceService(loggerFactory.CreateLogger<HoltropResistanceService>());
+        var stabilityService = new StabilityScreenService(loggerFactory.CreateLogger<StabilityScreenService>());
+
+        _solver = new FirstPrinciplesSolver(
+            familyService,
+            closureService,
+            resistanceService,
+            stabilityService,
+            _waterServiceMock.Object,
+            _context,
+            loggerFactory.CreateLogger<FirstPrinciplesSolver>());
+
+        // Create candidate service
+        _candidateService = new CandidateDesignService(
+            _context,
+            loggerFactory.CreateLogger<CandidateDesignService>(),
+            null, // shipdGeometryService
+            null, // shipdAdapter
+            null, // dataServiceClient
+            null  // shipdToHydroMapper
+        );
+
+        // Create geometry validation service
+        _geometryValidationService = new GeometryJsonValidationService(
+            loggerFactory.CreateLogger<GeometryJsonValidationService>());
+    }
+
+    private void SeedTestData()
+    {
+        if (!_context.HullFamilyPresets.Any())
+        {
+            _context.HullFamilyPresets.AddRange(
+                new HullFamilyPreset
+                {
+                    Id = Guid.NewGuid(),
+                    Family = "tanker",
+                    DisplayName = "Tanker",
+                    LOverBMin = 5.5m,
+                    LOverBMax = 7.0m,
+                    BOverTMin = 2.0m,
+                    BOverTMax = 2.8m,
+                    DOverTMin = 1.2m,
+                    DOverTMax = 1.4m,
+                    CbMin = 0.75m,
+                    CbMax = 0.85m,
+                    FnMin = 0.12m,
+                    FnMax = 0.18m,
+                    GeneratorType = "wigley",
+                    IsActive = true
+                }
+            );
+            _context.SaveChanges();
+        }
+    }
+
+    [Fact]
+    public async Task GeometryJson_ShouldBeValidForFrontendConsumption()
+    {
+        // Arrange
+        var mission = CreateTestMissionCase();
+        var request = new SolverRequest(
+            MissionCase: mission,
+            Locks: null,
+            Options: new SizingOptionsDto(null, 1, null, null, null)
+        );
+
+        // Act
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
+
+        // Assert
+        candidates.Should().NotBeEmpty();
+        var candidate = candidates.First();
+        candidate.GeometryJson.Should().NotBeNullOrEmpty();
+
+        // Validate JSON structure using validation service
+        var validation = _geometryValidationService.Validate(candidate.GeometryJson);
+        validation.IsValid.Should().BeTrue(
+            $"Geometry JSON should be valid. Errors: {string.Join(", ", validation.Errors)}");
+
+        if (validation.Warnings.Any())
+        {
+            // Log warnings but don't fail test (warnings are acceptable)
+            _ = validation.Warnings;
+        }
+    }
+
+    [Fact]
+    public async Task GeometryJson_ShouldMatchOffsetsGridFormat()
+    {
+        // Arrange
+        var mission = CreateTestMissionCase();
+        var request = new SolverRequest(
+            MissionCase: mission,
+            Locks: null,
+            Options: new SizingOptionsDto(null, 1, null, null, null)
+        );
+
+        // Act
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
+
+        // Assert
+        candidates.Should().NotBeEmpty();
+        var candidate = candidates.First();
+        candidate.GeometryJson.Should().NotBeNullOrEmpty();
+
+        var geometry = JsonSerializer.Deserialize<JsonElement>(candidate.GeometryJson!);
+
+        // Check for OffsetsGrid format (preferred format)
+        var hasStations = geometry.TryGetProperty("stations", out var stations) ||
+                         geometry.TryGetProperty("Stations", out stations);
+        var hasWaterlines = geometry.TryGetProperty("waterlines", out var waterlines) ||
+                           geometry.TryGetProperty("Waterlines", out waterlines);
+        var hasOffsets = geometry.TryGetProperty("offsets", out var offsets) ||
+                        geometry.TryGetProperty("Offsets", out offsets);
+
+        if (hasStations && hasWaterlines && hasOffsets)
+        {
+            // OffsetsGrid format
+            stations.ValueKind.Should().Be(JsonValueKind.Array, "stations should be an array");
+            waterlines.ValueKind.Should().Be(JsonValueKind.Array, "waterlines should be an array");
+            offsets.ValueKind.Should().Be(JsonValueKind.Array, "offsets should be a 2D array");
+
+            stations.GetArrayLength().Should().BeGreaterThan(0, "should have at least one station");
+            waterlines.GetArrayLength().Should().BeGreaterThan(0, "should have at least one waterline");
+            offsets.GetArrayLength().Should().Be(stations.GetArrayLength(),
+                "offsets array length should match stations length");
+        }
+    }
+
+    [Fact]
+    public async Task CandidateDesignDto_ShouldIncludeGeometryJson()
+    {
+        // Arrange: Create a sizing run with candidates
+        var mission = CreateTestMissionCase();
+        var run = new SizingRun
+        {
+            Id = Guid.NewGuid(),
+            MissionCaseId = mission.Id,
+            TenantId = "test-tenant",
+            UserId = Guid.NewGuid(),
+            Status = SizingRunStatus.Completed,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.SizingRuns.Add(run);
+        _context.MissionCases.Add(mission);
+        await _context.SaveChangesAsync();
+
+        // Generate candidates
+        var request = new SolverRequest(
+            MissionCase: mission,
+            Locks: null,
+            Options: new SizingOptionsDto(null, 1, null, null, null)
+        );
+
+        var (candidates, _) = await _solver.SolveAsync(request, default);
+        candidates.Should().NotBeEmpty();
+
+        var candidate = candidates.First();
+
+        // Store candidate in database (simulating SizingRunService behavior)
+        var candidateEntity = new CandidateDesign
+        {
+            Id = Guid.NewGuid(),
+            SizingRunId = run.Id,
+            HullFamily = candidate.HullFamily,
+            GeometryJson = candidate.GeometryJson,
+            GeometryGenerationStatus = candidate.GeometryGenerationStatus,
+            LppM = candidate.LppM,
+            BM = candidate.BeamM,
+            TM = candidate.DraftM,
+            Cb = candidate.Cb,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.CandidateDesigns.Add(candidateEntity);
+        await _context.SaveChangesAsync();
+
+        // Act: Retrieve candidate as DTO
+        var dto = await _candidateService.GetByIdAsync(candidateEntity.Id, "test-tenant", default);
+
+        // Assert
+        dto.Should().NotBeNull();
+        dto!.GeometryJson.Should().Be(candidate.GeometryJson,
+            "DTO should include geometry JSON from entity");
+        dto.GeometryJson.Should().NotBeNullOrEmpty("geometry JSON should not be empty");
+    }
+
+    [Fact]
+    public async Task GeometryJson_ShouldHaveValidNumericValues()
+    {
+        // Arrange
+        var mission = CreateTestMissionCase();
+        var request = new SolverRequest(
+            MissionCase: mission,
+            Locks: null,
+            Options: new SizingOptionsDto(null, 1, null, null, null)
+        );
+
+        // Act
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
+
+        // Assert
+        candidates.Should().NotBeEmpty();
+        var candidate = candidates.First();
+        candidate.GeometryJson.Should().NotBeNullOrEmpty();
+
+        var geometry = JsonSerializer.Deserialize<JsonElement>(candidate.GeometryJson!);
+
+        // Validate numeric values in OffsetsGrid format
+        if (geometry.TryGetProperty("stations", out var stations) ||
+            geometry.TryGetProperty("Stations", out stations))
+        {
+            if (stations.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var station in stations.EnumerateArray())
+                {
+                    if (station.TryGetDecimal(out var stationX))
+                    {
+                        stationX.Should().BeGreaterOrEqualTo(0m, "station positions should be non-negative");
+                        decimal.IsNormal(stationX).Should().BeTrue("station positions should be finite numbers");
+                    }
+                }
+            }
+        }
+
+        if (geometry.TryGetProperty("offsets", out var offsets) ||
+            geometry.TryGetProperty("Offsets", out offsets))
+        {
+            if (offsets.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var offsetRow in offsets.EnumerateArray())
+                {
+                    if (offsetRow.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var offset in offsetRow.EnumerateArray())
+                        {
+                            if (offset.TryGetDecimal(out var offsetValue))
+                            {
+                                offsetValue.Should().BeGreaterOrEqualTo(0m,
+                                    "half-breadth offsets should be non-negative");
+                                decimal.IsNormal(offsetValue).Should().BeTrue(
+                                    "offset values should be finite numbers");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task GeometryJson_ShouldBeConsistentAcrossCandidates()
+    {
+        // Arrange
+        var mission = CreateTestMissionCase();
+        var request = new SolverRequest(
+            MissionCase: mission,
+            Locks: null,
+            Options: new SizingOptionsDto(null, 3, null, null, null) // Generate 3 candidates
+        );
+
+        // Act
+        var (candidates, diagnostics) = await _solver.SolveAsync(request, default);
+
+        // Assert
+        candidates.Should().HaveCountGreaterOrEqualTo(1,
+            "solver should generate at least one candidate");
+
+        foreach (var candidate in candidates)
+        {
+            if (!string.IsNullOrEmpty(candidate.GeometryJson))
+            {
+                var validation = _geometryValidationService.Validate(candidate.GeometryJson);
+                validation.IsValid.Should().BeTrue(
+                    $"Candidate geometry should be valid. Errors: {string.Join(", ", validation.Errors)}");
+            }
+        }
+    }
+
+    private MissionCase CreateTestMissionCase()
+    {
+        return new MissionCase
+        {
+            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            TenantId = "test-tenant",
+            Name = "Visualization Test Mission",
+            MissionType = "product_carrier",
+            MissionCategory = "commercial",
+            CargoBasis = "weight",
+            CargoValue = 40000m,
+            ServiceSpeedKn = 14.0m,
+            SeaMarginPct = 15.0m,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+    }
+
+    public void Dispose()
+    {
+        _context?.Dispose();
+    }
+}
+

@@ -245,6 +245,9 @@ export interface CandidateDesign {
   referenceVesselName?: string;
   similarityScore?: number;
   solverMode?: string;
+
+  // Validation Results
+  validationResultsJson?: string;
 }
 
 // Parsed flags from JSON

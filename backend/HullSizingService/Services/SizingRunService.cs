@@ -7,6 +7,7 @@ using HullSizingService.Data;
 using HullSizingService.Services.Geometry;
 using HullSizingService.Services.Integration;
 using HullSizingService.Services.ShipD;
+using HullSizingService.Services.Validation;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs.Sizing;
 using Shared.Models.Sizing;
@@ -28,6 +29,9 @@ public class SizingRunService : ISizingRunService
     private readonly IHullGeometryGeneratorService? _hullGeometryGenerator;
     private readonly Engineering.IWeightEstimationService _weightService;
     private readonly Geometry.IHullOptimizationService? _hullOptimizationService;
+    private readonly Validation.IDesignValidationService? _designValidationService;
+    private readonly Validation.IShipDConstraintValidationService? _shipdConstraintValidationService;
+    private readonly Validation.IGeometryJsonValidationService? _geometryJsonValidationService;
 
     // JSON serializer options with camelCase naming (matches API response format)
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -68,7 +72,10 @@ public class SizingRunService : ISizingRunService
         IShipDHullGeometryService? shipdGeometryService = null,
         IDataServiceClient? dataServiceClient = null,
         IHullGeometryGeneratorService? hullGeometryGenerator = null,
-        Geometry.IHullOptimizationService? hullOptimizationService = null)
+        Geometry.IHullOptimizationService? hullOptimizationService = null,
+        Validation.IDesignValidationService? designValidationService = null,
+        Validation.IShipDConstraintValidationService? shipdConstraintValidationService = null,
+        Validation.IGeometryJsonValidationService? geometryJsonValidationService = null)
     {
         _context = context;
         _firstPrinciplesSolver = firstPrinciplesSolver;
@@ -83,6 +90,9 @@ public class SizingRunService : ISizingRunService
         _dataServiceClient = dataServiceClient;
         _hullGeometryGenerator = hullGeometryGenerator;
         _hullOptimizationService = hullOptimizationService;
+        _designValidationService = designValidationService;
+        _shipdConstraintValidationService = shipdConstraintValidationService;
+        _geometryJsonValidationService = geometryJsonValidationService;
     }
 
     public async Task<List<SizingRunDto>> GetByMissionCaseIdAsync(Guid missionCaseId, string tenantId, CancellationToken cancellationToken = default)
@@ -538,6 +548,26 @@ public class SizingRunService : ISizingRunService
                             geometryJson = JsonSerializer.Serialize(offsetsGrid, JsonOptions);
                             _logger.LogInformation("[SIZING_RUN] Generated form-coefficient-based OffsetsGrid for candidate {Rank}", i + 1);
 
+                            // Validate geometry JSON structure and quality
+                            if (_geometryJsonValidationService != null && !string.IsNullOrEmpty(geometryJson))
+                            {
+                                var jsonValidation = _geometryJsonValidationService.Validate(geometryJson);
+                                if (!jsonValidation.IsValid)
+                                {
+                                    _logger.LogWarning(
+                                        "[SIZING_RUN] Geometry JSON validation failed for candidate {Rank}: {Errors}",
+                                        i + 1, string.Join("; ", jsonValidation.Errors));
+                                    // Attempt to sanitize if possible
+                                    geometryJson = _geometryJsonValidationService.Sanitize(geometryJson);
+                                }
+                                else if (jsonValidation.Warnings.Any())
+                                {
+                                    _logger.LogInformation(
+                                        "[SIZING_RUN] Geometry JSON validation warnings for candidate {Rank}: {Warnings}",
+                                        i + 1, string.Join("; ", jsonValidation.Warnings));
+                                }
+                            }
+
                             // Validate form coefficients (log warnings if mismatch)
                             var validation = await _hullGeometryGenerator.ValidateFormCoefficientsAsync(
                                 sc,
@@ -623,6 +653,19 @@ public class SizingRunService : ISizingRunService
                             geometryStatus = GeometryGenerationStatus.Success;
                             geometryError = null;
 
+                            // Validate optimized geometry JSON
+                            if (_geometryJsonValidationService != null && !string.IsNullOrEmpty(geometryJson))
+                            {
+                                var jsonValidation = _geometryJsonValidationService.Validate(geometryJson);
+                                if (!jsonValidation.IsValid)
+                                {
+                                    _logger.LogWarning(
+                                        "[SIZING_RUN] Optimized geometry JSON validation failed for candidate {Rank}: {Errors}",
+                                        i + 1, string.Join("; ", jsonValidation.Errors));
+                                    geometryJson = _geometryJsonValidationService.Sanitize(geometryJson);
+                                }
+                            }
+
                             _logger.LogInformation(
                                 "[SIZING_RUN] ✅ NURBS optimization completed for candidate {Rank}: Final CB={Cb}, CP={Cp}, LCB={Lcb}% (Error={Error})",
                                 i + 1, optimizationResult.FinalCb, optimizationResult.FinalCp,
@@ -667,6 +710,26 @@ public class SizingRunService : ISizingRunService
                             // Use camelCase naming to match API response format and frontend expectations
                             geometryJson = JsonSerializer.Serialize(sections, JsonOptions);
                             _logger.LogInformation("[SIZING_RUN] Generated ShipD geometry as fallback for candidate {Rank}", i + 1);
+
+                            // Validate ShipD geometry JSON structure
+                            if (_geometryJsonValidationService != null && !string.IsNullOrEmpty(geometryJson))
+                            {
+                                var jsonValidation = _geometryJsonValidationService.Validate(geometryJson);
+                                if (!jsonValidation.IsValid)
+                                {
+                                    _logger.LogWarning(
+                                        "[SIZING_RUN] ShipD geometry JSON validation failed for candidate {Rank}: {Errors}",
+                                        i + 1, string.Join("; ", jsonValidation.Errors));
+                                    // Attempt to sanitize if possible
+                                    geometryJson = _geometryJsonValidationService.Sanitize(geometryJson);
+                                }
+                                else if (jsonValidation.Warnings.Any())
+                                {
+                                    _logger.LogInformation(
+                                        "[SIZING_RUN] ShipD geometry JSON validation warnings for candidate {Rank}: {Warnings}",
+                                        i + 1, string.Join("; ", jsonValidation.Warnings));
+                                }
+                            }
 
                             // Update status to indicate ShipD was used as fallback
                             if (geometryStatus == GeometryGenerationStatus.FormCoefficientFailed)
@@ -764,6 +827,12 @@ public class SizingRunService : ISizingRunService
                 };
 
                 candidateEntities.Add(entity);
+            }
+
+            // Perform validation on all candidates (non-blocking)
+            if (_designValidationService != null && candidateEntities.Any())
+            {
+                await ValidateCandidatesAsync(candidateEntities, missionCase, cancellationToken);
             }
 
             _context.CandidateDesigns.AddRange(candidateEntities);
@@ -1223,6 +1292,157 @@ public class SizingRunService : ISizingRunService
             _logger.LogWarning(
                 "[SIZING_RUN] ✅ Applied sensible bulb dimension defaults for candidate {Rank}: Lbb={Lbb}, Hbb={Hbb}, Bbb={Bbb}",
                 candidateRank, vector[33], vector[34], vector[35]);
+        }
+    }
+
+    /// <summary>
+    /// Validates all candidates against expected ranges, Alexander Limit, and other checks.
+    /// Results are stored in CandidateDesign.ValidationResultsJson (non-blocking).
+    /// </summary>
+    private async Task ValidateCandidatesAsync(
+        List<CandidateDesign> candidates,
+        MissionCase missionCase,
+        CancellationToken cancellationToken)
+    {
+        if (_designValidationService == null)
+        {
+            return; // Validation services not available
+        }
+
+        var vesselType = missionCase.MissionType ?? missionCase.MissionCategory ?? "general_cargo";
+
+        // Get ShipD metadata for constraint validation (if needed)
+        IReadOnlyList<Shared.DTOs.ShipD.ShipDParameterMetadataDto>? shipdMetadata = null;
+        if (_dataServiceClient != null)
+        {
+            try
+            {
+                shipdMetadata = await _dataServiceClient.GetShipDParameterMetadataAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[VALIDATION] Failed to load ShipD metadata for constraint validation");
+            }
+        }
+
+        foreach (var candidate in candidates)
+        {
+            try
+            {
+                var aggregateResult = new Validation.AggregateValidationResult
+                {
+                    AllValid = true,
+                    ErrorCount = 0,
+                    WarningCount = 0
+                };
+
+                // Design validation (expected ranges, dimensions, coefficients)
+                var designValidation = _designValidationService.ValidateAgainstExpectedRanges(
+                    candidate,
+                    vesselType,
+                    toleranceConfig: null); // Use default tolerances
+                aggregateResult.DesignValidation = designValidation;
+                aggregateResult.ErrorCount += designValidation.Errors.Count;
+                aggregateResult.WarningCount += designValidation.Warnings.Count;
+
+                // Alexander Limit validation
+                var alexanderLimitValidation = _designValidationService.ValidateAlexanderLimit(
+                    candidate.Fn,
+                    candidate.Cb);
+                aggregateResult.AlexanderLimitValidation = alexanderLimitValidation;
+                if (alexanderLimitValidation.ViolatesLimit)
+                {
+                    aggregateResult.ErrorCount++;
+                }
+                else if (alexanderLimitValidation.Severity == "Warning")
+                {
+                    aggregateResult.WarningCount++;
+                }
+
+                // Resistance trend validation (if EHP is available)
+                if (candidate.EhpKw.HasValue && candidate.DisplacementT > 0)
+                {
+                    var resistanceValidation = _designValidationService.ValidateResistanceTrend(
+                        candidate.EhpKw.Value,
+                        candidate.DisplacementT,
+                        vesselType);
+                    aggregateResult.ResistanceTrendValidation = resistanceValidation;
+                    if (resistanceValidation.Severity == "Warning")
+                    {
+                        aggregateResult.WarningCount++;
+                    }
+                }
+
+                // Form coefficient validation
+                if (candidate.Cm.HasValue)
+                {
+                    var formCoefficients = new Validation.FormCoefficients
+                    {
+                        Cb = candidate.Cb,
+                        Cp = candidate.Cp,
+                        Cm = candidate.Cm.Value,
+                        Cwp = candidate.Cwp
+                    };
+                    var formValidation = _designValidationService.ValidateFormCoefficients(
+                        formCoefficients,
+                        vesselType);
+                    aggregateResult.FormCoefficientValidation = formValidation;
+                    if (!formValidation.IsValid)
+                    {
+                        aggregateResult.ErrorCount += formValidation.Warnings.Count(w => w.Severity == "Error");
+                        aggregateResult.WarningCount += formValidation.Warnings.Count(w => w.Severity != "Error");
+                    }
+                }
+
+                // ShipD constraint validation (if metadata and parameters available)
+                if (_shipdConstraintValidationService != null &&
+                    shipdMetadata != null &&
+                    shipdMetadata.Count > 0 &&
+                    !string.IsNullOrEmpty(candidate.ShipdParametersJson))
+                {
+                    try
+                    {
+                        var shipdVector = System.Text.Json.JsonSerializer.Deserialize<decimal[]>(candidate.ShipdParametersJson);
+                        if (shipdVector != null && shipdVector.Length == 45)
+                        {
+                            var constraintValidation = _shipdConstraintValidationService.ValidateAllConstraints(
+                                shipdVector,
+                                shipdMetadata);
+                            aggregateResult.ConstraintValidation = constraintValidation;
+                            aggregateResult.ErrorCount += constraintValidation.ErrorCount;
+                            aggregateResult.WarningCount += constraintValidation.WarningCount;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[VALIDATION] Failed to validate ShipD constraints for candidate {CandidateId}", candidate.Id);
+                    }
+                }
+
+                // Determine overall validity
+                aggregateResult.AllValid = aggregateResult.ErrorCount == 0;
+
+                // Store validation results as JSON
+                candidate.ValidationResultsJson = System.Text.Json.JsonSerializer.Serialize(
+                    aggregateResult,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                        WriteIndented = false
+                    });
+
+                if (aggregateResult.ErrorCount > 0 || aggregateResult.WarningCount > 0)
+                {
+                    _logger.LogInformation(
+                        "[VALIDATION] Candidate {CandidateId} (Rank {Rank}): {ErrorCount} errors, {WarningCount} warnings",
+                        candidate.Id, candidate.Rank, aggregateResult.ErrorCount, aggregateResult.WarningCount);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[VALIDATION] Failed to validate candidate {CandidateId} (Rank {Rank})", candidate.Id, candidate.Rank);
+                // Continue with other candidates - validation failure shouldn't block candidate creation
+            }
         }
     }
 }
