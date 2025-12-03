@@ -10,6 +10,27 @@
 
 1. **Can't identify bow vs stern** in 3D isometric view (no labels/orientation markers)
 2. **Waterplane to hull intersection doesn't look right**
+3. **Issue is consistent across ALL 3D views** (design generation results AND workspace)
+
+---
+
+## AFFECTED COMPONENTS
+
+### 1. Hull Sizing - Design Generation Results
+**File**: `frontend/src/components/sizing/visualization/Hull3DScene.tsx`  
+**Used In**: ViewportQuadLayout when viewing generated design candidates  
+**Issue**: No bow/stern orientation markers
+
+### 2. Hydrostatics - Workspace View
+**File**: `frontend/src/components/hydrostatics/Vessel3DViewer.tsx`  
+**Used In**: Hydrostatics workspace 3D panel  
+**Issue**: No bow/stern orientation markers
+
+### 3. Common Problem
+**Both components**:
+- Render hull geometry correctly (coordinate system is correct)
+- Lack visual orientation cues (no labels, arrows, or indicators)
+- User cannot easily distinguish bow from stern without rotating view
 
 ---
 
@@ -175,7 +196,64 @@ console.log("[Waterplane] Rendering at", { x: 0, y: draft, z: lpp / 2, dimension
 
 ## RECOMMENDED FIXES
 
-### Fix 1: Add Bow/Stern Labels (P0 - Critical)
+### Fix 1A: Add Bow/Stern Labels to Hull Sizing Results (P0 - Critical)
+
+**File**: `frontend/src/components/sizing/visualization/Hull3DScene.tsx`
+
+**Add to scene (after line 111)**:
+```typescript
+{/* Orientation markers for bow/stern */}
+{showCenters && (
+  <group rotation={[0, Math.PI / 6, 0]}>
+    {/* Bow label (forward) */}
+    <Text
+      position={[0, draft * 0.3, lpp * 0.6]}
+      fontSize={lpp * 0.05}
+      color="#22c55e"
+      anchorX="center"
+      anchorY="middle"
+      outlineWidth={lpp * 0.002}
+      outlineColor="#000000"
+    >
+      BOW (FP)
+    </Text>
+    
+    {/* Stern label (aft) */}
+    <Text
+      position={[0, draft * 0.3, -lpp * 0.6]}
+      fontSize={lpp * 0.05}
+      color="#ef4444"
+      anchorX="center"
+      anchorY="middle"
+      outlineWidth={lpp * 0.002}
+      outlineColor="#000000"
+    >
+      STERN (AP)
+    </Text>
+
+    {/* Forward direction arrow */}
+    <arrowHelper
+      args={[
+        [0, 0, 1],           // Direction vector (forward +Z)
+        [0, 0, lpp * 0.5],   // Origin (near bow)
+        lpp * 0.15,          // Arrow length
+        0x22c55e,            // Green color
+        lpp * 0.05,          // Head length
+        lpp * 0.025,         // Head width
+      ]}
+    />
+  </group>
+)}
+```
+
+**Import required**:
+```typescript
+import { Text } from "@react-three/drei";
+```
+
+---
+
+### Fix 1B: Add Bow/Stern Labels to Hydrostatics Workspace (P0 - Critical)
 
 **File**: `frontend/src/components/hydrostatics/Vessel3DViewer.tsx`
 
@@ -297,12 +375,23 @@ position={[lpp * 1.2, lpp * 0.4, -lpp * 0.3]}  // View from aft-quarter
 
 ## ACTION ITEMS
 
-- [ ] P0: Add bow/stern labels to 3D isometric view
+**Hull Sizing - Design Generation Results** (`Hull3DScene.tsx`):
+- [ ] P0: Add bow/stern text labels (BOW/STERN)
+- [ ] P0: Add forward direction arrow (green)
+- [ ] P0: Ensure labels rotate with hull group
+- [ ] P1: Add visibility toggle for orientation markers
+
+**Hydrostatics - Workspace** (`Vessel3DViewer.tsx`):
+- [ ] P0: Add bow/stern text labels (BOW/STERN)
+- [ ] P0: Add forward direction arrow (green)
 - [ ] P0: Verify waterplane is rendering at correct elevation
 - [ ] P0: Check hull-waterplane intersection visually
-- [ ] P1: Add orientation arrow pointing forward
 - [ ] P1: Improve default camera angle for better bow/stern visibility
+
+**Common Improvements** (both components):
+- [ ] P1: Consider adding coordinate axes indicator (X/Y/Z)
 - [ ] P2: Consider adding color gradient (bow-to-stern) for visual orientation
+- [ ] P2: Add "Reset View" button to return to optimal angle
 
 ---
 
