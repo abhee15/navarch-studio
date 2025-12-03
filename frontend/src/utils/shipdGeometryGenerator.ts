@@ -541,8 +541,35 @@ function generateHull3DFromSectionsNurbs(
   const vertices: number[] = [];
   const indices: number[] = [];
 
-  if (sections.stations.length === 0) {
+  // === DEFENSIVE VALIDATION ===
+  // Validate inputs before NURBS evaluation to prevent NaN propagation
+  if (!sections || !sections.stations || sections.stations.length === 0) {
+    console.warn("[ShipD NURBS] Invalid sections input:", sections);
     return geometry;
+  }
+  if (!Number.isFinite(lppM) || lppM <= 0) {
+    console.error("[ShipD NURBS] Invalid lppM:", lppM);
+    return geometry;
+  }
+
+  // Validate all station offsets are finite
+  for (const station of sections.stations) {
+    if (!Number.isFinite(station.position)) {
+      console.error("[ShipD NURBS] Invalid station position:", station.position);
+      return geometry;
+    }
+    for (const [height, halfBreadth] of Object.entries(station.offsets)) {
+      const h = Number(height);
+      const hb = Number(halfBreadth);
+      if (!Number.isFinite(h) || !Number.isFinite(hb)) {
+        console.error("[ShipD NURBS] Invalid offset detected:", {
+          stationPos: station.position,
+          height: h,
+          halfBreadth: hb,
+        });
+        return geometry;
+      }
+    }
   }
 
   // Convert sections to offset grid format
@@ -569,7 +596,9 @@ function generateHull3DFromSectionsNurbs(
     for (let wIdx = 0; wIdx < waterlines.length; wIdx++) {
       const height = waterlines[wIdx];
       const halfBreadth = station.offsets[height] ?? 0;
-      stationOffsets.push(Math.max(0, halfBreadth));
+      // CRITICAL: Validate half-breadth to prevent NaN in NURBS evaluation
+      const validHalfBreadth = Number.isFinite(halfBreadth) ? Math.max(0, halfBreadth) : 0;
+      stationOffsets.push(validHalfBreadth);
     }
     offsets.push(stationOffsets);
   }
@@ -780,6 +809,19 @@ function generateHull3DFromSectionsNurbs(
         halfBreadth = normalizedY * (estimatedBeam / 2);
       }
 
+      // === CRITICAL: Validate vertex before adding to prevent NaN ===
+      if (!Number.isFinite(halfBreadth) || !Number.isFinite(height) || !Number.isFinite(z)) {
+        console.error("[ShipD NURBS] NaN detected in vertex calculation:", {
+          halfBreadth,
+          height,
+          z,
+          u,
+          v,
+        });
+        // Skip this vertex (will create holes, but better than crashing THREE.js)
+        continue;
+      }
+
       // Port side (negative X)
       vertices.push(-halfBreadth, height, z);
     }
@@ -811,6 +853,12 @@ function generateHull3DFromSectionsNurbs(
       const x = vertices[baseIdx];
       const y = vertices[baseIdx + 1];
       const z = vertices[baseIdx + 2];
+
+      // === CRITICAL: Validate starboard vertices ===
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+        console.error("[ShipD NURBS] NaN in starboard mirror:", { x, y, z });
+        continue;
+      }
 
       // Starboard side (positive X, mirrored)
       vertices.push(-x, y, z);
@@ -1576,6 +1624,40 @@ function generateStationOffsets(
 ): Record<number, number> {
   const offsets: Record<number, number> = {};
 
+  // === DEFENSIVE VALIDATION ===
+  // Validate all critical inputs before ANY calculations to prevent NaN propagation
+  if (!Number.isFinite(beamM) || beamM <= 0) {
+    console.error("[ShipD generateStationOffsets] Invalid beam:", beamM);
+    offsets[0] = 0; // Return minimal valid offsets (centerline only)
+    return offsets;
+  }
+  if (!Number.isFinite(draftM) || draftM <= 0) {
+    console.error("[ShipD generateStationOffsets] Invalid draft:", draftM);
+    offsets[0] = 0;
+    return offsets;
+  }
+  if (!Number.isFinite(stationPos)) {
+    console.error("[ShipD generateStationOffsets] Invalid station position:", stationPos);
+    offsets[0] = 0;
+    return offsets;
+  }
+
+  // Validate denormalized parameters (replace with safe versions)
+  const validatedDenormalized: Record<number, number> = {};
+  for (const key in denormalized) {
+    const value = denormalized[key];
+    validatedDenormalized[key] = Number.isFinite(value) ? value : 0;
+  }
+  denormalized = validatedDenormalized; // Reassign to use validated values throughout
+
+  // Validate ShipD vector (replace with safe versions)
+  const validatedShipdVector: number[] = [];
+  for (let i = 0; i < shipdVector.length; i++) {
+    const value = shipdVector[i];
+    validatedShipdVector[i] = Number.isFinite(value) ? value : 0;
+  }
+  shipdVector = validatedShipdVector; // Reassign to use validated values throughout
+
   // Always start with keel point (height=0, half-breadth=0) to close the bottom
   offsets[0] = 0;
 
@@ -2068,8 +2150,32 @@ function generateStationOffsets(
     }
     // Midship region: longitudinalScale = 1.0 (no taper, full beam)
 
+    // === VALIDATE LONGITUDINAL SCALE ===
+    // Ensure longitudinalScale is finite and positive
+    if (!Number.isFinite(longitudinalScale) || longitudinalScale < 0) {
+      console.warn("[ShipD generateStationOffsets] Invalid longitudinal scale", {
+        longitudinalScale,
+        region,
+        stationPos,
+      });
+      longitudinalScale = 1.0; // Fallback to no taper
+    }
+
     // Apply longitudinal scaling to half-breadth
     halfBreadth = halfBreadth * longitudinalScale;
+
+    // === NaN DETECTION ===
+    // Validate final half-breadth before storing to prevent NaN propagation
+    if (!Number.isFinite(halfBreadth)) {
+      console.warn("[ShipD generateStationOffsets] NaN detected in half-breadth calculation", {
+        height,
+        region,
+        stationPos,
+        longitudinalScale,
+        preScaleHalfBreadth: halfBreadth / (longitudinalScale || 1),
+      });
+      halfBreadth = 0; // Fallback to centerline (zero width)
+    }
 
     offsets[height] = Math.max(0, halfBreadth);
   }

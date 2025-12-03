@@ -177,7 +177,14 @@ public class NurbsCurveGenerator
 
             for (int r = 0; r < j; r++)
             {
-                decimal temp = basisFunctions[r] / (right[r] + left[j - r]);
+                // CRITICAL: Prevent division by zero which causes NaN
+                var denominator = right[r] + left[j - r];
+                if (denominator == 0m)
+                {
+                    // Skip this iteration if denominator is zero (degenerate case)
+                    continue;
+                }
+                decimal temp = basisFunctions[r] / denominator;
                 basisFunctions[r] = saved + right[r] * temp;
                 saved = left[j - r] * temp;
             }

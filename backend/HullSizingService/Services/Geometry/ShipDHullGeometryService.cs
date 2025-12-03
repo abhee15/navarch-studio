@@ -444,6 +444,28 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
     {
         var offsets = new Dictionary<decimal, decimal>();
 
+        // === DEFENSIVE VALIDATION ===
+        // Validate all critical inputs before ANY calculations to prevent exceptions
+        // Note: decimal type in C# cannot be NaN/Infinity (would throw on creation), but can be invalid/negative
+        if (beamM <= 0m)
+        {
+            _logger.LogError("[SHIPD_GEOMETRY] Invalid beam: {Beam}. Returning minimal offsets.", beamM);
+            offsets[0m] = 0m;
+            return offsets;
+        }
+        if (draftM <= 0m)
+        {
+            _logger.LogError("[SHIPD_GEOMETRY] Invalid draft: {Draft}. Returning minimal offsets.", draftM);
+            offsets[0m] = 0m;
+            return offsets;
+        }
+        if (stationPos < 0m || stationPos > 1m)
+        {
+            _logger.LogError("[SHIPD_GEOMETRY] Invalid station position: {StationPos}. Returning minimal offsets.", stationPos);
+            offsets[0m] = 0m;
+            return offsets;
+        }
+
         // Always start with keel point (height=0, half-breadth=0) to close the bottom
         offsets[0m] = 0m;
 
@@ -935,8 +957,28 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             }
             // Midship region: longitudinalScale = 1.0 (no taper, full beam)
 
+            // === VALIDATE LONGITUDINAL SCALE ===
+            // Ensure longitudinalScale is valid and positive
+            if (longitudinalScale < 0m || longitudinalScale > 2m)
+            {
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Invalid longitudinal scale detected: {LongitudinalScale} at station {StationPos} in {Region}. Using fallback 1.0",
+                    longitudinalScale, stationPos, region);
+                longitudinalScale = 1.0m;
+            }
+
             // Apply longitudinal scaling to half-breadth
             halfBreadth = halfBreadth * longitudinalScale;
+
+            // === VALIDATE HALF-BREADTH ===
+            // Ensure half-breadth is reasonable (catch any calculation errors)
+            if (halfBreadth < 0m || halfBreadth > beamM)
+            {
+                _logger.LogWarning(
+                    "[SHIPD_GEOMETRY] Invalid half-breadth detected: {HalfBreadth} at height={Height}, station={StationPos}, region={Region}. Clamping to valid range.",
+                    halfBreadth, height, stationPos, region);
+                halfBreadth = Math.Clamp(halfBreadth, 0m, beamM / 2m);
+            }
 
             // PARAMETER UPDATE: Waterline fining to reduce CWP from 0.800 to 0.75-0.78
             // Problem: CWP=0.800 is too high (WL parameter 0.050), contributing to excessive initial stability
@@ -1022,10 +1064,42 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 evaluationPoints: evaluationPoints);
 
             // Update offsets with faired values
+            // CRITICAL: Validate faired values to prevent invalid values from NURBS evaluation
             for (int i = 0; i < sortedHeights.Count && i < fairedHalfBreadths.Count; i++)
             {
-                offsets[sortedHeights[i]] = Math.Max(0m, fairedHalfBreadths[i]);
+                var fairedValue = fairedHalfBreadths[i];
+                // Validate faired value is in reasonable range
+                if (fairedValue < 0m || fairedValue > beamM)
+                {
+                    _logger.LogWarning(
+                        "[SHIPD_GEOMETRY] Invalid faired value detected at height={Height}, station={StationPos}: {Value}. Using original value.",
+                        sortedHeights[i], stationPos, fairedValue);
+                    // Keep original value instead of invalid value from NURBS
+                    continue;
+                }
+                offsets[sortedHeights[i]] = Math.Max(0m, fairedValue);
             }
+        }
+
+        // === FINAL VALIDATION ===
+        // Ensure no invalid values made it through to final offsets
+        var invalidCount = 0;
+        foreach (var kvp in offsets.ToList())
+        {
+            if (kvp.Value < 0m || kvp.Value > beamM)
+            {
+                _logger.LogError(
+                    "[SHIPD_GEOMETRY] Invalid offset found at height={Height}: {Value}. Removing entry.",
+                    kvp.Key, kvp.Value);
+                offsets.Remove(kvp.Key);
+                invalidCount++;
+            }
+        }
+        if (invalidCount > 0)
+        {
+            _logger.LogError(
+                "[SHIPD_GEOMETRY] ❌ Removed {InvalidCount} invalid offset values from station at position {StationPos}",
+                invalidCount, stationPos);
         }
 
         return offsets;
