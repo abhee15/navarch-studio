@@ -304,6 +304,14 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
           </mesh>
         )}
 
+        {/* Plan view waterlines overlay - shows hull shape from above in 3D */}
+        <WaterlinesOverlay
+          geometryJson={candidate.geometryJson}
+          lpp={candidate.lppM}
+          beam={candidate.beamM}
+          draft={candidate.draftM}
+        />
+
         {/* Center markers */}
         {showCenters && centerMarkers && (
           <>
@@ -330,6 +338,100 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
     );
   }
 );
+
+/**
+ * Plan View Waterlines Overlay for 3D Hull
+ * Renders waterline curves on the 3D hull surface to show plan view shape
+ * Helps visualize bow/stern family characteristics (bulbous bow protrusion, transom width, etc.)
+ */
+function WaterlinesOverlay({
+  geometryJson,
+  lpp,
+  beam,
+  draft,
+}: {
+  geometryJson?: string;
+  lpp: number;
+  beam: number;
+  draft: number;
+}) {
+  const waterlinesCurves = useMemo(() => {
+    if (!geometryJson) return [];
+
+    try {
+      // Normalize geometry to OffsetsGrid format
+      const normalized = normalizeGeometry(geometryJson);
+      if (!normalized || normalized.stations.length === 0 || normalized.waterlines.length === 0) {
+        return [];
+      }
+
+      const { stations, waterlines, offsets } = normalized;
+      const curves: React.ReactElement[] = [];
+
+      // Render every 2nd or 3rd waterline to avoid clutter (select key waterlines)
+      const waterlineStep = Math.max(1, Math.floor(waterlines.length / 7)); // Show ~7 waterlines
+
+      for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx += waterlineStep) {
+        const waterlineZ = waterlines[wlIdx]; // Vertical position
+
+        // Extract half-breadths for this waterline across all stations
+        const points: THREE.Vector3[] = [];
+
+        for (let stIdx = 0; stIdx < stations.length; stIdx++) {
+          const stationX = stations[stIdx]; // Longitudinal position
+          const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
+
+          if (halfBreadth > 0) {
+            // Add points for port and starboard sides
+            // Port side (negative X)
+            points.push(new THREE.Vector3(-halfBreadth, waterlineZ, stationX));
+          }
+        }
+
+        // Add starboard side in reverse order to complete the curve
+        for (let stIdx = stations.length - 1; stIdx >= 0; stIdx--) {
+          const stationX = stations[stIdx];
+          const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
+
+          if (halfBreadth > 0) {
+            // Starboard side (positive X)
+            points.push(new THREE.Vector3(halfBreadth, waterlineZ, stationX));
+          }
+        }
+
+        if (points.length > 1) {
+          // Create curve from points
+          const curve = new THREE.CatmullRomCurve3(points, false);
+          const curvePoints = curve.getPoints(points.length * 2); // Smooth curve
+
+          // Color based on waterline height (gradient from keel to deck)
+          const heightRatio = waterlineZ / (draft * 1.5);
+          const color = new THREE.Color().setHSL(0.55, 0.7, 0.3 + heightRatio * 0.4); // Blue-cyan gradient
+
+          // Create Three.js Line object
+          const lineGeometry = new THREE.BufferGeometry();
+          lineGeometry.setFromPoints(curvePoints);
+          const lineMaterial = new THREE.LineBasicMaterial({
+            color,
+            linewidth: 2,
+            opacity: 0.8,
+            transparent: true,
+          });
+          const lineObject = new THREE.Line(lineGeometry, lineMaterial);
+
+          curves.push(<primitive key={`waterline-${wlIdx}`} object={lineObject} />);
+        }
+      }
+
+      return curves;
+    } catch (error) {
+      console.warn("[WaterlinesOverlay] Failed to generate waterline curves:", error);
+      return [];
+    }
+  }, [geometryJson, lpp, beam, draft]);
+
+  return <group>{waterlinesCurves}</group>;
+}
 
 // Maintain backward compatibility with old name
 export const WigleyHull3D = ParametricHull3D;

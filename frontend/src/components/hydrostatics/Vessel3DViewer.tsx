@@ -8,7 +8,7 @@ import {
   useCallback,
 } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, PerspectiveCamera } from "@react-three/drei";
+import { OrbitControls, Grid, PerspectiveCamera, Text } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import { observer } from "mobx-react-lite";
@@ -799,6 +799,42 @@ function Waterplane({ lpp, beam, draft }: { lpp: number; beam: number; draft: nu
   );
 }
 
+/**
+ * Orientation markers for bow and stern
+ * Helps users immediately identify hull orientation in 3D view
+ */
+function OrientationMarkers({ lpp, draft }: { lpp: number; draft: number }) {
+  return (
+    <group>
+      {/* Bow label (forward perpendicular) - GREEN */}
+      <Text
+        position={[0, draft * 0.4, lpp * 0.55]}
+        fontSize={Math.max(lpp * 0.04, 3)}
+        color="#22c55e"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={lpp * 0.002}
+        outlineColor="#000000"
+      >
+        BOW (FP)
+      </Text>
+
+      {/* Stern label (aft perpendicular) - RED */}
+      <Text
+        position={[0, draft * 0.4, -lpp * 0.05]}
+        fontSize={Math.max(lpp * 0.04, 3)}
+        color="#ef4444"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={lpp * 0.002}
+        outlineColor="#000000"
+      >
+        STERN (AP)
+      </Text>
+    </group>
+  );
+}
+
 function BuoyancyMarker({ lcb, kb }: { lcb: number; kb: number }) {
   if (lcb === undefined || kb === undefined || lcb <= 0 || kb <= 0) return null;
 
@@ -968,6 +1004,9 @@ function SceneContent({
 
       {/* Waterplane */}
       <Waterplane lpp={lpp} beam={beam} draft={draft || designDraft} />
+
+      {/* Orientation markers - BOW/STERN labels for user clarity */}
+      <OrientationMarkers lpp={lpp} draft={draft || designDraft} />
 
       {/* Center of Buoyancy */}
       {kb !== undefined && lcb !== undefined && <BuoyancyMarker lcb={lcb} kb={kb} />}

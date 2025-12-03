@@ -290,4 +290,3 @@ After implementing fixes:
 **Interpretation**: The lack of bow/stern labels in 3D views is glaringly obvious and needs to be fixed.
 
 **Status**: Ready for implementation ✅
-
