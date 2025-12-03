@@ -707,6 +707,7 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
             {/* Perpendiculars */}
             {visibility.perpendiculars && (
               <>
+                {/* Aft Perpendicular (AP) - STERN */}
                 <line
                   x1={toSVG(-lpp / 2, -candidate.draftM)[0]}
                   y1={toSVG(-lpp / 2, -candidate.draftM)[1]}
@@ -718,6 +719,30 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                   opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
                   style={{ transition: "all 0.3s ease" }}
                 />
+                {/* STERN label at AP */}
+                <text
+                  x={
+                    toSVG(
+                      -lpp / 2,
+                      candidate.depthM - candidate.draftM + candidate.depthM * 0.15
+                    )[0]
+                  }
+                  y={
+                    toSVG(
+                      -lpp / 2,
+                      candidate.depthM - candidate.draftM + candidate.depthM * 0.15
+                    )[1]
+                  }
+                  textAnchor="middle"
+                  className="text-xs fill-red-500 font-semibold"
+                  filter="url(#shadow)"
+                  opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
+                  style={{ transition: "all 0.3s ease" }}
+                >
+                  STERN (AP)
+                </text>
+
+                {/* Forward Perpendicular (FP) - BOW */}
                 <line
                   x1={toSVG(lpp / 2, -candidate.draftM)[0]}
                   y1={toSVG(lpp / 2, -candidate.draftM)[1]}
@@ -729,6 +754,22 @@ export const Hull2DProfile = forwardRef<SVGSVGElement, Hull2DProfileProps>(
                   opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
                   style={{ transition: "all 0.3s ease" }}
                 />
+                {/* BOW label at FP */}
+                <text
+                  x={
+                    toSVG(lpp / 2, candidate.depthM - candidate.draftM + candidate.depthM * 0.15)[0]
+                  }
+                  y={
+                    toSVG(lpp / 2, candidate.depthM - candidate.draftM + candidate.depthM * 0.15)[1]
+                  }
+                  textAnchor="middle"
+                  className="text-xs fill-green-500 font-semibold"
+                  filter="url(#shadow)"
+                  opacity={hoveredLegendItem && hoveredLegendItem !== "perpendiculars" ? 0.3 : 1}
+                  style={{ transition: "all 0.3s ease" }}
+                >
+                  BOW (FP)
+                </text>
               </>
             )}
 

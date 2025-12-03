@@ -287,8 +287,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             opacity={opacity}
             transparent={opacity < 1}
             side={THREE.DoubleSide}
-            roughness={0.5}
-            metalness={0.1}
+            roughness={0.4}
+            metalness={0.15}
+            envMapIntensity={0.8}
           />
         </mesh>
 
@@ -309,6 +310,12 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
           geometryJson={candidate.geometryJson}
           lpp={candidate.lppM}
           beam={candidate.beamM}
+          draft={candidate.draftM}
+        />
+
+        {/* Hull-waterplane intersection curve - shows exact waterline shape */}
+        <WaterplaneIntersectionCurve
+          geometryJson={candidate.geometryJson}
           draft={candidate.draftM}
         />
 
@@ -431,6 +438,87 @@ function WaterlinesOverlay({
   }, [geometryJson, lpp, beam, draft]);
 
   return <group>{waterlinesCurves}</group>;
+}
+
+/**
+ * Hull-Waterplane Intersection Curve
+ * Renders explicit curve where hull meets waterplane at design draft
+ * Helps verify geometry accuracy and shows exact waterline shape
+ */
+function WaterplaneIntersectionCurve({
+  geometryJson,
+  draft,
+}: {
+  geometryJson?: string;
+  draft: number;
+}) {
+  const intersectionCurve = useMemo(() => {
+    if (!geometryJson) return null;
+
+    try {
+      const normalized = normalizeGeometry(geometryJson);
+      if (!normalized || normalized.stations.length === 0) {
+        return null;
+      }
+
+      const { stations, waterlines, offsets } = normalized;
+
+      // Find waterline closest to design draft
+      let closestWlIdx = 0;
+      let minDiff = Math.abs(waterlines[0] - draft);
+
+      for (let i = 1; i < waterlines.length; i++) {
+        const diff = Math.abs(waterlines[i] - draft);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestWlIdx = i;
+        }
+      }
+
+      // Extract intersection curve points at design draft waterline
+      const points: THREE.Vector3[] = [];
+
+      // Port side (aft to forward)
+      for (let stIdx = 0; stIdx < stations.length; stIdx++) {
+        const stationX = stations[stIdx];
+        const halfBreadth = offsets[stIdx]?.[closestWlIdx] || 0;
+        if (halfBreadth > 0) {
+          points.push(new THREE.Vector3(-halfBreadth, draft, stationX));
+        }
+      }
+
+      // Starboard side (forward to aft) to close the curve
+      for (let stIdx = stations.length - 1; stIdx >= 0; stIdx--) {
+        const stationX = stations[stIdx];
+        const halfBreadth = offsets[stIdx]?.[closestWlIdx] || 0;
+        if (halfBreadth > 0) {
+          points.push(new THREE.Vector3(halfBreadth, draft, stationX));
+        }
+      }
+
+      if (points.length > 1) {
+        const curve = new THREE.CatmullRomCurve3(points, true); // Closed curve
+        const curvePoints = curve.getPoints(points.length * 3);
+        const lineGeometry = new THREE.BufferGeometry();
+        lineGeometry.setFromPoints(curvePoints);
+        const lineMaterial = new THREE.LineBasicMaterial({
+          color: "#fbbf24", // Yellow/amber for high visibility
+          linewidth: 3,
+          opacity: 1.0,
+        });
+        return new THREE.Line(lineGeometry, lineMaterial);
+      }
+
+      return null;
+    } catch (error) {
+      console.warn("[WaterplaneIntersectionCurve] Failed to generate curve:", error);
+      return null;
+    }
+  }, [geometryJson, draft]);
+
+  if (!intersectionCurve) return null;
+
+  return <primitive object={intersectionCurve} />;
 }
 
 // Maintain backward compatibility with old name

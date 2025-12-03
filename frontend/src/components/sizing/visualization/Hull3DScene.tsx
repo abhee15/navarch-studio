@@ -58,6 +58,47 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
     }
   };
 
+  const setCameraView = (view: "bow" | "stern" | "side" | "top" | "isometric") => {
+    if (!controlsRef.current) return;
+
+    const controls = controlsRef.current;
+
+    switch (view) {
+      case "bow":
+        // Bow quarter view - looking from forward-starboard
+        controls.object.position.set(
+          cameraDistance * 0.8,
+          cameraDistance * 0.5,
+          cameraDistance * 1.0
+        );
+        break;
+      case "stern":
+        // Stern quarter view - looking from aft-port
+        controls.object.position.set(
+          -cameraDistance * 0.8,
+          cameraDistance * 0.5,
+          -cameraDistance * 1.0
+        );
+        break;
+      case "side":
+        // Beam view - pure side elevation
+        controls.object.position.set(cameraDistance * 1.5, cameraDistance * 0.3, 0);
+        break;
+      case "top":
+        // Top view - plan view angle
+        controls.object.position.set(0, cameraDistance * 1.8, 0);
+        break;
+      case "isometric":
+      default:
+        // Default isometric view
+        controls.object.position.set(cameraX, cameraY, cameraZ);
+        break;
+    }
+
+    controls.target.set(0, 0, 0);
+    controls.update();
+  };
+
   // Calculate optimal camera distance based on hull dimensions
   const lpp = candidate.lppM || 50;
   const beam = candidate.beamM || 10;
@@ -87,17 +128,26 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
           shadows
         >
           <Suspense fallback={null}>
-            {/* Lighting - improved for better hull definition */}
-            <ambientLight intensity={0.5} />
+            {/* Enhanced lighting for better hull form definition */}
+            <ambientLight intensity={0.6} />
+            {/* Key light from above-forward to highlight bow */}
             <directionalLight
-              position={[lpp * 0.5, beam * 0.5, draft * 2]}
-              intensity={1.0}
+              position={[lpp * 0.5, beam * 0.8, lpp * 0.6]}
+              intensity={1.2}
               castShadow
               shadow-mapSize-width={2048}
               shadow-mapSize-height={2048}
             />
-            <directionalLight position={[-lpp * 0.3, -beam * 0.3, draft * 1.5]} intensity={0.4} />
-            <pointLight position={[0, 0, draft * 2]} intensity={0.3} />
+            {/* Fill light from port side to reduce harsh shadows */}
+            <directionalLight position={[-beam * 0.5, draft * 0.5, lpp * 0.2]} intensity={0.5} />
+            {/* Rim light from aft to highlight stern shape */}
+            <directionalLight
+              position={[0, draft * 0.3, -lpp * 0.4]}
+              intensity={0.6}
+              color="#c0e0ff"
+            />
+            {/* Point light at midship for ambient fill */}
+            <pointLight position={[0, draft * 1.5, lpp * 0.2]} intensity={0.4} />
 
             {/* Environment (realistic reflections) */}
             <Environment preset="city" />
@@ -188,15 +238,47 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
           </div>
         )}
 
-        {/* Reset Camera Button */}
-        <button
-          onClick={resetCamera}
-          className="absolute top-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-          title="Reset View"
-        >
-          <Home className="h-3 w-3" />
-          <span>Reset</span>
-        </button>
+        {/* Camera View Preset Buttons */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2">
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg p-2 flex gap-1">
+            <button
+              onClick={() => setCameraView("bow")}
+              className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
+              title="Bow Quarter View"
+            >
+              Bow
+            </button>
+            <button
+              onClick={() => setCameraView("stern")}
+              className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+              title="Stern Quarter View"
+            >
+              Stern
+            </button>
+            <button
+              onClick={() => setCameraView("side")}
+              className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+              title="Beam View (Side)"
+            >
+              Side
+            </button>
+            <button
+              onClick={() => setCameraView("top")}
+              className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded transition-colors"
+              title="Top View (Plan)"
+            >
+              Top
+            </button>
+            <button
+              onClick={resetCamera}
+              className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center gap-1"
+              title="Reset to Isometric View"
+            >
+              <Home className="h-3 w-3" />
+              Reset
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Integrated Info Bar - Part of the same panel */}
