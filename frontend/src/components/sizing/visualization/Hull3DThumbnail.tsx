@@ -50,17 +50,6 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({
   // Use external options if provided, otherwise use local state
   const activeOptions = externalOptions || localOptions;
 
-  // Update function that handles both internal and external state
-  const updateOptions = (updates: Partial<Hull3DVisualizationOptions>) => {
-    const newOptions = { ...activeOptions, ...updates };
-    if (externalOptions) {
-      // If external state is provided, call callback
-      onVisualizationChange?.(newOptions);
-    } else {
-      // Otherwise, update local state
-      setLocalOptions(newOptions);
-    }
-  };
   // Calculate optimal camera distance based on hull dimensions
   // Use LPP as primary dimension, with padding for beam and draft
   const lpp = candidate.lppM || 50;
