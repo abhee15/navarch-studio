@@ -1333,13 +1333,13 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
 
             case "cruiser_stern":
                 if (vector[29] == 0) vector[29] = 0.5m;  // Rc_trans: moderate curvature
-                vector[27] = 0m; // Beta_trans: no rake (rounded stern)
+                if (vector[27] == 0) vector[27] = 0m; // Beta_trans: no rake (rounded stern)
                 _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded cruiser_stern defaults");
                 break;
 
             case "canoe_stern":
                 if (vector[29] == 0) vector[29] = 0.8m;  // Rc_trans: high curvature
-                vector[27] = 0m; // Beta_trans: no rake
+                if (vector[27] == 0) vector[27] = 0m; // Beta_trans: no rake
                 _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded canoe_stern defaults");
                 break;
 
@@ -1370,8 +1370,8 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
                 break;
 
             case "barge_type":
-                vector[9] = 0.05m;  // Minimal Rc (hard chine)
-                vector[10] = 0.05m; // Minimal Rk (hard knuckle)
+                if (vector[9] == 0) vector[9] = 0.05m;  // Minimal Rc (hard chine)
+                if (vector[10] == 0) vector[10] = 0.05m; // Minimal Rk (hard knuckle)
                 _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded barge_type defaults");
                 break;
 
