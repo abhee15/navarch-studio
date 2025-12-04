@@ -244,7 +244,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
   return (
     <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-3 bg-background p-3">
       {/* Top-Left: Plan View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative pb-4">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={(e) => {
@@ -272,7 +272,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
       </div>
 
       {/* Top-Right: Profile View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative pb-4">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={(e) => {
@@ -300,7 +300,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
       </div>
 
       {/* Bottom-Left: Sections View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative mb-4">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[620px] relative">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={(e) => {
@@ -322,13 +322,13 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
             Maximize
           </button>
         </div>
-        <div className="flex-1 min-h-0 pb-4">
+        <div className="flex-1 min-h-0">
           <Hull2DSections candidate={candidate} />
         </div>
       </div>
 
       {/* Bottom-Right: 3D View */}
-      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[560px] relative mb-4">
+      <div className="bg-card rounded-lg overflow-visible flex flex-col min-h-[560px] relative">
         <div
           className="bg-card px-3 py-2 border-b border-border flex items-center justify-between cursor-pointer hover:bg-accent"
           onClick={(e) => {
@@ -350,7 +350,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
             Maximize
           </button>
         </div>
-        <div className="flex-1 min-h-0 pb-4">
+        <div className="flex-1 min-h-0">
           <Hull3DScene
             candidate={candidate}
             showWaterplane={show3DWaterplane}
