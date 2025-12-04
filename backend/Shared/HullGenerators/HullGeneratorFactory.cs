@@ -52,20 +52,39 @@ public class HullGeneratorFactory
     private IHullGenerator GetGeneratorInternal(string? registryType, decimal cb)
     {
         // Try parent hull first
+        // Note: HasParentHull checks if data *should* exist, but actual data may be missing
+        // We'll try to use parent hull and catch any failures
         if (ParentHullLoader.HasParentHull(registryType, cb))
         {
-            _logger?.LogInformation(
-                "Using parent hull generator for {VesselType}, Cb={Cb}",
-                registryType ?? "unknown", cb);
+            try
+            {
+                _logger?.LogInformation(
+                    "Attempting parent hull generator for {VesselType}, Cb={Cb}",
+                    registryType ?? "unknown", cb);
 
-            // Use vessel-type-specific generator if available, otherwise generic parent hull generator
-            return CreateVesselTypeSpecificGenerator(registryType)
-                ?? new ParentHullHullGenerator(_parentHullLogger, registryType);
+                // Use vessel-type-specific generator if available, otherwise generic parent hull generator
+                var generator = CreateVesselTypeSpecificGenerator(registryType)
+                    ?? new ParentHullHullGenerator(_parentHullLogger, registryType);
+
+                _logger?.LogInformation(
+                    "✅ Using parent hull generator: {GeneratorType} for {VesselType}, Cb={Cb}",
+                    generator.GetType().Name, registryType ?? "unknown", cb);
+
+                return generator;
+            }
+            catch (Exception ex)
+            {
+                // Parent hull generator instantiation failed (e.g., missing data files)
+                // Fall through to parametric fallback
+                _logger?.LogWarning(ex,
+                    "Parent hull generator failed for {VesselType}, Cb={Cb}. Falling back to parametric generator. Error: {Message}",
+                    registryType ?? "unknown", cb, ex.Message);
+            }
         }
 
-        // Fallback to parametric
+        // Fallback to parametric (either HasParentHull returned false, or parent hull failed)
         _logger?.LogInformation(
-            "Parent hull not available for {VesselType}, Cb={Cb}. Using parametric generator.",
+            "Using parametric (form-coefficient) generator for {VesselType}, Cb={Cb}",
             registryType ?? "unknown", cb);
 
         return new FormCoefficientHullGenerator(_parametricLogger);

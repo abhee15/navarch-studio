@@ -65,19 +65,50 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
                     "[GEOMETRY_GEN] Using generator: {GeneratorType} for vessel type: {VesselType}, Cb: {Cb}, Stations: {Stations} (isParentHull={IsParentHull})",
                     generatorTypeName, vesselType ?? "unknown", candidate.Cb, actualNumStations, isParentHullGenerator);
 
-                // Generate geometry with ShipD family parameters
-                var geometry = generator.Generate(
-                    dims,
-                    candidate.Cb,
-                    candidate.Cp,
-                    candidate.Cm,
-                    candidate.Cwp,
-                    actualNumStations,
-                    numWaterlines,
-                    bowFamily,
-                    midshipFamily,
-                    sternFamily,
-                    vesselType);
+                GeneratedHullGeometry geometry;
+                try
+                {
+                    // Generate geometry with ShipD family parameters
+                    geometry = generator.Generate(
+                        dims,
+                        candidate.Cb,
+                        candidate.Cp,
+                        candidate.Cm,
+                        candidate.Cwp,
+                        actualNumStations,
+                        numWaterlines,
+                        bowFamily,
+                        midshipFamily,
+                        sternFamily,
+                        vesselType);
+                }
+                catch (InvalidOperationException ex) when (isParentHullGenerator && ex.Message.Contains("Parent hull not available"))
+                {
+                    // Parent hull generator said it could generate but data is missing
+                    // Fall back to pure parametric generator
+                    _logger.LogWarning(ex,
+                        "[GEOMETRY_GEN] Parent hull data missing for {VesselType}, Cb={Cb}. Falling back to parametric generator.",
+                        vesselType, candidate.Cb);
+
+                    // Retry with parametric generator
+                    var parametricGenerator = new Shared.HullGenerators.FormCoefficientHullGenerator(logger: null);
+                    geometry = parametricGenerator.Generate(
+                        dims,
+                        candidate.Cb,
+                        candidate.Cp,
+                        candidate.Cm,
+                        candidate.Cwp,
+                        numStations, // Use 60 stations for smooth rendering
+                        numWaterlines,
+                        bowFamily,
+                        midshipFamily,
+                        sternFamily,
+                        vesselType);
+
+                    _logger.LogInformation(
+                        "[GEOMETRY_GEN] ✅ Successfully generated geometry using parametric fallback for {VesselType}, Cb={Cb}",
+                        vesselType, candidate.Cb);
+                }
 
                 // Convert to DTO format
                 var offsetsGrid = new OffsetsGridDto
