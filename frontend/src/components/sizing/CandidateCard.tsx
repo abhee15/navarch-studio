@@ -491,9 +491,13 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
                 <div className="flex justify-between">
                   <span className="text-blue-700 dark:text-blue-400">Longitudinal:</span>
                   <span className="font-mono font-semibold text-blue-900 dark:text-blue-200">
-                    Lb={(shipdGeometryInfo.lb * 100).toFixed(0)}% Lm=
-                    {(shipdGeometryInfo.lm * 100).toFixed(0)}% Ls=
-                    {(shipdGeometryInfo.ls * 100).toFixed(0)}%
+                    {(() => {
+                      // Round Lb and Ls, then calculate Lm to ensure exact 100% sum
+                      const lbPct = Math.round(shipdGeometryInfo.lb * 100);
+                      const lsPct = Math.round(shipdGeometryInfo.ls * 100);
+                      const lmPct = 100 - lbPct - lsPct;
+                      return `Lb=${lbPct}% Lm=${lmPct}% Ls=${lsPct}%`;
+                    })()}
                   </span>
                 </div>
                 {shipdGeometryInfo.hasBulb && (
