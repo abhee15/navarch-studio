@@ -42,6 +42,10 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
   const [show3DCenters] = useState(true);
   const [show3DLabels] = useState(true);
   const [show3DGrid] = useState(true);
+  const [show3DWaterlines] = useState(false);
+  const [show3DButtocks] = useState(false);
+  const [show3DSections] = useState(false);
+  const [show3DWireframe] = useState(false);
 
   // Refs for export
   const planRef = useRef<SVGSVGElement>(null);
@@ -233,6 +237,10 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
               showCenters={show3DCenters}
               showLabels={show3DLabels}
               showGrid={show3DGrid}
+              showWaterlines={show3DWaterlines}
+              showButtocks={show3DButtocks}
+              showSections={show3DSections}
+              showWireframe={show3DWireframe}
             />
           )}
         </div>
@@ -355,7 +363,12 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
             candidate={candidate}
             showWaterplane={show3DWaterplane}
             showCenters={show3DCenters}
+            showLabels={show3DLabels}
             showGrid={show3DGrid}
+            showWaterlines={show3DWaterlines}
+            showButtocks={show3DButtocks}
+            showSections={show3DSections}
+            showWireframe={show3DWireframe}
           />
         </div>
       </div>

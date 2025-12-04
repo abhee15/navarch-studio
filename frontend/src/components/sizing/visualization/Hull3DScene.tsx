@@ -12,6 +12,10 @@ interface Hull3DSceneProps {
   showCenters?: boolean;
   showLabels?: boolean;
   showGrid?: boolean;
+  showWaterlines?: boolean;
+  showButtocks?: boolean;
+  showSections?: boolean;
+  showWireframe?: boolean;
 }
 
 /**
@@ -29,6 +33,12 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   showCenters = true,
   showLabels = true,
   showGrid = true,
+  showWaterlines = false,
+  showButtocks = false,
+  showSections = false,
+  showWireframe = false,
+  showLabels = true,
+  showGrid = true,
 }) => {
   const [showDimensions, setShowDimensions] = useState(false);
   const [showHint, setShowHint] = useState(true);
@@ -37,6 +47,10 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
     centers: true,
     labels: true,
     grid: true,
+    waterlines: true,
+    buttocks: true,
+    sections: true,
+    wireframe: true,
   });
   const controlsRef = useRef<OrbitControlsImpl>(null);
 
@@ -161,6 +175,10 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
                 candidate={candidate}
                 showWaterplane={showWaterplane && visibility.waterplane}
                 showCenters={showCenters && visibility.centers}
+                showWaterlines={showWaterlines && visibility.waterlines}
+                showButtocks={showButtocks && visibility.buttocks}
+                showSections={showSections && visibility.sections}
+                showWireframe={showWireframe && visibility.wireframe}
               />
 
               {/* Orientation markers - BOW/STERN labels for user clarity */}
@@ -339,6 +357,58 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
           >
             <span className="font-mono text-xs">ABC</span>
             <span>Labels</span>
+          </button>
+
+          <button
+            onClick={() => setVisibility((prev) => ({ ...prev, waterlines: !prev.waterlines }))}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+              visibility.waterlines
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
+            }`}
+            title="Toggle waterlines overlay"
+          >
+            <div className="w-5 h-0.5 bg-yellow-500"></div>
+            <span>Waterlines</span>
+          </button>
+
+          <button
+            onClick={() => setVisibility((prev) => ({ ...prev, buttocks: !prev.buttocks }))}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+              visibility.buttocks
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
+            }`}
+            title="Toggle buttocks (longitudinal curves) overlay"
+          >
+            <div className="w-5 h-0.5 bg-orange-500"></div>
+            <span>Buttocks</span>
+          </button>
+
+          <button
+            onClick={() => setVisibility((prev) => ({ ...prev, sections: !prev.sections }))}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+              visibility.sections
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
+            }`}
+            title="Toggle sections (transverse curves) overlay"
+          >
+            <div className="w-5 h-0.5 bg-purple-500"></div>
+            <span>Sections</span>
+          </button>
+
+          <button
+            onClick={() => setVisibility((prev) => ({ ...prev, wireframe: !prev.wireframe }))}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+              visibility.wireframe
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
+            }`}
+            title="Toggle wireframe mode"
+          >
+            <span className="font-mono text-xs">▦</span>
+            <span>Wireframe</span>
           </button>
         </div>
 
