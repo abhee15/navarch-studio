@@ -101,11 +101,13 @@ export const DropdownMenuTrigger: React.FC<DropdownMenuTriggerProps> = ({ childr
   };
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, {
+    const childProps = {
       onClick: handleClick,
-      "aria-haspopup": "true",
-      "aria-expanded": isOpen,
-    });
+    };
+    return React.cloneElement(
+      children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>,
+      childProps
+    );
   }
 
   return (
