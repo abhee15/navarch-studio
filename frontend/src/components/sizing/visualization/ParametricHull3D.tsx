@@ -60,10 +60,10 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
   }) => {
     const { theme } = useTheme();
 
-    // Professional CAD-style hull color with strong contrast
-    // Light mode: Darker slate for better definition against light background
-    // Dark mode: Saturated steel blue for high contrast and visibility
-    const hullColor = color || (theme === "dark" ? "#7B9FD3" : "#4A5568");
+    // HIGH CONTRAST hull color for maximum visibility
+    // Light mode: Very dark blue-gray for strong definition
+    // Dark mode: Bright blue for maximum contrast against dark background
+    const hullColor = color || (theme === "dark" ? "#60A5FA" : "#1E3A8A");
 
     const { sizingStore } = useStore();
 
@@ -311,9 +311,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             wireframe={showWireframe}
             side={THREE.DoubleSide}
             flatShading={false}
-            roughness={0.15}
-            metalness={0.6}
-            envMapIntensity={1.8}
+            roughness={0.3}
+            metalness={0.5}
+            envMapIntensity={1.2}
           />
         </mesh>
 
