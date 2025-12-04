@@ -13,6 +13,10 @@ import { ParameterSliders } from "../../components/sizing/workspace/ParameterSli
 import { ParametersDrawer } from "../../components/sizing/workspace/ParametersDrawer";
 import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
 import { SensitivityPanel } from "../../components/sizing/workspace/SensitivityPanel";
+import {
+  VisualizationSettings,
+  type VisualizationOptions,
+} from "../../components/sizing/workspace/VisualizationSettings";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { adjustParameter, getCandidate } from "../../services/sizingApi";
@@ -45,6 +49,24 @@ export const CandidateWorkspace: React.FC = observer(() => {
   const [isPushModalOpen, setPushModalOpen] = useState(false);
   const [isPushingToHydro, setIsPushingToHydro] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+  const [vizSettings, setVizSettings] = useState<VisualizationOptions>({
+    show3DWaterplane: true,
+    show3DCenters: true,
+    show3DLabels: true,
+    show3DGrid: true,
+    show3DWaterlines: false,
+    show3DButtocks: false,
+    show3DSections: false,
+    show3DWireframe: false,
+    show2DWaterlines: true,
+    show2DButtocks: true,
+    show2DSections: true,
+    waterlineCount: 7,
+    buttockCount: 5,
+    sectionCount: 10,
+    meshQuality: "medium",
+    enableAnimations: true,
+  });
 
   const candidate = sizingStore.selectedCandidate;
   const mission = sizingStore.selectedMission;
@@ -474,7 +496,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
           {/* Main Content Area */}
           <main className="flex-1 min-w-0 overflow-y-auto">
-            <div className="px-4 py-8 sm:px-6">
+            <div className="px-4 py-8 sm:px-6 xl:pr-2">
               {/* Viewports - Flexible Height */}
               <div className="mb-6 rounded-lg bg-card shadow overflow-hidden">
                 <div className="border-b border-border p-4">
@@ -485,7 +507,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                   </p>
                 </div>
                 <div className="min-h-[1400px]">
-                  <ViewportQuadLayout candidate={candidate} />
+                  <ViewportQuadLayout candidate={candidate} vizSettings={vizSettings} />
                 </div>
               </div>
 
@@ -624,6 +646,13 @@ export const CandidateWorkspace: React.FC = observer(() => {
               </div>
             </div>
           </main>
+
+          {/* Right Sidebar - Visualization Settings (Desktop & Large Screens) */}
+          <aside className="hidden xl:flex xl:flex-col w-80 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto border-l border-border bg-card/50 backdrop-blur-sm">
+            <div className="p-4">
+              <VisualizationSettings onSettingsChange={setVizSettings} />
+            </div>
+          </aside>
         </div>
       </main>
 

@@ -11,6 +11,10 @@ export interface VisualizationOptions {
   show3DCenters: boolean;
   show3DLabels: boolean;
   show3DGrid: boolean;
+  show3DWaterlines: boolean;
+  show3DButtocks: boolean;
+  show3DSections: boolean;
+  show3DWireframe: boolean;
   show2DWaterlines: boolean;
   show2DButtocks: boolean;
   show2DSections: boolean;
@@ -34,6 +38,10 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
     show3DCenters: true,
     show3DLabels: true,
     show3DGrid: true,
+    show3DWaterlines: false,
+    show3DButtocks: false,
+    show3DSections: false,
+    show3DWireframe: false,
     show2DWaterlines: true,
     show2DButtocks: true,
     show2DSections: true,
@@ -107,6 +115,46 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Show Grid</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.show3DWaterlines}
+                  onChange={(e) => updateSetting("show3DWaterlines", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Waterlines Overlay</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.show3DButtocks}
+                  onChange={(e) => updateSetting("show3DButtocks", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Buttocks (Longitudinal Curves)
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.show3DSections}
+                  onChange={(e) => updateSetting("show3DSections", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Sections (Transverse Curves)
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.show3DWireframe}
+                  onChange={(e) => updateSetting("show3DWireframe", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Wireframe Mode</span>
               </label>
             </div>
           </div>

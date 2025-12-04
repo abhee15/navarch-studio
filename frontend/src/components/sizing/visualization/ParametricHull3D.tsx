@@ -394,6 +394,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
 function ButtocksOverlay({
   geometryJson,
   beam,
+  draft: _draft,
+  lpp,
 }: {
   geometryJson?: string;
   beam: number;
@@ -425,7 +427,7 @@ function ButtocksOverlay({
         for (let stIdx = 0; stIdx < stations.length; stIdx++) {
           // CRITICAL FIX: Apply same coordinate transform as hull mesh
           const stationNormalized = stations[stIdx]; // 0-1 from normalizeGeometry()
-          const stationX = (stationNormalized - 0.5) * lppM; // Convert to centered meters
+          const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters
 
           // Find Z values where half-breadth matches targetY (interpolate between waterlines)
           for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
@@ -478,7 +480,7 @@ function ButtocksOverlay({
       console.warn("[ButtocksOverlay] Failed to generate buttock curves:", error);
       return [];
     }
-  }, [geometryJson, beam]);
+  }, [geometryJson, beam, lpp]);
 
   return <group>{buttocksCurves}</group>;
 }
@@ -490,6 +492,9 @@ function ButtocksOverlay({
  */
 function SectionsOverlay({
   geometryJson,
+  beam: _beam,
+  draft: _draft,
+  lpp,
 }: {
   geometryJson?: string;
   beam: number;
@@ -566,7 +571,7 @@ function SectionsOverlay({
       console.warn("[SectionsOverlay] Failed to generate section curves:", error);
       return [];
     }
-  }, [geometryJson]);
+  }, [geometryJson, lpp]);
 
   return <group>{sectionCurves}</group>;
 }
@@ -578,6 +583,8 @@ function SectionsOverlay({
  */
 function WaterlinesOverlay({
   geometryJson,
+  lpp,
+  beam: _beam,
   draft,
 }: {
   geometryJson?: string;
@@ -609,10 +616,10 @@ function WaterlinesOverlay({
 
         for (let stIdx = 0; stIdx < stations.length; stIdx++) {
           // CRITICAL FIX: stations[] array contains 0-1 normalized positions from normalizeGeometry()
-          // Must apply same centering transform as hull mesh: (position - 0.5) * lppM
+          // Must apply same centering transform as hull mesh: (position - 0.5) * lpp
           // This ensures waterlines align perfectly with hull geometry
           const stationNormalized = stations[stIdx]; // 0-1 range (0=aft, 1=forward)
-          const stationX = (stationNormalized - 0.5) * lppM; // Convert to centered meters: -lppM/2 to +lppM/2
+          const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters: -lpp/2 to +lpp/2
           const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
 
           if (halfBreadth > 0) {
@@ -625,7 +632,7 @@ function WaterlinesOverlay({
         // Add starboard side in reverse order to complete the curve
         for (let stIdx = stations.length - 1; stIdx >= 0; stIdx--) {
           const stationNormalized = stations[stIdx]; // 0-1 range
-          const stationX = (stationNormalized - 0.5) * lppM; // Convert to centered meters
+          const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters
           const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
 
           if (halfBreadth > 0) {
@@ -663,7 +670,7 @@ function WaterlinesOverlay({
       console.warn("[WaterlinesOverlay] Failed to generate waterline curves:", error);
       return [];
     }
-  }, [geometryJson, draft]);
+  }, [geometryJson, draft, lpp]);
 
   return <group>{waterlinesCurves}</group>;
 }
