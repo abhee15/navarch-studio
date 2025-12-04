@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Shared.HullGenerators.Fairing;
 using Shared.HullGenerators.Integration;
 using Shared.HullGenerators.Models;
@@ -13,6 +14,16 @@ public class FormCoefficientHullGenerator : IHullGenerator
 {
     // Note: Calibration parameters are now Cb-dependent and calculated dynamically
     // This provides better matching to BSRA/Series 60 characteristics
+
+    private readonly ILogger<FormCoefficientHullGenerator>? _logger;
+
+    /// <summary>
+    /// Constructor with optional logger for diagnostics
+    /// </summary>
+    public FormCoefficientHullGenerator(ILogger<FormCoefficientHullGenerator>? logger = null)
+    {
+        _logger = logger;
+    }
 
     /// <summary>
     /// Check if this generator can generate for the given vessel type and Cb
@@ -40,49 +51,145 @@ public class FormCoefficientHullGenerator : IHullGenerator
         string? sternFamily = null,
         string? vesselType = null)
     {
-        // Validate inputs
-        ValidateInputs(dims, cb, cp, cm, cwp, numStations, numWaterlines);
+        _logger?.LogDebug(
+            "[FORM_COEFF] Starting generation: L={L}m, B={B}m, T={T}m, Cb={Cb}, Cp={Cp}, Cm={Cm}, Cwp={Cwp}",
+            dims.Length, dims.Beam, dims.Draft, cb, cp, cm, cwp);
+
+        try
+        {
+            // Validate inputs
+            _logger?.LogDebug("[FORM_COEFF] Step 0: Validating inputs...");
+            ValidateInputs(dims, cb, cp, cm, cwp, numStations, numWaterlines);
+            _logger?.LogDebug("[FORM_COEFF] Step 0: ✅ Validation passed");
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[FORM_COEFF] Step 0: ❌ VALIDATION FAILED - {Message}", ex.Message);
+            throw;
+        }
 
         // Generate BSRA-compatible station layout
         var stations = GenerateBSRAStations(dims.Length, numStations);
-
-        // Generate waterlines (0 to 1.3T for extended visualization)
         var waterlines = GenerateWaterlines(dims.Draft, numWaterlines);
+        _logger?.LogDebug("[FORM_COEFF] Generated {StationCount} stations, {WaterlineCount} waterlines",
+            stations.Count, waterlines.Count);
 
-        // Step 1: Generate sectional area curve from Cp and LCB
-        var sectionalAreas = GenerateSectionalAreaCurve(
-            stations, dims.Length, dims.Beam, dims.Draft, cm, cp, dims.LcbPercent, cb);
+        // Declare variables before try blocks
+        List<decimal> sectionalAreas;
+        List<decimal> waterlineHalfBreadths;
+        List<decimal> sectionShapeProfile;
+        List<List<decimal>> offsets;
 
-        // Step 2: Generate waterline half-breadths from Cwp with ShipD family adjustments
-        var waterlineHalfBreadths = GenerateWaterlineHalfBreadths(
-            stations, dims.Length, dims.Beam, cwp, cb, bowFamily, sternFamily, vesselType);
-
-        // Step 3: Generate section shapes from Cm with ShipD family adjustments
-        var sectionShapeProfile = GenerateSectionShapes(
-            waterlines, dims.Beam, dims.Draft, cm, cb, midshipFamily, vesselType);
-
-        // Step 4: Combine to generate offsets
-        var offsets = CombineToOffsets(
-            stations, waterlines, sectionalAreas, sectionShapeProfile, waterlineHalfBreadths,
-            dims.Beam, dims.Draft, cm);
-
-        // Step 5: Fair the offsets using cubic spline (if BSRA standard layout)
-        if (numStations == 23)
+        try
         {
-            offsets = FairOffsets(stations, waterlines, offsets);
-            // Ensure all faired offsets are non-negative (fairing can produce negative values)
-            for (int i = 0; i < offsets.Count; i++)
-            {
-                for (int j = 0; j < offsets[i].Count; j++)
-                {
-                    offsets[i][j] = Math.Max(0m, offsets[i][j]);
-                }
-            }
+            // Step 1: Generate sectional area curve from Cp and LCB
+            _logger?.LogDebug("[FORM_COEFF] Step 1: Generating sectional area curve (Cp={Cp}, LCB={LCB}%)...", cp, dims.LcbPercent);
+            sectionalAreas = GenerateSectionalAreaCurve(
+                stations, dims.Length, dims.Beam, dims.Draft, cm, cp, dims.LcbPercent, cb);
+            _logger?.LogDebug("[FORM_COEFF] Step 1: ✅ Generated {Count} sectional areas", sectionalAreas.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[FORM_COEFF] Step 1: ❌ FAILED - Sectional area curve generation - {Message}", ex.Message);
+            throw;
         }
 
-        // Step 6: Validate and compute form coefficients
-        var computedCoeffs = ComputeFormCoefficients(
-            stations, waterlines, offsets, dims.Length, dims.Beam, dims.Draft, cm);
+        try
+        {
+            // Step 2: Generate waterline half-breadths from Cwp with ShipD family adjustments
+            _logger?.LogDebug("[FORM_COEFF] Step 2: Generating waterline half-breadths (Cwp={Cwp}, Bow={Bow}, Stern={Stern})...",
+                cwp, bowFamily ?? "none", sternFamily ?? "none");
+            waterlineHalfBreadths = GenerateWaterlineHalfBreadths(
+                stations, dims.Length, dims.Beam, cwp, cb, bowFamily, sternFamily, vesselType);
+            _logger?.LogDebug("[FORM_COEFF] Step 2: ✅ Generated {Count} waterline half-breadths", waterlineHalfBreadths.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[FORM_COEFF] Step 2: ❌ FAILED - Waterline half-breadths generation - {Message}", ex.Message);
+            throw;
+        }
+
+        try
+        {
+            // Step 3: Generate section shapes from Cm with ShipD family adjustments
+            _logger?.LogDebug("[FORM_COEFF] Step 3: Generating section shapes (Cm={Cm}, Midship={Midship})...",
+                cm, midshipFamily ?? "none");
+            sectionShapeProfile = GenerateSectionShapes(
+                waterlines, dims.Beam, dims.Draft, cm, cb, midshipFamily, vesselType);
+            _logger?.LogDebug("[FORM_COEFF] Step 3: ✅ Generated section shape profile with {Count} values", sectionShapeProfile.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[FORM_COEFF] Step 3: ❌ FAILED - Section shapes generation - {Message}", ex.Message);
+            throw;
+        }
+
+        try
+        {
+            // Step 4: Combine to generate offsets
+            _logger?.LogDebug("[FORM_COEFF] Step 4: Combining to generate offsets...");
+            offsets = CombineToOffsets(
+                stations, waterlines, sectionalAreas, sectionShapeProfile, waterlineHalfBreadths,
+                dims.Beam, dims.Draft, cm);
+            _logger?.LogDebug("[FORM_COEFF] Step 4: ✅ Generated {StationCount}x{WaterlineCount} offset grid",
+                offsets.Count, offsets[0].Count);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[FORM_COEFF] Step 4: ❌ FAILED - Combining offsets - {Message}", ex.Message);
+            throw;
+        }
+
+        try
+        {
+            // Step 5: Fair the offsets using cubic spline (if BSRA standard layout)
+            if (numStations == 23)
+            {
+                _logger?.LogDebug("[FORM_COEFF] Step 5: Fairing offsets with cubic spline...");
+                offsets = FairOffsets(stations, waterlines, offsets);
+                // Ensure all faired offsets are non-negative (fairing can produce negative values)
+                int negativeCount = 0;
+                for (int i = 0; i < offsets.Count; i++)
+                {
+                    for (int j = 0; j < offsets[i].Count; j++)
+                    {
+                        if (offsets[i][j] < 0m)
+                        {
+                            offsets[i][j] = 0m;
+                            negativeCount++;
+                        }
+                    }
+                }
+                _logger?.LogDebug("[FORM_COEFF] Step 5: ✅ Fairing complete, clamped {Count} negative values to zero", negativeCount);
+            }
+            else
+            {
+                _logger?.LogDebug("[FORM_COEFF] Step 5: Skipped fairing (not BSRA standard layout)");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[FORM_COEFF] Step 5: ❌ FAILED - Fairing offsets - {Message}", ex.Message);
+            throw;
+        }
+
+        FormCoefficients computedCoeffs;
+        try
+        {
+            // Step 6: Validate and compute form coefficients
+            _logger?.LogDebug("[FORM_COEFF] Step 6: Computing actual form coefficients...");
+            computedCoeffs = ComputeFormCoefficients(
+                stations, waterlines, offsets, dims.Length, dims.Beam, dims.Draft, cm);
+            _logger?.LogDebug("[FORM_COEFF] Step 6: ✅ Computed: Cb={Cb}, Cp={Cp}, Cm={Cm}, Cwp={Cwp}",
+                computedCoeffs.Cb, computedCoeffs.Cp, computedCoeffs.Cm, computedCoeffs.Cwp);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[FORM_COEFF] Step 6: ❌ FAILED - Computing coefficients - {Message}", ex.Message);
+            throw;
+        }
+
+        _logger?.LogInformation("[FORM_COEFF] ✅ Generation complete successfully");
 
         return new GeneratedHullGeometry
         {

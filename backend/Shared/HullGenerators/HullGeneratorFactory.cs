@@ -68,7 +68,7 @@ public class HullGeneratorFactory
             "Parent hull not available for {VesselType}, Cb={Cb}. Using parametric generator.",
             registryType ?? "unknown", cb);
 
-        return new FormCoefficientHullGenerator();
+        return new FormCoefficientHullGenerator(_parametricLogger);
     }
 
     /// <summary>
@@ -104,7 +104,7 @@ public class HullGeneratorFactory
             "Parent hull not available for {VesselType}, Cb={Cb}. Using parametric generator.",
             registryType ?? "unknown", cb);
 
-        return new FormCoefficientHullGenerator();
+        return new FormCoefficientHullGenerator(_parametricLogger);
     }
 
     /// <summary>
