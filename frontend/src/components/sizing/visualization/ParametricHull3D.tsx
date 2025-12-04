@@ -60,10 +60,10 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
   }) => {
     const { theme } = useTheme();
 
-    // Professional CAD-style hull color (naval architecture standard)
-    // Light mode: Light slate gray - soft, neutral, professional
-    // Dark mode: Light steel blue - high contrast, modern, sophisticated
-    const hullColor = color || (theme === "dark" ? "#B0C4DE" : "#778899");
+    // Professional CAD-style hull color with strong contrast
+    // Light mode: Darker slate for better definition against light background
+    // Dark mode: Saturated steel blue for high contrast and visibility
+    const hullColor = color || (theme === "dark" ? "#7B9FD3" : "#4A5568");
 
     const { sizingStore } = useStore();
 
@@ -311,9 +311,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             wireframe={showWireframe}
             side={THREE.DoubleSide}
             flatShading={false}
-            roughness={0.2}
-            metalness={0.4}
-            envMapIntensity={1.5}
+            roughness={0.15}
+            metalness={0.6}
+            envMapIntensity={1.8}
           />
         </mesh>
 
@@ -504,8 +504,8 @@ function ButtocksOverlay({
           lineGeometry.setFromPoints(curvePoints);
           const lineMaterial = new THREE.LineBasicMaterial({
             color,
-            linewidth: 2,
-            opacity: 0.8,
+            linewidth: 4,
+            opacity: 0.95,
             transparent: true,
           });
           const lineObject = new THREE.Line(lineGeometry, lineMaterial);
@@ -603,8 +603,8 @@ function SectionsOverlay({
           lineGeometry.setFromPoints(curvePoints);
           const lineMaterial = new THREE.LineBasicMaterial({
             color,
-            linewidth: 2,
-            opacity: 0.7,
+            linewidth: 4,
+            opacity: 0.95,
             transparent: true,
           });
           const lineObject = new THREE.Line(lineGeometry, lineMaterial);
@@ -703,8 +703,8 @@ function WaterlinesOverlay({
           lineGeometry.setFromPoints(curvePoints);
           const lineMaterial = new THREE.LineBasicMaterial({
             color,
-            linewidth: 2,
-            opacity: 0.8,
+            linewidth: 4,
+            opacity: 0.95,
             transparent: true,
           });
           const lineObject = new THREE.Line(lineGeometry, lineMaterial);
