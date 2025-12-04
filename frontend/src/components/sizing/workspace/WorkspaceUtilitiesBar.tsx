@@ -22,7 +22,7 @@ export const WorkspaceUtilitiesBar: React.FC<WorkspaceUtilitiesBarProps> = ({
       <button
         onClick={onSettingsClick}
         className={`
-          flex flex-col items-center justify-center gap-1 p-3 
+          flex flex-col items-center justify-center gap-1 p-3
           border-b border-border transition-colors
           hover:bg-accent/50 active:bg-accent
           ${activePanel === "settings" ? "bg-accent text-accent-foreground" : "text-muted-foreground"}

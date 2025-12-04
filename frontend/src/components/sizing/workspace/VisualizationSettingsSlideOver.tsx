@@ -43,7 +43,7 @@ export const VisualizationSettingsSlideOver: React.FC<VisualizationSettingsSlide
 
       {/* Slide-over Panel */}
       <div
-        className="fixed inset-y-0 right-0 w-80 lg:w-96 bg-card border-l border-border shadow-2xl z-50 
+        className="fixed inset-y-0 right-0 w-80 lg:w-96 bg-card border-l border-border shadow-2xl z-50
                    flex flex-col overflow-hidden
                    animate-in slide-in-from-right duration-300"
       >

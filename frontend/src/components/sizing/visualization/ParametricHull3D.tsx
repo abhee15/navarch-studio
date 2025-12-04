@@ -60,10 +60,10 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
   }) => {
     const { theme } = useTheme();
 
-    // Theme-aware hull color for better contrast
-    // Light mode: darker blue (blue-800) for contrast against light gray background
-    // Dark mode: brighter blue (blue-400) for contrast against dark gray background
-    const hullColor = color || (theme === "dark" ? "#60a5fa" : "#1e40af");
+    // Professional CAD-style hull color (naval architecture standard)
+    // Light mode: Light slate gray - soft, neutral, professional
+    // Dark mode: Light steel blue - high contrast, modern, sophisticated
+    const hullColor = color || (theme === "dark" ? "#B0C4DE" : "#778899");
 
     const { sizingStore } = useStore();
 
@@ -311,9 +311,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             wireframe={showWireframe}
             side={THREE.DoubleSide}
             flatShading={false}
-            roughness={0.25}
-            metalness={0.25}
-            envMapIntensity={1.2}
+            roughness={0.2}
+            metalness={0.4}
+            envMapIntensity={1.5}
           />
         </mesh>
 
@@ -491,9 +491,9 @@ function ButtocksOverlay({
           const curve = new THREE.CatmullRomCurve3(points, false);
           const curvePoints = curve.getPoints(points.length * 2);
 
-          // Color gradient based on Y position
+          // Professional CAD color: Bright orange (high contrast for buttock lines)
           const yRatio = targetY / (beam / 2);
-          const color = new THREE.Color().setHSL(0.35, 0.7, 0.3 + yRatio * 0.4); // Green gradient
+          const color = new THREE.Color().setHSL(0.047, 1.0, 0.5 + yRatio * 0.1); // Orange gradient (17° hue)
 
           const lineGeometry = new THREE.BufferGeometry();
           lineGeometry.setFromPoints(curvePoints);
@@ -582,9 +582,9 @@ function SectionsOverlay({
           const curve = new THREE.CatmullRomCurve3(points, false);
           const curvePoints = curve.getPoints(points.length * 2);
 
-          // Color based on station position (gradient from aft to forward)
+          // Professional CAD color: Bright magenta (high contrast for section lines)
           const stationRatio = stIdx / (stations.length - 1);
-          const color = new THREE.Color().setHSL(0.85, 0.6, 0.4 + stationRatio * 0.3); // Pink-purple gradient
+          const color = new THREE.Color().setHSL(0.844, 1.0, 0.48 + stationRatio * 0.1); // Magenta gradient (304° hue)
 
           const lineGeometry = new THREE.BufferGeometry();
           lineGeometry.setFromPoints(curvePoints);
@@ -680,9 +680,9 @@ function WaterlinesOverlay({
           const curve = new THREE.CatmullRomCurve3(points, false);
           const curvePoints = curve.getPoints(points.length * 2); // Smooth curve
 
-          // Color based on waterline height (gradient from keel to deck)
+          // Professional CAD color: Bright cyan (high contrast for waterlines)
           const heightRatio = waterlineZ / (draft * 1.5);
-          const color = new THREE.Color().setHSL(0.55, 0.7, 0.3 + heightRatio * 0.4); // Blue-cyan gradient
+          const color = new THREE.Color().setHSL(0.528, 1.0, 0.45 + heightRatio * 0.1); // Cyan gradient (190° hue)
 
           // Create Three.js Line object
           const lineGeometry = new THREE.BufferGeometry();
