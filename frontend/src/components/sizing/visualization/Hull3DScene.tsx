@@ -2,7 +2,7 @@ import React, { Suspense, useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid, Environment, Text } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { ParametricHull3D } from "./WigleyHull3D";
+import { ParametricHull3D } from "./ParametricHull3D";
 import type { CandidateDesign } from "../../../types/sizing";
 import { Home, Move3D } from "lucide-react";
 

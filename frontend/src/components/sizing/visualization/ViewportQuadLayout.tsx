@@ -220,8 +220,8 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
           </div>
         </div>
 
-        {/* Maximized viewport */}
-        <div className="flex-1 min-h-[600px]">
+        {/* Maximized viewport - use full available height */}
+        <div className="flex-1 overflow-hidden">
           {mode === "plan" && <Hull2DPlan candidate={candidate} ref={planRef} />}
           {mode === "profile" && <Hull2DProfile candidate={candidate} ref={profileRef} />}
           {mode === "sections" && <Hull2DSections candidate={candidate} ref={sectionsRef} />}

@@ -1,23 +1,66 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { ParametricHull3D } from "./WigleyHull3D";
+import { ParametricHull3D } from "./ParametricHull3D";
 import type { CandidateDesign } from "../../../types/sizing";
+
+export interface Hull3DVisualizationOptions {
+  showWaterlines?: boolean;
+  showButtocks?: boolean;
+  showSections?: boolean;
+  showWireframe?: boolean;
+  showWaterplane?: boolean;
+  showCenters?: boolean;
+}
 
 interface Hull3DThumbnailProps {
   candidate: CandidateDesign;
   height?: number;
+  /** External visualization options - if provided, overrides local state */
+  visualizationOptions?: Hull3DVisualizationOptions;
+  /** Callback when visualization options change (for external state management) */
+  onVisualizationChange?: (options: Hull3DVisualizationOptions) => void;
 }
 
 /**
  * Simplified 3D thumbnail for candidate cards
  *
- * - No grid, no overlays, no controls text
+ * - Supports external or internal visualization state
+ * - Optional controls for toggling waterlines, wireframe, etc.
  * - Auto-rotate disabled for performance
  * - Fixed camera angle for consistency
  * - Uses vessel-type-specific hull shapes
  */
-export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, height = 200 }) => {
+export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({
+  candidate,
+  height = 200,
+  visualizationOptions: externalOptions,
+  onVisualizationChange,
+}) => {
+  // Internal state for visualization options (used if no external options provided)
+  const [localOptions, setLocalOptions] = useState<Hull3DVisualizationOptions>({
+    showWaterlines: true,
+    showButtocks: false,
+    showSections: false,
+    showWireframe: false,
+    showWaterplane: false,
+    showCenters: false,
+  });
+
+  // Use external options if provided, otherwise use local state
+  const activeOptions = externalOptions || localOptions;
+
+  // Update function that handles both internal and external state
+  const updateOptions = (updates: Partial<Hull3DVisualizationOptions>) => {
+    const newOptions = { ...activeOptions, ...updates };
+    if (externalOptions) {
+      // If external state is provided, call callback
+      onVisualizationChange?.(newOptions);
+    } else {
+      // Otherwise, update local state
+      setLocalOptions(newOptions);
+    }
+  };
   // Calculate optimal camera distance based on hull dimensions
   // Use LPP as primary dimension, with padding for beam and draft
   const lpp = candidate.lppM || 50;
@@ -59,13 +102,17 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({ candidate, hei
           <group
             rotation={[0, Math.PI / 6, 0]} // Rotate 30° for better 3/4 view
           >
-            {/* Hull only - no overlays for thumbnail
-                IMPORTANT: Use low resolution (0.3 = 18x12 segments instead of 60x40)
-                to prevent WebGL context exhaustion when rendering multiple thumbnails */}
+            {/* Hull with configurable overlays
+              IMPORTANT: Use low resolution (0.3 = 18x12 segments instead of 60x40)
+              to prevent WebGL context exhaustion when rendering multiple thumbnails */}
             <ParametricHull3D
               candidate={candidate}
-              showWaterplane={false}
-              showCenters={false}
+              showWaterplane={activeOptions.showWaterplane || false}
+              showCenters={activeOptions.showCenters || false}
+              showWaterlines={activeOptions.showWaterlines !== false} // Default true
+              showButtocks={activeOptions.showButtocks || false}
+              showSections={activeOptions.showSections || false}
+              showWireframe={activeOptions.showWireframe || false}
               opacity={0.9}
               resolution={0.3}
             />

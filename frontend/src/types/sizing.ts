@@ -397,3 +397,17 @@ export interface PushToHydrostaticsResult {
   vesselId: string;
   sourceDesign?: SourceDesignSummary;
 }
+
+/**
+ * Hull Visualization Options
+ * Controls what elements are displayed in 3D hull renderings
+ */
+export interface HullVisualizationOptions {
+  showWaterlines: boolean;
+  showButtocks: boolean;
+  showSections: boolean;
+  showWireframe: boolean;
+  showWaterplane: boolean;
+  showCenters: boolean;
+  showGrid: boolean;
+}

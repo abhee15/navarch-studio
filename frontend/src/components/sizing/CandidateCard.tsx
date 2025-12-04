@@ -1,8 +1,21 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import type { CandidateDesign } from "../../types/sizing";
 import { Button } from "../ui/button";
-import { Hull3DThumbnail } from "./visualization/Hull3DThumbnail";
-import { AlertTriangle, Award, TrendingUp, Check, Database, Sparkles, Ship } from "lucide-react";
+import { Hull3DThumbnail, type Hull3DVisualizationOptions } from "./visualization/Hull3DThumbnail";
+import {
+  AlertTriangle,
+  Award,
+  TrendingUp,
+  Check,
+  Database,
+  Sparkles,
+  Ship,
+  Waves,
+  Grid3x3,
+  Droplet,
+  Circle,
+  Layers,
+} from "lucide-react";
 
 interface CandidateCardProps {
   candidate: CandidateDesign;
@@ -10,10 +23,40 @@ interface CandidateCardProps {
   onSelect: () => void;
   onCompare: () => void;
   isComparing: boolean;
+  /** Global visualization options - when provided, initializes card's visualization state */
+  globalVisualizationOptions?: Hull3DVisualizationOptions;
 }
 
 export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
-  ({ candidate, rank, onSelect, onCompare, isComparing }) => {
+  ({ candidate, rank, onSelect, onCompare, isComparing, globalVisualizationOptions }) => {
+    // Visualization options state for this card
+    // Initialize with global options if provided, otherwise use defaults
+    const [visualizationOptions, setVisualizationOptions] = useState<Hull3DVisualizationOptions>(
+      globalVisualizationOptions || {
+        showWaterlines: true,
+        showButtocks: false,
+        showSections: false,
+        showWireframe: false,
+        showWaterplane: false,
+        showCenters: false,
+      }
+    );
+
+    // Sync with global options when they change
+    React.useEffect(() => {
+      if (globalVisualizationOptions) {
+        setVisualizationOptions(globalVisualizationOptions);
+      }
+    }, [globalVisualizationOptions]);
+
+    // Toggle function for visualization options
+    const toggleVisualizationOption = (key: keyof Hull3DVisualizationOptions) => {
+      setVisualizationOptions((prev) => ({
+        ...prev,
+        [key]: !prev[key],
+      }));
+    };
+
     // Parse flags
     let flags: string[] = [];
     try {
@@ -53,6 +96,22 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
     const hasShipD = useMemo(() => {
       return !!candidate.shipdParametersJson || !!candidate.geometryJson;
     }, [candidate.shipdParametersJson, candidate.geometryJson]);
+
+    // Check if geometry is valid for waterlines/lines plan rendering
+    const hasValidGeometry = useMemo(() => {
+      if (!candidate.geometryJson) return false;
+      try {
+        const parsed = JSON.parse(candidate.geometryJson);
+        // Check for both OffsetsGrid format and ShipD sections format
+        const hasOffsets =
+          parsed &&
+          ((Array.isArray(parsed.stations) && parsed.stations.length > 0) ||
+            (Array.isArray(parsed.offsets) && parsed.offsets.length > 0));
+        return hasOffsets;
+      } catch {
+        return false;
+      }
+    }, [candidate.geometryJson]);
 
     // Parse ShipD vector to extract key geometry info
     const shipdGeometryInfo = useMemo(() => {
@@ -101,6 +160,16 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                       <Ship className="h-2.5 w-2.5" />
                       ShipD
+                    </span>
+                  )}
+                  {/* Geometry Availability Badge */}
+                  {!hasValidGeometry && (
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                      title="Waterlines and lines plan overlay unavailable - geometry data not generated"
+                    >
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      No Lines
                     </span>
                   )}
                 </div>
@@ -267,9 +336,112 @@ export const CandidateCard: React.FC<CandidateCardProps> = React.memo(
             </div>
           )}
 
-          {/* 3D Thumbnail */}
-          <div className="bg-muted/20 rounded-lg overflow-hidden">
-            <Hull3DThumbnail candidate={candidate} height={200} />
+          {/* 3D Thumbnail with Visualization Controls */}
+          <div className="relative bg-muted/20 rounded-lg overflow-hidden group">
+            <Hull3DThumbnail
+              candidate={candidate}
+              height={200}
+              visualizationOptions={visualizationOptions}
+              onVisualizationChange={setVisualizationOptions}
+            />
+
+            {/* Visualization Controls Overlay - appears on hover */}
+            <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+              <div className="bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1.5 flex items-center justify-center gap-1 shadow-lg">
+                {/* Waterlines Toggle */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleVisualizationOption("showWaterlines");
+                  }}
+                  className={`p-1.5 rounded transition-all ${
+                    visualizationOptions.showWaterlines
+                      ? "bg-blue-500 text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/20"
+                  }`}
+                  title="Toggle Waterlines Overlay"
+                  disabled={!hasValidGeometry}
+                >
+                  <Waves className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Wireframe Toggle */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleVisualizationOption("showWireframe");
+                  }}
+                  className={`p-1.5 rounded transition-all ${
+                    visualizationOptions.showWireframe
+                      ? "bg-purple-500 text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/20"
+                  }`}
+                  title="Toggle Wireframe Mode"
+                >
+                  <Grid3x3 className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Buttocks Toggle */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleVisualizationOption("showButtocks");
+                  }}
+                  className={`p-1.5 rounded transition-all ${
+                    visualizationOptions.showButtocks
+                      ? "bg-green-500 text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/20"
+                  }`}
+                  title="Toggle Buttocks (Longitudinal Curves)"
+                  disabled={!hasValidGeometry}
+                >
+                  <Layers className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Waterplane Toggle */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleVisualizationOption("showWaterplane");
+                  }}
+                  className={`p-1.5 rounded transition-all ${
+                    visualizationOptions.showWaterplane
+                      ? "bg-cyan-500 text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/20"
+                  }`}
+                  title="Toggle Waterplane Surface"
+                >
+                  <Droplet className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Centers Toggle */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleVisualizationOption("showCenters");
+                  }}
+                  className={`p-1.5 rounded transition-all ${
+                    visualizationOptions.showCenters
+                      ? "bg-red-500 text-white shadow-sm"
+                      : "text-gray-300 hover:bg-white/20"
+                  }`}
+                  title="Toggle Center Markers (LCB, KB)"
+                >
+                  <Circle className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Geometry Missing Overlay - show when waterlines requested but unavailable */}
+            {visualizationOptions.showWaterlines && !hasValidGeometry && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-none">
+                <div className="bg-amber-500/90 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-medium text-center">
+                  <AlertTriangle className="h-4 w-4 mx-auto mb-1" />
+                  <div>Waterlines unavailable</div>
+                  <div className="text-[10px] opacity-90">Geometry data not generated</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Principal Dimensions - Compact Grid */}

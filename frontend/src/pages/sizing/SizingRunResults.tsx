@@ -10,9 +10,10 @@ import { Button } from "../../components/ui/button";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { AppHeader } from "../../components/AppHeader";
-import { Home } from "lucide-react";
+import { Home, Waves, Grid3x3, Droplet, Circle, Layers, Eye, EyeOff } from "lucide-react";
 import { inferProblematicStep } from "../../utils/diagnosticHelpers";
 import { missionCaseToDto } from "../../utils/missionHelpers";
+import type { Hull3DVisualizationOptions } from "../../components/sizing/visualization/Hull3DThumbnail";
 
 export const SizingRunResults: React.FC = observer(() => {
   const { runId } = useParams<{ runId: string }>();
@@ -20,6 +21,18 @@ export const SizingRunResults: React.FC = observer(() => {
   const { sizingStore, authStore } = useStore();
   const [showComparison, setShowComparison] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Global visualization options (applied to all candidate cards)
+  const [globalVizOptions, setGlobalVizOptions] = useState<Hull3DVisualizationOptions>({
+    showWaterlines: true,
+    showButtocks: false,
+    showSections: false,
+    showWireframe: false,
+    showWaterplane: false,
+    showCenters: false,
+  });
+
+  const [showGlobalControls, setShowGlobalControls] = useState(false);
 
   useEffect(() => {
     if (!runId) return;
@@ -131,6 +144,110 @@ export const SizingRunResults: React.FC = observer(() => {
             </div>
           )}
 
+          {/* Global Visualization Controls Toolbar */}
+          {!sizingStore.isLoading && sizingStore.candidates.length > 0 && (
+            <div className="mb-6 rounded-lg border border-border bg-card shadow-sm">
+              <button
+                onClick={() => setShowGlobalControls(!showGlobalControls)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  {showGlobalControls ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  <span className="text-sm font-medium text-foreground">
+                    3D Display Options {showGlobalControls ? "(Hide)" : "(Show)"}
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Apply to all {sizingStore.candidates.length} candidates
+                </span>
+              </button>
+
+              {showGlobalControls && (
+                <div className="px-4 py-3 border-t border-border">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={globalVizOptions.showWaterlines ? "default" : "outline"}
+                      onClick={() =>
+                        setGlobalVizOptions({
+                          ...globalVizOptions,
+                          showWaterlines: !globalVizOptions.showWaterlines,
+                        })
+                      }
+                      className="text-xs"
+                    >
+                      <Waves className="h-3.5 w-3.5 mr-1.5" />
+                      Waterlines
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={globalVizOptions.showWireframe ? "default" : "outline"}
+                      onClick={() =>
+                        setGlobalVizOptions({
+                          ...globalVizOptions,
+                          showWireframe: !globalVizOptions.showWireframe,
+                        })
+                      }
+                      className="text-xs"
+                    >
+                      <Grid3x3 className="h-3.5 w-3.5 mr-1.5" />
+                      Wireframe
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={globalVizOptions.showButtocks ? "default" : "outline"}
+                      onClick={() =>
+                        setGlobalVizOptions({
+                          ...globalVizOptions,
+                          showButtocks: !globalVizOptions.showButtocks,
+                        })
+                      }
+                      className="text-xs"
+                    >
+                      <Layers className="h-3.5 w-3.5 mr-1.5" />
+                      Buttocks
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={globalVizOptions.showWaterplane ? "default" : "outline"}
+                      onClick={() =>
+                        setGlobalVizOptions({
+                          ...globalVizOptions,
+                          showWaterplane: !globalVizOptions.showWaterplane,
+                        })
+                      }
+                      className="text-xs"
+                    >
+                      <Droplet className="h-3.5 w-3.5 mr-1.5" />
+                      Waterplane
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={globalVizOptions.showCenters ? "default" : "outline"}
+                      onClick={() =>
+                        setGlobalVizOptions({
+                          ...globalVizOptions,
+                          showCenters: !globalVizOptions.showCenters,
+                        })
+                      }
+                      className="text-xs"
+                    >
+                      <Circle className="h-3.5 w-3.5 mr-1.5" />
+                      Centers
+                    </Button>
+                    <div className="ml-auto text-xs text-muted-foreground">
+                      Hover over each card for individual controls
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Empty State - No Candidates */}
           {!sizingStore.isLoading && sizingStore.candidates.length === 0 && (
             <EmptyResultsPanel
@@ -222,6 +339,7 @@ export const SizingRunResults: React.FC = observer(() => {
                     onSelect={() => navigate(`/sizing/workspace/${candidate.id}`)}
                     onCompare={() => sizingStore.toggleCompareCandidate(candidate.id)}
                     isComparing={isComparing}
+                    globalVisualizationOptions={showGlobalControls ? globalVizOptions : undefined}
                   />
                 );
               })}
