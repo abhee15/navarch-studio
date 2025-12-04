@@ -296,9 +296,10 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             transparent={showWireframe || opacity < 1}
             wireframe={showWireframe}
             side={THREE.DoubleSide}
-            roughness={0.4}
-            metalness={0.15}
-            envMapIntensity={0.8}
+            flatShading={false}
+            roughness={0.25}
+            metalness={0.25}
+            envMapIntensity={1.2}
           />
         </mesh>
 

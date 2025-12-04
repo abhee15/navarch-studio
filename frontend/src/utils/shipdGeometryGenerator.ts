@@ -98,7 +98,7 @@ export function generateShipDHull3D(
 
   // Otherwise, generate from ShipD vector
   const sections = generateShipDSections(params);
-  return generateHull3DFromSections(sections, params.lppM, true, 3, 3, true, "medium");
+  return generateHull3DFromSections(sections, params.lppM, true, 5, 5, true, "high");
 }
 
 /**
