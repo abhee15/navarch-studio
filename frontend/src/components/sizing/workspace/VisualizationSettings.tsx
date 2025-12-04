@@ -9,6 +9,7 @@ interface VisualizationSettingsProps {
 export interface VisualizationOptions {
   show3DWaterplane: boolean;
   show3DCenters: boolean;
+  show3DLabels: boolean;
   show3DGrid: boolean;
   show2DWaterlines: boolean;
   show2DButtocks: boolean;
@@ -31,6 +32,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
   const [settings, setSettings] = useState<VisualizationOptions>({
     show3DWaterplane: true,
     show3DCenters: true,
+    show3DLabels: true,
     show3DGrid: true,
     show2DWaterlines: true,
     show2DButtocks: true,
@@ -84,6 +86,17 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   Show Centers (LCB, KB)
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.show3DLabels}
+                  onChange={(e) => updateSetting("show3DLabels", e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Show BOW/STERN Labels
                 </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">

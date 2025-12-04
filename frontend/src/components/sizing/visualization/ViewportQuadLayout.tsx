@@ -40,6 +40,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
   const [mode, setMode] = useState<ViewportMode>("quad");
   const [show3DWaterplane] = useState(true);
   const [show3DCenters] = useState(true);
+  const [show3DLabels] = useState(true);
   const [show3DGrid] = useState(true);
 
   // Refs for export
@@ -230,6 +231,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(({
               candidate={candidate}
               showWaterplane={show3DWaterplane}
               showCenters={show3DCenters}
+              showLabels={show3DLabels}
               showGrid={show3DGrid}
             />
           )}

@@ -392,9 +392,6 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
  */
 function ButtocksOverlay({
   geometryJson,
-  beam,
-  draft,
-  lpp,
 }: {
   geometryJson?: string;
   beam: number;
@@ -489,9 +486,6 @@ function ButtocksOverlay({
  */
 function SectionsOverlay({
   geometryJson,
-  beam,
-  draft,
-  lpp,
 }: {
   geometryJson?: string;
   beam: number;
@@ -578,9 +572,6 @@ function SectionsOverlay({
  */
 function WaterlinesOverlay({
   geometryJson,
-  lpp,
-  beam,
-  draft,
 }: {
   geometryJson?: string;
   lpp: number;

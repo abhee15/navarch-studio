@@ -10,6 +10,7 @@ interface Hull3DSceneProps {
   candidate: CandidateDesign;
   showWaterplane?: boolean;
   showCenters?: boolean;
+  showLabels?: boolean;
   showGrid?: boolean;
 }
 
@@ -26,6 +27,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   candidate,
   showWaterplane = true,
   showCenters = true,
+  showLabels = true,
   showGrid = true,
 }) => {
   const [showDimensions, setShowDimensions] = useState(false);
@@ -33,6 +35,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   const [visibility, setVisibility] = useState({
     waterplane: true,
     centers: true,
+    labels: true,
     grid: true,
   });
   const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -161,7 +164,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
               />
 
               {/* Orientation markers - BOW/STERN labels for user clarity */}
-              {showCenters && visibility.centers && (
+              {showLabels && visibility.labels && (
                 <>
                   {/* Bow label (forward perpendicular) - GREEN */}
                   <Text
@@ -323,6 +326,19 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             </div>
             <span>Centers</span>
+          </button>
+
+          <button
+            onClick={() => setVisibility((prev) => ({ ...prev, labels: !prev.labels }))}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all text-xs font-medium ${
+              visibility.labels
+                ? "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200/50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 line-through"
+            }`}
+            title="Toggle BOW/STERN text labels"
+          >
+            <span className="font-mono text-xs">ABC</span>
+            <span>Labels</span>
           </button>
         </div>
 

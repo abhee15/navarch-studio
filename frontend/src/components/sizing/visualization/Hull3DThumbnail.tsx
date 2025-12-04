@@ -35,10 +35,9 @@ export const Hull3DThumbnail: React.FC<Hull3DThumbnailProps> = ({
   candidate,
   height = 200,
   visualizationOptions: externalOptions,
-  onVisualizationChange,
 }) => {
   // Internal state for visualization options (used if no external options provided)
-  const [localOptions, setLocalOptions] = useState<Hull3DVisualizationOptions>({
+  const [localOptions] = useState<Hull3DVisualizationOptions>({
     showWaterlines: true,
     showButtocks: false,
     showSections: false,
