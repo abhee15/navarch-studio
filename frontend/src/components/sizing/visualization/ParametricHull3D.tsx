@@ -456,10 +456,11 @@ function ButtocksOverlay({
         const targetY = buttockPositions[buttockIdx];
 
         // For each station, interpolate Z values at this Y position
+        // CRITICAL FIX: Only create points where interpolation is valid (not at bow/stern extremes)
         const points: THREE.Vector3[] = [];
+        const minOffset = 0.01; // Minimum offset threshold (1cm)
 
         for (let stIdx = 0; stIdx < stations.length; stIdx++) {
-          // CRITICAL FIX: Apply same coordinate transform as hull mesh
           const stationNormalized = stations[stIdx]; // 0-1 from normalizeGeometry()
           const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters
 
@@ -470,21 +471,25 @@ function ButtocksOverlay({
             const z1 = waterlines[wlIdx];
             const z2 = waterlines[wlIdx + 1];
 
-            // Check if targetY is between y1 and y2
-            if ((targetY >= y1 && targetY <= y2) || (targetY >= y2 && targetY <= y1)) {
-              // Linear interpolation to find Z at targetY
-              const t = y2 - y1 !== 0 ? (targetY - y1) / (y2 - y1) : 0;
-              const z = z1 + t * (z2 - z1);
+            // Only interpolate if both offsets are above threshold (valid hull region)
+            if (y1 > minOffset && y2 > minOffset) {
+              // Check if targetY is between y1 and y2
+              if ((targetY >= y1 && targetY <= y2) || (targetY >= y2 && targetY <= y1)) {
+                // Linear interpolation to find Z at targetY
+                const t = y2 - y1 !== 0 ? (targetY - y1) / (y2 - y1) : 0;
+                const z = z1 + t * (z2 - z1);
 
-              // Add points for both sides
-              points.push(new THREE.Vector3(-targetY, z, stationX)); // Port
-              points.push(new THREE.Vector3(targetY, z, stationX)); // Starboard
-              break;
+                // Add points for both sides
+                points.push(new THREE.Vector3(-targetY, z, stationX)); // Port
+                points.push(new THREE.Vector3(targetY, z, stationX)); // Starboard
+                break;
+              }
             }
           }
         }
 
-        if (points.length > 1) {
+        // Only create curve if we have enough valid points
+        if (points.length > 3) {
           // Sort points by Z coordinate for proper curve generation
           points.sort((a, b) => a.z - b.z);
 
@@ -556,29 +561,37 @@ function SectionsOverlay({
         const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters
 
         // Extract section curve points at this station
+        // CRITICAL FIX: Only include points where hull exists (not at bow/stern extremes)
         const points: THREE.Vector3[] = [];
+        const minOffset = 0.01; // Minimum offset threshold (1cm)
 
-        // Port side (bottom to top)
-        for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
-          const z = waterlines[wlIdx];
-          const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
+        // Check if this station has any valid offsets
+        const hasValidOffsets = offsets[stIdx]?.some((offset) => offset > minOffset);
 
-          if (halfBreadth >= 0) {
-            points.push(new THREE.Vector3(-halfBreadth, z, stationX));
+        if (hasValidOffsets) {
+          // Port side (bottom to top)
+          for (let wlIdx = 0; wlIdx < waterlines.length; wlIdx++) {
+            const z = waterlines[wlIdx];
+            const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
+
+            if (halfBreadth > minOffset) {
+              points.push(new THREE.Vector3(-halfBreadth, z, stationX));
+            }
+          }
+
+          // Starboard side (top to bottom) - mirror and reverse
+          for (let wlIdx = waterlines.length - 1; wlIdx >= 0; wlIdx--) {
+            const z = waterlines[wlIdx];
+            const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
+
+            if (halfBreadth > minOffset) {
+              points.push(new THREE.Vector3(halfBreadth, z, stationX));
+            }
           }
         }
 
-        // Starboard side (top to bottom) - mirror and reverse
-        for (let wlIdx = waterlines.length - 1; wlIdx >= 0; wlIdx--) {
-          const z = waterlines[wlIdx];
-          const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
-
-          if (halfBreadth >= 0) {
-            points.push(new THREE.Vector3(halfBreadth, z, stationX));
-          }
-        }
-
-        if (points.length > 2) {
+        // Only create curve if we have enough valid points
+        if (points.length > 3) {
           const curve = new THREE.CatmullRomCurve3(points, false);
           const curvePoints = curve.getPoints(points.length * 2);
 
@@ -646,19 +659,18 @@ function WaterlinesOverlay({
         const waterlineZ = waterlines[wlIdx]; // Vertical position
 
         // Extract half-breadths for this waterline across all stations
+        // CRITICAL FIX: Only include points where hull actually exists (halfBreadth > small threshold)
         const points: THREE.Vector3[] = [];
+        const minOffset = 0.01; // Minimum offset to consider (1cm) - filters bow/stern extremes
 
         for (let stIdx = 0; stIdx < stations.length; stIdx++) {
-          // CRITICAL FIX: stations[] array contains 0-1 normalized positions from normalizeGeometry()
-          // Must apply same centering transform as hull mesh: (position - 0.5) * lpp
-          // This ensures waterlines align perfectly with hull geometry
           const stationNormalized = stations[stIdx]; // 0-1 range (0=aft, 1=forward)
-          const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters: -lpp/2 to +lpp/2
+          const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters
           const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
 
-          if (halfBreadth > 0) {
-            // Add points for port and starboard sides
-            // Port side (negative X)
+          // Only add points where hull geometry exists
+          if (halfBreadth > minOffset) {
+            // Port side (negative Y)
             points.push(new THREE.Vector3(-halfBreadth, waterlineZ, stationX));
           }
         }
@@ -669,13 +681,15 @@ function WaterlinesOverlay({
           const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters
           const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
 
-          if (halfBreadth > 0) {
-            // Starboard side (positive X)
+          // Only add points where hull geometry exists
+          if (halfBreadth > minOffset) {
+            // Starboard side (positive Y)
             points.push(new THREE.Vector3(halfBreadth, waterlineZ, stationX));
           }
         }
 
-        if (points.length > 1) {
+        // Only create curve if we have enough valid points
+        if (points.length > 3) {
           // Create curve from points
           const curve = new THREE.CatmullRomCurve3(points, false);
           const curvePoints = curve.getPoints(points.length * 2); // Smooth curve
