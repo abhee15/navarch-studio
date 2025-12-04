@@ -16,6 +16,8 @@ export interface VisualizationOptions {
   show3DSections: boolean;
   show3DWireframe: boolean;
   hullOpacity: number;
+  showStationLabels: boolean;
+  showWaterlineLabels: boolean;
   show2DWaterlines: boolean;
   show2DButtocks: boolean;
   show2DSections: boolean;
@@ -44,6 +46,8 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
     show3DSections: false,
     show3DWireframe: false,
     hullOpacity: 80,
+    showStationLabels: false,
+    showWaterlineLabels: false,
     show2DWaterlines: true,
     show2DButtocks: true,
     show2DSections: true,
@@ -173,6 +177,28 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Lower to see internal structure and volume distribution
                 </p>
+              </div>
+              <div className="pt-3 border-t border-border space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.showStationLabels}
+                    onChange={(e) => updateSetting("showStationLabels", e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Station Numbers</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.showWaterlineLabels}
+                    onChange={(e) => updateSetting("showWaterlineLabels", e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Waterline Elevations
+                  </span>
+                </label>
               </div>
             </div>
           </div>

@@ -59,6 +59,8 @@ export const CandidateWorkspace: React.FC = observer(() => {
     show3DSections: false,
     show3DWireframe: false,
     hullOpacity: 80,
+    showStationLabels: false,
+    showWaterlineLabels: false,
     show2DWaterlines: true,
     show2DButtocks: true,
     show2DSections: true,

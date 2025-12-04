@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { observer } from "mobx-react-lite";
 import * as THREE from "three";
+import { Text } from "@react-three/drei";
 import type { CandidateDesign } from "../../../types/sizing";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { generateHull3DGeometry } from "../../../utils/hullShapeGenerator";
@@ -25,6 +26,10 @@ interface ParametricHull3DProps {
   resolution?: number;
   /** Mesh quality level. Default: "medium" */
   quality?: "low" | "medium" | "high" | "ultra";
+  /** Show station number labels on hull surface */
+  showStationLabels?: boolean;
+  /** Show waterline elevation labels on hull surface */
+  showWaterlineLabels?: boolean;
 }
 
 /**
@@ -50,6 +55,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
     opacity = 0.8,
     resolution = 1.0,
     quality = "medium",
+    showStationLabels = false,
+    showWaterlineLabels = false,
   }) => {
     const { theme } = useTheme();
 
@@ -387,6 +394,26 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
               <meshStandardMaterial color={centerMarkers.kb.color} />
             </mesh>
           </>
+        )}
+
+        {/* Station number labels */}
+        {showStationLabels && candidate.geometryJson && (
+          <StationLabelsOverlay
+            geometryJson={candidate.geometryJson}
+            lpp={candidate.lppM}
+            beam={candidate.beamM}
+            draft={candidate.draftM}
+          />
+        )}
+
+        {/* Waterline elevation labels */}
+        {showWaterlineLabels && candidate.geometryJson && (
+          <WaterlineLabelsOverlay
+            geometryJson={candidate.geometryJson}
+            draft={candidate.draftM}
+            beam={candidate.beamM}
+            lpp={candidate.lppM}
+          />
         )}
       </group>
     );
@@ -761,6 +788,121 @@ function WaterplaneIntersectionCurve({
   if (!intersectionCurve) return null;
 
   return <primitive object={intersectionCurve} />;
+}
+
+/**
+ * Station Labels Overlay
+ * Shows floating station numbers on hull surface for section identification
+ */
+function StationLabelsOverlay({
+  geometryJson,
+  lpp,
+  beam,
+  draft,
+}: {
+  geometryJson?: string;
+  lpp: number;
+  beam: number;
+  draft: number;
+}) {
+  const labels = useMemo(() => {
+    if (!geometryJson) return [];
+
+    try {
+      const normalized = normalizeGeometry(geometryJson);
+      if (!normalized || normalized.stations.length === 0) return [];
+
+      const { stations } = normalized;
+      const labelElements: React.ReactElement[] = [];
+
+      // Create label at every 5th station to avoid clutter
+      for (let i = 0; i < stations.length; i += 5) {
+        const stationNormalized = stations[i];
+        const stationZ = (stationNormalized - 0.5) * lpp; // Centered coordinates
+        const labelY = draft * 1.15; // Position above waterline
+        const labelX = beam * 0.6; // Position outside hull boundary
+
+        labelElements.push(
+          <Text
+            key={`station-${i}`}
+            position={[labelX, labelY, stationZ]}
+            fontSize={Math.max(lpp * 0.02, 1.5)}
+            color="#ffffff"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={lpp * 0.001}
+            outlineColor="#000000"
+          >
+            {`STA ${i}`}
+          </Text>
+        );
+      }
+
+      return labelElements;
+    } catch (error) {
+      console.warn("[StationLabelsOverlay] Failed to generate labels:", error);
+      return [];
+    }
+  }, [geometryJson, lpp, beam]);
+
+  return <group>{labels}</group>;
+}
+
+/**
+ * Waterline Labels Overlay
+ * Shows waterline elevation markers on hull surface for trim/draft analysis
+ */
+function WaterlineLabelsOverlay({
+  geometryJson,
+  draft,
+  beam,
+  lpp,
+}: {
+  geometryJson?: string;
+  draft: number;
+  beam: number;
+  lpp: number;
+}) {
+  const labels = useMemo(() => {
+    if (!geometryJson) return [];
+
+    try {
+      const normalized = normalizeGeometry(geometryJson);
+      if (!normalized || normalized.waterlines.length === 0) return [];
+
+      const { waterlines } = normalized;
+      const labelElements: React.ReactElement[] = [];
+
+      // Create label for every waterline
+      for (let i = 0; i < waterlines.length; i++) {
+        const wlHeight = waterlines[i];
+        const labelX = beam * 0.6; // Position outside hull boundary
+        const labelZ = lpp * 0.52; // Position slightly forward of bow
+
+        labelElements.push(
+          <Text
+            key={`wl-${i}`}
+            position={[labelX, wlHeight, labelZ]}
+            fontSize={Math.max(lpp * 0.018, 1.2)}
+            color="#60a5fa"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={lpp * 0.0008}
+            outlineColor="#000000"
+          >
+            {`WL ${wlHeight.toFixed(1)}m`}
+          </Text>
+        );
+      }
+
+      return labelElements;
+    } catch (error) {
+      console.warn("[WaterlineLabelsOverlay] Failed to generate labels:", error);
+      return [];
+    }
+  }, [geometryJson, draft, beam, lpp]);
+
+  return <group>{labels}</group>;
 }
 
 // Note: This file was renamed from WigleyHull3D.tsx to ParametricHull3D.tsx

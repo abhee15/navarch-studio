@@ -18,6 +18,8 @@ interface Hull3DSceneProps {
   showWireframe?: boolean;
   quality?: "low" | "medium" | "high" | "ultra";
   hullOpacity?: number;
+  showStationLabels?: boolean;
+  showWaterlineLabels?: boolean;
 }
 
 /**
@@ -41,6 +43,8 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   showWireframe = false,
   quality = "medium",
   hullOpacity = 80,
+  showStationLabels = false,
+  showWaterlineLabels = false,
 }) => {
   const [showDimensions, setShowDimensions] = useState(false);
   const [showHint, setShowHint] = useState(true);
@@ -183,6 +187,8 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
                 showWireframe={showWireframe && visibility.wireframe}
                 quality={quality}
                 opacity={hullOpacity / 100}
+                showStationLabels={showStationLabels}
+                showWaterlineLabels={showWaterlineLabels}
               />
 
               {/* Orientation markers - BOW/STERN labels for user clarity */}

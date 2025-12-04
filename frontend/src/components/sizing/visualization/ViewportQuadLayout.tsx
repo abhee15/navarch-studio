@@ -53,6 +53,8 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(
     const show3DWireframe = vizSettings?.show3DWireframe ?? false;
     const meshQuality = vizSettings?.meshQuality ?? "medium";
     const hullOpacity = vizSettings?.hullOpacity ?? 80;
+    const showStationLabels = vizSettings?.showStationLabels ?? false;
+    const showWaterlineLabels = vizSettings?.showWaterlineLabels ?? false;
 
     // Refs for export
     const planRef = useRef<SVGSVGElement>(null);
@@ -250,6 +252,8 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(
                 showWireframe={show3DWireframe}
                 quality={meshQuality}
                 hullOpacity={hullOpacity}
+                showStationLabels={showStationLabels}
+                showWaterlineLabels={showWaterlineLabels}
               />
             )}
           </div>
@@ -380,6 +384,8 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(
               showWireframe={show3DWireframe}
               quality={meshQuality}
               hullOpacity={hullOpacity}
+              showStationLabels={showStationLabels}
+              showWaterlineLabels={showWaterlineLabels}
             />
           </div>
         </div>
