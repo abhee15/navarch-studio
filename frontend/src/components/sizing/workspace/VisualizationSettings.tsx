@@ -15,6 +15,7 @@ export interface VisualizationOptions {
   show3DButtocks: boolean;
   show3DSections: boolean;
   show3DWireframe: boolean;
+  hullOpacity: number;
   show2DWaterlines: boolean;
   show2DButtocks: boolean;
   show2DSections: boolean;
@@ -42,6 +43,7 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
     show3DButtocks: false,
     show3DSections: false,
     show3DWireframe: false,
+    hullOpacity: 80,
     show2DWaterlines: true,
     show2DButtocks: true,
     show2DSections: true,
@@ -156,6 +158,22 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Wireframe Mode</span>
               </label>
+              <div className="pt-3 border-t border-border">
+                <Label className="text-xs text-gray-600 dark:text-gray-400">
+                  Hull Opacity: {settings.hullOpacity}%
+                </Label>
+                <input
+                  type="range"
+                  min="20"
+                  max="100"
+                  value={settings.hullOpacity}
+                  onChange={(e) => updateSetting("hullOpacity", parseInt(e.target.value))}
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-blue-200 dark:bg-blue-700"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Lower to see internal structure and volume distribution
+                </p>
+              </div>
             </div>
           </div>
 
