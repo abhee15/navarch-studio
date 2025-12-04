@@ -57,11 +57,13 @@ public class HullGeometryGeneratorService : IHullGeometryGeneratorService
 
                 // Parent hull generators require exactly 23 stations (BSRA standard)
                 // Parametric generators can use any number (60 for smooth 3D rendering)
-                var actualNumStations = generator is Shared.HullGenerators.ParentHullHullGenerator ? 23 : numStations;
+                var generatorTypeName = generator.GetType().Name;
+                var isParentHullGenerator = generatorTypeName.Contains("ParentHull") || generatorTypeName.Contains("TankerHullGenerator") || generatorTypeName.Contains("BulkerHullGenerator");
+                var actualNumStations = isParentHullGenerator ? 23 : numStations;
 
                 _logger.LogDebug(
-                    "[GEOMETRY_GEN] Using generator: {GeneratorType} for vessel type: {VesselType}, Cb: {Cb}, Stations: {Stations}",
-                    generator.GetType().Name, vesselType ?? "unknown", candidate.Cb, actualNumStations);
+                    "[GEOMETRY_GEN] Using generator: {GeneratorType} for vessel type: {VesselType}, Cb: {Cb}, Stations: {Stations} (isParentHull={IsParentHull})",
+                    generatorTypeName, vesselType ?? "unknown", candidate.Cb, actualNumStations, isParentHullGenerator);
 
                 // Generate geometry with ShipD family parameters
                 var geometry = generator.Generate(
