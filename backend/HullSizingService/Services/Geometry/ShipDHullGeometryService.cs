@@ -36,31 +36,13 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
             "[SHIPD_GEOMETRY] Generating {StationCount} sections for Lpp={Lpp}m, Beam={Beam}m, Draft={Draft}m",
             stationCount, lppM, beamM, draftM);
 
-        // PHASE 1: Displacement Correction
-        // Estimate block coefficient from ShipD parameters or use default
-        // C_B typically ranges from 0.55 (fine) to 0.85 (full) for commercial vessels
-        // Estimate based on form parameters: higher fullness parameters = higher C_B
-        decimal estimatedCb = EstimateBlockCoefficient(shipdVector, metadata);
-
-        // Calculate current displacement estimate: Δ = ρ * L * B * T * C_B
-        const decimal rhoSeawater = 1025m; // kg/m³
-        decimal currentDisplacementEst = rhoSeawater * lppM * beamM * draftM * estimatedCb;
-
-        // Target displacement: 10,000t deadweight + 3,500t lightship = 13,500t
-        // If current is significantly over (>20%), adjust draft
-        const decimal targetDisplacementT = 13500m; // tonnes
-        const decimal displacementTolerance = 0.20m; // 20% tolerance
-
-        decimal adjustedDraft = draftM;
-        if (currentDisplacementEst > targetDisplacementT * (1m + displacementTolerance))
-        {
-            // Adjust draft: T_new = Δ_target / (ρ * L * B * C_B)
-            adjustedDraft = targetDisplacementT / (rhoSeawater * lppM * beamM * estimatedCb);
-
-            _logger.LogWarning(
-                "[SHIPD_GEOMETRY] Displacement mismatch detected: Current estimate {CurrentDisp}t > Target {TargetDisp}t. Adjusting draft from {OldDraft}m to {NewDraft}m",
-                currentDisplacementEst / 1000m, targetDisplacementT, draftM, adjustedDraft);
-        }
+        // Use draft directly from solver - it already accounts for displacement
+        // The solver calculated this draft to match the candidate's target displacement
+        // Previous code had hardcoded 13,500t target which was for an old 10,000 DWT test case
+        // This caused extreme draft adjustments (e.g., 13.34m → 0.0036m) that crashed NURBS generation
+        _logger.LogDebug(
+            "[SHIPD_GEOMETRY] Using draft from solver: {Draft}m (no post-adjustment needed)",
+            draftM);
 
         // CRITICAL: Enforce sensible curvature parameters before geometry generation
         // This prevents unfair hulls caused by zero or extreme curvature values
@@ -96,7 +78,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     ? "midship"
                     : "bow";
 
-            // Generate offsets for this station (use adjusted draft)
+            // Generate offsets for this station
             var offsets = GenerateStationOffsets(
                 stationPos,
                 region,
@@ -104,7 +86,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 shipdVector,
                 lppM,
                 beamM,
-                adjustedDraft,
+                draftM,
                 metadata);
 
             // Check for bulb (only in bow region)
@@ -120,7 +102,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     shipdVector,
                     lppM,
                     beamM,
-                    adjustedDraft);
+                    draftM);
             }
 
             // Check for skeg (only in stern region)
@@ -136,7 +118,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     shipdVector,
                     lppM,
                     beamM,
-                    adjustedDraft);
+                    draftM);
             }
 
             stations.Add(new HullStationDto
@@ -154,7 +136,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
         // This corrects any artifacts in the generated geometry to ensure smooth, realistic hull shapes
         // Similar to ParentHullScaler corrections, but adapted for ShipD's dictionary-based offsets
         // CRITICAL: Pass shipdVector and denormalized to respect user-selected bow/stern families
-        EnsureBowAndSternClosure(stations, beamM, adjustedDraft, shipdVector, denormalized);
+        EnsureBowAndSternClosure(stations, beamM, draftM, shipdVector, denormalized);
 
         return Task.FromResult(new HullSectionsDto
         {
