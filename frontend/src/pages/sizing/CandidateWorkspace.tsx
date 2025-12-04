@@ -13,10 +13,9 @@ import { ParameterSliders } from "../../components/sizing/workspace/ParameterSli
 import { ParametersDrawer } from "../../components/sizing/workspace/ParametersDrawer";
 import { ResistanceCurvePanel } from "../../components/sizing/workspace/ResistanceCurvePanel";
 import { SensitivityPanel } from "../../components/sizing/workspace/SensitivityPanel";
-import {
-  VisualizationSettings,
-  type VisualizationOptions,
-} from "../../components/sizing/workspace/VisualizationSettings";
+import type { VisualizationOptions } from "../../components/sizing/workspace/VisualizationSettings";
+import { WorkspaceUtilitiesBar } from "../../components/sizing/workspace/WorkspaceUtilitiesBar";
+import { VisualizationSettingsSlideOver } from "../../components/sizing/workspace/VisualizationSettingsSlideOver";
 import { UserProfileMenu } from "../../components/UserProfileMenu";
 import { UserSettingsDialog } from "../../components/UserSettingsDialog";
 import { adjustParameter, getCandidate } from "../../services/sizingApi";
@@ -42,13 +41,14 @@ import type { PushToHydroForm } from "../../stores/SizingStore";
 export const CandidateWorkspace: React.FC = observer(() => {
   const { candidateId } = useParams<{ candidateId: string }>();
   const navigate = useNavigate();
-  const { sizingStore, authStore } = useStore();
+  const { sizingStore, authStore, copilotStore } = useStore();
   const [activeTab, setActiveTab] = useState<"kpi" | "offsets" | "sensitivity" | "shipd">("kpi");
   const [showSettings, setShowSettings] = useState(false);
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [isPushModalOpen, setPushModalOpen] = useState(false);
   const [isPushingToHydro, setIsPushingToHydro] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+  const [activeUtilityPanel, setActiveUtilityPanel] = useState<"settings" | "copilot" | null>(null);
   const [vizSettings, setVizSettings] = useState<VisualizationOptions>({
     show3DWaterplane: true,
     show3DCenters: true,
@@ -73,6 +73,15 @@ export const CandidateWorkspace: React.FC = observer(() => {
 
   const candidate = sizingStore.selectedCandidate;
   const mission = sizingStore.selectedMission;
+
+  // Sync copilot panel state with our utility panel state
+  useEffect(() => {
+    if (copilotStore.panelPosition === "hidden" && activeUtilityPanel === "copilot") {
+      setActiveUtilityPanel(null);
+    } else if (copilotStore.panelPosition !== "hidden" && activeUtilityPanel !== "copilot") {
+      setActiveUtilityPanel("copilot");
+    }
+  }, [copilotStore.panelPosition, activeUtilityPanel]);
 
   useEffect(() => {
     const loadCandidate = async () => {
@@ -650,14 +659,32 @@ export const CandidateWorkspace: React.FC = observer(() => {
             </div>
           </main>
 
-          {/* Right Sidebar - Visualization Settings (Desktop & Large Screens) */}
-          <aside className="hidden xl:flex xl:flex-col w-80 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto border-l border-border bg-card/50 backdrop-blur-sm">
-            <div className="p-4">
-              <VisualizationSettings onSettingsChange={setVizSettings} />
-            </div>
-          </aside>
+          {/* Right Utilities Icon Bar (Desktop & Large Screens) */}
+          <WorkspaceUtilitiesBar
+            onSettingsClick={() =>
+              setActiveUtilityPanel(activeUtilityPanel === "settings" ? null : "settings")
+            }
+            onCopilotClick={() => {
+              // Toggle copilot via store (existing system)
+              if (copilotStore.panelPosition === "hidden") {
+                copilotStore.setPosition("right");
+                setActiveUtilityPanel("copilot");
+              } else {
+                copilotStore.setPosition("hidden");
+                setActiveUtilityPanel(null);
+              }
+            }}
+            activePanel={activeUtilityPanel}
+          />
         </div>
       </main>
+
+      {/* Visualization Settings Slide-Over */}
+      <VisualizationSettingsSlideOver
+        isOpen={activeUtilityPanel === "settings"}
+        onClose={() => setActiveUtilityPanel(null)}
+        onSettingsChange={setVizSettings}
+      />
 
       {/* Mobile Parameters Drawer */}
       <ParametersDrawer
