@@ -78,6 +78,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   data-service:
     build:
@@ -103,6 +111,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   hull-sizing-service:
     build:
@@ -130,6 +146,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
   ai-agent-service:
     build:
@@ -157,6 +181,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   api-gateway:
     build:
@@ -188,6 +220,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   frontend:
     build:
@@ -198,6 +238,7 @@ services:
     environment:
       - VITE_API_URL=http://localhost:5002
       - VITE_AUTH_MODE=local
+      - NODE_OPTIONS=--max_old_space_size=4096
     volumes:
       - ./frontend:/app
       - ./packages:/packages
@@ -211,9 +252,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          cpus: "2.0"
+          memory: 6G
         reservations:
-          memory: 1G
+          cpus: "1.0"
+          memory: 2G
 
 volumes:
   postgres_data:
