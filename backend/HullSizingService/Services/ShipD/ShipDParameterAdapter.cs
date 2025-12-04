@@ -312,6 +312,14 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             }
         }
 
+        // CRITICAL FIX: Apply hardcoded family defaults if taxonomy doesn't provide them
+        // This ensures different family selections always produce visually distinct hull shapes
+        _logger.LogInformation("[SHIPD_ADAPTER] Applying hardcoded family defaults as fallback: bow={Bow}, midship={Mid}, stern={Stern}",
+            bowFamily ?? "none", midshipFamily ?? "none", sternFamily ?? "none");
+        ApplyHardcodedBowFamilyDefaults(vector, bowFamily, parameterMetadata);
+        ApplyHardcodedSternFamilyDefaults(vector, sternFamily, parameterMetadata);
+        ApplyHardcodedMidshipFamilyDefaults(vector, midshipFamily, parameterMetadata);
+
         // Apply conditional parameters from AdditionalParameters (using effectiveAdditionalParameters)
         ApplyConditionalParameters(
             vector,
@@ -1264,6 +1272,117 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             _logger.LogWarning(
                 "[SHIPD_ADAPTER] ✅ Applied sensible bulb dimension defaults: Lbb={Lbb}, Hbb={Hbb}, Bbb={Bbb}",
                 vector[33], vector[34], vector[35]);
+        }
+    }
+
+    /// <summary>
+    /// Apply hardcoded bow family defaults when taxonomy doesn't provide them.
+    /// This ensures different bow families produce visually distinct hull shapes.
+    /// </summary>
+    private void ApplyHardcodedBowFamilyDefaults(decimal[] vector, string? bowFamily, IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        if (string.IsNullOrEmpty(bowFamily)) return;
+
+        switch (bowFamily.ToLowerInvariant())
+        {
+            case "bulbous_bow":
+                // Set bulb geometry (indices 31, 33-37)
+                if (vector[31] == 0) vector[31] = 1m;    // bit_BB: 1 = bulb present
+                if (vector[33] == 0) vector[33] = 0.15m; // Lbb: 15% of Lpp
+                if (vector[34] == 0) vector[34] = 0.20m; // Hbb: 20% of draft
+                if (vector[35] == 0) vector[35] = 0.25m; // Bbb: 25% of beam
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded bulbous_bow defaults: bit_BB={BitBB}, Lbb={Lbb}, Hbb={Hbb}, Bbb={Bbb}",
+                    vector[31], vector[33], vector[34], vector[35]);
+                break;
+
+            case "straight_raked":
+            case "fine_entry":
+            case "axe_bow":
+            case "no_bulb":
+                // CRITICAL: Explicitly set ALL bulb parameters to ZERO (no bulb)
+                // This prevents EnsureSensibleBulbDimensions from adding defaults
+                vector[31] = 0m; // bit_BB: 0 = no bulb
+                vector[33] = 0m; // Lbb
+                vector[34] = 0m; // Hbb
+                vector[35] = 0m; // Bbb
+                vector[36] = 0m; // Lbbm
+                vector[37] = 0m; // Rbb
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied {BowFamily} - all bulb parameters forced to ZERO (no bulb)", bowFamily);
+                break;
+
+            default:
+                _logger.LogWarning("[SHIPD_ADAPTER] ⚠️ Unknown bow family '{BowFamily}' - no defaults applied", bowFamily);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Apply hardcoded stern family defaults when taxonomy doesn't provide them.
+    /// </summary>
+    private void ApplyHardcodedSternFamilyDefaults(decimal[] vector, string? sternFamily, IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        if (string.IsNullOrEmpty(sternFamily)) return;
+
+        switch (sternFamily.ToLowerInvariant())
+        {
+            case "transom_stern":
+                if (vector[22] == 0) vector[22] = 0.1m;  // Atrans: transom area ratio
+                if (vector[27] == 0) vector[27] = 0.1m;  // Beta_trans: slight rake
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded transom_stern defaults");
+                break;
+
+            case "cruiser_stern":
+                if (vector[29] == 0) vector[29] = 0.5m;  // Rc_trans: moderate curvature
+                vector[27] = 0m; // Beta_trans: no rake (rounded stern)
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded cruiser_stern defaults");
+                break;
+
+            case "canoe_stern":
+                if (vector[29] == 0) vector[29] = 0.8m;  // Rc_trans: high curvature
+                vector[27] = 0m; // Beta_trans: no rake
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded canoe_stern defaults");
+                break;
+
+            default:
+                _logger.LogWarning("[SHIPD_ADAPTER] ⚠️ Unknown stern family '{SternFamily}' - no defaults applied", sternFamily);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Apply hardcoded midship family defaults when taxonomy doesn't provide them.
+    /// </summary>
+    private void ApplyHardcodedMidshipFamilyDefaults(decimal[] vector, string? midshipFamily, IReadOnlyList<ShipDParameterMetadataDto> metadata)
+    {
+        if (string.IsNullOrEmpty(midshipFamily)) return;
+
+        switch (midshipFamily.ToLowerInvariant())
+        {
+            case "full_midship":
+                // Use default (most common for tankers/bulkers)
+                _logger.LogDebug("[SHIPD_ADAPTER] Using full_midship (default)");
+                break;
+
+            case "fine_midship":
+                if (vector[9] == 0) vector[9] = 0.3m;   // Rc: chine radius (finer sections)
+                if (vector[21] == 0) vector[21] = 1m;   // bit_EP_T: enable tumblehome
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded fine_midship defaults");
+                break;
+
+            case "barge_type":
+                vector[9] = 0.05m;  // Minimal Rc (hard chine)
+                vector[10] = 0.05m; // Minimal Rk (hard knuckle)
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded barge_type defaults");
+                break;
+
+            case "deep_v":
+                if (vector[19] == 0) vector[19] = 0.4m; // Cdrft: deadrise angle
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied hardcoded deep_v defaults");
+                break;
+
+            default:
+                _logger.LogWarning("[SHIPD_ADAPTER] ⚠️ Unknown midship family '{MidshipFamily}' - no defaults applied", midshipFamily);
+                break;
         }
     }
 }
