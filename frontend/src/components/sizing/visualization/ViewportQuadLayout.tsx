@@ -51,6 +51,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(
     const show3DButtocks = vizSettings?.show3DButtocks ?? false;
     const show3DSections = vizSettings?.show3DSections ?? false;
     const show3DWireframe = vizSettings?.show3DWireframe ?? false;
+    const meshQuality = vizSettings?.meshQuality ?? "medium";
 
     // Refs for export
     const planRef = useRef<SVGSVGElement>(null);
@@ -246,6 +247,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(
                 showButtocks={show3DButtocks}
                 showSections={show3DSections}
                 showWireframe={show3DWireframe}
+                quality={meshQuality}
               />
             )}
           </div>
@@ -374,6 +376,7 @@ export const ViewportQuadLayout: React.FC<ViewportQuadLayoutProps> = observer(
               showButtocks={show3DButtocks}
               showSections={show3DSections}
               showWireframe={show3DWireframe}
+              quality={meshQuality}
             />
           </div>
         </div>

@@ -23,6 +23,8 @@ interface ParametricHull3DProps {
   opacity?: number;
   /** Resolution multiplier (0-1). Use 0.5 for thumbnails to reduce WebGL load. Default: 1.0 */
   resolution?: number;
+  /** Mesh quality level. Default: "medium" */
+  quality?: "low" | "medium" | "high" | "ultra";
 }
 
 /**
@@ -47,6 +49,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
     color,
     opacity = 0.8,
     resolution = 1.0,
+    quality = "medium",
   }) => {
     const { theme } = useTheme();
 
@@ -95,7 +98,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
             // Use converted geometry for 3D generation
             // Enable smoothing for smooth 3D rendering - interpolation creates smooth surfaces
             // while preserving family-specific characteristics
-            // Use higher multipliers (4x) for Isometric view to eliminate faceting
+            // Quality-based multipliers: low=2, medium=3, high=5, ultra=8
+            const qualityMultiplier =
+              quality === "ultra" ? 8 : quality === "high" ? 5 : quality === "medium" ? 3 : 2;
             const fromSections = generateShipDHull3D({
               sections: {
                 stations: shipdSections.stations,
@@ -104,8 +109,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
               lppM: lpp,
               draftM: draft, // Pass draft to ensure waterplane alignment
               smooth: true, // Enable interpolation for smooth 3D rendering
-              stationMultiplier: 4, // Higher resolution for smoother surfaces
-              heightMultiplier: 4, // Higher resolution for smoother surfaces
+              stationMultiplier: qualityMultiplier,
+              heightMultiplier: qualityMultiplier,
             });
             if (isGeometryValid(fromSections)) {
               return fromSections;
@@ -128,7 +133,9 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
               // Use ShipD geometry from backend
               // Enable smoothing for smooth 3D rendering - interpolation creates smooth surfaces
               // while preserving family-specific characteristics
-              // Use higher multipliers (4x) for Isometric view to eliminate faceting
+              // Quality-based multipliers: low=2, medium=3, high=5, ultra=8
+              const qualityMultiplier =
+                quality === "ultra" ? 8 : quality === "high" ? 5 : quality === "medium" ? 3 : 2;
               const fromSections = generateShipDHull3D({
                 sections: {
                   stations: sections.stations,
@@ -137,8 +144,8 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
                 lppM: lpp,
                 draftM: draft, // Pass draft to ensure waterplane alignment
                 smooth: true, // Enable interpolation for smooth 3D rendering
-                stationMultiplier: 4, // Higher resolution for smoother surfaces
-                heightMultiplier: 4, // Higher resolution for smoother surfaces
+                stationMultiplier: qualityMultiplier,
+                heightMultiplier: qualityMultiplier,
               });
               if (isGeometryValid(fromSections)) {
                 return fromSections;
@@ -231,7 +238,7 @@ export const ParametricHull3D: React.FC<ParametricHull3DProps> = observer(
         // Return empty geometry on error
         return new THREE.BufferGeometry();
       }
-    }, [candidate, sizingStore.shipdParameters, resolution]);
+    }, [candidate, sizingStore.shipdParameters, resolution, quality]);
 
     // Cleanup hull geometry when component unmounts or geometry changes
     React.useEffect(() => {

@@ -16,6 +16,7 @@ interface Hull3DSceneProps {
   showButtocks?: boolean;
   showSections?: boolean;
   showWireframe?: boolean;
+  quality?: "low" | "medium" | "high" | "ultra";
 }
 
 /**
@@ -37,6 +38,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
   showButtocks = false,
   showSections = false,
   showWireframe = false,
+  quality = "medium",
 }) => {
   const [showDimensions, setShowDimensions] = useState(false);
   const [showHint, setShowHint] = useState(true);
@@ -177,6 +179,7 @@ export const Hull3DScene: React.FC<Hull3DSceneProps> = ({
                 showButtocks={showButtocks && visibility.buttocks}
                 showSections={showSections && visibility.sections}
                 showWireframe={showWireframe && visibility.wireframe}
+                quality={quality}
               />
 
               {/* Orientation markers - BOW/STERN labels for user clarity */}

@@ -21,7 +21,7 @@ export interface VisualizationOptions {
   waterlineCount: number;
   buttockCount: number;
   sectionCount: number;
-  meshQuality: "low" | "medium" | "high";
+  meshQuality: "low" | "medium" | "high" | "ultra";
   enableAnimations: boolean;
 }
 
@@ -254,8 +254,8 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                 <Label className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                   Mesh Quality
                 </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["low", "medium", "high"] as const).map((quality) => (
+                <div className="grid grid-cols-4 gap-2">
+                  {(["low", "medium", "high", "ultra"] as const).map((quality) => (
                     <button
                       key={quality}
                       onClick={() => updateSetting("meshQuality", quality)}
@@ -285,7 +285,13 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                   {settings.meshQuality === "high" && (
                     <>
                       <Sparkles className="h-3 w-3" />
-                      Best Quality (120×80 mesh)
+                      High Quality (120×80 mesh)
+                    </>
+                  )}
+                  {settings.meshQuality === "ultra" && (
+                    <>
+                      <Sparkles className="h-3 w-3" />
+                      Ultra (240×160 mesh)
                     </>
                   )}
                 </p>
