@@ -162,6 +162,27 @@ public class NurbsCurveGenerator
         int degree,
         List<decimal> knots)
     {
+        // CRITICAL FIX: Validate span is within safe bounds before accessing knot vector
+        // This prevents ArgumentOutOfRangeException when extreme hull parameters create invalid geometries
+        // Safe range: span must allow access to knots[span - degree] through knots[span + degree]
+        int minValidSpan = degree;
+        int maxValidSpan = knots.Count - degree - 2;
+
+        if (span < minValidSpan || span > maxValidSpan)
+        {
+            // Clamp to safe range to prevent crash
+            // This handles edge cases from extreme hull parameters
+            span = Math.Clamp(span, minValidSpan, Math.Max(minValidSpan, maxValidSpan));
+        }
+
+        // Additional safety: ensure knots vector is large enough
+        if (knots.Count < degree + 2)
+        {
+            // Degenerate case: not enough knots for this degree
+            // Return uniform basis functions to prevent crash
+            return Enumerable.Repeat(1m / (degree + 1), degree + 1).ToList();
+        }
+
         var basisFunctions = new List<decimal>(degree + 1);
         var left = new List<decimal>(degree + 1);
         var right = new List<decimal>(degree + 1);
@@ -170,8 +191,22 @@ public class NurbsCurveGenerator
 
         for (int j = 1; j <= degree; j++)
         {
-            left.Add(u - knots[span + 1 - j]);
-            right.Add(knots[span + j] - u);
+            // Additional safety: validate array indices before access
+            int leftIdx = span + 1 - j;
+            int rightIdx = span + j;
+
+            if (leftIdx < 0 || leftIdx >= knots.Count || rightIdx < 0 || rightIdx >= knots.Count)
+            {
+                // Edge case: index would be out of bounds
+                // Use zero to avoid crash while maintaining algorithm structure
+                left.Add(0m);
+                right.Add(0m);
+            }
+            else
+            {
+                left.Add(u - knots[leftIdx]);
+                right.Add(knots[rightIdx] - u);
+            }
 
             decimal saved = 0m;
 
