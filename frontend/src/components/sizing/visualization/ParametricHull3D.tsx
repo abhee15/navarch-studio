@@ -422,7 +422,9 @@ function ButtocksOverlay({
         const points: THREE.Vector3[] = [];
 
         for (let stIdx = 0; stIdx < stations.length; stIdx++) {
-          const stationX = stations[stIdx];
+          // CRITICAL FIX: Apply same coordinate transform as hull mesh
+          const stationNormalized = stations[stIdx]; // 0-1 from normalizeGeometry()
+          const stationX = (stationNormalized - 0.5) * lppM; // Convert to centered meters
 
           // Find Z values where half-breadth matches targetY (interpolate between waterlines)
           for (let wlIdx = 0; wlIdx < waterlines.length - 1; wlIdx++) {
@@ -509,7 +511,9 @@ function SectionsOverlay({
       const stationStep = Math.max(1, Math.floor(stations.length / 10)); // Show ~10 sections
 
       for (let stIdx = 0; stIdx < stations.length; stIdx += stationStep) {
-        const stationX = stations[stIdx];
+        // CRITICAL FIX: Apply same coordinate transform as hull mesh
+        const stationNormalized = stations[stIdx]; // 0-1 from normalizeGeometry()
+        const stationX = (stationNormalized - 0.5) * lpp; // Convert to centered meters
 
         // Extract section curve points at this station
         const points: THREE.Vector3[] = [];
@@ -603,7 +607,11 @@ function WaterlinesOverlay({
         const points: THREE.Vector3[] = [];
 
         for (let stIdx = 0; stIdx < stations.length; stIdx++) {
-          const stationX = stations[stIdx]; // Longitudinal position
+          // CRITICAL FIX: stations[] array contains 0-1 normalized positions from normalizeGeometry()
+          // Must apply same centering transform as hull mesh: (position - 0.5) * lppM
+          // This ensures waterlines align perfectly with hull geometry
+          const stationNormalized = stations[stIdx]; // 0-1 range (0=aft, 1=forward)
+          const stationX = (stationNormalized - 0.5) * lppM; // Convert to centered meters: -lppM/2 to +lppM/2
           const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
 
           if (halfBreadth > 0) {
@@ -615,7 +623,8 @@ function WaterlinesOverlay({
 
         // Add starboard side in reverse order to complete the curve
         for (let stIdx = stations.length - 1; stIdx >= 0; stIdx--) {
-          const stationX = stations[stIdx];
+          const stationNormalized = stations[stIdx]; // 0-1 range
+          const stationX = (stationNormalized - 0.5) * lppM; // Convert to centered meters
           const halfBreadth = offsets[stIdx]?.[wlIdx] || 0;
 
           if (halfBreadth > 0) {
