@@ -82,7 +82,10 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">3D View</h4>
             <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label
+                className="flex items-center gap-2 cursor-pointer"
+                title="Shows the waterplane surface at the design waterline"
+              >
                 <input
                   type="checkbox"
                   checked={settings.show3DWaterplane}
@@ -113,7 +116,10 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                   Show BOW/STERN Labels
                 </span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label
+                className="flex items-center gap-2 cursor-pointer"
+                title="Shows reference grid at waterline for scale and orientation"
+              >
                 <input
                   type="checkbox"
                   checked={settings.show3DGrid}
@@ -122,38 +128,55 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Show Grid</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label
+                className="flex items-center gap-2 cursor-pointer"
+                title="Horizontal sections showing hull shape at different drafts - essential for stability analysis"
+              >
                 <input
                   type="checkbox"
                   checked={settings.show3DWaterlines}
                   onChange={(e) => updateSetting("show3DWaterlines", e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Waterlines Overlay</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <div className="w-3 h-0.5 bg-yellow-500"></div>
+                  Waterlines
+                </span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label
+                className="flex items-center gap-2 cursor-pointer"
+                title="Longitudinal curves at constant transverse offsets - reveals bow/stern fairness"
+              >
                 <input
                   type="checkbox"
                   checked={settings.show3DButtocks}
                   onChange={(e) => updateSetting("show3DButtocks", e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Buttocks (Longitudinal Curves)
+                <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <div className="w-3 h-0.5 bg-orange-500"></div>
+                  Buttocks
                 </span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label
+                className="flex items-center gap-2 cursor-pointer"
+                title="Transverse sections showing hull cross-sections - critical for volume distribution"
+              >
                 <input
                   type="checkbox"
                   checked={settings.show3DSections}
                   onChange={(e) => updateSetting("show3DSections", e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Sections (Transverse Curves)
+                <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <div className="w-3 h-0.5 bg-purple-500"></div>
+                  Sections
                 </span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label
+                className="flex items-center gap-2 cursor-pointer"
+                title="Show mesh structure - useful for understanding surface tessellation and quality"
+              >
                 <input
                   type="checkbox"
                   checked={settings.show3DWireframe}
@@ -173,13 +196,17 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                   value={settings.hullOpacity}
                   onChange={(e) => updateSetting("hullOpacity", parseInt(e.target.value))}
                   className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-blue-200 dark:bg-blue-700"
+                  title="Reduce opacity to see internal volume, centers, and parallel mid-body extent"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Lower to see internal structure and volume distribution
                 </p>
               </div>
               <div className="pt-3 border-t border-border space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label
+                  className="flex items-center gap-2 cursor-pointer"
+                  title="Show station numbers for identifying specific cross-sections in analysis"
+                >
                   <input
                     type="checkbox"
                     checked={settings.showStationLabels}
@@ -188,7 +215,10 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Station Numbers</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label
+                  className="flex items-center gap-2 cursor-pointer"
+                  title="Show elevation markers for trim and draft analysis"
+                >
                   <input
                     type="checkbox"
                     checked={settings.showWaterlineLabels}
