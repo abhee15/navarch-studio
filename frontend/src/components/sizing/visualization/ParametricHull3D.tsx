@@ -475,7 +475,7 @@ function ButtocksOverlay({
       console.warn("[ButtocksOverlay] Failed to generate buttock curves:", error);
       return [];
     }
-  }, [geometryJson]);
+  }, [geometryJson, beam]);
 
   return <group>{buttocksCurves}</group>;
 }
@@ -653,7 +653,7 @@ function WaterlinesOverlay({
       console.warn("[WaterlinesOverlay] Failed to generate waterline curves:", error);
       return [];
     }
-  }, [geometryJson]);
+  }, [geometryJson, draft]);
 
   return <group>{waterlinesCurves}</group>;
 }

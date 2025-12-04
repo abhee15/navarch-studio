@@ -484,7 +484,7 @@ export const CandidateWorkspace: React.FC = observer(() => {
                     updates.
                   </p>
                 </div>
-                <div className="min-h-[800px]">
+                <div className="h-[calc(100vh-250px)] min-h-[800px]">
                   <ViewportQuadLayout candidate={candidate} />
                 </div>
               </div>
