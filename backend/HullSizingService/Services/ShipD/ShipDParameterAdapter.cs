@@ -454,21 +454,22 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
         }
 
         // Chine type affects Rc (index 9) and Rk (index 10)
+        // Frontend geometry generator expects: Rc in 0-1 range, Rk in 0.1-0.3 range
         if (!string.IsNullOrEmpty(additional.ChineType))
         {
             if (additional.ChineType.Equals("hard", StringComparison.OrdinalIgnoreCase))
             {
-                // Hard chine: sharper transition, lower Rc, higher Rk
-                vector[9] = 0.2m;  // Lower curvature
-                vector[10] = 0.8m; // Higher knuckle
-                _logger.LogDebug("[SHIPD_ADAPTER] Applied hard chine: Rc=0.2, Rk=0.8");
+                // Hard chine: sharper transition, lower Rc (sharper curve), higher Rk (pronounced knuckle)
+                vector[9] = 0.1m;  // Low Rc → sharper expansion curve (curvePower=2.35)
+                vector[10] = 0.3m; // Max Rk → maximum knuckle effect (sharp chine)
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied hard chine: Rc=0.1, Rk=0.3");
             }
             else if (additional.ChineType.Equals("soft", StringComparison.OrdinalIgnoreCase))
             {
-                // Soft chine: rounded transition, higher Rc, lower Rk
-                vector[9] = 0.6m;  // Higher curvature
-                vector[10] = 0.3m; // Lower knuckle
-                _logger.LogDebug("[SHIPD_ADAPTER] Applied soft chine: Rc=0.6, Rk=0.3");
+                // Soft chine: rounded transition, higher Rc (fuller curve), lower Rk (minimal knuckle)
+                vector[9] = 0.8m;  // High Rc → rounder, fuller expansion (curvePower=1.3)
+                vector[10] = 0.1m; // Min Rk → no knuckle effect (smooth rounded)
+                _logger.LogDebug("[SHIPD_ADAPTER] Applied soft chine: Rc=0.8, Rk=0.1");
             }
         }
 
