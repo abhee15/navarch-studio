@@ -9,8 +9,7 @@ namespace HullSizingService.Controllers;
 /// Provides automatic selection of hull families and parameters based on vessel type.
 /// </summary>
 [ApiController]
-[ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/sizing/vessel-types")]
+[Route("api/v1/hull-sizing/vessel-types")]
 public class VesselTypeDefaultsController : ControllerBase
 {
     private readonly IVesselTypeHullMappingService _mappingService;
