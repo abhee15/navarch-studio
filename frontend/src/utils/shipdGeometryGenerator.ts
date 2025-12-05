@@ -1674,10 +1674,10 @@ function generateStationOffsets(
     if (region === "bow") {
       // Bow section: use Beta (flare), Cdrft (deadrise), Rc (curvature), Rk (knuckle), Kappa_bow (convex/concave)
       const beta = denormalized[8]; // Flare angle (degrees)
-      // PHASE 2: Enforce R_c (curvature) parameter: 0.2-0.4 normalized for smooth bilge radius
-      // Fix: Increase from 0.000 to 0.2-0.4 to ensure bow sections have smooth, continuous curves
+      // PHASE 2: R_c (curvature) parameter: Use full 0-1 range for dramatic shape variation
+      // Rc controls section curvature: 0 = very curved/fine, 1 = very straight/full
       const rcNorm = shipdVector[9] ?? 0; // Curvature coefficient (normalized 0-1)
-      const rc = rcNorm <= 0 ? 0.3 : Math.max(0.2, Math.min(0.4, rcNorm)); // Default 0.3 if zero/negative
+      const rc = rcNorm <= 0 ? 0.3 : rcNorm; // Use full 0-1 range, default 0.3 if zero/negative
       // PHASE 2: Enforce R_k (knuckle) parameter: 0.1-0.3 normalized for deck edge transition
       // Fix: Set to moderate positive value (0.1-0.3) to introduce gentle radius and ensure continuity
       const rkNorm = shipdVector[10] ?? 0; // Knuckle coefficient (normalized 0-1)
@@ -1911,10 +1911,10 @@ function generateStationOffsets(
       const kappaStern = denormalized[24]; // Curvature type (-1 to 1, concave to convex)
       const betaTrans = denormalized[27]; // Stern rake angle
       const bcTrans = denormalized[28]; // Transom width ratio
-      // PHASE 2: Enforce R_c (curvature) for stern: 0.2-0.4 normalized
-      // Fix: Increase from 0.000 to 0.2-0.4 to round the transition from side to transom face
+      // PHASE 2: R_c (curvature) for stern: Use full 0-1 range for dramatic shape variation
+      // Rc_trans controls stern curvature: 0 = very curved/fine, 1 = very straight/full
       const rcTransNorm = shipdVector[29] ?? 0; // Stern curvature coefficient (normalized 0-1)
-      const rcTrans = rcTransNorm <= 0 ? 0.3 : Math.max(0.2, Math.min(0.4, rcTransNorm)); // Default 0.3 if zero/negative
+      const rcTrans = rcTransNorm <= 0 ? 0.3 : rcTransNorm; // Use full 0-1 range, default 0.3 if zero/negative
       // PHASE 2: Enforce R_k (knuckle) for stern: 0.0-0.2 normalized
       // Fix: Set to 0.0 or slightly positive to define sheer line knuckle smoothly
       const rkTransNorm = shipdVector[30] ?? 0; // Stern knuckle coefficient (normalized 0-1)
