@@ -1836,6 +1836,11 @@ function generateStationOffsets(
       // Deep V midship uses: Adrft (17), Bdrft (18), Cdrft (19)
       // Standard midship uses: bit_EP_S (20), bit_EP_T (21)
 
+      // PHASE 2: Detect chine type from Rc parameter (same as bow)
+      const rcNorm = shipdVector[9] ?? 0;
+      const rc = rcNorm <= 0 ? 0.3 : rcNorm;
+      const chineType = rc > 0.6 ? "soft" : "hard";
+
       // Detect deep V midship: Cdrft (deadrise angle) > 20 degrees indicates deep V
       const cdrft = denormalized[19]; // Deadrise angle (degrees)
       const isDeepV = cdrft > 20; // Deep V midship typically has higher deadrise
@@ -1848,7 +1853,34 @@ function generateStationOffsets(
 
       if (height <= draftM) {
         // BELOW WATERLINE
-        if (isDeepV) {
+        let baseHalfBreadth = 0;
+
+        if (chineType === "soft") {
+          // PHASE 2: SOFT CHINE - FLAT BOTTOM (same logic as bow)
+          const flatBottomStartHeight = 0.01;
+          const flatBottomHeight = draftM * 0.3;
+
+          if (height <= flatBottomStartHeight) {
+            baseHalfBreadth = 0;
+          } else if (height <= flatBottomHeight) {
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            baseHalfBreadth = flatBottomHalfBreadth;
+          } else {
+            const bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
+            const curvePower = 2.0 + (rc * 0.5);
+            const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower);
+
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            const waterlineHalfBreadthTarget = beamM / 2;
+            baseHalfBreadth = flatBottomHalfBreadth +
+              (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+          }
+          halfBreadth = Math.max(0, baseHalfBreadth);
+
+          if (Math.abs(height - draftM) < 0.001) {
+            waterlineHalfBreadth = halfBreadth;
+          }
+        } else if (isDeepV) {
           // DEEP V MIDSHIP (yacht): Use Bdrft, Cdrft for deadrise control
           const bdrft = denormalized[18]; // Draft rocker coefficient B
 
@@ -1858,7 +1890,7 @@ function generateStationOffsets(
           const deadriseReduction = Math.tan((deadriseAngle * Math.PI) / 180) * (draftM - height);
 
           // Keel width is narrower for deep V (more deadrise)
-          const keelHalfBreadth = 0.01; // Deep V keel closes at centerline (1cm for numerical stability)
+          const keelHalfBreadth = 0; // True point at keel for hard chine
 
           // Expansion curve with deadrise effect
           // Bdrft affects the curve shape
@@ -1876,9 +1908,9 @@ function generateStationOffsets(
             waterlineHalfBreadth = halfBreadth;
           }
         } else {
-          // STANDARD MIDSHIP: Gentle expansion from keel to waterline
+          // STANDARD MIDSHIP (HARD CHINE): Gentle expansion from keel to waterline
           // Midship has less deadrise, more parallel sides
-          const keelHalfBreadth = 0.01; // Keel closes at centerline (1cm for numerical stability)
+          const keelHalfBreadth = 0; // True point at keel for hard chine
 
           // Simple gentle expansion (midship is typically straighter)
           const expansionRatio = Math.pow(heightRatio, 0.8); // Gentle curve
@@ -1900,14 +1932,24 @@ function generateStationOffsets(
         // CRITICAL: Use actual waterline half-breadth from below-waterline calculation
         if (waterlineHalfBreadth === 0) {
           // Calculate waterline half-breadth using same logic as below-waterline
-          if (isDeepV) {
+          if (chineType === "soft") {
+            // Soft chine: waterline is at end of rounded bilge transition
+            const flatBottomHeight = draftM * 0.3;
+            const bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
+            const curvePower = 2.0 + (rc * 0.5);
+            const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower); // = 1.0
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            const waterlineHalfBreadthTarget = beamM / 2;
+            waterlineHalfBreadth = flatBottomHalfBreadth +
+              (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+          } else if (isDeepV) {
             const bdrft = denormalized[18];
-            const keelHalfBreadth = 0.01;
+            const keelHalfBreadth = 0;
             const curvePower = 1.5 - bdrft * 0.5;
             const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
             waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
           } else {
-            const keelHalfBreadth = 0.01;
+            const keelHalfBreadth = 0;
             const expansionRatio = Math.pow(1.0, 0.8); // heightRatio = 1.0 at waterline
             waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
           }
@@ -1953,6 +1995,11 @@ function generateStationOffsets(
       // Transom stern uses: Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans, Kappa_stern
       // Canoe stern uses: Adel_stern (25), Bdel_stern (26)
 
+      // PHASE 2: Detect chine type from Rc parameter (same as bow and midship)
+      const rcNorm = shipdVector[9] ?? 0;
+      const rc = rcNorm <= 0 ? 0.3 : rcNorm;
+      const chineType = rc > 0.6 ? "soft" : "hard";
+
       // CRITICAL: Use normalized vector for family detection (consistent with backend)
       const atransNorm = shipdVector[22] ?? 0; // Transom area coefficient (normalized 0-1)
       const isTransomStern = atransNorm > 0.5; // Transom when > 0.5, canoe when <= 0.5
@@ -1979,17 +2026,39 @@ function generateStationOffsets(
 
       if (height <= draftM) {
         // BELOW WATERLINE: Expand from narrow keel to wide waterline
-        const keelHalfBreadth = 0.01; // Stern keel closes at centerline (1cm for numerical stability)
+        let baseHalfBreadth = 0;
 
-        if (isTransomStern) {
-          // TRANSOM STERN: Use transom parameters
+        if (chineType === "soft") {
+          // PHASE 2: SOFT CHINE - FLAT BOTTOM (same logic as bow and midship)
+          const flatBottomStartHeight = 0.01;
+          const flatBottomHeight = draftM * 0.3;
+
+          if (height <= flatBottomStartHeight) {
+            baseHalfBreadth = 0;
+          } else if (height <= flatBottomHeight) {
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            baseHalfBreadth = flatBottomHalfBreadth;
+          } else {
+            const bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
+            const curvePower = 2.0 + (rc * 0.5);
+            const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower);
+
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            const waterlineHalfBreadthTarget = beamM / 2;
+            baseHalfBreadth = flatBottomHalfBreadth + 
+              (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+          }
+          // NO KNUCKLE for soft chine (smooth transition, no sharp angles)
+        } else if (isTransomStern) {
+          // TRANSOM STERN (HARD CHINE): Use transom parameters
           const atrans = denormalized[22];
+          const keelHalfBreadth = 0; // True point at keel for hard chine
 
           // Curvature expansion
           const curvePower = 2.5 - rcTrans * 1.5; // Range: 1.0 (full) to 2.5 (fine)
           const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
 
-          let baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
+          baseHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
 
           // Transom effect (flat stern) - only near the very aft
           if (stationPos < 0.15 && atrans > 0.5) {
@@ -2024,6 +2093,7 @@ function generateStationOffsets(
         } else {
           // CANOE STERN (yacht): Use Adel_stern, Bdel_stern for rounded stern shape
           // Canoe stern has more rounded, elliptical sections (less V-shaped)
+          const keelHalfBreadth = 0; // True point at keel for hard chine
 
           // Curvature expansion - canoe stern is more rounded (higher power)
           const curvePower = 2.0 + rcTrans * 1.0; // Range: 2.0-3.0 (more rounded)
@@ -2064,8 +2134,18 @@ function generateStationOffsets(
         // CRITICAL: Use actual waterline half-breadth from below-waterline calculation
         if (waterlineHalfBreadth === 0) {
           // Calculate waterline half-breadth using same logic as below-waterline
-          const keelHalfBreadth = 0.01;
-          if (isTransomStern) {
+          if (chineType === "soft") {
+            // Soft chine: waterline is at end of rounded bilge transition
+            const flatBottomHeight = draftM * 0.3;
+            const bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
+            const curvePower = 2.0 + (rc * 0.5);
+            const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower); // = 1.0
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            const waterlineHalfBreadthTarget = beamM / 2;
+            waterlineHalfBreadth = flatBottomHalfBreadth + 
+              (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+          } else if (isTransomStern) {
+            const keelHalfBreadth = 0;
             const curvePower = 2.5 - rcTrans * 1.5;
             const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
             waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
@@ -2079,6 +2159,7 @@ function generateStationOffsets(
                 (transomWidth / 2) * transomBlend * atrans;
             }
           } else {
+            const keelHalfBreadth = 0;
             const curvePower = 2.0 + rcTrans * 1.0;
             const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
             waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
