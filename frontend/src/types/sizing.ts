@@ -27,6 +27,11 @@ export interface MissionCase {
   sternFamily?: string;
   familyMaskVersion?: number;
   shipdInputsJson?: string;
+  /**
+   * @internal
+   * ShipD parameter vector (read-only, for display/debugging).
+   * Reserved for internal/testing use only.
+   */
   shipdInputVectorJson?: string;
   createdAt: string;
   updatedAt: string;
@@ -57,6 +62,12 @@ export interface CreateMissionCaseDto {
   sternFamily?: string;
   familyMaskVersion?: number;
   shipdInputsJson?: string;
+  /**
+   * @internal
+   * ShipD parameter vector override (45-element JSON array).
+   * Reserved for internal/testing use only. Users should use vessel type
+   * selections and geometry parameters instead.
+   */
   shipdInputVectorJson?: string;
 }
 
@@ -116,6 +127,12 @@ export interface CreateSizingRunDto {
   midshipFamily?: string;
   sternFamily?: string;
   familyMaskVersion?: number;
+  /**
+   * @internal
+   * ShipD parameter vector override (45-element JSON array).
+   * Reserved for internal/testing use only. Users should use vessel type
+   * selections and geometry parameters instead.
+   */
   shipdInputVectorJson?: string;
 }
 
@@ -134,6 +151,12 @@ export interface SizingRun {
   midshipFamily?: string;
   sternFamily?: string;
   familyMaskVersion?: number;
+  /**
+   * @internal
+   * ShipD parameter vector (read-only, for display/debugging).
+   * This field is populated from the run request but should not be
+   * used for new runs - use vessel type selections instead.
+   */
   shipdInputVectorJson?: string;
   candidatesCount: number;
   createdAt: string;
