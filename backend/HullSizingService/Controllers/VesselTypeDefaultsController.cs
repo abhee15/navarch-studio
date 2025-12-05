@@ -39,7 +39,11 @@ public class VesselTypeDefaultsController : ControllerBase
             return BadRequest(new { error = "Category and type are required" });
         }
 
-        var defaults = _mappingService.GetDefaultsForVesselType(category, type);
+        // Normalize to lowercase for case-insensitive matching
+        var normalizedCategory = category.ToLowerInvariant();
+        var normalizedType = type.ToLowerInvariant();
+
+        var defaults = _mappingService.GetDefaultsForVesselType(normalizedCategory, normalizedType);
 
         if (defaults == null)
         {
