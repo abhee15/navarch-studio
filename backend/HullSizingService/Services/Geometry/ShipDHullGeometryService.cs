@@ -748,7 +748,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                             expansionRatio *= 1m + curvatureEffect * bilgeFactor * 0.1m; // Smooth out bilge transition
                         }
 
-                        var baseHalfBreadth = keelHalfBreadth +
+                        baseHalfBreadth = keelHalfBreadth +
                             (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
 
                         halfBreadth = Math.Max(0m, baseHalfBreadth);
