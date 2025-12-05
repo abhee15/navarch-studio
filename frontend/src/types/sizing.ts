@@ -388,6 +388,17 @@ export interface ShipDVesselTaxonomy {
   additionalParametersJson?: string | null;
 }
 
+export interface VesselHullDefaults {
+  bowFamily?: string;
+  midshipFamily?: string;
+  sternFamily?: string;
+  chineType?: "hard" | "soft";
+  curvatureType?: "convex" | "concave";
+  deadriseAngleDeg?: number;
+  flareAngleDeg?: number;
+  tumblehomeEnabled?: boolean;
+}
+
 export interface SourceDesignSummary {
   candidateId?: string;
   sizingRunId?: string;

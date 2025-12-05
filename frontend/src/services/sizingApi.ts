@@ -9,6 +9,7 @@ import type {
   ExportFormat,
   ShipDParameterMetadata,
   ShipDVesselTaxonomy,
+  VesselHullDefaults,
   PushToHydrostaticsRequest,
   PushToHydrostaticsResult,
 } from "../types/sizing";
@@ -127,6 +128,25 @@ export const getShipDParameterMetadata = async (): Promise<ShipDParameterMetadat
 export const getShipDVesselTaxonomy = async (): Promise<ShipDVesselTaxonomy[]> => {
   const response = await api.get<ShipDVesselTaxonomy[]>(`${SHIPD_PATH}/taxonomy`);
   return response.data;
+};
+
+// Vessel Type Defaults
+export const getVesselTypeDefaults = async (
+  category: string,
+  type: string
+): Promise<VesselHullDefaults | null> => {
+  try {
+    const response = await api.get<VesselHullDefaults>(
+      `${BASE_PATH}/vessel-types/${category}/${type}/defaults`
+    );
+    return response.data;
+  } catch (error: any) {
+    // Return null if endpoint returns 404 (no defaults for this vessel type)
+    if (error.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 };
 
 export interface AdjustParameterDto {

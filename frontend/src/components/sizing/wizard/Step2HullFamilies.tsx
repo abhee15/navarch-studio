@@ -1,9 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import type { CreateMissionCaseDto, ShipDVesselTaxonomy } from "../../../types/sizing";
+import { getVesselTypeDefaults } from "../../../services/sizingApi";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 import { Select } from "../../ui/select";
 import { Input } from "../../ui/input";
+import { Info } from "lucide-react";
 
 interface Step2Props {
   formData: Partial<CreateMissionCaseDto>;
@@ -44,6 +46,9 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
     }
   }, [taxonomyEntry, formData.missionCategory, formData.missionType]);
 
+  const [defaultsApplied, setDefaultsApplied] = useState(false);
+  const [defaultsLoading, setDefaultsLoading] = useState(false);
+
   const bowOptions = taxonomyEntry?.bowFamilies ?? [];
   const midshipOptions = taxonomyEntry?.midshipFamilies ?? [];
   const sternOptions = taxonomyEntry?.sternFamilies ?? [];
@@ -51,9 +56,70 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
   const midshipKey = midshipOptions.join("|");
   const sternKey = sternOptions.join("|");
 
-  // Auto-select defaults when taxonomy provides families
+  // Auto-select defaults from vessel type mapping service (Phase 1)
   useEffect(() => {
-    if (!taxonomyEntry) {
+    const category = formData.missionCategory;
+    const type = formData.missionType;
+
+    // Only fetch defaults if vessel type is selected and families are not already set
+    if (!category || !type || defaultsApplied || defaultsLoading) {
+      return;
+    }
+
+    // Check if families are already set (user may have manually selected)
+    const hasFamilies = formData.bowFamily && formData.midshipFamily && formData.sternFamily;
+    if (hasFamilies) {
+      setDefaultsApplied(true);
+      return;
+    }
+
+    // Fetch vessel type defaults
+    setDefaultsLoading(true);
+    getVesselTypeDefaults(category, type)
+      .then((defaults) => {
+        if (defaults) {
+          const next: Partial<CreateMissionCaseDto> = {};
+
+          // Apply bow family default (only if not set and available in taxonomy options)
+          if (!formData.bowFamily && defaults.bowFamily) {
+            if (bowOptions.length === 0 || bowOptions.includes(defaults.bowFamily)) {
+              next.bowFamily = defaults.bowFamily;
+            }
+          }
+
+          // Apply midship family default
+          if (!formData.midshipFamily && defaults.midshipFamily) {
+            if (midshipOptions.length === 0 || midshipOptions.includes(defaults.midshipFamily)) {
+              next.midshipFamily = defaults.midshipFamily;
+            }
+          }
+
+          // Apply stern family default
+          if (!formData.sternFamily && defaults.sternFamily) {
+            if (sternOptions.length === 0 || sternOptions.includes(defaults.sternFamily)) {
+              next.sternFamily = defaults.sternFamily;
+            }
+          }
+
+          if (Object.keys(next).length > 0) {
+            updateFormData(next);
+            setDefaultsApplied(true);
+          }
+        }
+      })
+      .catch((error) => {
+        console.warn("[Step2HullFamilies] Failed to fetch vessel type defaults:", error);
+        // Fall through to taxonomy-based defaults
+      })
+      .finally(() => {
+        setDefaultsLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.missionCategory, formData.missionType]);
+
+  // Fallback: Auto-select defaults when taxonomy provides families (if vessel type defaults didn't apply)
+  useEffect(() => {
+    if (!taxonomyEntry || defaultsApplied) {
       return;
     }
 
@@ -84,6 +150,7 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
     formData.midshipFamily,
     formData.sternFamily,
     formData.familyMaskVersion,
+    defaultsApplied,
   ]);
 
   const handleFamilyChange = (
@@ -113,9 +180,23 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
           </p>
         )}
         {taxonomyEntry && (
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Selected vessel type: <strong>{taxonomyEntry.displayName}</strong>
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Selected vessel type: <strong>{taxonomyEntry.displayName}</strong>
+            </p>
+            {defaultsApplied && (
+              <div className="flex items-start gap-2 rounded-md bg-blue-50 dark:bg-blue-900/20 p-2 text-xs text-blue-800 dark:text-blue-200">
+                <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">Hull families pre-selected</p>
+                  <p className="mt-0.5">
+                    Based on your vessel type selection, we've pre-selected appropriate hull
+                    families. You can change these if needed.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
