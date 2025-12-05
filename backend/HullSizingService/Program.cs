@@ -152,7 +152,8 @@ try
     builder.Services.AddScoped<IShipDConstraintValidator, ShipDConstraintValidator>();
     builder.Services.AddScoped<IShipDHullGeometryService, ShipDHullGeometryService>();
     builder.Services.AddScoped<IShipDToHydroMapper, ShipDToHydroMapper>();
-    Log.Information("ShipD parameterization, geometry, and Hydro mapper services registered");
+    builder.Services.AddScoped<IVesselTypeHullMappingService, VesselTypeHullMappingService>();
+    Log.Information("ShipD parameterization, geometry, Hydro mapper, and vessel type mapping services registered");
 
     // Design Validation Services
     builder.Services.AddScoped<HullSizingService.Services.Validation.IDesignValidationService, HullSizingService.Services.Validation.DesignValidationService>();
