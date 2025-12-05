@@ -467,19 +467,15 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // Bow section: use Beta (flare), Cdrft (deadrise), Rc, Rk, Kappa_bow
                 var beta = denormalized[8]; // Flare angle (degrees)
 
-                // PHASE 2: Enforce R_c (curvature) parameter: 0.2-0.4 normalized for smooth bilge radius
-                // R_c defines smooth radius connecting flat bottom to vertical side
-                // Fix: Increase from 0.000 to 0.2-0.4 to ensure bow sections have smooth, continuous curves
+                // PHASE 2: R_c (curvature) parameter: Use full 0-1 range for dramatic shape variation
+                // Rc controls section curvature: 0 = very curved/fine, 1 = very straight/full
                 var rcNorm = shipdVector[9]; // Curvature coefficient (normalized 0-1)
-                // Enforce minimum threshold: values < 0.05 are too small and create hard chines
-                var rc = rcNorm < 0.05m ? 0.3m : Math.Clamp(rcNorm, 0.2m, 0.4m); // Default 0.3 if too small
+                var rc = rcNorm <= 0m ? 0.3m : rcNorm; // Use full 0-1 range, default 0.3 if zero/negative
 
                 // PHASE 2: Enforce R_k (knuckle) parameter: 0.1-0.3 normalized for deck edge transition
                 // R_k defines smooth connection between vertical side and deck/sheer line
-                // Fix: Set to moderate positive value (0.1-0.3) to introduce gentle radius and ensure continuity
                 var rkNorm = shipdVector[10]; // Knuckle coefficient (normalized 0-1)
-                // Enforce minimum threshold: values < 0.05 or negative/extreme negative create sharp transitions
-                var rk = (rkNorm < 0.05m || rkNorm < -0.5m) ? 0.2m : Math.Clamp(rkNorm, 0.1m, 0.3m); // Default 0.2 if too small/extreme
+                var rk = rkNorm <= 0m ? 0.2m : Math.Max(0.1m, Math.Min(0.3m, rkNorm)); // Default 0.2 if zero/negative
 
                 // Enforce Kappa_bow: should be around 0.4-0.6 for smooth sections (not 0.000)
                 var kappaBowNorm = shipdVector[14];
@@ -491,37 +487,81 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 }
                 var cdrft = denormalized[19]; // Deadrise angle (degrees)
 
+                // PHASE 2: Detect chine type from Rc parameter
+                // Soft chine: Rc > 0.6 (rounder bilge, fuller curvature)
+                // Hard chine: Rc <= 0.6 (sharper, more angular)
+                var chineType = rc > 0.6m ? "soft" : "hard";
+
                 var heightRatio = height / draftM;
 
                 if (height <= draftM)
                 {
                     // BELOW WATERLINE: Expand from narrow keel to wide waterline
-                    // Calculate keel width (reduced by deadrise)
-                    var deadriseReduction = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
-                    var keelHalfBreadth = 0.01m; // Keel closes at centerline (1cm for numerical stability)
+                    decimal baseHalfBreadth = 0m;
 
-                    // Expansion curve from keel to waterline
-                    // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
-                    var curvePower = 2.5m - rc * 1.5m; // Range: 1.0 (full) to 2.5 (fine)
-                    var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
-
-                    // Interpolate from keel to max beam
-                    var baseHalfBreadth = keelHalfBreadth +
-                        (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
-
-                    // PHASE 2: Apply knuckle effect with proper R_k radius (0.1-0.3)
-                    // R_k now always has a valid value (enforced above), so always apply
-                    var knuckleHeight = 0.5m; // Knuckle at mid-height
-                    var knuckleRange = 0.2m;
-                    if (Math.Abs(heightRatio - knuckleHeight) < knuckleRange)
+                    if (chineType == "soft")
                     {
-                        var knuckleFactor = 1m - Math.Abs(heightRatio - knuckleHeight) / knuckleRange;
-                        // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
-                        var knuckleEffect = (rk - 0.1m) / 0.2m; // Normalize 0.1-0.3 to 0-1
-                        baseHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.15m;
+                        // PHASE 2: SOFT CHINE - FLAT BOTTOM
+                        // Soft chine has a FLAT bottom (not V-shaped) with rounded bilge transition
+                        // The flat bottom extends horizontally from near the keel (for numerical stability, start at 0.01m)
+                        var flatBottomStartHeight = 0.01m;
+                        var flatBottomHeight = draftM * 0.3m; // Flat for 30% of draft
+
+                        if (height <= flatBottomStartHeight)
+                        {
+                            // At keel: half-breadth = 0 (centerline)
+                            baseHalfBreadth = 0m;
+                        }
+                        else if (height <= flatBottomHeight)
+                        {
+                            // FLAT BOTTOM: Constant half-breadth (horizontal flat section)
+                            var flatBottomHalfBreadth = (beamM / 2m) * 0.4m; // 40% of max beam at flat bottom
+                            baseHalfBreadth = flatBottomHalfBreadth;
+                        }
+                        else
+                        {
+                            // ROUNDED BILGE: Smooth curve from flat bottom to waterline
+                            var bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
+                            var curvePower = 2.0m + (rc * 0.5m); // Rc affects roundness (higher Rc = rounder)
+                            var expansionRatio = (decimal)Math.Pow((double)bilgeRatio, (double)(1m / curvePower));
+
+                            var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                            var waterlineHalfBreadthTarget = beamM / 2m;
+                            baseHalfBreadth = flatBottomHalfBreadth +
+                                (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+                        }
+                        // NO KNUCKLE for soft chine (smooth transition, no sharp angles)
+                    }
+                    else
+                    {
+                        // HARD CHINE - V-SHAPE (existing logic, but ensure keel = 0)
+                        // Calculate keel width (reduced by deadrise)
+                        var deadriseReduction = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
+                        var keelHalfBreadth = 0m; // True point at keel for hard chine
+
+                        // Expansion curve from keel to waterline
+                        // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
+                        var curvePower = 2.5m - rc * 1.5m; // Range: 1.0 (full) to 2.5 (fine)
+                        var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
+
+                        // Interpolate from keel to max beam
+                        baseHalfBreadth = keelHalfBreadth +
+                            (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
+
+                        // PHASE 2: Apply knuckle effect with proper R_k radius (0.1-0.3)
+                        // R_k now always has a valid value (enforced above), so always apply
+                        var knuckleHeight = 0.5m; // Knuckle at mid-height
+                        var knuckleRange = 0.2m;
+                        if (Math.Abs(heightRatio - knuckleHeight) < knuckleRange)
+                        {
+                            var knuckleFactor = 1m - Math.Abs(heightRatio - knuckleHeight) / knuckleRange;
+                            // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
+                            var knuckleEffect = (rk - 0.1m) / 0.2m; // Normalize 0.1-0.3 to 0-1
+                            baseHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.15m;
+                        }
                     }
 
-                    // Apply convex/concave control
+                    // Apply convex/concave control (for both soft and hard chine)
                     if (Math.Abs(kappaBow - 0.5m) > 0.1m)
                     {
                         var convexEffect = (kappaBow - 0.5m) * 2m * (decimal)Math.Sin((double)(heightRatio * (decimal)Math.PI / 2m)) * 0.1m;
@@ -532,18 +572,67 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 }
                 else
                 {
-                    // ABOVE WATERLINE: Apply flare (widen)
+                    // ABOVE WATERLINE: Apply flare (widen) with smooth transition
                     var aboveWLHeight = height - draftM;
-                    var baseHalfBreadth = beamM / 2m;
+                    var freeboard = draftM * 0.35m; // 35% freeboard above waterline
+                    var aboveWLRatio = Math.Min(aboveWLHeight / freeboard, 1.0m);
 
-                    // Add flare effect
-                    if (beta > 5m)
+                    // Calculate waterline half-breadth using same logic as below-waterline
+                    decimal waterlineHalfBreadth = 0m;
+                    if (chineType == "soft")
                     {
-                        var flareExpansion = (decimal)Math.Tan((double)(beta * (decimal)Math.PI / 180m)) * aboveWLHeight;
-                        baseHalfBreadth += flareExpansion * 0.2m;
+                        // Soft chine: waterline is at end of rounded bilge transition
+                        var flatBottomHeight = draftM * 0.3m;
+                        var bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
+                        var curvePower = 2.0m + (rc * 0.5m);
+                        var expansionRatio = (decimal)Math.Pow((double)bilgeRatio, (double)(1m / curvePower)); // = 1.0
+                        var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                        var waterlineHalfBreadthTarget = beamM / 2m;
+                        waterlineHalfBreadth = flatBottomHalfBreadth +
+                            (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+                    }
+                    else
+                    {
+                        // Hard chine: use V-shape logic
+                        var keelHalfBreadth = 0m;
+                        var curvePower = 2.5m - rc * 1.5m;
+                        var expansionRatio = (decimal)Math.Pow(1.0, (double)(1m / curvePower)); // heightRatio = 1.0 at waterline
+                        var deadriseReduction = 0m; // At waterline, no deadrise reduction
+                        waterlineHalfBreadth = keelHalfBreadth +
+                            (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.3m) * expansionRatio;
+
+                        // Apply knuckle and convex/concave effects at waterline
+                        var knuckleHeight = 0.5m;
+                        var knuckleRange = 0.2m;
+                        if (Math.Abs(1.0m - knuckleHeight) < knuckleRange)
+                        {
+                            var knuckleFactor = 1m - Math.Abs(1.0m - knuckleHeight) / knuckleRange;
+                            var knuckleEffect = (rk - 0.1m) / 0.2m;
+                            waterlineHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.15m;
+                        }
+                    }
+                    // Apply convex/concave control at waterline (for both soft and hard chine)
+                    if (Math.Abs(kappaBow - 0.5m) > 0.1m)
+                    {
+                        var convexEffect = (kappaBow - 0.5m) * 2m * (decimal)Math.Sin((double)(1.0m * (decimal)Math.PI / 2m)) * 0.1m;
+                        waterlineHalfBreadth *= 1m + convexEffect;
                     }
 
-                    halfBreadth = Math.Max(0m, baseHalfBreadth);
+                    // Start at actual waterline half-breadth (ensures continuity)
+                    var baseHalfBreadth = waterlineHalfBreadth;
+
+                    // Add flare effect with smooth transition
+                    if (beta > 5m)
+                    {
+                        // Use smooth flare curve to avoid abrupt changes
+                        var flareExpansion = (decimal)Math.Tan((double)(beta * (decimal)Math.PI / 180m)) * aboveWLHeight;
+                        // Apply gradual flare increase (smooth curve, not linear)
+                        var flareCurve = (decimal)Math.Pow((double)aboveWLRatio, 1.5); // Smooth curve
+                        baseHalfBreadth += flareExpansion * 0.2m * flareCurve;
+                    }
+
+                    // Ensure monotonicity: above-waterline should be >= waterline
+                    halfBreadth = Math.Max(waterlineHalfBreadth, baseHalfBreadth);
                 }
             }
             else if (region == "midship")
@@ -551,6 +640,11 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // Midship section: Check for deep_v_midship (yacht) vs standard midship
                 // Deep V midship uses: Adrft (17), Bdrft (18), Cdrft (19)
                 // Standard midship uses: bit_EP_S (20), bit_EP_T (21)
+
+                // PHASE 2: Detect chine type from Rc parameter (same as bow)
+                var rcNorm = shipdVector[9];
+                var rc = rcNorm <= 0m ? 0.3m : rcNorm;
+                var chineType = rc > 0.6m ? "soft" : "hard";
 
                 // PARAMETER UPDATE: Deadrise (Cdrft) - Ensure 5°-8° for standard midship
                 // Deadrise reduces GM and improves roll period by lifting keel slightly
@@ -572,7 +666,37 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 if (height <= draftM)
                 {
                     // BELOW WATERLINE
-                    if (isDeepV)
+                    decimal baseHalfBreadth = 0m;
+
+                    if (chineType == "soft")
+                    {
+                        // PHASE 2: SOFT CHINE - FLAT BOTTOM (same logic as bow)
+                        var flatBottomStartHeight = 0.01m;
+                        var flatBottomHeight = draftM * 0.3m;
+
+                        if (height <= flatBottomStartHeight)
+                        {
+                            baseHalfBreadth = 0m;
+                        }
+                        else if (height <= flatBottomHeight)
+                        {
+                            var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                            baseHalfBreadth = flatBottomHalfBreadth;
+                        }
+                        else
+                        {
+                            var bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
+                            var curvePower = 2.0m + (rc * 0.5m);
+                            var expansionRatio = (decimal)Math.Pow((double)bilgeRatio, (double)(1m / curvePower));
+
+                            var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                            var waterlineHalfBreadthTarget = beamM / 2m;
+                            baseHalfBreadth = flatBottomHalfBreadth +
+                                (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+                        }
+                        halfBreadth = Math.Max(0m, baseHalfBreadth);
+                    }
+                    else if (isDeepV)
                     {
                         // DEEP V MIDSHIP (yacht): Use Adrft, Bdrft, Cdrft for deadrise control
                         var adrft = denormalized[17]; // Draft rocker coefficient A
@@ -584,28 +708,28 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                         var deadriseReduction = (decimal)Math.Tan((double)(deadriseAngle * (decimal)Math.PI / 180m)) * (draftM - height);
 
                         // Keel width is narrower for deep V (more deadrise)
-                        var keelHalfBreadth = 0.01m; // Deep V keel closes at centerline (1cm for numerical stability)
+                        var keelHalfBreadth = 0m; // True point at keel for hard chine
 
                         // Expansion curve with deadrise effect
                         // Bdrft affects the curve shape
                         var curvePower = 1.5m - bdrft * 0.5m; // Range: 1.0-1.5 (more V-shaped)
                         var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
 
-                        var baseHalfBreadth = keelHalfBreadth +
+                        baseHalfBreadth = keelHalfBreadth +
                             (beamM / 2m - keelHalfBreadth - deadriseReduction * 0.2m) * expansionRatio;
 
                         halfBreadth = Math.Max(0m, baseHalfBreadth);
                     }
                     else
                     {
-                        // STANDARD MIDSHIP with deadrise (5°-8°) and curvature (Rc 0.3-0.5)
+                        // STANDARD MIDSHIP (HARD CHINE) with deadrise (5°-8°) and curvature (Rc 0.3-0.5)
                         // Apply deadrise to lift keel slightly, reducing waterplane area near center
                         // This reduces GM and improves roll period (softer, more comfortable)
                         var deadriseReduction = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
 
                         // Keel width is narrower due to deadrise (V-shape)
                         // Deadrise creates a slight V, so keel is narrower than without deadrise
-                        var keelHalfBreadth = 0.01m; // Midship standard keel closes at centerline (1cm for numerical stability)
+                        var keelHalfBreadth = 0m; // True point at keel for hard chine
 
                         // PARAMETER UPDATE: Apply curvature (Rc) for smooth bilge radius
                         // Higher Rc = smoother transition (fuller), Lower Rc = sharper (finer)
@@ -632,12 +756,42 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 }
                 else
                 {
-                    // ABOVE WATERLINE
+                    // ABOVE WATERLINE: Smooth transition from waterline
                     var aboveWLHeight = height - draftM;
                     var freeboard = draftM * 0.35m; // Match total freeboard (35%)
                     var aboveWLRatio = Math.Min(aboveWLHeight / freeboard, 1.0m);
 
-                    var baseHalfBreadth = beamM / 2m;
+                    // Calculate waterline half-breadth using same logic as below-waterline
+                    decimal waterlineHalfBreadth = 0m;
+                    if (chineType == "soft")
+                    {
+                        // Soft chine: waterline is at end of rounded bilge transition
+                        var flatBottomHeight = draftM * 0.3m;
+                        var bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
+                        var curvePower = 2.0m + (rc * 0.5m);
+                        var expansionRatio = (decimal)Math.Pow((double)bilgeRatio, (double)(1m / curvePower)); // = 1.0
+                        var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                        var waterlineHalfBreadthTarget = beamM / 2m;
+                        waterlineHalfBreadth = flatBottomHalfBreadth +
+                            (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+                    }
+                    else if (isDeepV)
+                    {
+                        var bdrft = denormalized[18];
+                        var keelHalfBreadth = 0m;
+                        var curvePower = 1.5m - bdrft * 0.5m;
+                        var expansionRatio = (decimal)Math.Pow(1.0, (double)(1m / curvePower)); // heightRatio = 1.0 at waterline
+                        waterlineHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+                    }
+                    else
+                    {
+                        var keelHalfBreadth = 0m;
+                        var expansionRatio = (decimal)Math.Pow(1.0, 0.8); // heightRatio = 1.0 at waterline
+                        waterlineHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+                    }
+
+                    // Start at actual waterline half-breadth (ensures continuity)
+                    var baseHalfBreadth = waterlineHalfBreadth;
 
                     if (isDeepV)
                     {
@@ -685,6 +839,11 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // Transom stern uses: Atrans, Beta_trans, Bc_trans, Rc_trans, Rk_trans, Kappa_stern
                 // Canoe stern uses: Adel_stern (25), Bdel_stern (26)
 
+                // PHASE 2: Detect chine type from Rc parameter (same as bow and midship)
+                var rcNorm = shipdVector[9];
+                var rc = rcNorm <= 0m ? 0.3m : rcNorm;
+                var chineType = rc > 0.6m ? "soft" : "hard";
+
                 // CRITICAL: Use normalized vector for family detection (consistent with longitudinal scaling)
                 var atransNorm = shipdVector[22]; // Transom area coefficient (normalized 0-1)
                 var isTransomStern = atransNorm > 0.5m; // Transom when > 0.5, canoe when <= 0.5
@@ -700,17 +859,15 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 var betaTrans = denormalized[27];
                 var bcTrans = denormalized[28];
 
-                // PHASE 2: Enforce R_c (curvature) for stern: 0.2-0.4 normalized
-                // Fix: Increase from 0.000 to 0.2-0.4 to round the transition from side to transom face
+                // PHASE 2: R_c (curvature) for stern: Use full 0-1 range for dramatic shape variation
+                // Rc_trans controls stern curvature: 0 = very curved/fine, 1 = very straight/full
                 var rcTransNorm = shipdVector[29]; // Stern curvature coefficient (normalized 0-1)
-                // Enforce minimum threshold: values < 0.05 are too small and create hard chines
-                var rcTrans = rcTransNorm < 0.05m ? 0.3m : Math.Clamp(rcTransNorm, 0.2m, 0.4m); // Default 0.3 if too small
+                var rcTrans = rcTransNorm <= 0m ? 0.3m : rcTransNorm; // Use full 0-1 range, default 0.3 if zero/negative
 
                 // PHASE 2: Enforce R_k (knuckle) for stern: 0.0-0.2 normalized
                 // Fix: Set to 0.0 or slightly positive to define sheer line knuckle smoothly
                 var rkTransNorm = shipdVector[30]; // Stern knuckle coefficient (normalized 0-1)
-                // Enforce minimum threshold: values < 0.02 or negative/extreme negative create sharp transitions
-                var rkTrans = (rkTransNorm < 0.02m || rkTransNorm < -0.5m) ? 0.1m : Math.Clamp(rkTransNorm, 0.0m, 0.2m); // Default 0.1 if too small/extreme
+                var rkTrans = rkTransNorm <= 0m ? 0.1m : Math.Max(0.0m, Math.Min(0.2m, rkTransNorm)); // Default 0.1 if zero/negative
                 var adelStern = denormalized[25]; // Canoe stern sheer coefficient A
                 var bdelStern = denormalized[26]; // Canoe stern sheer coefficient B
 
@@ -719,18 +876,48 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 if (height <= draftM)
                 {
                     // BELOW WATERLINE: Expand from narrow keel to wide waterline
-                    var keelHalfBreadth = 0.01m; // Stern keel closes at centerline (1cm for numerical stability)
+                    decimal baseHalfBreadth = 0m;
 
-                    if (isTransomStern)
+                    if (chineType == "soft")
                     {
-                        // TRANSOM STERN: Use transom parameters
+                        // PHASE 2: SOFT CHINE - FLAT BOTTOM (same logic as bow and midship)
+                        var flatBottomStartHeight = 0.01m;
+                        var flatBottomHeight = draftM * 0.3m;
+
+                        if (height <= flatBottomStartHeight)
+                        {
+                            baseHalfBreadth = 0m;
+                        }
+                        else if (height <= flatBottomHeight)
+                        {
+                            var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                            baseHalfBreadth = flatBottomHalfBreadth;
+                        }
+                        else
+                        {
+                            var bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
+                            var curvePower = 2.0m + (rc * 0.5m);
+                            var expansionRatio = (decimal)Math.Pow((double)bilgeRatio, (double)(1m / curvePower));
+
+                            var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                            var waterlineHalfBreadthTarget = beamM / 2m;
+                            baseHalfBreadth = flatBottomHalfBreadth +
+                                (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+                        }
+                        // NO KNUCKLE for soft chine (smooth transition, no sharp angles)
+                        halfBreadth = Math.Max(0m, baseHalfBreadth);
+                    }
+                    else if (isTransomStern)
+                    {
+                        // TRANSOM STERN (HARD CHINE): Use transom parameters
                         var atrans = denormalized[22];
+                        var keelHalfBreadth = 0m; // True point at keel for hard chine
 
                         // Curvature expansion
                         var curvePower = 2.5m - rcTrans * 1.5m; // Range: 1.0 (full) to 2.5 (fine)
                         var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
 
-                        var baseHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+                        baseHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
 
                         // Transom effect (flat stern) - only near the very aft
                         if (stationPos < 0.15m && atrans > 0.5m)
@@ -764,12 +951,13 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     {
                         // CANOE STERN (yacht): Use Adel_stern, Bdel_stern for rounded stern shape
                         // Canoe stern has more rounded, elliptical sections (less V-shaped)
+                        var keelHalfBreadth = 0m; // True point at keel for hard chine
 
                         // Curvature expansion - canoe stern is more rounded (higher power)
                         var curvePower = 2.0m + rcTrans * 1.0m; // Range: 2.0-3.0 (more rounded)
                         var expansionRatio = (decimal)Math.Pow((double)heightRatio, (double)(1m / curvePower));
 
-                        var baseHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+                        baseHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
 
                         // Adel_stern and Bdel_stern affect the stern curvature
                         // Adel_stern: affects the vertical curvature (sheer)
@@ -798,9 +986,51 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 }
                 else
                 {
-                    // ABOVE WATERLINE
+                    // ABOVE WATERLINE: Smooth transition from waterline
                     var aboveWLHeight = height - draftM;
-                    var baseHalfBreadth = beamM / 2m;
+                    var freeboard = draftM * 0.35m; // Match total freeboard (35%)
+                    var aboveWLRatio = Math.Min(aboveWLHeight / freeboard, 1.0m);
+
+                    // Calculate waterline half-breadth using same logic as below-waterline
+                    decimal waterlineHalfBreadth = 0m;
+                    if (chineType == "soft")
+                    {
+                        // Soft chine: waterline is at end of rounded bilge transition
+                        var flatBottomHeight = draftM * 0.3m;
+                        var bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
+                        var curvePower = 2.0m + (rc * 0.5m);
+                        var expansionRatio = (decimal)Math.Pow((double)bilgeRatio, (double)(1m / curvePower)); // = 1.0
+                        var flatBottomHalfBreadth = (beamM / 2m) * 0.4m;
+                        var waterlineHalfBreadthTarget = beamM / 2m;
+                        waterlineHalfBreadth = flatBottomHalfBreadth +
+                            (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+                    }
+                    else if (isTransomStern)
+                    {
+                        var keelHalfBreadth = 0m;
+                        var curvePower = 2.5m - rcTrans * 1.5m;
+                        var expansionRatio = (decimal)Math.Pow(1.0, (double)(1m / curvePower)); // heightRatio = 1.0 at waterline
+                        waterlineHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+                        // Apply transom effect at waterline if in transom region
+                        var atrans = denormalized[22];
+                        if (stationPos < 0.15m && atrans > 0.5m)
+                        {
+                            var transomWidth = beamM * bcTrans;
+                            var transomBlend = (0.15m - stationPos) / 0.15m;
+                            waterlineHalfBreadth = waterlineHalfBreadth * (1m - transomBlend * atrans) +
+                                (transomWidth / 2m) * transomBlend * atrans;
+                        }
+                    }
+                    else
+                    {
+                        var keelHalfBreadth = 0m;
+                        var curvePower = 2.0m + rcTrans * 1.0m;
+                        var expansionRatio = (decimal)Math.Pow(1.0, (double)(1m / curvePower)); // heightRatio = 1.0 at waterline
+                        waterlineHalfBreadth = keelHalfBreadth + (beamM / 2m - keelHalfBreadth) * expansionRatio;
+                    }
+
+                    // Start at actual waterline half-breadth (ensures continuity)
+                    var baseHalfBreadth = waterlineHalfBreadth;
 
                     if (isTransomStern)
                     {

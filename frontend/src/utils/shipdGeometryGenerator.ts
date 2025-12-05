@@ -2045,7 +2045,7 @@ function generateStationOffsets(
 
             const flatBottomHalfBreadth = (beamM / 2) * 0.4;
             const waterlineHalfBreadthTarget = beamM / 2;
-            baseHalfBreadth = flatBottomHalfBreadth + 
+            baseHalfBreadth = flatBottomHalfBreadth +
               (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
           }
           // NO KNUCKLE for soft chine (smooth transition, no sharp angles)
@@ -2142,7 +2142,7 @@ function generateStationOffsets(
             const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower); // = 1.0
             const flatBottomHalfBreadth = (beamM / 2) * 0.4;
             const waterlineHalfBreadthTarget = beamM / 2;
-            waterlineHalfBreadth = flatBottomHalfBreadth + 
+            waterlineHalfBreadth = flatBottomHalfBreadth +
               (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
           } else if (isTransomStern) {
             const keelHalfBreadth = 0;
