@@ -18,13 +18,16 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
 
     private readonly ILogger<ShipDParameterAdapter> _logger;
     private readonly IDataServiceClient _dataServiceClient;
+    private readonly IVesselTypeHullMappingService _vesselTypeMappingService;
 
     public ShipDParameterAdapter(
         ILogger<ShipDParameterAdapter> logger,
-        IDataServiceClient dataServiceClient)
+        IDataServiceClient dataServiceClient,
+        IVesselTypeHullMappingService vesselTypeMappingService)
     {
         _logger = logger;
         _dataServiceClient = dataServiceClient;
+        _vesselTypeMappingService = vesselTypeMappingService;
     }
 
     public async Task<ShipDParameterizationResult> BuildAsync(
@@ -51,6 +54,40 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
         var taxonomyEntry = taxonomy.FirstOrDefault(t =>
             string.Equals(t.Category, vesselCategory, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(t.Type, vesselType, StringComparison.OrdinalIgnoreCase));
+
+        // PHASE 1: Apply vessel type defaults (lowest priority - can be overridden by family/user)
+        // Get defaults from mapping service based on vessel type
+        var vesselTypeDefaults = _vesselTypeMappingService.GetDefaultsForVesselType(vesselCategory, vesselType);
+        if (vesselTypeDefaults != null)
+        {
+            _logger.LogInformation("[SHIPD_ADAPTER] ✅ Found vessel type defaults for {Category}:{Type}: Bow={Bow}, Mid={Mid}, Stern={Stern}, Chine={Chine}",
+                vesselCategory, vesselType, vesselTypeDefaults.BowFamily, vesselTypeDefaults.MidshipFamily,
+                vesselTypeDefaults.SternFamily, vesselTypeDefaults.ChineType);
+
+            // Apply vessel type defaults to families (only if not already set by user)
+            if (string.IsNullOrWhiteSpace(bowFamily) && !string.IsNullOrWhiteSpace(vesselTypeDefaults.BowFamily))
+            {
+                bowFamily = vesselTypeDefaults.BowFamily;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default bow family: {BowFamily}", bowFamily);
+            }
+
+            if (string.IsNullOrWhiteSpace(midshipFamily) && !string.IsNullOrWhiteSpace(vesselTypeDefaults.MidshipFamily))
+            {
+                midshipFamily = vesselTypeDefaults.MidshipFamily;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default midship family: {MidshipFamily}", midshipFamily);
+            }
+
+            if (string.IsNullOrWhiteSpace(sternFamily) && !string.IsNullOrWhiteSpace(vesselTypeDefaults.SternFamily))
+            {
+                sternFamily = vesselTypeDefaults.SternFamily;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default stern family: {SternFamily}", sternFamily);
+            }
+        }
+        else
+        {
+            _logger.LogDebug("[SHIPD_ADAPTER] No vessel type defaults found for {Category}:{Type}, will use taxonomy/family defaults",
+                vesselCategory, vesselType);
+        }
 
         // Placeholder vector: start with zeros and inject a few normalized mission hints.
         var vector = Enumerable.Repeat(0m, ShipDParameterCount).ToArray();
@@ -134,6 +171,48 @@ public class ShipDParameterAdapter : IShipDParameterAdapter
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "[SHIPD_ADAPTER] Unexpected error extracting additionalParameters from MissionCase.ShipdInputsJson");
+            }
+        }
+
+        // Apply vessel type defaults to AdditionalParameters (only if user hasn't provided values)
+        // Priority: User > Vessel Type Defaults > Taxonomy Defaults > Family Defaults
+        if (vesselTypeDefaults != null)
+        {
+            effectiveAdditionalParameters ??= new Dictionary<string, object>();
+
+            // Apply chine type default (only if not set by user)
+            if (!effectiveAdditionalParameters.ContainsKey("chineType") && !string.IsNullOrWhiteSpace(vesselTypeDefaults.ChineType))
+            {
+                effectiveAdditionalParameters["chineType"] = vesselTypeDefaults.ChineType;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default chine type: {ChineType}", vesselTypeDefaults.ChineType);
+            }
+
+            // Apply curvature type default (only if not set by user)
+            if (!effectiveAdditionalParameters.ContainsKey("curvatureType") && !string.IsNullOrWhiteSpace(vesselTypeDefaults.CurvatureType))
+            {
+                effectiveAdditionalParameters["curvatureType"] = vesselTypeDefaults.CurvatureType;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default curvature type: {CurvatureType}", vesselTypeDefaults.CurvatureType);
+            }
+
+            // Apply deadrise angle default (only if not set by user)
+            if (!effectiveAdditionalParameters.ContainsKey("deadriseAngleDeg") && vesselTypeDefaults.DeadriseAngleDeg.HasValue)
+            {
+                effectiveAdditionalParameters["deadriseAngleDeg"] = vesselTypeDefaults.DeadriseAngleDeg.Value;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default deadrise angle: {Deadrise}°", vesselTypeDefaults.DeadriseAngleDeg.Value);
+            }
+
+            // Apply flare angle default (only if not set by user)
+            if (!effectiveAdditionalParameters.ContainsKey("flareAngleDeg") && vesselTypeDefaults.FlareAngleDeg.HasValue)
+            {
+                effectiveAdditionalParameters["flareAngleDeg"] = vesselTypeDefaults.FlareAngleDeg.Value;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default flare angle: {Flare}°", vesselTypeDefaults.FlareAngleDeg.Value);
+            }
+
+            // Apply tumblehome enabled default (only if not set by user)
+            if (!effectiveAdditionalParameters.ContainsKey("tumblehomeEnabled") && vesselTypeDefaults.TumblehomeEnabled.HasValue)
+            {
+                effectiveAdditionalParameters["tumblehomeEnabled"] = vesselTypeDefaults.TumblehomeEnabled.Value;
+                _logger.LogInformation("[SHIPD_ADAPTER] ✅ Applied vessel type default tumblehome enabled: {Tumblehome}", vesselTypeDefaults.TumblehomeEnabled.Value);
             }
         }
 
