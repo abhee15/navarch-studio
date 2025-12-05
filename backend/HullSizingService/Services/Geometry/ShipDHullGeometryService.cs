@@ -498,7 +498,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     // BELOW WATERLINE: Expand from narrow keel to wide waterline
                     // Calculate keel width (reduced by deadrise)
                     var deadriseReduction = (decimal)Math.Tan((double)(cdrft * (decimal)Math.PI / 180m)) * (draftM - height);
-                    var keelHalfBreadth = Math.Max(0m, (beamM / 2m) * 0.1m); // Keel is ~10% of beam
+                    var keelHalfBreadth = 0.01m; // Keel closes at centerline (1cm for numerical stability)
 
                     // Expansion curve from keel to waterline
                     // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
@@ -584,7 +584,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                         var deadriseReduction = (decimal)Math.Tan((double)(deadriseAngle * (decimal)Math.PI / 180m)) * (draftM - height);
 
                         // Keel width is narrower for deep V (more deadrise)
-                        var keelHalfBreadth = Math.Max(0m, (beamM / 2m) * (0.05m + adrft * 0.05m)); // 5-10% of beam, modulated by Adrft
+                        var keelHalfBreadth = 0.01m; // Deep V keel closes at centerline (1cm for numerical stability)
 
                         // Expansion curve with deadrise effect
                         // Bdrft affects the curve shape
@@ -605,7 +605,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
 
                         // Keel width is narrower due to deadrise (V-shape)
                         // Deadrise creates a slight V, so keel is narrower than without deadrise
-                        var keelHalfBreadth = Math.Max(0m, (beamM / 2m) * (0.15m - cdrft / 100m)); // 10-15% of beam, modulated by deadrise
+                        var keelHalfBreadth = 0.01m; // Midship standard keel closes at centerline (1cm for numerical stability)
 
                         // PARAMETER UPDATE: Apply curvature (Rc) for smooth bilge radius
                         // Higher Rc = smoother transition (fuller), Lower Rc = sharper (finer)
@@ -719,7 +719,7 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 if (height <= draftM)
                 {
                     // BELOW WATERLINE: Expand from narrow keel to wide waterline
-                    var keelHalfBreadth = (beamM / 2m) * 0.15m; // Stern keel slightly wider than bow
+                    var keelHalfBreadth = 0.01m; // Stern keel closes at centerline (1cm for numerical stability)
 
                     if (isTransomStern)
                     {
@@ -1047,7 +1047,8 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
 
             // Update offsets with faired values
             // CRITICAL: Validate faired values to prevent invalid values from NURBS evaluation
-            for (int i = 0; i < sortedHeights.Count && i < fairedHalfBreadths.Count; i++)
+            // CRITICAL: SKIP baseline (i=0) - it must remain at 0 for proper keel closure
+            for (int i = 1; i < sortedHeights.Count && i < fairedHalfBreadths.Count; i++) // Start from i=1 to protect baseline
             {
                 var fairedValue = fairedHalfBreadths[i];
                 // Validate faired value is in reasonable range

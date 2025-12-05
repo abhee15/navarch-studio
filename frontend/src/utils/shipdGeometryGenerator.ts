@@ -1696,7 +1696,7 @@ function generateStationOffsets(
 
         // 1. Calculate keel width (reduced by deadrise)
         const deadriseReduction = Math.tan((cdrft * Math.PI) / 180) * (draftM - height);
-        const keelHalfBreadth = Math.max(0, (beamM / 2) * 0.1); // Keel is ~10% of beam
+        const keelHalfBreadth = 0.01; // Keel closes at centerline (1cm for numerical stability)
 
         // 2. Expansion curve from keel to waterline
         // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
@@ -1741,7 +1741,7 @@ function generateStationOffsets(
         // If not available, calculate it at waterline (height = draftM)
         if (waterlineHalfBreadth === 0) {
           // Calculate waterline half-breadth using same logic as below-waterline
-          const keelHalfBreadth = Math.max(0, (beamM / 2) * 0.1);
+          const keelHalfBreadth = 0.01;
           const curvePower = 2.5 - rc * 1.5;
           const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
           const deadriseReduction = 0; // At waterline, no deadrise reduction
@@ -1798,8 +1798,7 @@ function generateStationOffsets(
       if (height <= draftM) {
         // BELOW WATERLINE
         if (isDeepV) {
-          // DEEP V MIDSHIP (yacht): Use Adrft, Bdrft, Cdrft for deadrise control
-          const adrft = denormalized[17]; // Draft rocker coefficient A
+          // DEEP V MIDSHIP (yacht): Use Bdrft, Cdrft for deadrise control
           const bdrft = denormalized[18]; // Draft rocker coefficient B
 
           // Deep V has more deadrise (narrower keel, wider at waterline)
@@ -1808,7 +1807,7 @@ function generateStationOffsets(
           const deadriseReduction = Math.tan((deadriseAngle * Math.PI) / 180) * (draftM - height);
 
           // Keel width is narrower for deep V (more deadrise)
-          const keelHalfBreadth = Math.max(0, (beamM / 2) * (0.05 + adrft * 0.05)); // 5-10% of beam, modulated by Adrft
+          const keelHalfBreadth = 0.01; // Deep V keel closes at centerline (1cm for numerical stability)
 
           // Expansion curve with deadrise effect
           // Bdrft affects the curve shape
@@ -1828,7 +1827,7 @@ function generateStationOffsets(
         } else {
           // STANDARD MIDSHIP: Gentle expansion from keel to waterline
           // Midship has less deadrise, more parallel sides
-          const keelHalfBreadth = (beamM / 2) * 0.2; // Midship keel ~20% of beam (wider than bow)
+          const keelHalfBreadth = 0.01; // Keel closes at centerline (1cm for numerical stability)
 
           // Simple gentle expansion (midship is typically straighter)
           const expansionRatio = Math.pow(heightRatio, 0.8); // Gentle curve
@@ -1851,14 +1850,13 @@ function generateStationOffsets(
         if (waterlineHalfBreadth === 0) {
           // Calculate waterline half-breadth using same logic as below-waterline
           if (isDeepV) {
-            const adrft = denormalized[17];
             const bdrft = denormalized[18];
-            const keelHalfBreadth = Math.max(0, (beamM / 2) * (0.05 + adrft * 0.05));
+            const keelHalfBreadth = 0.01;
             const curvePower = 1.5 - bdrft * 0.5;
             const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
             waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
           } else {
-            const keelHalfBreadth = (beamM / 2) * 0.2;
+            const keelHalfBreadth = 0.01;
             const expansionRatio = Math.pow(1.0, 0.8); // heightRatio = 1.0 at waterline
             waterlineHalfBreadth = keelHalfBreadth + (beamM / 2 - keelHalfBreadth) * expansionRatio;
           }
@@ -1930,7 +1928,7 @@ function generateStationOffsets(
 
       if (height <= draftM) {
         // BELOW WATERLINE: Expand from narrow keel to wide waterline
-        const keelHalfBreadth = (beamM / 2) * 0.15; // Stern keel slightly wider than bow
+        const keelHalfBreadth = 0.01; // Stern keel closes at centerline (1cm for numerical stability)
 
         if (isTransomStern) {
           // TRANSOM STERN: Use transom parameters
@@ -2015,7 +2013,7 @@ function generateStationOffsets(
         // CRITICAL: Use actual waterline half-breadth from below-waterline calculation
         if (waterlineHalfBreadth === 0) {
           // Calculate waterline half-breadth using same logic as below-waterline
-          const keelHalfBreadth = (beamM / 2) * 0.15;
+          const keelHalfBreadth = 0.01;
           if (isTransomStern) {
             const curvePower = 2.5 - rcTrans * 1.5;
             const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
