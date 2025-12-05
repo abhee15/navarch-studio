@@ -1085,6 +1085,17 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 invalidCount, stationPos);
         }
 
+        // FINAL ENFORCEMENT: Baseline MUST be exactly 0 for proper keel closure
+        // This ensures the keel is at the centerline regardless of any intermediate calculations
+        // (NURBS fairing, longitudinal scaling, etc.)
+        if (offsets.ContainsKey(0m))
+        {
+            offsets[0m] = 0m;
+            _logger.LogDebug(
+                "[SHIPD_GEOMETRY] ✅ Enforced baseline=0 at station {StationPos} in {Region} (keel centerline closure)",
+                stationPos, region);
+        }
+
         return offsets;
     }
 

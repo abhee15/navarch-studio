@@ -2204,6 +2204,11 @@ function generateStationOffsets(
     offsets[draftM] = maxHalfBreadth * 0.95; // Slightly narrower at deck
   }
 
+  // FINAL ENFORCEMENT: Baseline MUST be exactly 0 for proper keel closure
+  // This ensures the keel is at the centerline regardless of any intermediate calculations
+  // (longitudinal scaling, monotonicity enforcement, etc.)
+  offsets[0] = 0;
+
   return offsets;
 }
 
