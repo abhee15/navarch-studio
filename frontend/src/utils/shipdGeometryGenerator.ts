@@ -1685,6 +1685,11 @@ function generateStationOffsets(
       const kappaBow = denormalized[14]; // Curvature type (-1 to 1, concave to convex)
       const cdrft = denormalized[19]; // Deadrise angle (degrees)
 
+      // PHASE 2: Detect chine type from Rc parameter
+      // Soft chine: Rc > 0.6 (rounder bilge, fuller curvature)
+      // Hard chine: Rc <= 0.6 (sharper, more angular)
+      const chineType = rc > 0.6 ? "soft" : "hard";
+
       const heightRatio = height / draftM;
 
       // CORRECT VERTICAL PROFILE: Narrow at keel, wide at waterline
@@ -1693,33 +1698,64 @@ function generateStationOffsets(
 
       if (height <= draftM) {
         // BELOW WATERLINE: Expand from narrow keel to wide waterline
+        let baseHalfBreadth = 0;
 
-        // 1. Calculate keel width (reduced by deadrise)
-        const deadriseReduction = Math.tan((cdrft * Math.PI) / 180) * (draftM - height);
-        const keelHalfBreadth = 0.01; // Keel closes at centerline (1cm for numerical stability)
+        if (chineType === "soft") {
+          // PHASE 2: SOFT CHINE - FLAT BOTTOM
+          // Soft chine has a FLAT bottom (not V-shaped) with rounded bilge transition
+          // The flat bottom extends horizontally from near the keel (for numerical stability, start at 0.01m)
+          const flatBottomStartHeight = 0.01; // Start flat bottom slightly above keel for numerical stability
+          const flatBottomHeight = draftM * 0.3; // Flat for 30% of draft
 
-        // 2. Expansion curve from keel to waterline
-        // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
-        const curvePower = 2.5 - rc * 1.5; // Range: 1.0 (full) to 2.5 (fine)
-        const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
+          if (height <= flatBottomStartHeight) {
+            // At keel: half-breadth = 0 (centerline)
+            baseHalfBreadth = 0;
+          } else if (height <= flatBottomHeight) {
+            // FLAT BOTTOM: Constant half-breadth (horizontal flat section)
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4; // 40% of max beam at flat bottom
+            baseHalfBreadth = flatBottomHalfBreadth;
+          } else {
+            // ROUNDED BILGE: Smooth curve from flat bottom to waterline
+            const bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
+            const curvePower = 2.0 + rc * 0.5; // Rc affects roundness (higher Rc = rounder)
+            const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower);
 
-        // 3. Interpolate from keel to max beam
-        let baseHalfBreadth =
-          keelHalfBreadth +
-          (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            const waterlineHalfBreadthTarget = beamM / 2;
+            baseHalfBreadth =
+              flatBottomHalfBreadth +
+              (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+          }
+          // NO KNUCKLE for soft chine (smooth transition, no sharp angles)
+        } else {
+          // HARD CHINE - V-SHAPE (existing logic, but ensure keel = 0)
+          // 1. Calculate keel width (reduced by deadrise)
+          const deadriseReduction = Math.tan((cdrft * Math.PI) / 180) * (draftM - height);
+          const keelHalfBreadth = 0; // True point at keel for hard chine
 
-        // 4. Apply knuckle effect with proper R_k radius (0.1-0.3)
-        // R_k now always has a valid value (enforced above), so always apply
-        const knuckleHeight = 0.5; // Knuckle at mid-height
-        const knuckleRange = 0.2;
-        if (Math.abs(heightRatio - knuckleHeight) < knuckleRange) {
-          const knuckleFactor = 1 - Math.abs(heightRatio - knuckleHeight) / knuckleRange;
-          // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
-          const knuckleEffect = (rk - 0.1) / 0.2; // Normalize 0.1-0.3 to 0-1
-          baseHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.15;
+          // 2. Expansion curve from keel to waterline
+          // Higher Rc = fuller (straighter expansion), Lower Rc = finer (more curved)
+          const curvePower = 2.5 - rc * 1.5; // Range: 1.0 (full) to 2.5 (fine)
+          const expansionRatio = Math.pow(heightRatio, 1 / curvePower);
+
+          // 3. Interpolate from keel to max beam
+          baseHalfBreadth =
+            keelHalfBreadth +
+            (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
+
+          // 4. Apply knuckle effect with proper R_k radius (0.1-0.3)
+          // R_k now always has a valid value (enforced above), so always apply
+          const knuckleHeight = 0.5; // Knuckle at mid-height
+          const knuckleRange = 0.2;
+          if (Math.abs(heightRatio - knuckleHeight) < knuckleRange) {
+            const knuckleFactor = 1 - Math.abs(heightRatio - knuckleHeight) / knuckleRange;
+            // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
+            const knuckleEffect = (rk - 0.1) / 0.2; // Normalize 0.1-0.3 to 0-1
+            baseHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.15;
+          }
         }
 
-        // 5. Apply convex/concave control
+        // 5. Apply convex/concave control (for both soft and hard chine)
         if (Math.abs(kappaBow) > 0.1) {
           const convexEffect = kappaBow * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
           baseHalfBreadth *= 1 + convexEffect;
@@ -1741,24 +1777,39 @@ function generateStationOffsets(
         // If not available, calculate it at waterline (height = draftM)
         if (waterlineHalfBreadth === 0) {
           // Calculate waterline half-breadth using same logic as below-waterline
-          const keelHalfBreadth = 0.01;
-          const curvePower = 2.5 - rc * 1.5;
-          const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
-          const deadriseReduction = 0; // At waterline, no deadrise reduction
-          waterlineHalfBreadth =
-            keelHalfBreadth +
-            (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
+          if (chineType === "soft") {
+            // Soft chine: waterline is at end of rounded bilge transition
+            const flatBottomHeight = draftM * 0.3;
+            const bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
+            const curvePower = 2.0 + rc * 0.5;
+            const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower); // = 1.0
+            const flatBottomHalfBreadth = (beamM / 2) * 0.4;
+            const waterlineHalfBreadthTarget = beamM / 2;
+            waterlineHalfBreadth =
+              flatBottomHalfBreadth +
+              (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
+          } else {
+            // Hard chine: use V-shape logic
+            const keelHalfBreadth = 0;
+            const curvePower = 2.5 - rc * 1.5;
+            const expansionRatio = Math.pow(1.0, 1 / curvePower); // heightRatio = 1.0 at waterline
+            const deadriseReduction = 0; // At waterline, no deadrise reduction
+            waterlineHalfBreadth =
+              keelHalfBreadth +
+              (beamM / 2 - keelHalfBreadth - deadriseReduction * 0.3) * expansionRatio;
 
-          // Apply knuckle and convex/concave effects at waterline
-          // R_k now always has a valid value (enforced above), so always apply
-          const knuckleHeight = 0.5;
-          const knuckleRange = 0.2;
-          if (Math.abs(1.0 - knuckleHeight) < knuckleRange) {
-            const knuckleFactor = 1 - Math.abs(1.0 - knuckleHeight) / knuckleRange;
-            // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
-            const knuckleEffect = (rk - 0.1) / 0.2; // Normalize 0.1-0.3 to 0-1
-            waterlineHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.15;
+            // Apply knuckle and convex/concave effects at waterline
+            // R_k now always has a valid value (enforced above), so always apply
+            const knuckleHeight = 0.5;
+            const knuckleRange = 0.2;
+            if (Math.abs(1.0 - knuckleHeight) < knuckleRange) {
+              const knuckleFactor = 1 - Math.abs(1.0 - knuckleHeight) / knuckleRange;
+              // Scale knuckle effect by R_k value (0.1-0.3 range, normalized to 0-1)
+              const knuckleEffect = (rk - 0.1) / 0.2; // Normalize 0.1-0.3 to 0-1
+              waterlineHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.15;
+            }
           }
+          // Apply convex/concave control at waterline (for both soft and hard chine)
           if (Math.abs(kappaBow) > 0.1) {
             const convexEffect = kappaBow * Math.sin((1.0 * Math.PI) / 2) * 0.1;
             waterlineHalfBreadth *= 1 + convexEffect;
