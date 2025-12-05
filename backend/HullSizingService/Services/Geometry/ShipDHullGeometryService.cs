@@ -1044,9 +1044,6 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     else
                     {
                         // CANOE STERN: Use Adel_stern/Bdel_stern for sheer effects above waterline
-                        var freeboard = draftM * 0.35m;
-                        var aboveWLRatio = Math.Min(aboveWLHeight / freeboard, 1.0m);
-
                         // Adel_stern affects outward curve (sheer) above waterline
                         if (adelStern > 0 && aboveWLRatio > 0.4m)
                         {
