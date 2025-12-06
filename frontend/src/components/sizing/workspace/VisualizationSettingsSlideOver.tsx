@@ -83,3 +83,4 @@ export const VisualizationSettingsSlideOver: React.FC<VisualizationSettingsSlide
     </>
   );
 };
+

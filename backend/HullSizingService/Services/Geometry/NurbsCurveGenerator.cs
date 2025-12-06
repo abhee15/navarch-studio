@@ -184,6 +184,7 @@ public class NurbsCurveGenerator
         }
 
         var basisFunctions = new List<decimal>(degree + 1);
+        // Pre-allocate left and right arrays with degree+1 elements to prevent index out of bounds
         var left = new List<decimal>(degree + 1);
         var right = new List<decimal>(degree + 1);
 
@@ -195,24 +196,35 @@ public class NurbsCurveGenerator
             int leftIdx = span + 1 - j;
             int rightIdx = span + j;
 
-            if (leftIdx < 0 || leftIdx >= knots.Count || rightIdx < 0 || rightIdx >= knots.Count)
+            decimal leftValue = 0m;
+            decimal rightValue = 0m;
+
+            if (leftIdx >= 0 && leftIdx < knots.Count && rightIdx >= 0 && rightIdx < knots.Count)
             {
-                // Edge case: index would be out of bounds
-                // Use zero to avoid crash while maintaining algorithm structure
-                left.Add(0m);
-                right.Add(0m);
+                leftValue = u - knots[leftIdx];
+                rightValue = knots[rightIdx] - u;
             }
-            else
+
+            // Ensure left and right have at least j+1 elements for safe indexing
+            while (left.Count <= j)
             {
-                left.Add(u - knots[leftIdx]);
-                right.Add(knots[rightIdx] - u);
+                left.Add(leftValue);
             }
+            while (right.Count <= j)
+            {
+                right.Add(rightValue);
+            }
+
+            // Update the j-th element (0-indexed, so index j)
+            left[j] = leftValue;
+            right[j] = rightValue;
 
             decimal saved = 0m;
 
             for (int r = 0; r < j; r++)
             {
                 // CRITICAL: Prevent division by zero which causes NaN
+                // Access left[j - r] which is now safe because left has j+1 elements
                 var denominator = right[r] + left[j - r];
                 if (denominator == 0m)
                 {

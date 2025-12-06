@@ -492,6 +492,13 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                 // Hard chine: Rc <= 0.6 (sharper, more angular)
                 var chineType = rc > 0.6m ? "soft" : "hard";
 
+                // DEBUG: Log chine type detection for troubleshooting
+                if (region == "bow" && height == (decimal)1 / heightSteps * maxHeight)
+                {
+                    _logger.LogInformation("[ShipD Geometry] Bow region chine type detection: rcNorm={RcNorm}, rc={Rc}, chineType={ChineType}, height={Height:F3}, draftM={DraftM}",
+                        rcNorm, rc, chineType, height, draftM);
+                }
+
                 var heightRatio = height / draftM;
 
                 if (height <= draftM)
@@ -517,6 +524,13 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                             // FLAT BOTTOM: Constant half-breadth (horizontal flat section)
                             var flatBottomHalfBreadth = (beamM / 2m) * 0.4m; // 40% of max beam at flat bottom
                             baseHalfBreadth = flatBottomHalfBreadth;
+
+                            // DEBUG: Log flat bottom values
+                            if (region == "bow" && Math.Abs(height - flatBottomHeight * 0.5m) < 0.01m)
+                            {
+                                _logger.LogInformation("[ShipD Geometry] Soft chine flat bottom: height={Height:F3}, flatBottomHeight={FlatBottomHeight:F3}, flatBottomHalfBreadth={FlatBottomHalfBreadth:F3}, baseHalfBreadth={BaseHalfBreadth:F3}",
+                                    height, flatBottomHeight, flatBottomHalfBreadth, baseHalfBreadth);
+                            }
                         }
                         else
                         {
@@ -562,10 +576,46 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                     }
 
                     // Apply convex/concave control (for both soft and hard chine)
-                    if (Math.Abs(kappaBow - 0.5m) > 0.1m)
+                    // PHASE 2: Localize concave to bilge area (30-70% of draft) and increase effect magnitude
+                    // Kappa is denormalized -1 to 1: negative = concave (inward), positive = convex (outward)
+                    if (Math.Abs(kappaBow) > 0.1m)
                     {
-                        var convexEffect = (kappaBow - 0.5m) * 2m * (decimal)Math.Sin((double)(heightRatio * (decimal)Math.PI / 2m)) * 0.1m;
-                        baseHalfBreadth *= 1m + convexEffect;
+                        if (kappaBow < 0m)
+                        {
+                            // CONCAVE: Localize to bilge area (30-70% of draft height)
+                            // Negative kappa creates inward curve (reduces half-breadth in bilge)
+                            var bilgeStart = 0.3m; // 30% of draft
+                            var bilgeEnd = 0.7m; // 70% of draft
+
+                            if (heightRatio >= bilgeStart && heightRatio <= bilgeEnd)
+                            {
+                                // Create bell-shaped curve centered in bilge area
+                                var bilgeCenter = (bilgeStart + bilgeEnd) / 2m; // 0.5 (50% of draft)
+                                var bilgeRange = bilgeEnd - bilgeStart; // 0.4 (40% range)
+                                var distanceFromCenter = Math.Abs(heightRatio - bilgeCenter);
+                                var normalizedDistance = distanceFromCenter / (bilgeRange / 2m); // 0 at center, 1 at edges
+
+                                // Bell curve: 1 at center, 0 at edges (using cosine for smooth transition)
+                                var bilgeIntensity = (decimal)Math.Cos((double)(normalizedDistance * (decimal)Math.PI / 2m));
+
+                                // Concave effect: negative kappa reduces half-breadth (inward curve)
+                                // Increase magnitude from 10% to 25% for more visible effect
+                                var concaveEffect = kappaBow * bilgeIntensity * 0.25m;
+                                baseHalfBreadth *= 1m + concaveEffect;
+                            }
+                        }
+                        else
+                        {
+                            // CONVEX: Apply to create U-shaped bottom (throughout lower portion)
+                            // Positive kappa creates outward curve (increases half-breadth)
+                            // Apply more strongly in lower portion (0-60% of draft) for U-shape
+                            var lowerPortionRatio = Math.Max(0m, 1m - (heightRatio / 0.6m)); // 1 at keel, 0 at 60% draft
+                            var convexIntensity = (decimal)Math.Pow((double)lowerPortionRatio, 0.5); // Smooth falloff
+
+                            // Increase magnitude from 10% to 25% for more visible U-shape
+                            var convexEffect = kappaBow * convexIntensity * 0.25m;
+                            baseHalfBreadth *= 1m + convexEffect;
+                        }
                     }
 
                     halfBreadth = Math.Max(0m, baseHalfBreadth);
@@ -611,28 +661,70 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                             waterlineHalfBreadth *= 1m + knuckleEffect * knuckleFactor * 0.15m;
                         }
                     }
-                    // Apply convex/concave control at waterline (for both soft and hard chine)
-                    if (Math.Abs(kappaBow - 0.5m) > 0.1m)
+                    // Apply convex/concave control at waterline (minimal effect, mainly for convex U-shape)
+                    // At waterline, we're outside bilge area, so apply simplified convex effect if positive
+                    // Kappa is denormalized -1 to 1: negative = concave (inward), positive = convex (outward)
+                    if (Math.Abs(kappaBow) > 0.1m)
                     {
-                        var convexEffect = (kappaBow - 0.5m) * 2m * (decimal)Math.Sin((double)(1.0m * (decimal)Math.PI / 2m)) * 0.1m;
-                        waterlineHalfBreadth *= 1m + convexEffect;
+                        if (kappaBow > 0m)
+                        {
+                            // Convex: slight outward curve at waterline
+                            var convexEffect = kappaBow * 0.15m; // Reduced effect at waterline
+                            waterlineHalfBreadth *= 1m + convexEffect;
+                        }
+                        // Concave effect minimal at waterline (mainly in bilge area)
                     }
 
                     // Start at actual waterline half-breadth (ensures continuity)
                     var baseHalfBreadth = waterlineHalfBreadth;
 
-                    // Add flare effect with smooth transition
+                    // Add flare or tumblehome effect with smooth transition
+                    // PHASE 2: Enhance tumblehome (negative beta) - inward-sloping upper hull
                     if (beta > 5m)
                     {
+                        // FLARE (positive beta): Outward-sloping sides above waterline
                         // Use smooth flare curve to avoid abrupt changes
                         var flareExpansion = (decimal)Math.Tan((double)(beta * (decimal)Math.PI / 180m)) * aboveWLHeight;
                         // Apply gradual flare increase (smooth curve, not linear)
                         var flareCurve = (decimal)Math.Pow((double)aboveWLRatio, 1.5); // Smooth curve
                         baseHalfBreadth += flareExpansion * 0.2m * flareCurve;
                     }
+                    else if (beta < -5m)
+                    {
+                        // TUMBLEHOME (negative beta): Inward-sloping sides above waterline
+                        // Beam at deck narrower than at waterline
+                        // Create smooth inward slope that increases with height above waterline
+                        var tumblehomeAngle = Math.Abs(beta); // Use absolute value for calculation
+                        var tumblehomeReduction = (decimal)Math.Tan((double)(tumblehomeAngle * (decimal)Math.PI / 180m)) * aboveWLHeight;
 
-                    // Ensure monotonicity: above-waterline should be >= waterline
-                    halfBreadth = Math.Max(waterlineHalfBreadth, baseHalfBreadth);
+                        // Apply gradual tumblehome reduction (smooth curve, not linear)
+                        // More pronounced at deck level (higher aboveWLRatio)
+                        var tumblehomeCurve = (decimal)Math.Pow((double)aboveWLRatio, 1.5); // Smooth curve
+                        var reductionAmount = tumblehomeReduction * 0.25m * tumblehomeCurve;
+
+                        // Reduce half-breadth (inward slope)
+                        baseHalfBreadth -= reductionAmount;
+
+                        // Ensure we don't go below a reasonable minimum (at least 60% of waterline width)
+                        baseHalfBreadth = Math.Max(waterlineHalfBreadth * 0.6m, baseHalfBreadth);
+                    }
+
+                    // Ensure monotonicity: above-waterline should be >= waterline for flare, <= waterline for tumblehome
+                    if (beta > 5m)
+                    {
+                        // Flare: above-waterline should be >= waterline
+                        halfBreadth = Math.Max(waterlineHalfBreadth, baseHalfBreadth);
+                    }
+                    else if (beta < -5m)
+                    {
+                        // Tumblehome: above-waterline should be <= waterline (narrower at deck)
+                        halfBreadth = Math.Max(waterlineHalfBreadth * 0.6m, Math.Min(waterlineHalfBreadth, baseHalfBreadth));
+                    }
+                    else
+                    {
+                        // Neutral: maintain waterline half-breadth
+                        halfBreadth = waterlineHalfBreadth;
+                    }
                 }
             }
             else if (region == "midship")
@@ -939,10 +1031,36 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                         }
 
                         // Apply convex/concave control
-                        if (Math.Abs(kappaStern - 0.5m) > 0.1m)
+                        // PHASE 2: Localize concave to bilge area (30-70% of draft) and increase effect magnitude
+                        // Kappa is denormalized -1 to 1: negative = concave (inward), positive = convex (outward)
+                        if (Math.Abs(kappaStern) > 0.1m)
                         {
-                            var convexEffect = (kappaStern - 0.5m) * 2m * (decimal)Math.Sin((double)(heightRatio * (decimal)Math.PI / 2m)) * 0.1m;
-                            baseHalfBreadth *= 1m + convexEffect;
+                            if (kappaStern < 0m)
+                            {
+                                // CONCAVE: Localize to bilge area (30-70% of draft height)
+                                var bilgeStart = 0.3m; // 30% of draft
+                                var bilgeEnd = 0.7m; // 70% of draft
+
+                                if (heightRatio >= bilgeStart && heightRatio <= bilgeEnd)
+                                {
+                                    var bilgeCenter = (bilgeStart + bilgeEnd) / 2m; // 0.5 (50% of draft)
+                                    var bilgeRange = bilgeEnd - bilgeStart; // 0.4 (40% range)
+                                    var distanceFromCenter = Math.Abs(heightRatio - bilgeCenter);
+                                    var normalizedDistance = distanceFromCenter / (bilgeRange / 2m);
+
+                                    var bilgeIntensity = (decimal)Math.Cos((double)(normalizedDistance * (decimal)Math.PI / 2m));
+                                    var concaveEffect = kappaStern * bilgeIntensity * 0.25m;
+                                    baseHalfBreadth *= 1m + concaveEffect;
+                                }
+                            }
+                            else
+                            {
+                                // CONVEX: Apply to create U-shaped bottom (throughout lower portion)
+                                var lowerPortionRatio = Math.Max(0m, 1m - (heightRatio / 0.6m));
+                                var convexIntensity = (decimal)Math.Pow((double)lowerPortionRatio, 0.5);
+                                var convexEffect = kappaStern * convexIntensity * 0.25m;
+                                baseHalfBreadth *= 1m + convexEffect;
+                            }
                         }
 
                         halfBreadth = Math.Max(0m, baseHalfBreadth);
@@ -975,10 +1093,35 @@ public class ShipDHullGeometryService : IShipDHullGeometryService
                         }
 
                         // Apply convex/concave control (less pronounced for canoe stern)
-                        if (Math.Abs(kappaStern - 0.5m) > 0.1m)
+                        // PHASE 2: Localize concave to bilge area (30-70% of draft) and increase effect magnitude
+                        // Kappa is denormalized -1 to 1: negative = concave (inward), positive = convex (outward)
+                        if (Math.Abs(kappaStern) > 0.1m)
                         {
-                            var convexEffect = (kappaStern - 0.5m) * 2m * (decimal)Math.Sin((double)(heightRatio * (decimal)Math.PI / 2m)) * 0.05m; // Reduced effect
-                            baseHalfBreadth *= 1m + convexEffect;
+                            if (kappaStern < 0m)
+                            {
+                                // CONCAVE: Localize to bilge area (30-70% of draft height)
+                                var bilgeStart = 0.3m; // 30% of draft
+                                var bilgeEnd = 0.7m; // 70% of draft
+
+                                if (heightRatio >= bilgeStart && heightRatio <= bilgeEnd)
+                                {
+                                    var bilgeCenter = (bilgeStart + bilgeEnd) / 2m;
+                                    var bilgeRange = bilgeEnd - bilgeStart;
+                                    var distanceFromCenter = Math.Abs(heightRatio - bilgeCenter);
+                                    var normalizedDistance = distanceFromCenter / (bilgeRange / 2m);
+                                    var bilgeIntensity = (decimal)Math.Cos((double)(normalizedDistance * (decimal)Math.PI / 2m));
+                                    var concaveEffect = kappaStern * bilgeIntensity * 0.2m; // Slightly reduced for canoe stern
+                                    baseHalfBreadth *= 1m + concaveEffect;
+                                }
+                            }
+                            else
+                            {
+                                // CONVEX: Apply to create U-shaped bottom
+                                var lowerPortionRatio = Math.Max(0m, 1m - (heightRatio / 0.6m));
+                                var convexIntensity = (decimal)Math.Pow((double)lowerPortionRatio, 0.5);
+                                var convexEffect = kappaStern * convexIntensity * 0.2m; // Slightly reduced for canoe stern
+                                baseHalfBreadth *= 1m + convexEffect;
+                            }
                         }
 
                         halfBreadth = Math.Max(0m, baseHalfBreadth);

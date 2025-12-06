@@ -1690,6 +1690,17 @@ function generateStationOffsets(
       // Hard chine: Rc <= 0.6 (sharper, more angular)
       const chineType = rc > 0.6 ? "soft" : "hard";
 
+      // DEBUG: Log chine type detection for troubleshooting
+      if (region === "bow" && height === (1 / heightSteps) * maxHeight) {
+        console.log("[ShipD Geometry] Bow region chine type detection:", {
+          rcNorm: rcNorm,
+          rc: rc,
+          chineType: chineType,
+          height: height.toFixed(3),
+          draftM: draftM,
+        });
+      }
+
       const heightRatio = height / draftM;
 
       // CORRECT VERTICAL PROFILE: Narrow at keel, wide at waterline
@@ -1714,6 +1725,16 @@ function generateStationOffsets(
             // FLAT BOTTOM: Constant half-breadth (horizontal flat section)
             const flatBottomHalfBreadth = (beamM / 2) * 0.4; // 40% of max beam at flat bottom
             baseHalfBreadth = flatBottomHalfBreadth;
+
+            // DEBUG: Log flat bottom values
+            if (region === "bow" && Math.abs(height - flatBottomHeight * 0.5) < 0.01) {
+              console.log("[ShipD Geometry] Soft chine flat bottom:", {
+                height: height.toFixed(3),
+                flatBottomHeight: flatBottomHeight.toFixed(3),
+                flatBottomHalfBreadth: flatBottomHalfBreadth.toFixed(3),
+                baseHalfBreadth: baseHalfBreadth.toFixed(3),
+              });
+            }
           } else {
             // ROUNDED BILGE: Smooth curve from flat bottom to waterline
             const bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
@@ -1756,9 +1777,40 @@ function generateStationOffsets(
         }
 
         // 5. Apply convex/concave control (for both soft and hard chine)
+        // PHASE 2: Localize concave to bilge area (30-70% of draft) and increase effect magnitude
         if (Math.abs(kappaBow) > 0.1) {
-          const convexEffect = kappaBow * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
-          baseHalfBreadth *= 1 + convexEffect;
+          if (kappaBow < 0) {
+            // CONCAVE: Localize to bilge area (30-70% of draft height)
+            // Negative kappa creates inward curve (reduces half-breadth in bilge)
+            const bilgeStart = 0.3; // 30% of draft
+            const bilgeEnd = 0.7; // 70% of draft
+
+            if (heightRatio >= bilgeStart && heightRatio <= bilgeEnd) {
+              // Create bell-shaped curve centered in bilge area
+              const bilgeCenter = (bilgeStart + bilgeEnd) / 2; // 0.5 (50% of draft)
+              const bilgeRange = bilgeEnd - bilgeStart; // 0.4 (40% range)
+              const distanceFromCenter = Math.abs(heightRatio - bilgeCenter);
+              const normalizedDistance = distanceFromCenter / (bilgeRange / 2); // 0 at center, 1 at edges
+
+              // Bell curve: 1 at center, 0 at edges (using cosine for smooth transition)
+              const bilgeIntensity = Math.cos((normalizedDistance * Math.PI) / 2);
+
+              // Concave effect: negative kappa reduces half-breadth (inward curve)
+              // Increase magnitude from 10% to 25% for more visible effect
+              const concaveEffect = kappaBow * bilgeIntensity * 0.25;
+              baseHalfBreadth *= 1 + concaveEffect;
+            }
+          } else {
+            // CONVEX: Apply to create U-shaped bottom (throughout lower portion)
+            // Positive kappa creates outward curve (increases half-breadth)
+            // Apply more strongly in lower portion (0-60% of draft) for U-shape
+            const lowerPortionRatio = Math.max(0, 1 - heightRatio / 0.6); // 1 at keel, 0 at 60% draft
+            const convexIntensity = Math.pow(lowerPortionRatio, 0.5); // Smooth falloff
+
+            // Increase magnitude from 10% to 25% for more visible U-shape
+            const convexEffect = kappaBow * convexIntensity * 0.25;
+            baseHalfBreadth *= 1 + convexEffect;
+          }
         }
 
         halfBreadth = Math.max(0, baseHalfBreadth);
@@ -1809,27 +1861,63 @@ function generateStationOffsets(
               waterlineHalfBreadth *= 1 + knuckleEffect * knuckleFactor * 0.15;
             }
           }
-          // Apply convex/concave control at waterline (for both soft and hard chine)
+          // Apply convex/concave control at waterline (minimal effect, mainly for convex U-shape)
+          // At waterline, we're outside bilge area, so apply simplified convex effect if positive
           if (Math.abs(kappaBow) > 0.1) {
-            const convexEffect = kappaBow * Math.sin((1.0 * Math.PI) / 2) * 0.1;
-            waterlineHalfBreadth *= 1 + convexEffect;
+            if (kappaBow > 0) {
+              // Convex: slight outward curve at waterline
+              const convexEffect = kappaBow * 0.15; // Reduced effect at waterline
+              waterlineHalfBreadth *= 1 + convexEffect;
+            }
+            // Concave effect minimal at waterline (mainly in bilge area)
           }
         }
 
         // Start at actual waterline half-breadth (ensures continuity)
         let baseHalfBreadth = waterlineHalfBreadth;
 
-        // Add flare effect with smooth transition
+        // Add flare or tumblehome effect with smooth transition
+        // PHASE 2: Enhance tumblehome (negative beta) - inward-sloping upper hull
         if (beta > 5) {
+          // FLARE (positive beta): Outward-sloping sides above waterline
           // Use smooth flare curve to avoid abrupt changes
           const flareExpansion = Math.tan((beta * Math.PI) / 180) * aboveWLHeight;
           // Apply gradual flare increase (smooth curve, not linear)
           const flareCurve = Math.pow(aboveWLRatio, 1.5); // Smooth curve
           baseHalfBreadth += flareExpansion * 0.2 * flareCurve;
+        } else if (beta < -5) {
+          // TUMBLEHOME (negative beta): Inward-sloping sides above waterline
+          // Beam at deck narrower than at waterline
+          // Create smooth inward slope that increases with height above waterline
+          const tumblehomeAngle = Math.abs(beta); // Use absolute value for calculation
+          const tumblehomeReduction = Math.tan((tumblehomeAngle * Math.PI) / 180) * aboveWLHeight;
+
+          // Apply gradual tumblehome reduction (smooth curve, not linear)
+          // More pronounced at deck level (higher aboveWLRatio)
+          const tumblehomeCurve = Math.pow(aboveWLRatio, 1.5); // Smooth curve
+          const reductionAmount = tumblehomeReduction * 0.25 * tumblehomeCurve;
+
+          // Reduce half-breadth (inward slope)
+          baseHalfBreadth -= reductionAmount;
+
+          // Ensure we don't go below a reasonable minimum (at least 60% of waterline width)
+          baseHalfBreadth = Math.max(waterlineHalfBreadth * 0.6, baseHalfBreadth);
         }
 
-        // Ensure monotonicity: above-waterline should be >= waterline
-        halfBreadth = Math.max(waterlineHalfBreadth, baseHalfBreadth);
+        // Ensure monotonicity: above-waterline should be >= waterline for flare, <= waterline for tumblehome
+        if (beta > 5) {
+          // Flare: above-waterline should be >= waterline
+          halfBreadth = Math.max(waterlineHalfBreadth, baseHalfBreadth);
+        } else if (beta < -5) {
+          // Tumblehome: above-waterline should be <= waterline (narrower at deck)
+          halfBreadth = Math.max(
+            waterlineHalfBreadth * 0.6,
+            Math.min(waterlineHalfBreadth, baseHalfBreadth)
+          );
+        } else {
+          // Neutral: maintain waterline half-breadth
+          halfBreadth = waterlineHalfBreadth;
+        }
       }
     } else if (region === "midship") {
       // Midship section: Check for deep_v_midship (yacht) vs standard midship
@@ -1867,12 +1955,13 @@ function generateStationOffsets(
             baseHalfBreadth = flatBottomHalfBreadth;
           } else {
             const bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
-            const curvePower = 2.0 + (rc * 0.5);
+            const curvePower = 2.0 + rc * 0.5;
             const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower);
 
             const flatBottomHalfBreadth = (beamM / 2) * 0.4;
             const waterlineHalfBreadthTarget = beamM / 2;
-            baseHalfBreadth = flatBottomHalfBreadth +
+            baseHalfBreadth =
+              flatBottomHalfBreadth +
               (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
           }
           halfBreadth = Math.max(0, baseHalfBreadth);
@@ -1936,11 +2025,12 @@ function generateStationOffsets(
             // Soft chine: waterline is at end of rounded bilge transition
             const flatBottomHeight = draftM * 0.3;
             const bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
-            const curvePower = 2.0 + (rc * 0.5);
+            const curvePower = 2.0 + rc * 0.5;
             const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower); // = 1.0
             const flatBottomHalfBreadth = (beamM / 2) * 0.4;
             const waterlineHalfBreadthTarget = beamM / 2;
-            waterlineHalfBreadth = flatBottomHalfBreadth +
+            waterlineHalfBreadth =
+              flatBottomHalfBreadth +
               (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
           } else if (isDeepV) {
             const bdrft = denormalized[18];
@@ -2040,12 +2130,13 @@ function generateStationOffsets(
             baseHalfBreadth = flatBottomHalfBreadth;
           } else {
             const bilgeRatio = (height - flatBottomHeight) / (draftM - flatBottomHeight);
-            const curvePower = 2.0 + (rc * 0.5);
+            const curvePower = 2.0 + rc * 0.5;
             const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower);
 
             const flatBottomHalfBreadth = (beamM / 2) * 0.4;
             const waterlineHalfBreadthTarget = beamM / 2;
-            baseHalfBreadth = flatBottomHalfBreadth +
+            baseHalfBreadth =
+              flatBottomHalfBreadth +
               (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
           }
           // NO KNUCKLE for soft chine (smooth transition, no sharp angles)
@@ -2079,9 +2170,30 @@ function generateStationOffsets(
           }
 
           // Apply convex/concave control
+          // PHASE 2: Localize concave to bilge area (30-70% of draft) and increase effect magnitude
           if (Math.abs(kappaStern) > 0.1) {
-            const convexEffect = kappaStern * Math.sin((heightRatio * Math.PI) / 2) * 0.1;
-            baseHalfBreadth *= 1 + convexEffect;
+            if (kappaStern < 0) {
+              // CONCAVE: Localize to bilge area (30-70% of draft height)
+              const bilgeStart = 0.3; // 30% of draft
+              const bilgeEnd = 0.7; // 70% of draft
+
+              if (heightRatio >= bilgeStart && heightRatio <= bilgeEnd) {
+                const bilgeCenter = (bilgeStart + bilgeEnd) / 2; // 0.5 (50% of draft)
+                const bilgeRange = bilgeEnd - bilgeStart; // 0.4 (40% range)
+                const distanceFromCenter = Math.abs(heightRatio - bilgeCenter);
+                const normalizedDistance = distanceFromCenter / (bilgeRange / 2);
+
+                const bilgeIntensity = Math.cos((normalizedDistance * Math.PI) / 2);
+                const concaveEffect = kappaStern * bilgeIntensity * 0.25;
+                baseHalfBreadth *= 1 + concaveEffect;
+              }
+            } else {
+              // CONVEX: Apply to create U-shaped bottom (throughout lower portion)
+              const lowerPortionRatio = Math.max(0, 1 - heightRatio / 0.6);
+              const convexIntensity = Math.pow(lowerPortionRatio, 0.5);
+              const convexEffect = kappaStern * convexIntensity * 0.25;
+              baseHalfBreadth *= 1 + convexEffect;
+            }
           }
 
           halfBreadth = Math.max(0, baseHalfBreadth);
@@ -2115,9 +2227,29 @@ function generateStationOffsets(
           }
 
           // Apply convex/concave control (less pronounced for canoe stern)
+          // PHASE 2: Localize concave to bilge area (30-70% of draft) and increase effect magnitude
           if (Math.abs(kappaStern) > 0.1) {
-            const convexEffect = kappaStern * Math.sin((heightRatio * Math.PI) / 2) * 0.05; // Reduced effect
-            baseHalfBreadth *= 1 + convexEffect;
+            if (kappaStern < 0) {
+              // CONCAVE: Localize to bilge area (30-70% of draft height)
+              const bilgeStart = 0.3; // 30% of draft
+              const bilgeEnd = 0.7; // 70% of draft
+
+              if (heightRatio >= bilgeStart && heightRatio <= bilgeEnd) {
+                const bilgeCenter = (bilgeStart + bilgeEnd) / 2;
+                const bilgeRange = bilgeEnd - bilgeStart;
+                const distanceFromCenter = Math.abs(heightRatio - bilgeCenter);
+                const normalizedDistance = distanceFromCenter / (bilgeRange / 2);
+                const bilgeIntensity = Math.cos((normalizedDistance * Math.PI) / 2);
+                const concaveEffect = kappaStern * bilgeIntensity * 0.2; // Slightly reduced for canoe stern
+                baseHalfBreadth *= 1 + concaveEffect;
+              }
+            } else {
+              // CONVEX: Apply to create U-shaped bottom
+              const lowerPortionRatio = Math.max(0, 1 - heightRatio / 0.6);
+              const convexIntensity = Math.pow(lowerPortionRatio, 0.5);
+              const convexEffect = kappaStern * convexIntensity * 0.2; // Slightly reduced for canoe stern
+              baseHalfBreadth *= 1 + convexEffect;
+            }
           }
 
           halfBreadth = Math.max(0, baseHalfBreadth);
@@ -2138,11 +2270,12 @@ function generateStationOffsets(
             // Soft chine: waterline is at end of rounded bilge transition
             const flatBottomHeight = draftM * 0.3;
             const bilgeRatio = (draftM - flatBottomHeight) / (draftM - flatBottomHeight); // = 1.0 at waterline
-            const curvePower = 2.0 + (rc * 0.5);
+            const curvePower = 2.0 + rc * 0.5;
             const expansionRatio = Math.pow(bilgeRatio, 1 / curvePower); // = 1.0
             const flatBottomHalfBreadth = (beamM / 2) * 0.4;
             const waterlineHalfBreadthTarget = beamM / 2;
-            waterlineHalfBreadth = flatBottomHalfBreadth +
+            waterlineHalfBreadth =
+              flatBottomHalfBreadth +
               (waterlineHalfBreadthTarget - flatBottomHalfBreadth) * expansionRatio;
           } else if (isTransomStern) {
             const keelHalfBreadth = 0;

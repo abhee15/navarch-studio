@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import type { CreateMissionCaseDto, ShipDVesselTaxonomy } from "../../../types/sizing";
 import { getVesselTypeDefaults } from "../../../services/sizingApi";
 import { Button } from "../../ui/button";
@@ -56,12 +56,25 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
   const midshipKey = midshipOptions.join("|");
   const sternKey = sternOptions.join("|");
 
+  // Track current vessel type combination to detect changes (fixes Issue 1)
+  const vesselTypeKeyRef = useRef<string>("");
+  const currentVesselTypeKey = `${formData.missionCategory || ""}|${formData.missionType || ""}`;
+
+  // Reset defaultsApplied when vessel type changes (fixes Issue 1)
+  useEffect(() => {
+    if (vesselTypeKeyRef.current !== currentVesselTypeKey) {
+      vesselTypeKeyRef.current = currentVesselTypeKey;
+      setDefaultsApplied(false);
+      setDefaultsLoading(false);
+    }
+  }, [currentVesselTypeKey]);
+
   // Auto-select defaults from vessel type mapping service (Phase 1)
   useEffect(() => {
     const category = formData.missionCategory;
     const type = formData.missionType;
 
-    // Only fetch defaults if vessel type is selected and families are not already set
+    // Only fetch defaults if vessel type is selected and defaults haven't been applied yet
     if (!category || !type || defaultsApplied || defaultsLoading) {
       return;
     }
@@ -75,47 +88,89 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
 
     // Fetch vessel type defaults
     setDefaultsLoading(true);
+
+    // Capture current values for validation in async callback
+    // Use taxonomyEntry directly to avoid array reference issues
+    const currentBowOptions = taxonomyEntry?.bowFamilies ?? [];
+    const currentMidshipOptions = taxonomyEntry?.midshipFamilies ?? [];
+    const currentSternOptions = taxonomyEntry?.sternFamilies ?? [];
+    const fetchVesselTypeKey = currentVesselTypeKey; // Track which vessel type this fetch is for
+
     getVesselTypeDefaults(category, type)
       .then((defaults) => {
-        if (defaults) {
-          const next: Partial<CreateMissionCaseDto> = {};
+        // Verify this fetch is still for the current vessel type (may have changed during async)
+        if (fetchVesselTypeKey !== vesselTypeKeyRef.current) {
+          return; // Vessel type changed, ignore this result
+        }
 
-          // Apply bow family default (only if not set and available in taxonomy options)
-          if (!formData.bowFamily && defaults.bowFamily) {
-            if (bowOptions.length === 0 || bowOptions.includes(defaults.bowFamily)) {
-              next.bowFamily = defaults.bowFamily;
-            }
-          }
+        if (!defaults) {
+          return;
+        }
 
-          // Apply midship family default
-          if (!formData.midshipFamily && defaults.midshipFamily) {
-            if (midshipOptions.length === 0 || midshipOptions.includes(defaults.midshipFamily)) {
-              next.midshipFamily = defaults.midshipFamily;
-            }
-          }
+        const next: Partial<CreateMissionCaseDto> = {};
 
-          // Apply stern family default
-          if (!formData.sternFamily && defaults.sternFamily) {
-            if (sternOptions.length === 0 || sternOptions.includes(defaults.sternFamily)) {
-              next.sternFamily = defaults.sternFamily;
-            }
-          }
-
-          if (Object.keys(next).length > 0) {
-            updateFormData(next);
-            setDefaultsApplied(true);
+        // Apply bow family default (only if not set and available in taxonomy options)
+        // Use captured options at fetch time, but re-validate when taxonomy loads
+        if (!formData.bowFamily && defaults.bowFamily) {
+          if (currentBowOptions.length === 0 || currentBowOptions.includes(defaults.bowFamily)) {
+            next.bowFamily = defaults.bowFamily;
           }
         }
+
+        // Apply midship family default
+        if (!formData.midshipFamily && defaults.midshipFamily) {
+          if (
+            currentMidshipOptions.length === 0 ||
+            currentMidshipOptions.includes(defaults.midshipFamily)
+          ) {
+            next.midshipFamily = defaults.midshipFamily;
+          }
+        }
+
+        // Apply stern family default
+        if (!formData.sternFamily && defaults.sternFamily) {
+          if (
+            currentSternOptions.length === 0 ||
+            currentSternOptions.includes(defaults.sternFamily)
+          ) {
+            next.sternFamily = defaults.sternFamily;
+          }
+        }
+
+        if (Object.keys(next).length > 0) {
+          updateFormData(next);
+          setDefaultsApplied(true);
+        } else if (taxonomyEntry) {
+          // Taxonomy is loaded but no defaults matched - mark as applied to prevent retries
+          setDefaultsApplied(true);
+        }
+        // If taxonomy not loaded yet, don't set defaultsApplied - allow retry when taxonomy loads
       })
       .catch((error) => {
         console.warn("[Step2HullFamilies] Failed to fetch vessel type defaults:", error);
         // Fall through to taxonomy-based defaults
       })
       .finally(() => {
-        setDefaultsLoading(false);
+        // Only clear loading if this fetch is still for the current vessel type
+        if (fetchVesselTypeKey === vesselTypeKeyRef.current) {
+          setDefaultsLoading(false);
+        }
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.missionCategory, formData.missionType]);
+  }, [
+    formData.missionCategory,
+    formData.missionType,
+    defaultsApplied,
+    defaultsLoading,
+    formData.bowFamily,
+    formData.midshipFamily,
+    formData.sternFamily,
+    bowKey,
+    midshipKey,
+    sternKey,
+    taxonomyEntry?.id,
+    currentVesselTypeKey,
+    updateFormData,
+  ]);
 
   // Fallback: Auto-select defaults when taxonomy provides families (if vessel type defaults didn't apply)
   useEffect(() => {
