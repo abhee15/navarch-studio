@@ -140,9 +140,17 @@ export const getVesselTypeDefaults = async (
       `${BASE_PATH}/vessel-types/${category}/${type}/defaults`
     );
     return response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Return null if endpoint returns 404 (no defaults for this vessel type)
-    if (error.response?.status === 404) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "response" in error &&
+      error.response &&
+      typeof error.response === "object" &&
+      "status" in error.response &&
+      error.response.status === 404
+    ) {
       return null;
     }
     throw error;

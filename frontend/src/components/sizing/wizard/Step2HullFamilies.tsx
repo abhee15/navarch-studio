@@ -167,7 +167,7 @@ export const Step2HullFamilies: React.FC<Step2Props> = ({
     bowKey,
     midshipKey,
     sternKey,
-    taxonomyEntry?.id,
+    taxonomyEntry,
     currentVesselTypeKey,
     updateFormData,
   ]);

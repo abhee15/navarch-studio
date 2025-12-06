@@ -857,7 +857,7 @@ function StationLabelsOverlay({
       console.warn("[StationLabelsOverlay] Failed to generate labels:", error);
       return [];
     }
-  }, [geometryJson, lpp, beam]);
+  }, [geometryJson, lpp, beam, draft]);
 
   return <group>{labels}</group>;
 }
@@ -914,7 +914,7 @@ function WaterlineLabelsOverlay({
       console.warn("[WaterlineLabelsOverlay] Failed to generate labels:", error);
       return [];
     }
-  }, [geometryJson, draft, beam, lpp]);
+  }, [geometryJson, beam, lpp]);
 
   return <group>{labels}</group>;
 }
