@@ -868,7 +868,7 @@ function StationLabelsOverlay({
  */
 function WaterlineLabelsOverlay({
   geometryJson,
-  draft,
+  draft: _draft,
   beam,
   lpp,
 }: {
@@ -877,6 +877,8 @@ function WaterlineLabelsOverlay({
   beam: number;
   lpp: number;
 }) {
+  // _draft is intentionally unused - kept for API consistency
+  void _draft;
   const labels = useMemo(() => {
     if (!geometryJson) return [];
 
