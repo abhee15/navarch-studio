@@ -29,7 +29,7 @@ export function EnhancedHull3D({
         color={color}
         opacity={opacity}
         transparent={opacity < 1}
-        side={THREE.DoubleSide}
+        side={THREE.FrontSide}
         wireframe={wireframe}
         roughness={0.6}
         metalness={0.2}

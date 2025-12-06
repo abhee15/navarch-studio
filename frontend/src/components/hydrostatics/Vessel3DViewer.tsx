@@ -778,7 +778,7 @@ function HullMesh({
         color="#6b7280"
         metalness={0.2}
         roughness={0.6}
-        side={THREE.DoubleSide}
+        side={THREE.FrontSide}
         wireframe={wireframe}
         flatShading={false}
       />
