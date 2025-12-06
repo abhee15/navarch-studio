@@ -42,11 +42,7 @@ export const VisualizationSettingsSlideOver: React.FC<VisualizationSettingsSlide
       />
 
       {/* Slide-over Panel */}
-      <div
-        className="fixed inset-y-0 right-0 w-80 lg:w-96 bg-card border-l border-border shadow-2xl z-50
-                   flex flex-col overflow-hidden
-                   animate-in slide-in-from-right duration-300"
-      >
+      <div className="fixed inset-y-0 right-0 w-80 lg:w-96 bg-card border-l border-border shadow-2xl z-50 flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="flex items-center gap-2">
@@ -83,4 +79,3 @@ export const VisualizationSettingsSlideOver: React.FC<VisualizationSettingsSlide
     </>
   );
 };
-
