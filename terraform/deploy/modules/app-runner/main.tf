@@ -96,6 +96,34 @@ resource "aws_iam_role_policy_attachment" "secrets_access" {
   policy_arn = aws_iam_policy.secrets_access.arn
 }
 
+# Policy for CloudWatch Logs access (for application logging)
+resource "aws_iam_policy" "cloudwatch_logs" {
+  name = "${var.project_name}-${var.environment}-cloudwatch-logs"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams"
+      ]
+      Resource = "arn:aws:logs:*:*:log-group:/aws/apprunner/${var.project_name}-${var.environment}-*"
+    }]
+  })
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-cloudwatch-logs"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_logs" {
+  role       = aws_iam_role.app_runner_instance.name
+  policy_arn = aws_iam_policy.cloudwatch_logs.arn
+}
+
 # Identity Service
 resource "aws_apprunner_service" "identity_service" {
   service_name = "${var.project_name}-${var.environment}-identity-service"
